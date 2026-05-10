@@ -188,7 +188,7 @@ back, and the result is openable in PowerPoint.
 DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
 `Shape`, …) with **lossless preservation** of unknown XML chunks.
 
-- [ ] Theme parser (`a:theme`)
+- [x] **Phase 3a — Theme parser (`a:theme`)** *(complete)* — `src/theme/` sub-package: `Theme`, `ColorScheme` (12 slots: dk1/2 lt1/2 accent1..6 hlink folHlink), `ColorChoice` (`Srgb` + `Sys` w/ lastClr fallback), `FontScheme` w/ `FontCollection` (latin/ea/cs + per-script overrides). Strict on modelled elements, lenient via `skip_subtree` on the rest (`fmtScheme`, `objectDefaults`, …). 9 tests, all green × 4 backends.
 - [ ] Slide master / layout parsers + inheritance resolver
 - [ ] Slide parser: shapes, group shapes, connectors, pictures, tables, charts
 - [ ] Text parser: paragraph, run, list style, font, hyperlink
@@ -435,5 +435,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon_pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
 - **2026-05-11** — Phase 2 a/b/c done: `src/opc/` sub-package with `Package`, `Part`, `OpcError`, `ContentTypes` (Default/Override + resolution + auto-populate), `Relationships` (parse/serialize/lookup/builder + relative/`..`/external target resolution + `rels_path_for` helper). Total 110 tests on all four backends. Phase 2d (end-to-end .pptx fixture) remaining.
 - **2026-05-11** — Phase 2d done: in-memory minimal-but-realistic `.pptx` fixture (6 parts, 2 rels files, Default + Override content-types, `..`-walking targets) exercises full open → mutate → save → reopen. **Phase 2 (OPC layer) closed.** 117 tests on all four backends.
+- **2026-05-11** — Phase 3a done: `src/theme/` reads `a:theme` into typed `Theme` / `ColorScheme` / `FontScheme`. `skip_subtree` swallows unmodelled siblings (`fmtScheme` and friends) without losing parser state — lossless preservation of the skipped sections is on the docket once ADR-004 is implemented. 126 tests on all four backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

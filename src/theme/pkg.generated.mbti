@@ -1,0 +1,80 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/theme"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
+}
+
+// Values
+pub let drawing_ns : String
+
+pub fn wrap_xml(@xml.XmlError) -> ThemeError
+
+// Errors
+pub(all) suberror ThemeError {
+  XmlFailure(String, String)
+  MalformedTheme(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for ThemeError
+
+// Types and methods
+pub(all) enum ColorChoice {
+  Srgb(@units.RgbColor)
+  Sys(SysColor)
+} derive(Eq, @debug.Debug)
+pub impl Show for ColorChoice
+
+pub(all) struct ColorScheme {
+  name : String
+  dk1 : ColorChoice
+  lt1 : ColorChoice
+  dk2 : ColorChoice
+  lt2 : ColorChoice
+  accent1 : ColorChoice
+  accent2 : ColorChoice
+  accent3 : ColorChoice
+  accent4 : ColorChoice
+  accent5 : ColorChoice
+  accent6 : ColorChoice
+  hlink : ColorChoice
+  fol_hlink : ColorChoice
+} derive(Eq, @debug.Debug)
+
+pub(all) struct FontCollection {
+  latin : String
+  ea : String
+  cs : String
+  scripts : Array[ScriptFont]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct FontScheme {
+  name : String
+  major_font : FontCollection
+  minor_font : FontCollection
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ScriptFont {
+  script : String
+  typeface : String
+} derive(Eq, @debug.Debug)
+pub impl Show for ScriptFont
+
+pub(all) struct SysColor {
+  val : String
+  last_clr : @units.RgbColor?
+} derive(Eq, @debug.Debug)
+pub impl Show for SysColor
+
+pub(all) struct Theme {
+  name : String
+  color_scheme : ColorScheme
+  font_scheme : FontScheme
+} derive(Eq, @debug.Debug)
+pub fn Theme::parse(FixedArray[Byte]) -> Self raise ThemeError
+
+// Type aliases
+
+// Traits
+
