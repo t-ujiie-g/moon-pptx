@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/xml"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror XmlError {
+  Malformed(String)
+  MismatchedEndTag(String)
+  UnexpectedEof
+  UnboundPrefix(String)
+  WriterMisuse(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for XmlError
+
+// Types and methods
+pub(all) struct QName {
+  uri : String
+  local_name : String
+} derive(Eq, Hash, @debug.Debug)
+pub fn QName::is_qualified(Self) -> Bool
+pub fn QName::new(String, String) -> Self
+pub fn QName::unqualified(String) -> Self
+pub impl Show for QName
+
+pub struct XmlWriter {
+  buf : StringBuilder
+  prefix_for_uri : Map[String, String]
+  stack : Array[QName]
+  mut in_start_tag : Bool
+}
+pub fn XmlWriter::attribute(Self, QName, String) -> Unit raise XmlError
+pub fn XmlWriter::bind_namespace(Self, String, String) -> Unit
+pub fn XmlWriter::cdata(Self, String) -> Unit raise XmlError
+pub fn XmlWriter::default_namespace_attr(Self, String) -> Unit raise XmlError
+pub fn XmlWriter::end_element(Self) -> Unit raise XmlError
+pub fn XmlWriter::namespace_attr(Self, String, String) -> Unit raise XmlError
+pub fn XmlWriter::new() -> Self
+pub fn XmlWriter::start_element(Self, QName) -> Unit raise XmlError
+pub fn XmlWriter::text(Self, String) -> Unit raise XmlError
+pub fn XmlWriter::to_string(Self) -> String raise XmlError
+pub fn XmlWriter::xml_declaration(Self) -> Unit
+
+// Type aliases
+
+// Traits
+
