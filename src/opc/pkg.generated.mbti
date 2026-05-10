@@ -7,6 +7,10 @@ import {
 }
 
 // Values
+pub let content_types_ns : String
+
+pub let content_types_part_name : String
+
 pub fn opc_name_to_zip(String) -> String
 
 pub fn validate_part_name(String) -> Unit raise OpcError
@@ -24,16 +28,31 @@ pub(all) suberror OpcError {
 pub impl Show for OpcError
 
 // Types and methods
+pub(all) struct ContentTypes {
+  defaults : Array[(String, String)]
+  overrides : Array[(String, String)]
+} derive(Eq, @debug.Debug)
+pub fn ContentTypes::new() -> Self
+pub fn ContentTypes::parse(FixedArray[Byte]) -> Self raise OpcError
+pub fn ContentTypes::resolve(Self, String) -> String?
+pub fn ContentTypes::serialize(Self) -> FixedArray[Byte] raise OpcError
+pub fn ContentTypes::with_default(Self, String, String) -> Self
+pub fn ContentTypes::with_override(Self, String, String) -> Self
+
 pub struct Package {
   parts : Array[Part]
+  mut content_types : ContentTypes
 }
 pub fn Package::add_part(Self, Part) -> Unit raise OpcError
+pub fn Package::content_types(Self) -> ContentTypes
 pub fn Package::new() -> Self
 pub fn Package::open(FixedArray[Byte]) -> Self raise OpcError
 pub fn Package::part_by_name(Self, String) -> Part?
 pub fn Package::parts(Self) -> Array[Part]
+pub fn Package::regenerate_content_types_part(Self) -> Unit raise OpcError
 pub fn Package::remove_part(Self, String) -> Bool
 pub fn Package::require_part(Self, String) -> Part raise OpcError
+pub fn Package::set_content_types(Self, ContentTypes) -> Unit
 pub fn Package::to_bytes(Self) -> FixedArray[Byte]
 
 pub(all) struct Part {

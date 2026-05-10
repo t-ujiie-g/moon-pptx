@@ -10,8 +10,15 @@
 /// The `parts` array preserves the order of entries in the underlying ZIP
 /// for stable byte-near-equal round-trip, even though OPC itself does not
 /// give meaning to entry order.
+///
+/// `content_types` mirrors the parsed `[Content_Types].xml` for fast lookup.
+/// `Package::open` populates it; `Package::new` starts it empty. There is
+/// no automatic synchronisation when parts are added or removed; the caller
+/// (or a higher layer) is responsible for keeping `[Content_Types].xml` in
+/// sync via `set_content_types`.
 pub struct Package {
   parts : Array[Part]
+  mut content_types : ContentTypes
 }
 
 ///|
@@ -26,14 +33,77 @@ pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
     let name = zip_name_to_opc(entry.0)
     parts.push({ name, content_type: "", bytes: entry.1 })
   }
-  { parts, }
+  // Locate [Content_Types].xml and parse it.
+  let mut ct_bytes : FixedArray[Byte]? = None
+  for p in parts {
+    if p.name == content_types_part_name {
+      ct_bytes = Some(p.bytes)
+      break
+    }
+  }
+  let content_types = match ct_bytes {
+    Some(b) => ContentTypes::parse(b)
+    None =>
+      raise MalformedPackage(
+        "package is missing the required " + content_types_part_name + " part",
+      )
+  }
+  // Populate each part's content_type by lookup.
+  for p in parts {
+    if p.name == content_types_part_name {
+      // [Content_Types].xml itself is implicit; the spec doesn't require an
+      // entry. Skip resolution for it to keep behaviour predictable.
+      continue
+    }
+    match content_types.resolve(p.name) {
+      Some(ct) => p.content_type = ct
+      None => () // unresolved — leave empty; callers can detect with `is_empty`
+    }
+  }
+  { parts, content_types }
 }
 
 ///|
-/// Construct an empty package with no parts. Useful as a starting point for
-/// builder code or tests.
+/// Construct an empty package with no parts and an empty content-types
+/// catalog. Useful as a starting point for builder code or tests.
 pub fn Package::new() -> Package {
-  { parts: Array::new() }
+  { parts: Array::new(), content_types: ContentTypes::new() }
+}
+
+///|
+/// Return the parsed content-types catalog.
+pub fn Package::content_types(self : Package) -> ContentTypes {
+  self.content_types
+}
+
+///|
+/// Replace the content-types catalog. Does NOT update the
+/// `[Content_Types].xml` part bytes — call `regenerate_content_types_part`
+/// (or do it yourself) before `to_bytes` if you want the change to round-trip.
+pub fn Package::set_content_types(self : Package, ct : ContentTypes) -> Unit {
+  self.content_types = ct
+}
+
+///|
+/// Re-serialise the in-memory `ContentTypes` to bytes and store them as the
+/// `[Content_Types].xml` part. Adds the part if it's missing.
+pub fn Package::regenerate_content_types_part(
+  self : Package,
+) -> Unit raise OpcError {
+  let bytes = self.content_types.serialize()
+  let mut found = false
+  let mut i = 0
+  while i < self.parts.length() {
+    if self.parts[i].name == content_types_part_name {
+      self.parts[i] = { name: content_types_part_name, content_type: "", bytes }
+      found = true
+      break
+    }
+    i = i + 1
+  }
+  if !found {
+    self.parts.push({ name: content_types_part_name, content_type: "", bytes })
+  }
 }
 
 ///|
