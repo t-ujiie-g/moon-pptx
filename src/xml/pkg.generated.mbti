@@ -27,6 +27,24 @@ pub fn QName::new(String, String) -> Self
 pub fn QName::unqualified(String) -> Self
 pub impl Show for QName
 
+pub(all) enum XmlEvent {
+  StartElement(QName, Array[(QName, String)])
+  EndElement(QName)
+  Text(String)
+  CData(String)
+} derive(@debug.Debug)
+pub impl Show for XmlEvent
+
+pub struct XmlReader {
+  chars : Array[Char]
+  mut pos : Int
+  ns_stack : Array[Map[String, String]]
+  element_stack : Array[QName]
+  pending : Array[XmlEvent]
+}
+pub fn XmlReader::new(String) -> Self
+pub fn XmlReader::next(Self) -> XmlEvent? raise XmlError
+
 pub struct XmlWriter {
   buf : StringBuilder
   prefix_for_uri : Map[String, String]
