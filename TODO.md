@@ -427,5 +427,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Phase 1.1 done: `src/units/` sub-package with `Emu` / `Pt` / `Inch` / `Cm` / `Percentage` / `Angle`. ADR-005 accepted (sub-packages under `src/`). 18 tests pass on all four backends.
 - **2026-05-10** — Phase 1.2 done: color types added to `src/units/` — `RgbColor` (hex parse/format), `HslColor` (RGB↔HSL conversion), `ThemeColor` enum (17 slots), `ColorTransform` ADT, `SchemeColor` immutable builder, `UnitsError` suberror. 33 tests pass on all four backends.
 - **2026-05-10** — Phase 1.3 done (in three commits): `src/xml/` sub-package complete with `QName`, `XmlError`, namespace-aware streaming `XmlWriter`, and event-based `XmlReader` with full namespace + entity handling. ADR-008 records the event-vs-DOM decision. 75 tests pass on all four backends. **Phase 1 (Foundations) closed.**
+- **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon_pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

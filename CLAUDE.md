@@ -117,7 +117,6 @@ moon test --target all
 | Regenerate `.mbti` | `moon info` |
 | Coverage | `moon test --enable-coverage && moon coverage report` |
 | Add a dependency | `moon add <user>/<module>` |
-| Run the CLI entry | `moon run cmd/main` |
 
 CI (see `.github/workflows/ci.yml`) runs `check` + `fmt --check` + `info`
 drift on `ubuntu-latest` and `macos-latest`, plus `test` against
@@ -172,7 +171,78 @@ See ADRs in `TODO.md §4` for the rationale behind each convention.
 
 ---
 
-## 7. Things to avoid
+## 7. Refactoring checklist
+
+When the user says "リファクタリング" / "refactor" / "tidy up" / "clean up",
+walk through these five lenses **in order**, stopping to write a concrete
+findings list **before** changing any code. The same lens applies whether
+the trigger is a single file or the whole tree.
+
+### 7.1 Constants management
+- Are there magic numbers or repeated string literals that name a meaningful
+  concept? Promote to a `pub let` constant in the most relevant package.
+- Are domain conversion factors (EMU per inch, OOXML scale factors) defined
+  exactly once and re-used everywhere?
+- Hard-coded namespace URIs, file extensions, content types — extract to
+  named constants in the package that owns the domain.
+
+### 7.2 Duplicate / dead code
+- Identical helper definitions in two files → consolidate to one location and
+  re-export.
+- Stub files left over from `moon new` (3-line comment-only `.mbt` files) —
+  delete unless they hold actual API.
+- Smoke / sanity tests whose purpose has been served by later integration
+  tests — delete; do not keep "just in case".
+- Unused imports in `moon.pkg` (look for `unused_package` warnings) — drop.
+- Functions exported `pub` but called from nowhere — make private or delete.
+
+### 7.3 File splitting
+- A single `.mbt` file over ~500 lines is *a smell*, not a rule. Split only
+  when there is a *logical* boundary (e.g. lexer state vs. token readers vs.
+  name-resolution helpers), not just to hit a line count.
+- Test files: one `_test.mbt` per source file is a good default; collapse
+  only if the unified file stays small.
+- Keep blackbox (`*_test.mbt`) and whitebox (`*_wbtest.mbt`) tests separate;
+  do not co-mingle.
+
+### 7.4 Test adequacy
+- Every `pub fn` has at least one direct test (positive case).
+- Every error path (`raise`, `Option None`) is covered by at least one test.
+- Round-trip / property tests exist at any boundary that serialises data
+  (XML reader↔writer, OPC pack↔unpack, OOXML parse↔serialise).
+- Tests assert on values, not just shapes — `assert_eq` over `assert_true`
+  where possible. `assert_true(x is Pattern(_))` is fine for error variants.
+- A test that only re-runs the type checker (`let _ = …`) duplicates
+  `moon check` and should be deleted.
+
+### 7.5 Documentation freshness
+- `TODO.md` phase checkboxes reflect actual code state; the changelog has an
+  entry for the change you're making.
+- `README.mbt.md` status table is current (no Phase marked "🔜 Next" if it's
+  already merged).
+- Public APIs have `///` doc comments; non-obvious *why* lines have inline
+  comments.
+- ADRs supersede rather than mutate: when a decision changes, append a new
+  ADR and mark the old one Superseded.
+- `pkg.generated.mbti` is regenerated (`moon info`) — diff shows the
+  intended public-API change.
+
+### 7.6 Validation loop after refactoring
+After changes, always run:
+
+```bash
+moon check --deny-warn
+moon test --target all
+moon fmt
+moon info        # commit any .mbti diffs alongside code changes
+```
+
+Push only when all four are clean. CI repeats the same loop across the OS
+matrix.
+
+---
+
+## 8. Things to avoid
 
 - ❌ Creating "decision documents" or "planning documents" outside `TODO.md`.
 - ❌ Adding dependencies without an ADR in `TODO.md §4`.
@@ -184,7 +254,7 @@ See ADRs in `TODO.md §4` for the rationale behind each convention.
 
 ---
 
-## 8. When in doubt
+## 9. When in doubt
 
 - For MoonBit language / API questions: rely on the `moonbit-orientation`
   skill's verification tiers — never present guessed APIs as facts. Use

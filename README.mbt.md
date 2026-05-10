@@ -3,9 +3,9 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phase 0).** Bootstrapped, dependency wired up, smoke
-> test green. Public API does not exist yet — see [TODO.md](TODO.md) for the
-> phase-by-phase roadmap.
+> **Status: pre-alpha (Phase 1 closed).** Foundation primitives (units, colors,
+> XML reader/writer) are in. Public OOXML API does not exist yet — see
+> [TODO.md](TODO.md) for the phase-by-phase roadmap.
 
 A pure-MoonBit library for reading, building, and writing PowerPoint
 presentations (`.pptx` / OOXML), with a type-safe builder API.
@@ -35,8 +35,8 @@ full feature comparison.
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Bootstrap, deps, CI | ✅ Done |
-| 1 | Units & XML | 🔜 Next |
-| 2 | OPC layer over fzip | ⏳ |
+| 1 | Units & XML | ✅ Done |
+| 2 | OPC layer over fzip | 🔜 Next |
 | 3 | Read path | ⏳ |
 | 4 | Write path | ⏳ |
 | 5 | Builder API (create from scratch) | ⏳ |
