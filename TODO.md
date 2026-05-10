@@ -153,7 +153,7 @@ in MoonBit, and serialize/parse arbitrary XML round-trip without data loss.
 
 ---
 
-### Phase 2 — OPC layer over fzip *(in progress)*
+### Phase 2 — OPC layer over fzip *(complete)*
 
 DoD: read/write a PPTX (or any OPC package) at the part-and-relationship level.
 You can `Package::open(bytes)`, list parts, pick `[Content_Types].xml`, write
@@ -175,11 +175,11 @@ back, and the result is openable in PowerPoint.
   - [x] `rels_path_for(source)` computes the `.rels` location
   - [x] `resolve_target(source, target, mode)` for relative / `..` / absolute / external resolution
   - [x] `Package::relationships_for(source)` returns empty when the rels part is absent
-- [ ] **Phase 2d — End-to-end .pptx round trip with hand-built fixture**
-  - [ ] Test helper that constructs a minimal valid `.pptx` (Content Types + package rels + presentation + slide + theme) via fzip
-  - [ ] Open → mutate → save → reopen, asserting parts and rels survive
+- [x] **Phase 2d — End-to-end .pptx round trip with hand-built fixture** *(complete)*
+  - [x] Test helper that constructs a minimal valid `.pptx` shape (Content Types + package rels + presentation + presentation rels + slide + image) via fzip
+  - [x] Open → mutate (add new slide + register Override + replace part bytes) → save → reopen, asserting parts, content types, and rels all survive
 
-  110 tests pass on all four backends so far.
+  117 tests pass on all four backends. **Phase 2 (OPC layer) closed.**
 
 ---
 
@@ -434,5 +434,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Phase 1.3 done (in three commits): `src/xml/` sub-package complete with `QName`, `XmlError`, namespace-aware streaming `XmlWriter`, and event-based `XmlReader` with full namespace + entity handling. ADR-008 records the event-vs-DOM decision. 75 tests pass on all four backends. **Phase 1 (Foundations) closed.**
 - **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon_pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
 - **2026-05-11** — Phase 2 a/b/c done: `src/opc/` sub-package with `Package`, `Part`, `OpcError`, `ContentTypes` (Default/Override + resolution + auto-populate), `Relationships` (parse/serialize/lookup/builder + relative/`..`/external target resolution + `rels_path_for` helper). Total 110 tests on all four backends. Phase 2d (end-to-end .pptx fixture) remaining.
+- **2026-05-11** — Phase 2d done: in-memory minimal-but-realistic `.pptx` fixture (6 parts, 2 rels files, Default + Override content-types, `..`-walking targets) exercises full open → mutate → save → reopen. **Phase 2 (OPC layer) closed.** 117 tests on all four backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

@@ -36,8 +36,8 @@ full feature comparison.
 |---|---|---|
 | 0 | Bootstrap, deps, CI | ✅ Done |
 | 1 | Units & XML | ✅ Done |
-| 2 | OPC layer over fzip | 🔜 Next |
-| 3 | Read path | ⏳ |
+| 2 | OPC layer over fzip | ✅ Done |
+| 3 | Read path | 🔜 Next |
 | 4 | Write path | ⏳ |
 | 5 | Builder API (create from scratch) | ⏳ |
 | 6 | Tables | ⏳ |
