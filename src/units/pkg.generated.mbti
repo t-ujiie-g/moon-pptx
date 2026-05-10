@@ -17,6 +17,11 @@ pub let ooxml_per_degree : Int
 pub let ooxml_per_percent : Int
 
 // Errors
+pub(all) suberror UnitsError {
+  InvalidHexColor(String)
+  UnknownSchemeColor(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for UnitsError
 
 // Types and methods
 pub(all) struct Angle(Double) derive(@debug.Debug)
@@ -30,6 +35,15 @@ pub fn Cm::to_emu(Self) -> Emu
 pub fn Cm::value(Self) -> Double
 pub impl Show for Cm
 
+pub(all) enum ColorTransform {
+  Tint(Percentage)
+  Shade(Percentage)
+  SatMod(Percentage)
+  LumMod(Percentage)
+  Alpha(Percentage)
+} derive(@debug.Debug)
+pub impl Show for ColorTransform
+
 pub(all) struct Emu(Int64) derive(Compare, Eq, @debug.Debug)
 pub fn Emu::add(Self, Self) -> Self
 pub fn Emu::neg(Self) -> Self
@@ -39,6 +53,15 @@ pub fn Emu::to_inch(Self) -> Inch
 pub fn Emu::to_pt(Self) -> Pt
 pub fn Emu::value(Self) -> Int64
 pub impl Show for Emu
+
+pub(all) struct HslColor {
+  hue : Double
+  saturation : Double
+  lightness : Double
+} derive(@debug.Debug)
+pub fn HslColor::new(Double, Double, Double) -> Self
+pub fn HslColor::to_rgb(Self) -> RgbColor
+pub impl Show for HslColor
 
 pub(all) struct Inch(Double) derive(@debug.Debug)
 pub fn Inch::to_emu(Self) -> Emu
@@ -55,6 +78,48 @@ pub(all) struct Pt(Double) derive(@debug.Debug)
 pub fn Pt::to_emu(Self) -> Emu
 pub fn Pt::value(Self) -> Double
 pub impl Show for Pt
+
+pub(all) struct RgbColor {
+  r : Int
+  g : Int
+  b : Int
+} derive(Eq, @debug.Debug)
+pub fn RgbColor::new(Int, Int, Int) -> Self
+pub fn RgbColor::parse_hex(String) -> Self raise UnitsError
+pub fn RgbColor::to_hex(Self) -> String
+pub fn RgbColor::to_hsl(Self) -> HslColor
+pub impl Show for RgbColor
+
+pub(all) struct SchemeColor {
+  base : ThemeColor
+  transforms : Array[ColorTransform]
+} derive(@debug.Debug)
+pub fn SchemeColor::new(ThemeColor) -> Self
+pub fn SchemeColor::with_transform(Self, ColorTransform) -> Self
+pub impl Show for SchemeColor
+
+pub(all) enum ThemeColor {
+  Bg1
+  Bg2
+  Tx1
+  Tx2
+  Dk1
+  Dk2
+  Lt1
+  Lt2
+  Accent1
+  Accent2
+  Accent3
+  Accent4
+  Accent5
+  Accent6
+  Hlink
+  FolHlink
+  PhClr
+} derive(Eq, @debug.Debug)
+pub fn ThemeColor::from_xml(String) -> Self raise UnitsError
+pub fn ThemeColor::to_xml(Self) -> String
+pub impl Show for ThemeColor
 
 // Type aliases
 

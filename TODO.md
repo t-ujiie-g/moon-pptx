@@ -133,10 +133,15 @@ in MoonBit, and serialize/parse arbitrary XML round-trip without data loss.
   - [x] `Angle` exposed as `Double` degrees; `to_ooxml()` / `from_ooxml()` round-trip the 1/60_000-degree integer
   - [x] `Show` impls for `assert_eq` diagnostics (manual — `derive(Show)` is deprecated in current MoonBit)
   - [x] Tests pass on all four backends (`native` / `wasm-gc` / `js` / `wasm`)
-- [ ] **Phase 1.2 — `units` color types**
-  - [ ] `RgbColor`, `HslColor`, conversions
-  - [ ] `ThemeColor` enum (12 slots: bg1/2, tx1/2, accent1..6, hlink, folHlink)
-  - [ ] `SchemeColor` modifiers: tint, shade, sat/lum mod
+- [x] **Phase 1.2 — `units` color types** *(complete)*
+  - [x] `RgbColor` with `parse_hex` (accepts optional `#`, lowercase) and `to_hex` (uppercase, no `#`); raises `UnitsError::InvalidHexColor` for malformed input
+  - [x] `HslColor` and lossless RGB↔HSL conversion (round-trip tested within ±1 channel for representative palette); hue auto-wraps for negatives
+  - [x] `ThemeColor` enum: 17 slots (`bg1/2`, `tx1/2`, `dk1/2`, `lt1/2`, `accent1..6`, `hlink`, `folHlink`, `phClr`) — exceeds the planned 12 to cover master-level definitions and placeholder color
+  - [x] `ColorTransform` ADT (`Tint`, `Shade`, `SatMod`, `LumMod`, `Alpha`) and `SchemeColor` immutable builder (`with_transform` returns a new value)
+  - [x] `UnitsError` suberror introduced for the package
+  - [x] 33 tests pass on all four backends
+
+  Deferred (not blocking Phase 1): the long-tail OOXML color transforms (`hueMod`, `redMod`, `greenMod`, `blueMod`, `comp`, `inv`, `gamma`, `gray`, etc.). Add as needed when fill/effect parsers in Phase 3 surface them.
 - [ ] **Phase 1.3 — `xml` package**
   - [ ] Streaming writer with namespace handling and attribute escaping
   - [ ] Event-based reader (start/end/text/cdata) tolerating real-world OOXML
@@ -411,5 +416,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Phase 0 closed: README, CI matrix (Ubuntu+macOS × native/wasm-gc/js), CLAUDE.md, AGENTS.md, ADR-006 (TODO.md as single source of truth), ADR-007 (MoonBit skills required). ADR-002 accepted.
 - **2026-05-10** — CI fix: added `moon update` step before `moon check` / `moon test`. First push surfaced "Failed to resolve registry dependency `hustcer/fzip`" because fresh runners have no registry index until `moon update` populates it. Fix verified locally by wiping `.mooncakes/` and reproducing.
 - **2026-05-10** — Phase 1.1 done: `src/units/` sub-package with `Emu` / `Pt` / `Inch` / `Cm` / `Percentage` / `Angle`. ADR-005 accepted (sub-packages under `src/`). 18 tests pass on all four backends.
+- **2026-05-10** — Phase 1.2 done: color types added to `src/units/` — `RgbColor` (hex parse/format), `HslColor` (RGB↔HSL conversion), `ThemeColor` enum (17 slots), `ColorTransform` ADT, `SchemeColor` immutable builder, `UnitsError` suberror. 33 tests pass on all four backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)
