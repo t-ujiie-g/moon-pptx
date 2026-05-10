@@ -121,21 +121,23 @@ TODO.md is the living roadmap.
 
 ---
 
-### Phase 1 — Foundations: units & XML
+### Phase 1 — Foundations: units & XML *(in progress)*
 
 DoD: a developer can express any OOXML primitive value (units, colors, qnames)
 in MoonBit, and serialize/parse arbitrary XML round-trip without data loss.
 
-- [ ] `units` package
-  - [ ] `Emu` (Int64), `Pt`, `Inch`, `Cm` newtypes with conversion
-  - [ ] Conversion table tested: 914400 EMU = 1 inch = 72 pt = 2.54 cm
-  - [ ] `Percentage` (Int, 1/1000 %)
-  - [ ] `Angle` (Int, 1/60000 deg) — used for rotation, gradient angles
-- [ ] `units::color`
+- [x] **Phase 1.1 — `units` package** *(complete)*
+  - [x] `Emu` (Int64), `Pt`, `Inch`, `Cm` as `pub(all) struct Name(Inner)` newtypes
+  - [x] Conversion table tested: 914_400 EMU = 1 inch = 72 pt = 2.54 cm
+  - [x] `Percentage` exposed as `Double` percent-value; `to_ooxml()` / `from_ooxml()` round-trip the 1/1000-percent integer
+  - [x] `Angle` exposed as `Double` degrees; `to_ooxml()` / `from_ooxml()` round-trip the 1/60_000-degree integer
+  - [x] `Show` impls for `assert_eq` diagnostics (manual — `derive(Show)` is deprecated in current MoonBit)
+  - [x] Tests pass on all four backends (`native` / `wasm-gc` / `js` / `wasm`)
+- [ ] **Phase 1.2 — `units` color types**
   - [ ] `RgbColor`, `HslColor`, conversions
   - [ ] `ThemeColor` enum (12 slots: bg1/2, tx1/2, accent1..6, hlink, folHlink)
   - [ ] `SchemeColor` modifiers: tint, shade, sat/lum mod
-- [ ] `xml` package
+- [ ] **Phase 1.3 — `xml` package**
   - [ ] Streaming writer with namespace handling and attribute escaping
   - [ ] Event-based reader (start/end/text/cdata) tolerating real-world OOXML
   - [ ] `QName` type (prefix + local) with namespace map
@@ -306,12 +308,12 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Decision**: Every parsed model node carries an `extension : Array[XmlElement]` capturing children we did not recognize. Writers emit them back verbatim.
 - **Consequences**: Slightly heavier model; full round-trip safety even for incomplete coverage.
 
-### ADR-005: Single root package vs sub-packages
+### ADR-005: Sub-packages under `src/<name>/`
 - **Date**: 2026-05-10
-- **Status**: Pending
-- **Context**: fzip uses a single flat package; pptx-svg uses sub-packages. Trade-off: discoverability (single) vs encapsulation (multiple).
-- **Decision**: TBD. Lean toward sub-packages by Phase 1 because the surface area will be much larger than fzip's.
-- **Consequences**: Decide before Phase 1 or refactor cost grows.
+- **Status**: Accepted
+- **Context**: fzip uses a single flat package; pptx-svg uses sub-packages. Surface area for moon_pptx (units, xml, opc, oxml, theme, parts, shapes, text, fill, stroke, effect, geometry, chart, smartart, animation, presentation) is much larger than a leaf compression library — flat scope would muddle namespaces.
+- **Decision**: Set `"source": "src"` in `moon.mod.json`. Each subdomain lives at `src/<name>/` with its own `moon.pkg`. Users import as `@<name>` (e.g. `@units`, `@xml`).
+- **Consequences**: One `moon.pkg` per sub-package and one `pkg.generated.mbti` per sub-package. Cross-package imports are explicit. Refactoring boundaries between phases is now low-cost: adding/removing a package is a directory move.
 
 ### ADR-006: TODO.md as single source of truth; no separate planning docs
 - **Date**: 2026-05-10
@@ -408,5 +410,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Project bootstrapped; fzip dependency wired up; smoke test green.
 - **2026-05-10** — Phase 0 closed: README, CI matrix (Ubuntu+macOS × native/wasm-gc/js), CLAUDE.md, AGENTS.md, ADR-006 (TODO.md as single source of truth), ADR-007 (MoonBit skills required). ADR-002 accepted.
 - **2026-05-10** — CI fix: added `moon update` step before `moon check` / `moon test`. First push surfaced "Failed to resolve registry dependency `hustcer/fzip`" because fresh runners have no registry index until `moon update` populates it. Fix verified locally by wiping `.mooncakes/` and reproducing.
+- **2026-05-10** — Phase 1.1 done: `src/units/` sub-package with `Emu` / `Pt` / `Inch` / `Cm` / `Percentage` / `Angle`. ADR-005 accepted (sub-packages under `src/`). 18 tests pass on all four backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

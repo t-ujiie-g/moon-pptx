@@ -1,6 +1,7 @@
 {
   "name": "t-ujiie-g/moon_pptx",
   "version": "0.0.1",
+  "source": "src",
   "deps": {
     "hustcer/fzip": "0.6.1"
   },

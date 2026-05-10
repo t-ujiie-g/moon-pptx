@@ -1,0 +1,62 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/units"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let emu_per_cm : Int64
+
+pub let emu_per_inch : Int64
+
+pub let emu_per_pt : Int64
+
+pub let ooxml_per_degree : Int
+
+pub let ooxml_per_percent : Int
+
+// Errors
+
+// Types and methods
+pub(all) struct Angle(Double) derive(@debug.Debug)
+pub fn Angle::degrees(Self) -> Double
+pub fn Angle::from_ooxml(Int) -> Self
+pub fn Angle::to_ooxml(Self) -> Int
+pub impl Show for Angle
+
+pub(all) struct Cm(Double) derive(@debug.Debug)
+pub fn Cm::to_emu(Self) -> Emu
+pub fn Cm::value(Self) -> Double
+pub impl Show for Cm
+
+pub(all) struct Emu(Int64) derive(Compare, Eq, @debug.Debug)
+pub fn Emu::add(Self, Self) -> Self
+pub fn Emu::neg(Self) -> Self
+pub fn Emu::sub(Self, Self) -> Self
+pub fn Emu::to_cm(Self) -> Cm
+pub fn Emu::to_inch(Self) -> Inch
+pub fn Emu::to_pt(Self) -> Pt
+pub fn Emu::value(Self) -> Int64
+pub impl Show for Emu
+
+pub(all) struct Inch(Double) derive(@debug.Debug)
+pub fn Inch::to_emu(Self) -> Emu
+pub fn Inch::value(Self) -> Double
+pub impl Show for Inch
+
+pub(all) struct Percentage(Double) derive(@debug.Debug)
+pub fn Percentage::from_ooxml(Int) -> Self
+pub fn Percentage::to_ooxml(Self) -> Int
+pub fn Percentage::value(Self) -> Double
+pub impl Show for Percentage
+
+pub(all) struct Pt(Double) derive(@debug.Debug)
+pub fn Pt::to_emu(Self) -> Emu
+pub fn Pt::value(Self) -> Double
+pub impl Show for Pt
+
+// Type aliases
+
+// Traits
+
