@@ -3,12 +3,19 @@ package "t-ujiie-g/moon_pptx/slide_master"
 
 import {
   "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/theme",
   "t-ujiie-g/moon_pptx/units",
   "t-ujiie-g/moon_pptx/xml",
 }
 
 // Values
+pub fn effective_color_mapping(SlideMaster, SlideLayout) -> ColorMapping
+
+pub fn lookup_theme_slot(@units.ThemeColor, @theme.ColorScheme) -> @theme.ColorChoice
+
 pub fn parse_clr_map_attrs(Array[(@xml.QName, String)]) -> ColorMapping raise SlideMasterError
+
+pub fn resolve_slide_color(@units.ThemeColor, SlideMaster, SlideLayout, @theme.ColorScheme) -> @theme.ColorChoice?
 
 pub fn wrap_xml(@xml.XmlError) -> SlideMasterError
 
@@ -20,6 +27,11 @@ pub(all) suberror SlideMasterError {
 pub impl Show for SlideMasterError
 
 // Types and methods
+pub(all) enum ClrMapOverride {
+  MasterMapping
+  Override(ColorMapping)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct ColorMapping {
   bg1 : @units.ThemeColor
   tx1 : @units.ThemeColor
@@ -36,10 +48,57 @@ pub(all) struct ColorMapping {
 } derive(Eq, @debug.Debug)
 pub fn ColorMapping::resolve(Self, @units.ThemeColor) -> @units.ThemeColor?
 
+pub(all) struct SlideLayout {
+  name : String
+  layout_type : SlideLayoutType
+  clr_map_override : ClrMapOverride
+} derive(Eq, @debug.Debug)
+pub fn SlideLayout::parse(FixedArray[Byte]) -> Self raise SlideMasterError
+
 pub(all) struct SlideLayoutRef {
   id : Int64
   r_id : String
 } derive(Eq, @debug.Debug)
+
+pub(all) enum SlideLayoutType {
+  Title
+  Tx
+  TwoColTx
+  Tbl
+  TxAndChart
+  ChartAndTx
+  Diagram
+  Chart
+  TxAndClipArt
+  ClipArtAndTx
+  TitleOnly
+  Blank
+  TxAndObj
+  ObjAndTx
+  ObjOnly
+  Object
+  TxAndMedia
+  MediaAndTx
+  ObjOverTx
+  TxOverObj
+  TxAndTwoObj
+  TwoObjAndTx
+  TwoObjOverTx
+  FourObj
+  VertTx
+  ClipArtAndVertTx
+  VertTitleAndTx
+  VertTitleAndTxOverChart
+  TwoObj
+  ObjAndTwoObj
+  TwoObjAndObj
+  Custom
+  SecHead
+  TwoTxTwoObj
+  ObjTx
+  PicTx
+} derive(Eq, @debug.Debug)
+pub fn SlideLayoutType::from_xml(String) -> Self raise SlideMasterError
 
 pub(all) struct SlideMaster {
   color_mapping : ColorMapping

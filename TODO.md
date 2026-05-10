@@ -189,7 +189,7 @@ DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
 `Shape`, …) with **lossless preservation** of unknown XML chunks.
 
 - [x] **Phase 3a — Theme parser (`a:theme`)** *(complete)* — `src/theme/` sub-package: `Theme`, `ColorScheme` (12 slots: dk1/2 lt1/2 accent1..6 hlink folHlink), `ColorChoice` (`Srgb` + `Sys` w/ lastClr fallback), `FontScheme` w/ `FontCollection` (latin/ea/cs + per-script overrides). Strict on modelled elements, lenient via `skip_subtree` on the rest (`fmtScheme`, `objectDefaults`, …). 9 tests, all green × 4 backends.
-- [ ] Slide master / layout parsers + inheritance resolver
+- [x] **Phase 3b — Slide master / layout parsers + inheritance resolver** *(complete)* — `src/slide_master/` sub-package: `SlideMaster` (clrMap + sldLayoutIdLst), `SlideLayout` (27 layout types per `ST_SlideLayoutType`, `ClrMapOverride { MasterMapping | Override(ColorMapping) }`), and `effective_color_mapping` / `resolve_slide_color` / `lookup_theme_slot` resolvers that walk the theme ← master ← layout chain. Shared `src/oxml/` namespace constants extracted in the same commit. 26 new tests, 152 total × 4 backends.
 - [ ] Slide parser: shapes, group shapes, connectors, pictures, tables, charts
 - [ ] Text parser: paragraph, run, list style, font, hyperlink
 - [ ] Fill / stroke / effect parsers
@@ -436,5 +436,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-11** — Phase 2 a/b/c done: `src/opc/` sub-package with `Package`, `Part`, `OpcError`, `ContentTypes` (Default/Override + resolution + auto-populate), `Relationships` (parse/serialize/lookup/builder + relative/`..`/external target resolution + `rels_path_for` helper). Total 110 tests on all four backends. Phase 2d (end-to-end .pptx fixture) remaining.
 - **2026-05-11** — Phase 2d done: in-memory minimal-but-realistic `.pptx` fixture (6 parts, 2 rels files, Default + Override content-types, `..`-walking targets) exercises full open → mutate → save → reopen. **Phase 2 (OPC layer) closed.** 117 tests on all four backends.
 - **2026-05-11** — Phase 3a done: `src/theme/` reads `a:theme` into typed `Theme` / `ColorScheme` / `FontScheme`. `skip_subtree` swallows unmodelled siblings (`fmtScheme` and friends) without losing parser state — lossless preservation of the skipped sections is on the docket once ADR-004 is implemented. 126 tests on all four backends.
+- **2026-05-11** — Phase 3b done: `src/slide_master/` reads `p:sldMaster` and `p:sldLayout` into typed structs (`ColorMapping`, `SlideLayoutRef`, `ClrMapOverride`, `SlideLayoutType` with 27 spec values), and `inheritance.mbt` resolves theme ← master ← layout colour chains. Shared `src/oxml/` namespace constants extracted (used by theme + slide_master). 152 tests on all four backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)
