@@ -407,5 +407,6 @@ Run all four before committing. CI enforces them.
 
 - **2026-05-10** — Project bootstrapped; fzip dependency wired up; smoke test green.
 - **2026-05-10** — Phase 0 closed: README, CI matrix (Ubuntu+macOS × native/wasm-gc/js), CLAUDE.md, AGENTS.md, ADR-006 (TODO.md as single source of truth), ADR-007 (MoonBit skills required). ADR-002 accepted.
+- **2026-05-10** — CI fix: added `moon update` step before `moon check` / `moon test`. First push surfaced "Failed to resolve registry dependency `hustcer/fzip`" because fresh runners have no registry index until `moon update` populates it. Fix verified locally by wiping `.mooncakes/` and reproducing.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

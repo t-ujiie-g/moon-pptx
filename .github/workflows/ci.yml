@@ -23,6 +23,8 @@ jobs:
         uses: hustcer/setup-moonbit@v1
       - name: moon version
         run: moon version --all
+      - name: moon update (refresh registry index)
+        run: moon update
       - name: moon check
         run: moon check --deny-warn
       - name: moon fmt --check
@@ -42,5 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup MoonBit
         uses: hustcer/setup-moonbit@v1
+      - name: moon update (refresh registry index)
+        run: moon update
       - name: moon test --target ${{ matrix.target }}
         run: moon test --target ${{ matrix.target }} --deny-warn
