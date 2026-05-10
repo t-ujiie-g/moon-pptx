@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/slide_master"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
+}
+
+// Values
+pub fn parse_clr_map_attrs(Array[(@xml.QName, String)]) -> ColorMapping raise SlideMasterError
+
+pub fn wrap_xml(@xml.XmlError) -> SlideMasterError
+
+// Errors
+pub(all) suberror SlideMasterError {
+  XmlFailure(String, String)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for SlideMasterError
+
+// Types and methods
+pub(all) struct ColorMapping {
+  bg1 : @units.ThemeColor
+  tx1 : @units.ThemeColor
+  bg2 : @units.ThemeColor
+  tx2 : @units.ThemeColor
+  accent1 : @units.ThemeColor
+  accent2 : @units.ThemeColor
+  accent3 : @units.ThemeColor
+  accent4 : @units.ThemeColor
+  accent5 : @units.ThemeColor
+  accent6 : @units.ThemeColor
+  hlink : @units.ThemeColor
+  fol_hlink : @units.ThemeColor
+} derive(Eq, @debug.Debug)
+pub fn ColorMapping::resolve(Self, @units.ThemeColor) -> @units.ThemeColor?
+
+pub(all) struct SlideLayoutRef {
+  id : Int64
+  r_id : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SlideMaster {
+  color_mapping : ColorMapping
+  layout_refs : Array[SlideLayoutRef]
+} derive(Eq, @debug.Debug)
+pub fn SlideMaster::parse(FixedArray[Byte]) -> Self raise SlideMasterError
+
+// Type aliases
+
+// Traits
+

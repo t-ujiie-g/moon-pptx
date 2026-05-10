@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/oxml"
+
+// Values
+pub let drawing_ns : String
+
+pub let office_relationships_ns : String
+
+pub let presentation_ns : String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

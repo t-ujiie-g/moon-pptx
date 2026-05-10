@@ -1,0 +1,23 @@
+// Shared OOXML namespace URIs used across the typed read/write layers.
+//
+// These are *content-XML* namespaces (drawingml, presentationml, the
+// OOXML-side relationships namespace used by `r:id="…"` references). The
+// OPC packaging-side namespaces (`[Content_Types].xml`, `.rels`) live in
+// `@opc` because they belong to the package layer, not OOXML content.
+
+///|
+/// DrawingML main namespace — `a:` prefix. Home of `a:theme`, color
+/// elements (`a:srgbClr`, `a:sysClr`, …), shapes, paragraphs, runs.
+pub let drawing_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
+
+///|
+/// PresentationML namespace — `p:` prefix. Home of `p:sldMaster`,
+/// `p:sldLayout`, `p:sld`, `p:presentation`, `p:clrMap`, `p:spTree`, …
+pub let presentation_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
+
+///|
+/// OOXML relationships namespace — `r:` prefix. Used inside content XML
+/// for `r:id="rIdN"` references. **Distinct** from the OPC packaging
+/// relationships namespace (`@opc.relationships_ns`); that one is for
+/// `.rels` files only.
+pub let office_relationships_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"

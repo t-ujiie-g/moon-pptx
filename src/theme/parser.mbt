@@ -87,7 +87,7 @@ fn parse_theme_xml(xml : String) -> Theme raise ThemeError {
     let event = next_event(r)
     match event {
       StartElement(child, _) => {
-        if child.uri != drawing_ns {
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
           continue
         }
@@ -122,7 +122,7 @@ fn parse_theme_elements(
     let event = next_event(r)
     match event {
       StartElement(child, attrs) => {
-        if child.uri != drawing_ns {
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
           continue
         }
@@ -157,7 +157,7 @@ fn parse_color_scheme(
     let event = next_event(r)
     match event {
       StartElement(slot_name, _) => {
-        if slot_name.uri != drawing_ns {
+        if slot_name.uri != @oxml.drawing_ns {
           skip_subtree(r)
           continue
         }
@@ -207,7 +207,7 @@ fn parse_color_inside_wrapper(
     let event = next_event(r)
     match event {
       StartElement(child, attrs) => {
-        if child.uri != drawing_ns {
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
           continue
         }
@@ -290,7 +290,7 @@ fn parse_font_scheme(
     let event = next_event(r)
     match event {
       StartElement(child, _) => {
-        if child.uri != drawing_ns {
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
           continue
         }
@@ -324,7 +324,7 @@ fn parse_font_collection(
     let event = next_event(r)
     match event {
       StartElement(child, attrs) => {
-        if child.uri != drawing_ns {
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
           continue
         }
@@ -387,7 +387,7 @@ fn next_event(r : @xml.XmlReader) -> @xml.XmlEvent raise ThemeError {
 
 ///|
 fn expect_name(name : @xml.QName, expected : String) -> Unit raise ThemeError {
-  if name.uri != drawing_ns || name.local_name != expected {
+  if name.uri != @oxml.drawing_ns || name.local_name != expected {
     raise MalformedTheme(
       "expected element <a:" + expected + "> but got <" + name.local_name + ">",
     )
