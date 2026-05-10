@@ -153,28 +153,33 @@ in MoonBit, and serialize/parse arbitrary XML round-trip without data loss.
 
 ---
 
-### Phase 2 — OPC layer over fzip
+### Phase 2 — OPC layer over fzip *(in progress)*
 
 DoD: read/write a PPTX (or any OPC package) at the part-and-relationship level.
 You can `Package::open(bytes)`, list parts, pick `[Content_Types].xml`, write
 back, and the result is openable in PowerPoint.
 
-- [ ] `opc::Package` struct
-  - [ ] `open(bytes : FixedArray[Byte]) -> Package raise OpcError`
-  - [ ] `to_bytes() -> FixedArray[Byte]`
-  - [ ] `parts() -> Array[Part]` and `part_by_name(name) -> Part?`
-- [ ] `opc::Part`
-  - [ ] `name : String` (PartName, starts with `/`)
-  - [ ] `content_type : String`
-  - [ ] `bytes : FixedArray[Byte]` and `text() : String`
-- [ ] `opc::Relationship` and `opc::Relationships`
-  - [ ] Relationship targets, types, IDs
-  - [ ] Helper: traverse from main `presentation.xml` outward
-- [ ] `opc::ContentTypes`
-  - [ ] Default and Override entries
-  - [ ] Auto-update on add/remove of parts
-- [ ] Round-trip test: load a real `.pptx` from `test_fixtures/`, dump and reload,
-      ensure all parts and rels survive byte-equal (modulo XML formatting).
+- [x] **Phase 2a — `opc::Package` + `opc::Part`** *(complete)*
+  - [x] `Package::open(bytes)` / `to_bytes()` / `parts()` / `part_by_name()` / `require_part()` / `add_part()` / `remove_part()`
+  - [x] `Part { name, content_type, bytes }` + `text()` UTF-8 decoder + `Part::new` with name validation
+  - [x] `OpcError` with `ZipFailure` / `MalformedPackage` / `PartNotFound`; `wrap_fzip` boundary
+- [x] **Phase 2b — `opc::ContentTypes`** *(complete)*
+  - [x] `ContentTypes::parse` / `serialize` for `[Content_Types].xml`
+  - [x] `with_default` / `with_override` immutable builders
+  - [x] `resolve(part_name)` applies OPC rules (Override > Default; case-insensitive on extension)
+  - [x] `Package::open` requires `[Content_Types].xml` and auto-populates `Part.content_type`
+  - [x] `Package::content_types()` / `set_content_types()` / `regenerate_content_types_part()`
+- [x] **Phase 2c — `opc::Relationship` + `opc::Relationships`** *(complete)*
+  - [x] `Relationship { id, rel_type, target, target_mode }` and `TargetMode { Internal | External }`
+  - [x] `Relationships::parse` / `serialize` / `by_id` / `by_type` / `with_relationship` (rejects duplicate ids)
+  - [x] `rels_path_for(source)` computes the `.rels` location
+  - [x] `resolve_target(source, target, mode)` for relative / `..` / absolute / external resolution
+  - [x] `Package::relationships_for(source)` returns empty when the rels part is absent
+- [ ] **Phase 2d — End-to-end .pptx round trip with hand-built fixture**
+  - [ ] Test helper that constructs a minimal valid `.pptx` (Content Types + package rels + presentation + slide + theme) via fzip
+  - [ ] Open → mutate → save → reopen, asserting parts and rels survive
+
+  110 tests pass on all four backends so far.
 
 ---
 
@@ -428,5 +433,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Phase 1.2 done: color types added to `src/units/` — `RgbColor` (hex parse/format), `HslColor` (RGB↔HSL conversion), `ThemeColor` enum (17 slots), `ColorTransform` ADT, `SchemeColor` immutable builder, `UnitsError` suberror. 33 tests pass on all four backends.
 - **2026-05-10** — Phase 1.3 done (in three commits): `src/xml/` sub-package complete with `QName`, `XmlError`, namespace-aware streaming `XmlWriter`, and event-based `XmlReader` with full namespace + entity handling. ADR-008 records the event-vs-DOM decision. 75 tests pass on all four backends. **Phase 1 (Foundations) closed.**
 - **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon_pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
+- **2026-05-11** — Phase 2 a/b/c done: `src/opc/` sub-package with `Package`, `Part`, `OpcError`, `ContentTypes` (Default/Override + resolution + auto-populate), `Relationships` (parse/serialize/lookup/builder + relative/`..`/external target resolution + `rels_path_for` helper). Total 110 tests on all four backends. Phase 2d (end-to-end .pptx fixture) remaining.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)
