@@ -142,12 +142,14 @@ in MoonBit, and serialize/parse arbitrary XML round-trip without data loss.
   - [x] 33 tests pass on all four backends
 
   Deferred (not blocking Phase 1): the long-tail OOXML color transforms (`hueMod`, `redMod`, `greenMod`, `blueMod`, `comp`, `inv`, `gamma`, `gray`, etc.). Add as needed when fill/effect parsers in Phase 3 surface them.
-- [ ] **Phase 1.3 — `xml` package**
-  - [ ] Streaming writer with namespace handling and attribute escaping
-  - [ ] Event-based reader (start/end/text/cdata) tolerating real-world OOXML
-  - [ ] `QName` type (prefix + local) with namespace map
-  - [ ] Round-trip test: read complex XML, write it back byte-near-equal
-  - [ ] Decision: parse to DOM, or stay event-only? (recommend event + ad-hoc DOM helpers)
+- [x] **Phase 1.3 — `xml` package** *(complete)*
+  - [x] `QName` type (uri + local; prefix is a serialization-only concept, not part of identity)
+  - [x] Streaming writer with namespace prefix binding, attribute and text escaping, auto-collapsing empty elements, CDATA, and typed misuse errors (`WriterMisuse`)
+  - [x] Event-based reader yielding `StartElement` / `EndElement` / `Text` / `CData`; full namespace prefix resolution including the default-namespace-doesn't-apply-to-attributes rule; entity decoding (named + numeric); comments / PIs / `<?xml … ?>` skipped; tolerates real-world OOXML
+  - [x] Round-trip test: parse → replay through writer → parse again, assert event sequences match (semantic round-trip — byte-equal isn't possible because prefixes are not preserved by event interface and there are multiple valid serialisations)
+  - [x] ADR-008 records the event-vs-DOM decision
+
+  75 tests pass on all four backends.
 
 ---
 
@@ -327,6 +329,13 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Decision**: All roadmap, scope, ADRs, open questions, and risk tracking live in `TODO.md`. Tool-agnostic contributor guidance lives in `AGENTS.md`; Claude-specific overlay in `CLAUDE.md`. New planning, decision, or analysis files are not created — append to `TODO.md` instead.
 - **Consequences**: One file to keep current. PRs that change scope must update `TODO.md` in the same change.
 
+### ADR-008: XML reader is event-based; DOM is opt-in on top
+- **Date**: 2026-05-10
+- **Status**: Accepted
+- **Context**: OOXML files (especially slide masters, themes, and embedded chart XML) can be tens to hundreds of KB; a full DOM forces every parser to materialise the whole tree even when it only inspects a handful of elements. Event readers are also easier to make resilient against unknown elements (we can `skip_subtree` at any node).
+- **Decision**: The `xml` package exposes a streaming `XmlReader::next() -> XmlEvent?` API with `StartElement` / `EndElement` / `Text` / `CData` events. Higher layers (OOXML AST in Phase 2+) build typed structures by consuming events. If a small DOM helper is needed for an element with many child kinds, build it locally on top of the event stream — never re-parse.
+- **Consequences**: Parsers in higher layers carry more state machinery than DOM-based code, but stay memory-bounded and skip unknown subtrees cheaply. The `extension : Array[XmlElement]` lossless-preservation promise (ADR-004) is implemented by collecting events into a small ad-hoc DOM type at exactly the points where we need it.
+
 ### ADR-007: MoonBit official skills required for Claude Code workflow
 - **Date**: 2026-05-10
 - **Status**: Accepted
@@ -417,5 +426,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — CI fix: added `moon update` step before `moon check` / `moon test`. First push surfaced "Failed to resolve registry dependency `hustcer/fzip`" because fresh runners have no registry index until `moon update` populates it. Fix verified locally by wiping `.mooncakes/` and reproducing.
 - **2026-05-10** — Phase 1.1 done: `src/units/` sub-package with `Emu` / `Pt` / `Inch` / `Cm` / `Percentage` / `Angle`. ADR-005 accepted (sub-packages under `src/`). 18 tests pass on all four backends.
 - **2026-05-10** — Phase 1.2 done: color types added to `src/units/` — `RgbColor` (hex parse/format), `HslColor` (RGB↔HSL conversion), `ThemeColor` enum (17 slots), `ColorTransform` ADT, `SchemeColor` immutable builder, `UnitsError` suberror. 33 tests pass on all four backends.
+- **2026-05-10** — Phase 1.3 done (in three commits): `src/xml/` sub-package complete with `QName`, `XmlError`, namespace-aware streaming `XmlWriter`, and event-based `XmlReader` with full namespace + entity handling. ADR-008 records the event-vs-DOM decision. 75 tests pass on all four backends. **Phase 1 (Foundations) closed.**
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)
