@@ -1,0 +1,7 @@
+// import {
+//   "t-ujiie-g/moon_pptx" @lib,
+// }
+
+options(
+  "is-main": true,
+)

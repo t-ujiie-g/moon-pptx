@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check / fmt / info  (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup MoonBit
+        uses: hustcer/setup-moonbit@v1
+      - name: moon version
+        run: moon version --all
+      - name: moon check
+        run: moon check --deny-warn
+      - name: moon fmt --check
+        run: moon fmt && git diff --exit-code
+      - name: moon info (mbti drift)
+        run: moon info && git diff --exit-code
+
+  test:
+    name: test / ${{ matrix.target }}  (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        target: [native, wasm-gc, js]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup MoonBit
+        uses: hustcer/setup-moonbit@v1
+      - name: moon test --target ${{ matrix.target }}
+        run: moon test --target ${{ matrix.target }} --deny-warn
