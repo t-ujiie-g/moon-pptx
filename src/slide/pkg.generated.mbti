@@ -1,0 +1,64 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/slide"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/slide_master",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
+}
+
+// Values
+pub fn wrap_xml(@xml.XmlError) -> SlideError
+
+// Errors
+pub(all) suberror SlideError {
+  XmlFailure(String, String)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for SlideError
+
+// Types and methods
+pub(all) struct AutoShape {
+  id : Int
+  name : String
+  placeholder : Placeholder?
+  transform : Transform?
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Placeholder {
+  ph_type : String
+  idx : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Point {
+  x : @units.Emu
+  y : @units.Emu
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Shape {
+  AutoShape(AutoShape)
+  Unknown(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Size {
+  cx : @units.Emu
+  cy : @units.Emu
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Slide {
+  name : String
+  shapes : Array[Shape]
+  clr_map_override : @slide_master.ClrMapOverride
+} derive(Eq, @debug.Debug)
+pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
+
+pub(all) struct Transform {
+  offset : Point
+  extent : Size
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+
