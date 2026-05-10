@@ -162,6 +162,23 @@ pub fn Package::add_part(self : Package, part : Part) -> Unit raise OpcError {
 }
 
 ///|
+/// Return the relationships originating from `source` (a part name, or
+/// `package_root` for the package-level rels at `/_rels/.rels`).
+///
+/// If the corresponding `.rels` part is missing, returns an empty
+/// `Relationships` — per OPC, parts are not required to have rels.
+pub fn Package::relationships_for(
+  self : Package,
+  source : String,
+) -> Relationships raise OpcError {
+  let path = rels_path_for(source)
+  match self.part_by_name(path) {
+    Some(p) => Relationships::parse(source, p.bytes)
+    None => Relationships::new(source)
+  }
+}
+
+///|
 /// Remove a part by OPC name. Returns true if a part was removed.
 pub fn Package::remove_part(self : Package, name : String) -> Bool {
   let mut i = 0

@@ -13,6 +13,14 @@ pub let content_types_part_name : String
 
 pub fn opc_name_to_zip(String) -> String
 
+pub let package_root : String
+
+pub let relationships_ns : String
+
+pub fn rels_path_for(String) -> String
+
+pub fn resolve_target(String, String, TargetMode) -> String
+
 pub fn validate_part_name(String) -> Unit raise OpcError
 
 pub fn wrap_fzip(@fzip.FzipError) -> OpcError
@@ -50,6 +58,7 @@ pub fn Package::open(FixedArray[Byte]) -> Self raise OpcError
 pub fn Package::part_by_name(Self, String) -> Part?
 pub fn Package::parts(Self) -> Array[Part]
 pub fn Package::regenerate_content_types_part(Self) -> Unit raise OpcError
+pub fn Package::relationships_for(Self, String) -> Relationships raise OpcError
 pub fn Package::remove_part(Self, String) -> Bool
 pub fn Package::require_part(Self, String) -> Part raise OpcError
 pub fn Package::set_content_types(Self, ContentTypes) -> Unit
@@ -63,6 +72,30 @@ pub(all) struct Part {
 pub fn Part::new(String, String, FixedArray[Byte]) -> Self raise OpcError
 pub fn Part::text(Self) -> String raise OpcError
 pub impl Show for Part
+
+pub(all) struct Relationship {
+  id : String
+  rel_type : String
+  target : String
+  target_mode : TargetMode
+} derive(Eq, @debug.Debug)
+pub impl Show for Relationship
+
+pub(all) struct Relationships {
+  source : String
+  items : Array[Relationship]
+} derive(@debug.Debug)
+pub fn Relationships::by_id(Self, String) -> Relationship?
+pub fn Relationships::by_type(Self, String) -> Array[Relationship]
+pub fn Relationships::new(String) -> Self
+pub fn Relationships::parse(String, FixedArray[Byte]) -> Self raise OpcError
+pub fn Relationships::serialize(Self) -> FixedArray[Byte] raise OpcError
+pub fn Relationships::with_relationship(Self, Relationship) -> Self raise OpcError
+
+pub(all) enum TargetMode {
+  Internal
+  External
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 
