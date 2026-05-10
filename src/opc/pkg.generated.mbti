@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/opc"
+
+import {
+  "hustcer/fzip",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn opc_name_to_zip(String) -> String
+
+pub fn validate_part_name(String) -> Unit raise OpcError
+
+pub fn wrap_fzip(@fzip.FzipError) -> OpcError
+
+pub fn zip_name_to_opc(String) -> String
+
+// Errors
+pub(all) suberror OpcError {
+  ZipFailure(String, String)
+  MalformedPackage(String)
+  PartNotFound(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for OpcError
+
+// Types and methods
+pub struct Package {
+  parts : Array[Part]
+}
+pub fn Package::add_part(Self, Part) -> Unit raise OpcError
+pub fn Package::new() -> Self
+pub fn Package::open(FixedArray[Byte]) -> Self raise OpcError
+pub fn Package::part_by_name(Self, String) -> Part?
+pub fn Package::parts(Self) -> Array[Part]
+pub fn Package::remove_part(Self, String) -> Bool
+pub fn Package::require_part(Self, String) -> Part raise OpcError
+pub fn Package::to_bytes(Self) -> FixedArray[Byte]
+
+pub(all) struct Part {
+  name : String
+  mut content_type : String
+  bytes : FixedArray[Byte]
+} derive(@debug.Debug)
+pub fn Part::new(String, String, FixedArray[Byte]) -> Self raise OpcError
+pub fn Part::text(Self) -> String raise OpcError
+pub impl Show for Part
+
+// Type aliases
+
+// Traits
+
