@@ -419,12 +419,150 @@ pub fn Paragraph::plain_text(self : Paragraph) -> String {
 }
 
 ///|
+/// Vertical anchor inside the text frame (`ST_TextAnchoringType`,
+/// ECMA-376 §20.1.10.59).
+pub(all) enum Anchor {
+  AnchorTop // "t"
+  AnchorCenter // "ctr"
+  AnchorBottom // "b"
+  AnchorJustify // "just"
+  AnchorDistributed // "dist"
+} derive(Eq, Debug)
+
+///|
+pub fn Anchor::from_xml(s : String) -> Anchor? {
+  match s {
+    "t" => Some(AnchorTop)
+    "ctr" => Some(AnchorCenter)
+    "b" => Some(AnchorBottom)
+    "just" => Some(AnchorJustify)
+    "dist" => Some(AnchorDistributed)
+    _ => None
+  }
+}
+
+///|
+/// Text wrapping mode (`ST_TextWrappingType`, §20.1.10.85).
+pub(all) enum WrapKind {
+  WrapNone // "none"
+  WrapSquare // "square"
+} derive(Eq, Debug)
+
+///|
+pub fn WrapKind::from_xml(s : String) -> WrapKind? {
+  match s {
+    "none" => Some(WrapNone)
+    "square" => Some(WrapSquare)
+    _ => None
+  }
+}
+
+///|
+/// Text vertical-orientation (`ST_TextVerticalType`, §20.1.10.83).
+pub(all) enum VerticalText {
+  VertHorz // "horz"
+  VertVert // "vert"
+  VertVert270 // "vert270"
+  VertWordArtVert // "wordArtVert"
+  VertEaVert // "eaVert"
+  VertMongolianVert // "mongolianVert"
+  VertWordArtVertRtl // "wordArtVertRtl"
+} derive(Eq, Debug)
+
+///|
+pub fn VerticalText::from_xml(s : String) -> VerticalText? {
+  match s {
+    "horz" => Some(VertHorz)
+    "vert" => Some(VertVert)
+    "vert270" => Some(VertVert270)
+    "wordArtVert" => Some(VertWordArtVert)
+    "eaVert" => Some(VertEaVert)
+    "mongolianVert" => Some(VertMongolianVert)
+    "wordArtVertRtl" => Some(VertWordArtVertRtl)
+    _ => None
+  }
+}
+
+///|
+/// Auto-fit behaviour (`<a:noAutofit>` / `<a:normAutofit>` /
+/// `<a:spAutoFit>`). `NormAutoFit` carries `(fontScale, lnSpcReduction)`
+/// both in 1/1000 of a percent per spec.
+pub(all) enum AutoFit {
+  NoAutoFit
+  NormAutoFit(@units.Percentage, @units.Percentage)
+  SpAutoFit
+} derive(Eq, Debug)
+
+///|
+/// Parsed `<a:bodyPr>` body properties for a text frame.
+///
+/// All fields are `Option`. `None` everywhere means "inherit / use spec
+/// defaults". The 3d4 slice covers the practical surface; warp text,
+/// flatTx, and rich/RTL column attributes are deferred.
+pub(all) struct BodyProperties {
+  rotation : @units.Angle?
+  vertical_text : VerticalText?
+  wrap : WrapKind?
+  anchor : Anchor?
+  left_inset : @units.Emu?
+  top_inset : @units.Emu?
+  right_inset : @units.Emu?
+  bottom_inset : @units.Emu?
+  auto_fit : AutoFit?
+} derive(Eq, Debug)
+
+///|
+pub fn BodyProperties::default() -> BodyProperties {
+  {
+    rotation: None,
+    vertical_text: None,
+    wrap: None,
+    anchor: None,
+    left_inset: None,
+    top_inset: None,
+    right_inset: None,
+    bottom_inset: None,
+    auto_fit: None,
+  }
+}
+
+///|
+/// Per-level paragraph defaults from `<a:lstStyle>`.
+///
+/// `default_props` corresponds to `<a:defPPr>`. `level_props[i]`
+/// corresponds to `<a:lvl{i+1}pPr>` for `i ∈ 0..9` — the spec defines
+/// nine levels (`lvl1pPr` … `lvl9pPr`). Missing slots are `None`.
+pub(all) struct ListStyle {
+  default_props : ParagraphProperties?
+  level_props : Array[ParagraphProperties?]
+} derive(Eq, Debug)
+
+///|
+/// Construct an empty `ListStyle` with nine `None` level slots.
+pub fn ListStyle::empty() -> ListStyle {
+  let level_props : Array[ParagraphProperties?] = [
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+  ]
+  { default_props: None, level_props }
+}
+
+///|
 /// Parsed `<p:txBody>`.
 ///
-/// Phase 3d1 covers only the paragraph list. The (optional)
-/// `<a:bodyPr>` and `<a:lstStyle>` siblings are parsed and discarded
-/// for now; full handling lands in 3d4.
+/// `body_properties` mirrors `<a:bodyPr>`, `list_style` mirrors
+/// `<a:lstStyle>`. Both are `Option` — many real-world text bodies omit
+/// one or both. `paragraphs` is the run-bearing content in source order.
 pub(all) struct TextBody {
+  body_properties : BodyProperties?
+  list_style : ListStyle?
   paragraphs : Array[Paragraph]
 } derive(Eq, Debug)
 

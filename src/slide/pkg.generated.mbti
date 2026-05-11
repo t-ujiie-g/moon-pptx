@@ -19,6 +19,21 @@ pub(all) suberror SlideError {
 pub impl Show for SlideError
 
 // Types and methods
+pub(all) enum Anchor {
+  AnchorTop
+  AnchorCenter
+  AnchorBottom
+  AnchorJustify
+  AnchorDistributed
+} derive(Eq, @debug.Debug)
+pub fn Anchor::from_xml(String) -> Self?
+
+pub(all) enum AutoFit {
+  NoAutoFit
+  NormAutoFit(@units.Percentage, @units.Percentage)
+  SpAutoFit
+} derive(Eq, @debug.Debug)
+
 pub(all) enum AutoNumType {
   ArabicPeriod
   ArabicParenR
@@ -71,6 +86,19 @@ pub(all) struct AutoShape {
   text_body : TextBody?
 } derive(Eq, @debug.Debug)
 
+pub(all) struct BodyProperties {
+  rotation : @units.Angle?
+  vertical_text : VerticalText?
+  wrap : WrapKind?
+  anchor : Anchor?
+  left_inset : @units.Emu?
+  top_inset : @units.Emu?
+  right_inset : @units.Emu?
+  bottom_inset : @units.Emu?
+  auto_fit : AutoFit?
+} derive(Eq, @debug.Debug)
+pub fn BodyProperties::default() -> Self
+
 pub(all) enum Bullet {
   BulNone
   Char(String)
@@ -119,6 +147,12 @@ pub(all) struct GroupShape {
   child_extent : Size?
   children : Array[Shape]
 } derive(Eq, @debug.Debug)
+
+pub(all) struct ListStyle {
+  default_props : ParagraphProperties?
+  level_props : Array[ParagraphProperties?]
+} derive(Eq, @debug.Debug)
+pub fn ListStyle::empty() -> Self
 
 pub(all) struct Paragraph {
   properties : ParagraphProperties
@@ -433,6 +467,8 @@ pub(all) enum TextAlignment {
 pub fn TextAlignment::from_xml(String) -> Self?
 
 pub(all) struct TextBody {
+  body_properties : BodyProperties?
+  list_style : ListStyle?
   paragraphs : Array[Paragraph]
 } derive(Eq, @debug.Debug)
 pub fn TextBody::plain_text(Self) -> String
@@ -463,6 +499,23 @@ pub(all) enum UnderlineKind {
   UlWavyDouble
 } derive(Eq, @debug.Debug)
 pub fn UnderlineKind::from_xml(String) -> Self?
+
+pub(all) enum VerticalText {
+  VertHorz
+  VertVert
+  VertVert270
+  VertWordArtVert
+  VertEaVert
+  VertMongolianVert
+  VertWordArtVertRtl
+} derive(Eq, @debug.Debug)
+pub fn VerticalText::from_xml(String) -> Self?
+
+pub(all) enum WrapKind {
+  WrapNone
+  WrapSquare
+} derive(Eq, @debug.Debug)
+pub fn WrapKind::from_xml(String) -> Self?
 
 // Type aliases
 

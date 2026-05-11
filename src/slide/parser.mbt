@@ -549,24 +549,172 @@ fn parse_auto_shape(
 // --- TextBody (Phase 3d1) ---
 
 ///|
-/// Parse `<p:txBody>` body. Phase 3d1 collects paragraphs only;
-/// `<a:bodyPr>` and `<a:lstStyle>` are skipped until 3d4.
+/// Parse `<p:txBody>` body. Picks up `<a:bodyPr>`, `<a:lstStyle>`, and
+/// the paragraph list (in source order).
 fn parse_text_body(r : @xml.XmlReader) -> TextBody raise SlideError {
   let paragraphs : Array[Paragraph] = []
+  let mut body_properties : BodyProperties? = None
+  let mut list_style : ListStyle? = None
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) =>
-        if child.uri == @oxml.drawing_ns && child.local_name == "p" {
-          paragraphs.push(parse_paragraph(r))
-        } else {
+      StartElement(child, child_attrs) =>
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
+        } else {
+          match child.local_name {
+            "bodyPr" =>
+              body_properties = Some(parse_body_properties(r, child_attrs))
+            "lstStyle" => list_style = Some(parse_list_style(r))
+            "p" => paragraphs.push(parse_paragraph(r))
+            _ => skip_subtree(r)
+          }
         }
       EndElement(_) => break
       _ => ()
     }
   }
-  { paragraphs, }
+  { body_properties, list_style, paragraphs }
+}
+
+///|
+/// Parse `<a:bodyPr>` attributes + auto-fit child.
+fn parse_body_properties(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> BodyProperties raise SlideError {
+  let rotation = parse_angle_attr(attrs, "rot")
+  let vertical_text = parse_enum_attr(attrs, "vert", VerticalText::from_xml)
+  let wrap = parse_enum_attr(attrs, "wrap", WrapKind::from_xml)
+  let anchor = parse_enum_attr(attrs, "anchor", Anchor::from_xml)
+  let left_inset = parse_emu_attr(attrs, "lIns")
+  let top_inset = parse_emu_attr(attrs, "tIns")
+  let right_inset = parse_emu_attr(attrs, "rIns")
+  let bottom_inset = parse_emu_attr(attrs, "bIns")
+  let mut auto_fit : AutoFit? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri != @oxml.drawing_ns {
+          skip_subtree(r)
+        } else {
+          match child.local_name {
+            "noAutofit" => {
+              auto_fit = Some(NoAutoFit)
+              skip_subtree(r)
+            }
+            "normAutofit" => {
+              let font_scale = parse_thousandths_pct_attr(
+                child_attrs, "fontScale",
+              ).unwrap_or(@units.Percentage(100.0))
+              let line_reduction = parse_thousandths_pct_attr(
+                child_attrs, "lnSpcReduction",
+              ).unwrap_or(@units.Percentage(0.0))
+              auto_fit = Some(NormAutoFit(font_scale, line_reduction))
+              skip_subtree(r)
+            }
+            "spAutoFit" => {
+              auto_fit = Some(SpAutoFit)
+              skip_subtree(r)
+            }
+            // prstTxWarp, scene3d, sp3d, flatTx, extLst — deferred.
+            _ => skip_subtree(r)
+          }
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  {
+    rotation,
+    vertical_text,
+    wrap,
+    anchor,
+    left_inset,
+    top_inset,
+    right_inset,
+    bottom_inset,
+    auto_fit,
+  }
+}
+
+///|
+/// Parse `<a:lstStyle>` body — `<a:defPPr>` plus `<a:lvl1pPr>` …
+/// `<a:lvl9pPr>`. Slots may appear in any order; missing levels stay
+/// `None`. Unknown children are skipped.
+fn parse_list_style(r : @xml.XmlReader) -> ListStyle raise SlideError {
+  let level_props : Array[ParagraphProperties?] = [
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+  ]
+  let mut default_props : ParagraphProperties? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri != @oxml.drawing_ns {
+          skip_subtree(r)
+        } else if child.local_name == "defPPr" {
+          default_props = Some(parse_paragraph_properties(r, child_attrs))
+        } else {
+          let lvl = match_level_name(child.local_name)
+          match lvl {
+            Some(idx) =>
+              level_props[idx] = Some(
+                parse_paragraph_properties(r, child_attrs),
+              )
+            None => skip_subtree(r)
+          }
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { default_props, level_props }
+}
+
+///|
+/// Map `"lvl1pPr"` → `Some(0)` … `"lvl9pPr"` → `Some(8)`. Returns
+/// `None` for any other local name.
+fn match_level_name(name : String) -> Int? {
+  match name {
+    "lvl1pPr" => Some(0)
+    "lvl2pPr" => Some(1)
+    "lvl3pPr" => Some(2)
+    "lvl4pPr" => Some(3)
+    "lvl5pPr" => Some(4)
+    "lvl6pPr" => Some(5)
+    "lvl7pPr" => Some(6)
+    "lvl8pPr" => Some(7)
+    "lvl9pPr" => Some(8)
+    _ => None
+  }
+}
+
+///|
+/// Parse an integer attribute in 1/60000 of a degree (`ST_Angle`) and
+/// lift to `Angle`. Returns `None` for absent / unparseable.
+fn parse_angle_attr(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Angle? {
+  for kv in attrs {
+    if kv.0.local_name == name && kv.0.uri == "" {
+      match parse_int_decimal(kv.1) {
+        Some(n) => return Some(@units.Angle::from_ooxml(n))
+        None => return None
+      }
+    }
+  }
+  None
 }
 
 ///|
