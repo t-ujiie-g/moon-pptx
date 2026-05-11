@@ -58,13 +58,19 @@ pub(all) enum Shape {
 
 ///|
 /// `<p:sp>` — auto-shape. Phase 3c1 covers id, name, placeholder
-/// metadata, and transform. Geometry, fill, stroke, text body land in
-/// later 3c slices.
+/// metadata, and transform; Phase 3c2 adds `geometry`. Fill, stroke, text
+/// body land in later 3c / 3d slices.
+///
+/// `geometry` is `Option` because some real-world PPTX places omit
+/// `<a:prstGeom>` (e.g. when the shape inherits geometry from a layout
+/// placeholder); we don't synthesise a default — `None` means "the part
+/// did not specify".
 pub(all) struct AutoShape {
   id : Int
   name : String
   placeholder : Placeholder?
   transform : Transform?
+  geometry : Geometry?
 } derive(Eq, Debug)
 
 ///|

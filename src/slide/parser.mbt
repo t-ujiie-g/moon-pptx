@@ -115,6 +115,7 @@ fn parse_auto_shape(
   let mut name = ""
   let mut placeholder : Placeholder? = None
   let mut transform : Transform? = None
+  let mut geometry : Geometry? = None
   while true {
     let ev = next_event(r)
     match ev {
@@ -130,7 +131,11 @@ fn parse_auto_shape(
             name = parsed_name
             placeholder = ph
           }
-          "spPr" => transform = parse_sp_pr_for_xfrm(r)
+          "spPr" => {
+            let (xfrm, geom) = parse_sp_pr(r)
+            transform = xfrm
+            geometry = geom
+          }
           // style, txBody, extLst — Phase 3c later slices
           _ => skip_subtree(r)
         }
@@ -139,7 +144,7 @@ fn parse_auto_shape(
       _ => ()
     }
   }
-  { id, name, placeholder, transform }
+  { id, name, placeholder, transform, geometry }
 }
 
 ///|
@@ -198,17 +203,51 @@ fn parse_nv_pr(r : @xml.XmlReader) -> Placeholder? raise SlideError {
 }
 
 ///|
-/// Look inside `<p:spPr>` for an `<a:xfrm>`. Other children
-/// (`a:prstGeom`, `a:custGeom`, `a:solidFill`, `a:ln`, `a:effectLst`, …)
-/// are skipped; later 3c slices fill them in.
-fn parse_sp_pr_for_xfrm(r : @xml.XmlReader) -> Transform? raise SlideError {
+/// Look inside `<p:spPr>` for an `<a:xfrm>` and either `<a:prstGeom>` or
+/// `<a:custGeom>`. Other children (`a:solidFill`, `a:ln`, `a:effectLst`, …)
+/// are skipped; later 3c / 3d slices fill them in.
+fn parse_sp_pr(r : @xml.XmlReader) -> (Transform?, Geometry?) raise SlideError {
   let mut transform : Transform? = None
+  let mut geometry : Geometry? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) =>
+        if child.uri != @oxml.drawing_ns {
+          skip_subtree(r)
+        } else {
+          match child.local_name {
+            "xfrm" => transform = Some(parse_xfrm(r))
+            "prstGeom" => geometry = Some(parse_prst_geom(r, attrs))
+            "custGeom" => {
+              skip_subtree(r) // path data not yet modelled
+              geometry = Some(Custom)
+            }
+            _ => skip_subtree(r)
+          }
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  (transform, geometry)
+}
+
+///|
+/// Parse `<a:prstGeom prst="…">` plus its `<a:avLst>` adjustment values.
+fn parse_prst_geom(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> Geometry raise SlideError {
+  let prst_raw = require_attr(attrs, "prst")
+  let preset = PresetShape::from_xml(prst_raw)
+  let adjustments : Array[ShapeAdjustValue] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, _) =>
-        if child.uri == @oxml.drawing_ns && child.local_name == "xfrm" {
-          transform = Some(parse_xfrm(r))
+        if child.uri == @oxml.drawing_ns && child.local_name == "avLst" {
+          parse_av_lst(r, adjustments)
         } else {
           skip_subtree(r)
         }
@@ -216,7 +255,30 @@ fn parse_sp_pr_for_xfrm(r : @xml.XmlReader) -> Transform? raise SlideError {
       _ => ()
     }
   }
-  transform
+  Preset(preset, adjustments)
+}
+
+///|
+/// Parse the `<a:avLst>` body — zero or more `<a:gd name="…" fmla="…"/>`.
+fn parse_av_lst(
+  r : @xml.XmlReader,
+  out : Array[ShapeAdjustValue],
+) -> Unit raise SlideError {
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) => {
+        if child.uri == @oxml.drawing_ns && child.local_name == "gd" {
+          let name = require_attr(attrs, "name")
+          let fmla = require_attr(attrs, "fmla")
+          out.push({ name, fmla })
+        }
+        skip_subtree(r)
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
 }
 
 ///|

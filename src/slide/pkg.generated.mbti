@@ -24,6 +24,12 @@ pub(all) struct AutoShape {
   name : String
   placeholder : Placeholder?
   transform : Transform?
+  geometry : Geometry?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Geometry {
+  Preset(PresetShape, Array[ShapeAdjustValue])
+  Custom
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Placeholder {
@@ -36,9 +42,205 @@ pub(all) struct Point {
   y : @units.Emu
 } derive(Eq, @debug.Debug)
 
+pub(all) enum PresetShape {
+  Line
+  LineInv
+  Rect
+  RoundRect
+  Round1Rect
+  Round2SameRect
+  Round2DiagRect
+  SnipRoundRect
+  Snip1Rect
+  Snip2SameRect
+  Snip2DiagRect
+  Plaque
+  Frame
+  HalfFrame
+  Corner
+  DiagStripe
+  Triangle
+  RtTriangle
+  Parallelogram
+  Trapezoid
+  NonIsoscelesTrapezoid
+  Diamond
+  Pentagon
+  Hexagon
+  Heptagon
+  Octagon
+  Decagon
+  Dodecagon
+  Star4
+  Star5
+  Star6
+  Star7
+  Star8
+  Star10
+  Star12
+  Star16
+  Star24
+  Star32
+  IrregularSeal1
+  IrregularSeal2
+  Ellipse
+  Teardrop
+  Pie
+  PieWedge
+  Arc
+  Chord
+  BlockArc
+  Donut
+  NoSmoking
+  RightArrow
+  LeftArrow
+  UpArrow
+  DownArrow
+  LeftRightArrow
+  UpDownArrow
+  QuadArrow
+  LeftRightUpArrow
+  LeftUpArrow
+  BentArrow
+  UturnArrow
+  CircularArrow
+  LeftCircularArrow
+  LeftRightCircularArrow
+  CurvedRightArrow
+  CurvedLeftArrow
+  CurvedUpArrow
+  CurvedDownArrow
+  StripedRightArrow
+  NotchedRightArrow
+  SwooshArrow
+  HomePlate
+  Chevron
+  LeftArrowCallout
+  RightArrowCallout
+  UpArrowCallout
+  DownArrowCallout
+  LeftRightArrowCallout
+  UpDownArrowCallout
+  QuadArrowCallout
+  Cube
+  Can
+  Bevel
+  LightningBolt
+  Heart
+  Sun
+  Moon
+  SmileyFace
+  FoldedCorner
+  Cloud
+  LeftBracket
+  RightBracket
+  LeftBrace
+  RightBrace
+  BracketPair
+  BracePair
+  StraightConnector1
+  BentConnector2
+  BentConnector3
+  BentConnector4
+  BentConnector5
+  CurvedConnector2
+  CurvedConnector3
+  CurvedConnector4
+  CurvedConnector5
+  Callout1
+  Callout2
+  Callout3
+  AccentCallout1
+  AccentCallout2
+  AccentCallout3
+  BorderCallout1
+  BorderCallout2
+  BorderCallout3
+  AccentBorderCallout1
+  AccentBorderCallout2
+  AccentBorderCallout3
+  WedgeRectCallout
+  WedgeRoundRectCallout
+  WedgeEllipseCallout
+  CloudCallout
+  Ribbon
+  Ribbon2
+  EllipseRibbon
+  EllipseRibbon2
+  LeftRightRibbon
+  VerticalScroll
+  HorizontalScroll
+  Wave
+  DoubleWave
+  Plus
+  FlowChartProcess
+  FlowChartDecision
+  FlowChartInputOutput
+  FlowChartPredefinedProcess
+  FlowChartInternalStorage
+  FlowChartDocument
+  FlowChartMultidocument
+  FlowChartTerminator
+  FlowChartPreparation
+  FlowChartManualInput
+  FlowChartManualOperation
+  FlowChartConnector
+  FlowChartPunchedCard
+  FlowChartPunchedTape
+  FlowChartSummingJunction
+  FlowChartOr
+  FlowChartCollate
+  FlowChartSort
+  FlowChartExtract
+  FlowChartMerge
+  FlowChartOfflineStorage
+  FlowChartOnlineStorage
+  FlowChartMagneticTape
+  FlowChartMagneticDisk
+  FlowChartMagneticDrum
+  FlowChartDisplay
+  FlowChartDelay
+  FlowChartAlternateProcess
+  FlowChartOffpageConnector
+  ActionButtonBlank
+  ActionButtonHome
+  ActionButtonHelp
+  ActionButtonInformation
+  ActionButtonForwardNext
+  ActionButtonBackPrevious
+  ActionButtonEnd
+  ActionButtonBeginning
+  ActionButtonReturn
+  ActionButtonDocument
+  ActionButtonSound
+  ActionButtonMovie
+  MathPlus
+  MathMinus
+  MathMultiply
+  MathDivide
+  MathEqual
+  MathNotEqual
+  Gear6
+  Gear9
+  Funnel
+  CornerTabs
+  SquareTabs
+  PlaqueTabs
+  ChartX
+  ChartStar
+  ChartPlus
+} derive(Eq, @debug.Debug)
+pub fn PresetShape::from_xml(String) -> Self raise SlideError
+pub fn PresetShape::to_xml(Self) -> String
+
 pub(all) enum Shape {
   AutoShape(AutoShape)
   Unknown(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ShapeAdjustValue {
+  name : String
+  fmla : String
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Size {

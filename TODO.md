@@ -192,7 +192,7 @@ DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
 - [x] **Phase 3b — Slide master / layout parsers + inheritance resolver** *(complete)* — `src/slide_master/` sub-package: `SlideMaster` (clrMap + sldLayoutIdLst), `SlideLayout` (27 layout types per `ST_SlideLayoutType`, `ClrMapOverride { MasterMapping | Override(ColorMapping) }`), and `effective_color_mapping` / `resolve_slide_color` / `lookup_theme_slot` resolvers that walk the theme ← master ← layout chain. Shared `src/oxml/` namespace constants extracted in the same commit. 26 new tests, 152 total × 4 backends.
 - [ ] **Phase 3c — Slide parser: shapes, group shapes, connectors, pictures, tables**
   - [x] **3c1**: `src/slide/` skeleton — `Slide`, `Shape { AutoShape | Unknown(String) }`, `AutoShape` (id/name/placeholder/transform via `<a:xfrm>`), `clrMapOvr` reuse from `@slide_master`. 10 tests, 162 total × 4 backends.
-  - [ ] 3c2: PrstGeom + auto-shape geometry recognition (154 preset shapes)
+  - [x] **3c2**: `PresetShape` enum (187 `ST_ShapeType` variants) + `Geometry { Preset(PresetShape, Array[ShapeAdjustValue]) | Custom }`. Parses `<a:prstGeom prst="…">` + `<a:avLst>` adjustment formulas; `<a:custGeom>` recorded as `Custom` with path data deferred. 8 tests, 170 total × 4 backends.
   - [ ] 3c3: Picture (`p:pic`) parser
   - [ ] 3c4: Group shape recursion + connectors, charts
 - [ ] Text parser: paragraph, run, list style, font, hyperlink
@@ -442,5 +442,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-11** — Phase 3a done: `src/theme/` reads `a:theme` into typed `Theme` / `ColorScheme` / `FontScheme`. `skip_subtree` swallows unmodelled siblings (`fmtScheme` and friends) without losing parser state — lossless preservation of the skipped sections is on the docket once ADR-004 is implemented. 126 tests on all four backends.
 - **2026-05-11** — Phase 3b done: `src/slide_master/` reads `p:sldMaster` and `p:sldLayout` into typed structs (`ColorMapping`, `SlideLayoutRef`, `ClrMapOverride`, `SlideLayoutType` with 27 spec values), and `inheritance.mbt` resolves theme ← master ← layout colour chains. Shared `src/oxml/` namespace constants extracted (used by theme + slide_master). 152 tests on all four backends.
 - **2026-05-11** — Phase 3c1 done: `src/slide/` skeleton parses `<p:sld>` into typed `Slide` with shape list (AutoShape modelled with id/name/placeholder/transform; pic/cxnSp/grpSp/graphicFrame land as `Unknown(name)` placeholders for later 3c slices). 10 tests, 162 total × 4 backends.
+- **2026-05-11** — Phase 3c2 done: `PresetShape` enum covers all 187 `ST_ShapeType` values with `from_xml` / `to_xml`; `Geometry` ADT and `ShapeAdjustValue` carry `<a:prstGeom>` adjustment formulas verbatim (formula language deferred). `<a:custGeom>` is recognised but its path data is intentionally opaque for now. 8 tests, 170 total × 4 backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)
