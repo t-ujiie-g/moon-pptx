@@ -3,7 +3,7 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phase 1 closed).** Foundation primitives (units, colors,
+> **Status: pre-alpha (Phase 3 closed).** Foundation primitives (units, colors,
 > XML reader/writer) are in. Public OOXML API does not exist yet — see
 > [TODO.md](TODO.md) for the phase-by-phase roadmap.
 
@@ -37,8 +37,8 @@ full feature comparison.
 | 0 | Bootstrap, deps, CI | ✅ Done |
 | 1 | Units & XML | ✅ Done |
 | 2 | OPC layer over fzip | ✅ Done |
-| 3 | Read path | 🚧 In progress (3a–3d done; 3e fill/stroke/effect next) |
-| 4 | Write path | ⏳ |
+| 3 | Read path | ✅ Done |
+| 4 | Write path | 🔜 Next |
 | 5 | Builder API (create from scratch) | ⏳ |
 | 6 | Tables | ⏳ |
 | 7 | Charts | ⏳ |

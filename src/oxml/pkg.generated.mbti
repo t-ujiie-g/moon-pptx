@@ -16,6 +16,8 @@ pub let office_relationships_ns : String
 
 pub fn parse_color_element(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> Color raise ColorError
 
+pub fn parse_effect_list(@xml.XmlReader) -> EffectList raise EffectError
+
 pub fn parse_fill(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> Fill raise FillError
 
 pub fn parse_percent_value(String) -> @units.Percentage?
@@ -30,6 +32,12 @@ pub(all) suberror ColorError {
   MalformedColor(String)
 } derive(Eq, @debug.Debug)
 pub impl Show for ColorError
+
+pub(all) suberror EffectError {
+  MalformedEffect(String)
+  EffectColorFailure(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for EffectError
 
 pub(all) suberror FillError {
   UnknownFillElement(String)
@@ -86,6 +94,11 @@ pub(all) enum BlipFillMode {
   Tile(TileSpec)
 } derive(Eq, @debug.Debug)
 
+pub(all) struct Blur {
+  rad : @units.Emu
+  grow : Bool?
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Color {
   base : ColorBase
   transforms : Array[@units.ColorTransform]
@@ -129,6 +142,17 @@ pub(all) enum DashStyle {
 } derive(Eq, @debug.Debug)
 pub fn DashStyle::from_xml(String) -> Self?
 
+pub(all) struct EffectList {
+  blur : Blur?
+  glow : Glow?
+  inner_shadow : InnerShadow?
+  outer_shadow : OuterShadow?
+  preset_shadow : PresetShadow?
+  reflection : Reflection?
+  soft_edge : SoftEdge?
+} derive(Eq, @debug.Debug)
+pub fn EffectList::empty() -> Self
+
 pub(all) enum Fill {
   NoFill
   SolidFill(Color)
@@ -144,6 +168,11 @@ pub(all) struct FillRect {
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
 pub fn FillRect::default() -> Self
+
+pub(all) struct Glow {
+  rad : @units.Emu
+  color : Color
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Gradient {
   stops : Array[GradientStop]
@@ -164,6 +193,13 @@ pub(all) struct GradientStop {
   color : Color
 } derive(Eq, @debug.Debug)
 
+pub(all) struct InnerShadow {
+  blur_rad : @units.Emu
+  dist : @units.Emu
+  dir : @units.Angle
+  color : Color
+} derive(Eq, @debug.Debug)
+
 pub(all) enum LineCap {
   CapFlat
   CapSquare
@@ -177,6 +213,19 @@ pub(all) enum LineJoin {
   JoinMiter(@units.Percentage?)
 } derive(Eq, @debug.Debug)
 
+pub(all) struct OuterShadow {
+  blur_rad : @units.Emu
+  dist : @units.Emu
+  dir : @units.Angle
+  sx : @units.Percentage?
+  sy : @units.Percentage?
+  kx : @units.Angle?
+  ky : @units.Angle?
+  alignment : RectAlignment?
+  rotate_with_shape : Bool?
+  color : Color
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Pattern {
   preset : String
   fg : Color
@@ -188,6 +237,47 @@ pub(all) enum PenAlignment {
   AlignPenInset
 } derive(Eq, @debug.Debug)
 pub fn PenAlignment::from_xml(String) -> Self?
+
+pub(all) struct PresetShadow {
+  preset : String
+  dist : @units.Emu
+  dir : @units.Angle
+  color : Color
+} derive(Eq, @debug.Debug)
+
+pub(all) enum RectAlignment {
+  RectTopLeft
+  RectTop
+  RectTopRight
+  RectLeft
+  RectCenter
+  RectRight
+  RectBottomLeft
+  RectBottom
+  RectBottomRight
+} derive(Eq, @debug.Debug)
+pub fn RectAlignment::from_xml(String) -> Self?
+
+pub(all) struct Reflection {
+  blur_rad : @units.Emu?
+  st_a : @units.Percentage?
+  st_pos : @units.Percentage?
+  end_a : @units.Percentage?
+  end_pos : @units.Percentage?
+  dist : @units.Emu?
+  dir : @units.Angle?
+  fade_dir : @units.Angle?
+  sx : @units.Percentage?
+  sy : @units.Percentage?
+  kx : @units.Angle?
+  ky : @units.Angle?
+  alignment : RectAlignment?
+  rotate_with_shape : Bool?
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SoftEdge {
+  rad : @units.Emu
+} derive(Eq, @debug.Debug)
 
 pub(all) struct SrcRect {
   left : @units.Percentage

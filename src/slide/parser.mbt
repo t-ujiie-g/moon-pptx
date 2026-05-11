@@ -117,6 +117,7 @@ fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
   let mut stroke : @oxml.Stroke? = None
+  let mut effects : @oxml.EffectList? = None
   let mut start : ConnectionEnd? = None
   let mut end : ConnectionEnd? = None
   while true {
@@ -136,10 +137,11 @@ fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
             end = en
           }
           "spPr" => {
-            let (xfrm, geom, ln) = parse_sp_pr(r)
+            let (xfrm, geom, ln, fx) = parse_sp_pr(r)
             transform = xfrm
             geometry = geom
             stroke = ln
+            effects = fx
           }
           // style, extLst — Phase 3 later slices
           _ => skip_subtree(r)
@@ -149,7 +151,7 @@ fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
       _ => ()
     }
   }
-  { id, name, transform, geometry, stroke, start, end }
+  { id, name, transform, geometry, stroke, effects, start, end }
 }
 
 ///|
@@ -372,6 +374,7 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
   let mut stroke : @oxml.Stroke? = None
+  let mut effects : @oxml.EffectList? = None
   let mut blip_fill : @oxml.BlipFill? = None
   while true {
     let ev = next_event(r)
@@ -401,10 +404,11 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
             }
           }
           "spPr" => {
-            let (xfrm, geom, ln) = parse_sp_pr(r)
+            let (xfrm, geom, ln, fx) = parse_sp_pr(r)
             transform = xfrm
             geometry = geom
             stroke = ln
+            effects = fx
           }
           // style, extLst — Phase 3 later slices
           _ => skip_subtree(r)
@@ -418,7 +422,7 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
     Some(b) => b
     None => raise Malformed("<p:pic> is missing <p:blipFill>")
   }
-  { id, name, transform, geometry, stroke, blip_fill: bf }
+  { id, name, transform, geometry, stroke, effects, blip_fill: bf }
 }
 
 // --- AutoShape ---
@@ -434,6 +438,7 @@ fn parse_auto_shape(
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
   let mut stroke : @oxml.Stroke? = None
+  let mut effects : @oxml.EffectList? = None
   let mut text_body : TextBody? = None
   while true {
     let ev = next_event(r)
@@ -451,10 +456,11 @@ fn parse_auto_shape(
             placeholder = ph
           }
           "spPr" => {
-            let (xfrm, geom, ln) = parse_sp_pr(r)
+            let (xfrm, geom, ln, fx) = parse_sp_pr(r)
             transform = xfrm
             geometry = geom
             stroke = ln
+            effects = fx
           }
           "txBody" => text_body = Some(parse_text_body(r))
           // style, extLst — Phase 3 later slices
@@ -465,7 +471,7 @@ fn parse_auto_shape(
       _ => ()
     }
   }
-  { id, name, placeholder, transform, geometry, stroke, text_body }
+  { id, name, placeholder, transform, geometry, stroke, effects, text_body }
 }
 
 ///|
@@ -646,15 +652,16 @@ fn parse_nv_pr(r : @xml.XmlReader) -> Placeholder? raise SlideError {
 }
 
 ///|
-/// Look inside `<p:spPr>` for an `<a:xfrm>`, geometry, and `<a:ln>`.
-/// Other children (`a:solidFill`, `a:effectLst`, `a:scene3d`, …) are
-/// skipped — fill-and-effects on `<p:spPr>` will arrive in Phase 3e4.
+/// Look inside `<p:spPr>` for `<a:xfrm>`, geometry, `<a:ln>`, and
+/// `<a:effectLst>`. Other children (`a:solidFill`, `a:scene3d`, …) are
+/// skipped — shape-level fill will arrive in a later slice.
 fn parse_sp_pr(
   r : @xml.XmlReader,
-) -> (Transform?, Geometry?, @oxml.Stroke?) raise SlideError {
+) -> (Transform?, Geometry?, @oxml.Stroke?, @oxml.EffectList?) raise SlideError {
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
   let mut stroke : @oxml.Stroke? = None
+  let mut effects : @oxml.EffectList? = None
   while true {
     let ev = next_event(r)
     match ev {
@@ -675,6 +682,12 @@ fn parse_sp_pr(
               }
               stroke = Some(s)
             }
+            "effectLst" => {
+              let e = @oxml.parse_effect_list(r) catch {
+                err => raise Malformed("a:effectLst: " + err.to_string())
+              }
+              effects = Some(e)
+            }
             _ => skip_subtree(r)
           }
         }
@@ -682,7 +695,7 @@ fn parse_sp_pr(
       _ => ()
     }
   }
-  (transform, geometry, stroke)
+  (transform, geometry, stroke, effects)
 }
 
 ///|

@@ -32,5 +32,7 @@ pub(all) struct Picture {
   /// `<a:ln>` outline parsed off `<p:spPr>` — e.g. a border around the
   /// picture. `None` means the picture has no outline.
   stroke : @oxml.Stroke?
+  /// `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
+  effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
 } derive(Eq, Debug)

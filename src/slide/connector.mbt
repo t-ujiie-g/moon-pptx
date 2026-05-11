@@ -39,6 +39,8 @@ pub(all) struct Connector {
   /// `<a:ln>` outline parsed off `<p:spPr>`. Connectors almost always
   /// carry one (they're a line by definition).
   stroke : @oxml.Stroke?
+  /// `<a:effectLst>` parsed off `<p:spPr>`.
+  effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
 } derive(Eq, Debug)
