@@ -28,8 +28,8 @@ fn fixed_color_mapping(
 }
 
 ///|
-fn srgb(hex : String) -> @theme.ColorChoice raise @units.UnitsError {
-  @theme.ColorChoice::Srgb(@units.RgbColor::parse_hex(hex))
+fn srgb(hex : String) -> @oxml.Color raise @units.UnitsError {
+  @oxml.Color::srgb(@units.RgbColor::parse_hex(hex))
 }
 
 ///|
@@ -117,7 +117,7 @@ test "resolve_slide_color: through inherited mapping then theme" {
     layout_inheriting(),
     fixture_scheme(),
   )
-  match result.unwrap() {
+  match result.unwrap().base {
     Srgb(rgb) => assert_eq(rgb.to_hex(), "FFFFF1")
     _ => fail("expected Srgb")
   }
@@ -133,7 +133,7 @@ test "resolve_slide_color: layout override takes precedence" {
     layout_overriding(),
     fixture_scheme(),
   )
-  match result.unwrap() {
+  match result.unwrap().base {
     Srgb(rgb) => assert_eq(rgb.to_hex(), "000001")
     _ => fail("expected Srgb")
   }
@@ -148,7 +148,7 @@ test "resolve_slide_color: accent passthrough" {
     layout_inheriting(),
     fixture_scheme(),
   )
-  match result.unwrap() {
+  match result.unwrap().base {
     Srgb(rgb) => assert_eq(rgb.to_hex(), "AAAA03")
     _ => fail("expected Srgb")
   }

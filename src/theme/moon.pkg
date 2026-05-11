@@ -1,5 +1,4 @@
 import {
   "t-ujiie-g/moon_pptx/oxml" @oxml,
-  "t-ujiie-g/moon_pptx/units" @units,
   "t-ujiie-g/moon_pptx/xml" @xml,
 }

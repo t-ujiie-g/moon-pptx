@@ -3,7 +3,7 @@ package "t-ujiie-g/moon_pptx/theme"
 
 import {
   "moonbitlang/core/debug",
-  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/oxml",
   "t-ujiie-g/moon_pptx/xml",
 }
 
@@ -18,26 +18,20 @@ pub(all) suberror ThemeError {
 pub impl Show for ThemeError
 
 // Types and methods
-pub(all) enum ColorChoice {
-  Srgb(@units.RgbColor)
-  Sys(SysColor)
-} derive(Eq, @debug.Debug)
-pub impl Show for ColorChoice
-
 pub(all) struct ColorScheme {
   name : String
-  dk1 : ColorChoice
-  lt1 : ColorChoice
-  dk2 : ColorChoice
-  lt2 : ColorChoice
-  accent1 : ColorChoice
-  accent2 : ColorChoice
-  accent3 : ColorChoice
-  accent4 : ColorChoice
-  accent5 : ColorChoice
-  accent6 : ColorChoice
-  hlink : ColorChoice
-  fol_hlink : ColorChoice
+  dk1 : @oxml.Color
+  lt1 : @oxml.Color
+  dk2 : @oxml.Color
+  lt2 : @oxml.Color
+  accent1 : @oxml.Color
+  accent2 : @oxml.Color
+  accent3 : @oxml.Color
+  accent4 : @oxml.Color
+  accent5 : @oxml.Color
+  accent6 : @oxml.Color
+  hlink : @oxml.Color
+  fol_hlink : @oxml.Color
 } derive(Eq, @debug.Debug)
 
 pub(all) struct FontCollection {
@@ -58,12 +52,6 @@ pub(all) struct ScriptFont {
   typeface : String
 } derive(Eq, @debug.Debug)
 pub impl Show for ScriptFont
-
-pub(all) struct SysColor {
-  val : String
-  last_clr : @units.RgbColor?
-} derive(Eq, @debug.Debug)
-pub impl Show for SysColor
 
 pub(all) struct Theme {
   name : String

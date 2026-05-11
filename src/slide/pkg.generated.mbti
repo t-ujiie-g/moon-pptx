@@ -3,6 +3,7 @@ package "t-ujiie-g/moon_pptx/slide"
 
 import {
   "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/oxml",
   "t-ujiie-g/moon_pptx/slide_master",
   "t-ujiie-g/moon_pptx/units",
   "t-ujiie-g/moon_pptx/xml",
@@ -394,11 +395,6 @@ pub(all) struct Run {
   text : String
 } derive(Eq, @debug.Debug)
 
-pub(all) enum RunFill {
-  SolidRgb(@units.RgbColor)
-  SolidTheme(@units.ThemeColor)
-} derive(Eq, @debug.Debug)
-
 pub(all) struct RunProperties {
   lang : String
   font_size : @units.Pt?
@@ -411,7 +407,7 @@ pub(all) struct RunProperties {
   latin : String?
   east_asian : String?
   complex_script : String?
-  fill : RunFill?
+  fill : @oxml.Color?
   hyperlink_click : String?
 } derive(Eq, @debug.Debug)
 pub fn RunProperties::default() -> Self

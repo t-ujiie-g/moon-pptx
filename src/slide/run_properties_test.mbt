@@ -131,9 +131,9 @@ test "rPr: solidFill with srgbClr" {
       "<a:rPr><a:solidFill><a:srgbClr val=\"FF0000\"/></a:solidFill></a:rPr>",
     ),
   )
-  match rpr_of(slide).fill.unwrap() {
-    SolidRgb(c) => assert_eq(c.to_hex(), "FF0000")
-    _ => fail("expected SolidRgb")
+  match rpr_of(slide).fill.unwrap().base {
+    Srgb(c) => assert_eq(c.to_hex(), "FF0000")
+    _ => fail("expected Srgb base")
   }
 }
 
@@ -144,9 +144,9 @@ test "rPr: solidFill with schemeClr" {
       "<a:rPr><a:solidFill><a:schemeClr val=\"accent2\"/></a:solidFill></a:rPr>",
     ),
   )
-  match rpr_of(slide).fill.unwrap() {
-    SolidTheme(t) => assert_true(t is @units.ThemeColor::Accent2)
-    _ => fail("expected SolidTheme")
+  match rpr_of(slide).fill.unwrap().base {
+    Scheme(t) => assert_true(t is @units.ThemeColor::Accent2)
+    _ => fail("expected Scheme base")
   }
 }
 

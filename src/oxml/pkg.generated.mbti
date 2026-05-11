@@ -3,6 +3,8 @@ package "t-ujiie-g/moon_pptx/oxml"
 
 import {
   "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
 }
 
 // Values
@@ -12,9 +14,19 @@ pub let drawing_ns : String
 
 pub let office_relationships_ns : String
 
+pub fn parse_color_element(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> Color raise ColorError
+
+pub fn parse_percent_value(String) -> @units.Percentage?
+
 pub let presentation_ns : String
 
 // Errors
+pub(all) suberror ColorError {
+  UnknownColorElement(String)
+  MalformedColor(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for ColorError
+
 pub(all) suberror Utf8Error {
   StrayContinuation(Int)
   TruncatedSequence(Int)
@@ -22,6 +34,30 @@ pub(all) suberror Utf8Error {
 pub impl Show for Utf8Error
 
 // Types and methods
+pub(all) struct Color {
+  base : ColorBase
+  transforms : Array[@units.ColorTransform]
+} derive(Eq, @debug.Debug)
+pub fn Color::of(ColorBase) -> Self
+pub fn Color::scheme(@units.ThemeColor) -> Self
+pub fn Color::srgb(@units.RgbColor) -> Self
+pub impl Show for Color
+
+pub(all) enum ColorBase {
+  Srgb(@units.RgbColor)
+  Hsl(@units.HslColor)
+  Sys(SysColor)
+  Scheme(@units.ThemeColor)
+  Preset(String)
+  Scrgb(@units.Percentage, @units.Percentage, @units.Percentage)
+} derive(Eq, @debug.Debug)
+pub impl Show for ColorBase
+
+pub(all) struct SysColor {
+  val : String
+  last_clr : @units.RgbColor?
+} derive(Eq, @debug.Debug)
+pub impl Show for SysColor
 
 // Type aliases
 

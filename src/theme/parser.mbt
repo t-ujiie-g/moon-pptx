@@ -110,7 +110,7 @@ fn parse_color_scheme(
   attrs : Array[(@xml.QName, String)],
 ) -> ColorScheme raise ThemeError {
   let name = optional_attr(attrs, "name")
-  let slots : Map[String, ColorChoice] = Map::new()
+  let slots : Map[String, @oxml.Color] = Map::new()
   while true {
     let event = next_event(r)
     match event {
@@ -145,9 +145,9 @@ fn parse_color_scheme(
 
 ///|
 fn require_slot(
-  slots : Map[String, ColorChoice],
+  slots : Map[String, @oxml.Color],
   name : String,
-) -> ColorChoice raise ThemeError {
+) -> @oxml.Color raise ThemeError {
   match slots.get(name) {
     Some(c) => c
     None => raise MalformedTheme("clrScheme missing slot: " + name)
@@ -155,12 +155,15 @@ fn require_slot(
 }
 
 ///|
-/// Read the wrapper's single color child + the wrapper's EndElement.
+/// Read the wrapper's single colour child + the wrapper's EndElement.
+/// Delegates colour parsing to `@oxml.parse_color_element` so theme
+/// slots, run-level fills, and (eventually) gradient stops all share
+/// one parse path.
 fn parse_color_inside_wrapper(
   r : @xml.XmlReader,
   wrapper_name : @xml.QName,
-) -> ColorChoice raise ThemeError {
-  let mut found : ColorChoice? = None
+) -> @oxml.Color raise ThemeError {
+  let mut found : @oxml.Color? = None
   while true {
     let event = next_event(r)
     match event {
@@ -169,19 +172,18 @@ fn parse_color_inside_wrapper(
           skip_subtree(r)
           continue
         }
-        let choice = parse_color_choice(r, child, attrs)
+        let color = @oxml.parse_color_element(r, child, attrs) catch {
+          e =>
+            raise MalformedTheme(
+              "color slot " + wrapper_name.local_name + ": " + e.to_string(),
+            )
+        }
         if found is None {
-          found = Some(choice)
+          found = Some(color)
         }
         // ignore any further children — schema permits only one
       }
-      EndElement(en) =>
-        if en == wrapper_name {
-          break
-        } else {
-          // shouldn't happen with well-formed XML — reader catches mismatches
-          ()
-        }
+      EndElement(en) => if en == wrapper_name { break } else { () }
       _ => ()
     }
   }
@@ -191,47 +193,6 @@ fn parse_color_inside_wrapper(
       raise MalformedTheme(
         "color slot " + wrapper_name.local_name + " has no color child",
       )
-  }
-}
-
-///|
-/// Parse a single color element. Currently handles `srgbClr` and `sysClr`
-/// (covers all real-world theme color schemes); other variants raise
-/// `MalformedTheme` so we notice and add support intentionally.
-fn parse_color_choice(
-  r : @xml.XmlReader,
-  name : @xml.QName,
-  attrs : Array[(@xml.QName, String)],
-) -> ColorChoice raise ThemeError {
-  match name.local_name {
-    "srgbClr" => {
-      let hex = require_attr(attrs, "val")
-      let rgb = @units.RgbColor::parse_hex(hex) catch {
-        _ =>
-          raise MalformedTheme("srgbClr val is not a 6-hex-digit color: " + hex)
-      }
-      skip_subtree(r) // consume any color modifier children + EndElement
-      Srgb(rgb)
-    }
-    "sysClr" => {
-      let val = require_attr(attrs, "val")
-      let last = optional_attr(attrs, "lastClr")
-      let last_clr = if last.length() > 0 {
-        let parsed = @units.RgbColor::parse_hex(last) catch {
-          _ =>
-            raise MalformedTheme(
-              "sysClr lastClr is not a 6-hex-digit color: " + last,
-            )
-        }
-        Some(parsed)
-      } else {
-        None
-      }
-      skip_subtree(r)
-      Sys({ val, last_clr })
-    }
-    other =>
-      raise MalformedTheme("unsupported color element in clrScheme: " + other)
   }
 }
 

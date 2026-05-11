@@ -316,7 +316,7 @@ fn parse_run_properties(
   let mut latin : String? = None
   let mut east_asian : String? = None
   let mut complex_script : String? = None
-  let mut fill : RunFill? = None
+  let mut fill : @oxml.Color? = None
   let mut hyperlink_click : String? = None
   while true {
     let ev = next_event(r)
@@ -368,45 +368,22 @@ fn parse_run_properties(
 }
 
 ///|
-/// Parse `<a:solidFill>` looking for `<a:srgbClr>` or `<a:schemeClr>`.
-/// Returns `None` if the body is empty or carries an unsupported colour
-/// element (we expand the ADT when callers need them).
-fn parse_solid_fill(r : @xml.XmlReader) -> RunFill? raise SlideError {
-  let mut result : RunFill? = None
+/// Parse `<a:solidFill>` body. Delegates colour parsing to
+/// `@oxml.parse_color_element` so every colour kind (srgb / hsl / sys /
+/// scheme / prst / scrgb) and its modifiers come through one path.
+/// Returns `None` if the body has no recognised colour child.
+fn parse_solid_fill(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
+  let mut result : @oxml.Color? = None
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri == @oxml.drawing_ns {
-          match child.local_name {
-            "srgbClr" => {
-              let hex = require_attr(child_attrs, "val")
-              let rgb = @units.RgbColor::parse_hex(hex) catch {
-                _ =>
-                  raise Malformed(
-                    "srgbClr val is not a 6-hex-digit color: " + hex,
-                  )
-              }
-              if result is None {
-                result = Some(SolidRgb(rgb))
-              }
-              skip_subtree(r)
-            }
-            "schemeClr" => {
-              let raw = require_attr(child_attrs, "val")
-              let theme = @units.ThemeColor::from_xml(raw) catch {
-                _ =>
-                  raise Malformed(
-                    "schemeClr val is not a ST_SchemeColorVal: " + raw,
-                  )
-              }
-              if result is None {
-                result = Some(SolidTheme(theme))
-              }
-              skip_subtree(r)
-            }
-            // hsl, prst, scrgb — widen RunFill if a real PPTX needs them.
-            _ => skip_subtree(r)
+          let color = @oxml.parse_color_element(r, child, child_attrs) catch {
+            e => raise Malformed("solidFill: " + e.to_string())
+          }
+          if result is None {
+            result = Some(color)
           }
         } else {
           skip_subtree(r)

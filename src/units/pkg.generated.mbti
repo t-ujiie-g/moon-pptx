@@ -41,7 +41,7 @@ pub(all) enum ColorTransform {
   SatMod(Percentage)
   LumMod(Percentage)
   Alpha(Percentage)
-} derive(@debug.Debug)
+} derive(Eq, @debug.Debug)
 pub impl Show for ColorTransform
 
 pub(all) struct Emu(Int64) derive(Compare, Eq, @debug.Debug)
@@ -58,7 +58,7 @@ pub(all) struct HslColor {
   hue : Double
   saturation : Double
   lightness : Double
-} derive(@debug.Debug)
+} derive(Eq, @debug.Debug)
 pub fn HslColor::new(Double, Double, Double) -> Self
 pub fn HslColor::to_rgb(Self) -> RgbColor
 pub impl Show for HslColor

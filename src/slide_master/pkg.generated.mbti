@@ -3,6 +3,7 @@ package "t-ujiie-g/moon_pptx/slide_master"
 
 import {
   "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/oxml",
   "t-ujiie-g/moon_pptx/theme",
   "t-ujiie-g/moon_pptx/units",
   "t-ujiie-g/moon_pptx/xml",
@@ -11,11 +12,11 @@ import {
 // Values
 pub fn effective_color_mapping(SlideMaster, SlideLayout) -> ColorMapping
 
-pub fn lookup_theme_slot(@units.ThemeColor, @theme.ColorScheme) -> @theme.ColorChoice
+pub fn lookup_theme_slot(@units.ThemeColor, @theme.ColorScheme) -> @oxml.Color
 
 pub fn parse_clr_map_attrs(Array[(@xml.QName, String)]) -> ColorMapping raise SlideMasterError
 
-pub fn resolve_slide_color(@units.ThemeColor, SlideMaster, SlideLayout, @theme.ColorScheme) -> @theme.ColorChoice?
+pub fn resolve_slide_color(@units.ThemeColor, SlideMaster, SlideLayout, @theme.ColorScheme) -> @oxml.Color?
 
 pub fn wrap_xml(@xml.XmlError) -> SlideMasterError
 

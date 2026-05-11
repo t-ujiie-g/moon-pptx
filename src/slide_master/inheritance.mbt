@@ -54,7 +54,7 @@ pub fn resolve_slide_color(
   master : SlideMaster,
   layout : SlideLayout,
   theme_scheme : @theme.ColorScheme,
-) -> @theme.ColorChoice? {
+) -> @oxml.Color? {
   let mapping = effective_color_mapping(master, layout)
   match mapping.resolve(slot) {
     Some(theme_slot) => Some(lookup_theme_slot(theme_slot, theme_scheme))
@@ -72,7 +72,7 @@ pub fn resolve_slide_color(
 pub fn lookup_theme_slot(
   slot : @units.ThemeColor,
   scheme : @theme.ColorScheme,
-) -> @theme.ColorChoice {
+) -> @oxml.Color {
   match slot {
     Bg1 | Lt1 => scheme.lt1
     Bg2 | Lt2 => scheme.lt2

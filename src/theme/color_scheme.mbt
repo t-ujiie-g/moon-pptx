@@ -1,63 +1,11 @@
 // Theme color scheme — the 12 named slots that drive every theme-color
 // reference in the deck (ECMA-376 §20.1.6.2).
 //
-// Each slot wraps a single color element. In real themes the wrapped element
-// is almost always `a:srgbClr` (literal RGB) or `a:sysClr` (host system
-// color with a `lastClr` fallback). The other DrawingML color elements
-// (`a:schemeClr`, `a:hslClr`, `a:scrgbClr`, `a:prstClr`) are valid here per
-// the schema but virtually never appear inside `clrScheme`; we'll add them
-// to `ColorChoice` if a real-world theme requires it.
-
-///|
-/// One color choice within a theme color slot.
-pub(all) enum ColorChoice {
-  /// `<a:srgbClr val="FF0000"/>` — literal RGB.
-  Srgb(@units.RgbColor)
-  /// `<a:sysClr val="windowText" lastClr="000000"/>` — host system color
-  /// with a fallback RGB used when the system value can't be resolved.
-  Sys(SysColor)
-} derive(Eq, Debug)
-
-///|
-pub impl Show for ColorChoice with output(self, logger) {
-  match self {
-    Srgb(c) => {
-      logger.write_string("Srgb(")
-      logger.write_object(c)
-      logger.write_string(")")
-    }
-    Sys(c) => {
-      logger.write_string("Sys(")
-      logger.write_object(c)
-      logger.write_string(")")
-    }
-  }
-}
-
-///|
-/// `<a:sysClr val="…" lastClr="…"/>` — a host system color with a fallback.
-pub(all) struct SysColor {
-  /// The system color name, e.g. `"windowText"`, `"window"`, `"3dShadow"`.
-  /// Per ECMA-376 §20.1.10.58 (`ST_SystemColorVal`).
-  val : String
-  /// The literal RGB to fall back to when the host can't resolve `val`.
-  /// `None` is permitted by the schema but real PPTX always supplies it.
-  last_clr : @units.RgbColor?
-} derive(Eq, Debug)
-
-///|
-pub impl Show for SysColor with output(self, logger) {
-  logger.write_string("SysColor(")
-  logger.write_object(self.val)
-  match self.last_clr {
-    Some(c) => {
-      logger.write_string(", last=")
-      logger.write_object(c)
-    }
-    None => ()
-  }
-  logger.write_string(")")
-}
+// Each slot holds an `@oxml.Color`, the unified DrawingML colour
+// representation. In real themes the wrapped element is almost always
+// `<a:srgbClr>` or `<a:sysClr>`, but the model accepts every variant
+// the spec allows (hsl / scheme / prst / scrgb) so unusual third-party
+// themes round-trip without information loss.
 
 ///|
 /// A theme color scheme — twelve named slots in fixed order per ECMA-376.
@@ -68,16 +16,16 @@ pub impl Show for SysColor with output(self, logger) {
 /// hyperlink and followed-hyperlink colours.
 pub(all) struct ColorScheme {
   name : String
-  dk1 : ColorChoice
-  lt1 : ColorChoice
-  dk2 : ColorChoice
-  lt2 : ColorChoice
-  accent1 : ColorChoice
-  accent2 : ColorChoice
-  accent3 : ColorChoice
-  accent4 : ColorChoice
-  accent5 : ColorChoice
-  accent6 : ColorChoice
-  hlink : ColorChoice
-  fol_hlink : ColorChoice
+  dk1 : @oxml.Color
+  lt1 : @oxml.Color
+  dk2 : @oxml.Color
+  lt2 : @oxml.Color
+  accent1 : @oxml.Color
+  accent2 : @oxml.Color
+  accent3 : @oxml.Color
+  accent4 : @oxml.Color
+  accent5 : @oxml.Color
+  accent6 : @oxml.Color
+  hlink : @oxml.Color
+  fol_hlink : @oxml.Color
 } derive(Eq, Debug)

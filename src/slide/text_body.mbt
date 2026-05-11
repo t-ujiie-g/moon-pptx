@@ -64,16 +64,6 @@ pub(all) enum CapsKind {
 } derive(Eq, Debug)
 
 ///|
-/// Run-level fill. Phase 3d2 covers the two common shapes
-/// (`<a:solidFill><a:srgbClr/></a:solidFill>` and
-/// `<a:solidFill><a:schemeClr/></a:solidFill>`). Gradient, pattern,
-/// and blip fills land alongside the shape-level fill ADT in Phase 3e.
-pub(all) enum RunFill {
-  SolidRgb(@units.RgbColor)
-  SolidTheme(@units.ThemeColor)
-} derive(Eq, Debug)
-
-///|
 /// Run property record. Every field is `Option` because OOXML rPr is
 /// strictly additive over inherited values — a `None` means "inherit
 /// from the next layer up" (text body default → list style → master
@@ -104,8 +94,11 @@ pub(all) struct RunProperties {
   east_asian : String?
   /// `<a:cs typeface="…"/>` font for complex script.
   complex_script : String?
-  /// `<a:solidFill>` resolved to a colour.
-  fill : RunFill?
+  /// `<a:solidFill>` resolved to a colour. Other fill kinds
+  /// (`<a:gradFill>`, `<a:pattFill>`, `<a:blipFill>`) are silently
+  /// dropped at run level for now — Phase 3e2 will widen this to the
+  /// full shape-level `@oxml.Fill` ADT.
+  fill : @oxml.Color?
   /// `<a:hlinkClick r:id="…">` — relationship id of the click target.
   hyperlink_click : String?
 } derive(Eq, Debug)

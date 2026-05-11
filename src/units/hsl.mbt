@@ -17,7 +17,7 @@ pub(all) struct HslColor {
   hue : Double
   saturation : Double
   lightness : Double
-} derive(Debug)
+} derive(Eq, Debug)
 
 ///|
 pub fn HslColor::new(

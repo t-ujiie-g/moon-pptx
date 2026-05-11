@@ -107,7 +107,7 @@ pub(all) enum ColorTransform {
   LumMod(Percentage)
   /// Set the opacity. `Percentage(50.0)` is half-transparent.
   Alpha(Percentage)
-} derive(Debug)
+} derive(Eq, Debug)
 
 ///|
 pub impl Show for ColorTransform with output(self, logger) {

@@ -77,7 +77,7 @@ test "parse: top-level name and slot count" {
 test "parse: srgbClr slots decoded as RGB" {
   let theme = @theme.Theme::parse(office_like_theme())
   let cs = theme.color_scheme
-  match cs.accent1 {
+  match cs.accent1.base {
     Srgb(rgb) => {
       assert_eq(rgb.r, 0x5B)
       assert_eq(rgb.g, 0x9B)
@@ -85,7 +85,7 @@ test "parse: srgbClr slots decoded as RGB" {
     }
     _ => fail("expected Srgb for accent1")
   }
-  match cs.accent6 {
+  match cs.accent6.base {
     Srgb(rgb) => assert_eq(rgb.to_hex(), "70AD47")
     _ => fail("expected Srgb for accent6")
   }
@@ -94,14 +94,14 @@ test "parse: srgbClr slots decoded as RGB" {
 ///|
 test "parse: sysClr slots decoded with lastClr fallback" {
   let theme = @theme.Theme::parse(office_like_theme())
-  match theme.color_scheme.dk1 {
+  match theme.color_scheme.dk1.base {
     Sys(s) => {
       assert_eq(s.val, "windowText")
       assert_eq(s.last_clr.unwrap().to_hex(), "000000")
     }
     _ => fail("expected Sys for dk1")
   }
-  match theme.color_scheme.lt1 {
+  match theme.color_scheme.lt1.base {
     Sys(s) => {
       assert_eq(s.val, "window")
       assert_eq(s.last_clr.unwrap().to_hex(), "FFFFFF")
