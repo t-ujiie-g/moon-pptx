@@ -13,7 +13,7 @@ pub let ooxml_per_degree : Int = 60_000
 
 ///|
 /// An angle in degrees. Sign convention is OOXML's (positive = clockwise).
-pub(all) struct Angle(Double) derive(Debug)
+pub(all) struct Angle(Double) derive(Eq, Debug)
 
 ///|
 pub fn Angle::degrees(self : Angle) -> Double {

@@ -24,7 +24,7 @@ pub(all) suberror UnitsError {
 pub impl Show for UnitsError
 
 // Types and methods
-pub(all) struct Angle(Double) derive(@debug.Debug)
+pub(all) struct Angle(Double) derive(Eq, @debug.Debug)
 pub fn Angle::degrees(Self) -> Double
 pub fn Angle::from_ooxml(Int) -> Self
 pub fn Angle::to_ooxml(Self) -> Int
@@ -68,7 +68,7 @@ pub fn Inch::to_emu(Self) -> Emu
 pub fn Inch::value(Self) -> Double
 pub impl Show for Inch
 
-pub(all) struct Percentage(Double) derive(@debug.Debug)
+pub(all) struct Percentage(Double) derive(Eq, @debug.Debug)
 pub fn Percentage::from_ooxml(Int) -> Self
 pub fn Percentage::to_ooxml(Self) -> Int
 pub fn Percentage::value(Self) -> Double

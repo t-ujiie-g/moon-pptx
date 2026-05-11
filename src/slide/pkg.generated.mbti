@@ -32,6 +32,16 @@ pub(all) enum Geometry {
   Custom
 } derive(Eq, @debug.Debug)
 
+pub(all) struct Picture {
+  id : Int
+  name : String
+  transform : Transform?
+  geometry : Geometry?
+  embed_id : String
+  link_id : String
+  src_rect : SrcRect?
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Placeholder {
   ph_type : String
   idx : Int
@@ -235,6 +245,7 @@ pub fn PresetShape::to_xml(Self) -> String
 
 pub(all) enum Shape {
   AutoShape(AutoShape)
+  Picture(Picture)
   Unknown(String)
 } derive(Eq, @debug.Debug)
 
@@ -254,6 +265,13 @@ pub(all) struct Slide {
   clr_map_override : @slide_master.ClrMapOverride
 } derive(Eq, @debug.Debug)
 pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
+
+pub(all) struct SrcRect {
+  left : @units.Percentage
+  top : @units.Percentage
+  right : @units.Percentage
+  bottom : @units.Percentage
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Transform {
   offset : Point

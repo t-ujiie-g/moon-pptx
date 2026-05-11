@@ -143,7 +143,7 @@ test "parse: AutoShape with explicit placeholder idx" {
 ///|
 test "parse: shape order is preserved" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  // shapes[0] = title sp, shapes[1] = subtitle sp, shapes[2] = pic Unknown
+  // shapes[0] = title sp, shapes[1] = subtitle sp, shapes[2] = picture
   match slide.shapes[0] {
     AutoShape(s) => assert_eq(s.id, 2)
     _ => fail("expected AutoShape at index 0")
@@ -153,8 +153,11 @@ test "parse: shape order is preserved" {
     _ => fail("expected AutoShape at index 1")
   }
   match slide.shapes[2] {
-    Unknown(name) => assert_eq(name, "pic")
-    _ => fail("expected Unknown at index 2")
+    Picture(p) => {
+      assert_eq(p.id, 4)
+      assert_eq(p.embed_id, "rId2")
+    }
+    _ => fail("expected Picture at index 2")
   }
 }
 

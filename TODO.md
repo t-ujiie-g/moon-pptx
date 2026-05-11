@@ -193,7 +193,7 @@ DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
 - [ ] **Phase 3c — Slide parser: shapes, group shapes, connectors, pictures, tables**
   - [x] **3c1**: `src/slide/` skeleton — `Slide`, `Shape { AutoShape | Unknown(String) }`, `AutoShape` (id/name/placeholder/transform via `<a:xfrm>`), `clrMapOvr` reuse from `@slide_master`. 10 tests, 162 total × 4 backends.
   - [x] **3c2**: `PresetShape` enum (187 `ST_ShapeType` variants) + `Geometry { Preset(PresetShape, Array[ShapeAdjustValue]) | Custom }`. Parses `<a:prstGeom prst="…">` + `<a:avLst>` adjustment formulas; `<a:custGeom>` recorded as `Custom` with path data deferred. 8 tests, 170 total × 4 backends.
-  - [ ] 3c3: Picture (`p:pic`) parser
+  - [x] **3c3**: `Picture` struct (id/name/transform/geometry + `embed_id` / `link_id` from `<a:blip>` + `SrcRect` crop in 1000ths-of-percent). New `Shape::Picture` variant replaces the `Unknown("pic")` placeholder. `@units.Percentage` and `@units.Angle` now derive `Eq` (needed for crop-comparison tests). 8 tests, 178 total × 4 backends.
   - [ ] 3c4: Group shape recursion + connectors, charts
 - [ ] Text parser: paragraph, run, list style, font, hyperlink
 - [ ] Fill / stroke / effect parsers
@@ -443,5 +443,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-11** — Phase 3b done: `src/slide_master/` reads `p:sldMaster` and `p:sldLayout` into typed structs (`ColorMapping`, `SlideLayoutRef`, `ClrMapOverride`, `SlideLayoutType` with 27 spec values), and `inheritance.mbt` resolves theme ← master ← layout colour chains. Shared `src/oxml/` namespace constants extracted (used by theme + slide_master). 152 tests on all four backends.
 - **2026-05-11** — Phase 3c1 done: `src/slide/` skeleton parses `<p:sld>` into typed `Slide` with shape list (AutoShape modelled with id/name/placeholder/transform; pic/cxnSp/grpSp/graphicFrame land as `Unknown(name)` placeholders for later 3c slices). 10 tests, 162 total × 4 backends.
 - **2026-05-11** — Phase 3c2 done: `PresetShape` enum covers all 187 `ST_ShapeType` values with `from_xml` / `to_xml`; `Geometry` ADT and `ShapeAdjustValue` carry `<a:prstGeom>` adjustment formulas verbatim (formula language deferred). `<a:custGeom>` is recognised but its path data is intentionally opaque for now. 8 tests, 170 total × 4 backends.
+- **2026-05-11** — Phase 3c3 done: `Picture` shape parsed from `<p:pic>` (id, name, transform, geometry, blip embed/link rIds, srcRect crop). `Shape::Picture` variant added, `Unknown("pic")` placeholder removed. `@units.Percentage` and `@units.Angle` gained `derive(Eq)` so structural comparison works in tests. 8 tests, 178 total × 4 backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

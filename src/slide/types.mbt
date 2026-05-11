@@ -51,8 +51,9 @@ pub(all) struct Placeholder {
 /// the slide-shape order even before every shape kind is modelled.
 pub(all) enum Shape {
   AutoShape(AutoShape)
+  Picture(Picture)
   /// Placeholder for an as-yet-unmodelled shape kind. Payload is the
-  /// element's local name (`pic`, `cxnSp`, `grpSp`, `graphicFrame`).
+  /// element's local name (`cxnSp`, `grpSp`, `graphicFrame`).
   Unknown(String)
 } derive(Eq, Debug)
 

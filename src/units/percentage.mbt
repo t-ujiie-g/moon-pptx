@@ -15,7 +15,7 @@ pub let ooxml_per_percent : Int = 1000
 ///|
 /// A percentage value, expressed in percent (e.g. `Percentage(50.0)` is 50%).
 /// Negative values are permitted; OOXML element constraints decide validity.
-pub(all) struct Percentage(Double) derive(Debug)
+pub(all) struct Percentage(Double) derive(Eq, Debug)
 
 ///|
 pub fn Percentage::value(self : Percentage) -> Double {
