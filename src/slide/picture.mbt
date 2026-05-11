@@ -29,5 +29,8 @@ pub(all) struct Picture {
   name : String
   transform : Transform?
   geometry : Geometry?
+  /// `<a:ln>` outline parsed off `<p:spPr>` — e.g. a border around the
+  /// picture. `None` means the picture has no outline.
+  stroke : @oxml.Stroke?
   blip_fill : @oxml.BlipFill
 } derive(Eq, Debug)

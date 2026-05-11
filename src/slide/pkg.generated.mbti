@@ -84,6 +84,7 @@ pub(all) struct AutoShape {
   placeholder : Placeholder?
   transform : Transform?
   geometry : Geometry?
+  stroke : @oxml.Stroke?
   text_body : TextBody?
 } derive(Eq, @debug.Debug)
 
@@ -124,6 +125,7 @@ pub(all) struct Connector {
   name : String
   transform : Transform?
   geometry : Geometry?
+  stroke : @oxml.Stroke?
   start : ConnectionEnd?
   end : ConnectionEnd?
 } derive(Eq, @debug.Debug)
@@ -184,6 +186,7 @@ pub(all) struct Picture {
   name : String
   transform : Transform?
   geometry : Geometry?
+  stroke : @oxml.Stroke?
   blip_fill : @oxml.BlipFill
 } derive(Eq, @debug.Debug)
 

@@ -36,6 +36,9 @@ pub(all) struct Connector {
   name : String
   transform : Transform?
   geometry : Geometry?
+  /// `<a:ln>` outline parsed off `<p:spPr>`. Connectors almost always
+  /// carry one (they're a line by definition).
+  stroke : @oxml.Stroke?
   start : ConnectionEnd?
   end : ConnectionEnd?
 } derive(Eq, Debug)

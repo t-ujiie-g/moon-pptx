@@ -76,6 +76,9 @@ pub(all) struct AutoShape {
   placeholder : Placeholder?
   transform : Transform?
   geometry : Geometry?
+  /// `<a:ln>` outline parsed off `<p:spPr>`. `None` means "inherit
+  /// from the placeholder / theme defaults".
+  stroke : @oxml.Stroke?
   text_body : TextBody?
 } derive(Eq, Debug)
 

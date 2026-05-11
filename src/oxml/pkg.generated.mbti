@@ -20,6 +20,8 @@ pub fn parse_fill(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> Fi
 
 pub fn parse_percent_value(String) -> @units.Percentage?
 
+pub fn parse_stroke(@xml.XmlReader, Array[(@xml.QName, String)]) -> Stroke raise StrokeError
+
 pub let presentation_ns : String
 
 // Errors
@@ -36,6 +38,12 @@ pub(all) suberror FillError {
 } derive(Eq, @debug.Debug)
 pub impl Show for FillError
 
+pub(all) suberror StrokeError {
+  MalformedStroke(String)
+  FillFailure(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for StrokeError
+
 pub(all) suberror Utf8Error {
   StrayContinuation(Int)
   TruncatedSequence(Int)
@@ -43,6 +51,29 @@ pub(all) suberror Utf8Error {
 pub impl Show for Utf8Error
 
 // Types and methods
+pub(all) struct ArrowEnd {
+  arrow_type : ArrowType
+  width : ArrowSize?
+  length : ArrowSize?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ArrowSize {
+  SizeSmall
+  SizeMedium
+  SizeLarge
+} derive(Eq, @debug.Debug)
+pub fn ArrowSize::from_xml(String) -> Self?
+
+pub(all) enum ArrowType {
+  ArrowNone
+  ArrowTriangle
+  ArrowStealth
+  ArrowDiamond
+  ArrowOval
+  ArrowArrow
+} derive(Eq, @debug.Debug)
+pub fn ArrowType::from_xml(String) -> Self?
+
 pub(all) struct BlipFill {
   embed_id : String
   link_id : String
@@ -73,6 +104,30 @@ pub(all) enum ColorBase {
   Scrgb(@units.Percentage, @units.Percentage, @units.Percentage)
 } derive(Eq, @debug.Debug)
 pub impl Show for ColorBase
+
+pub(all) enum CompoundLine {
+  CmpdSingle
+  CmpdDouble
+  CmpdThickThin
+  CmpdThinThick
+  CmpdTriple
+} derive(Eq, @debug.Debug)
+pub fn CompoundLine::from_xml(String) -> Self?
+
+pub(all) enum DashStyle {
+  DashSolid
+  DashDot
+  DashDash
+  DashLgDash
+  DashDashDot
+  DashLgDashDot
+  DashLgDashDotDot
+  DashSysDash
+  DashSysDot
+  DashSysDashDot
+  DashSysDashDotDot
+} derive(Eq, @debug.Debug)
+pub fn DashStyle::from_xml(String) -> Self?
 
 pub(all) enum Fill {
   NoFill
@@ -109,11 +164,30 @@ pub(all) struct GradientStop {
   color : Color
 } derive(Eq, @debug.Debug)
 
+pub(all) enum LineCap {
+  CapFlat
+  CapSquare
+  CapRound
+} derive(Eq, @debug.Debug)
+pub fn LineCap::from_xml(String) -> Self?
+
+pub(all) enum LineJoin {
+  JoinRound
+  JoinBevel
+  JoinMiter(@units.Percentage?)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Pattern {
   preset : String
   fg : Color
   bg : Color
 } derive(Eq, @debug.Debug)
+
+pub(all) enum PenAlignment {
+  AlignPenCenter
+  AlignPenInset
+} derive(Eq, @debug.Debug)
+pub fn PenAlignment::from_xml(String) -> Self?
 
 pub(all) struct SrcRect {
   left : @units.Percentage
@@ -122,6 +196,19 @@ pub(all) struct SrcRect {
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
 pub fn SrcRect::default() -> Self
+
+pub(all) struct Stroke {
+  width : @units.Emu?
+  cap : LineCap?
+  compound : CompoundLine?
+  alignment : PenAlignment?
+  fill : Fill?
+  dash : DashStyle?
+  join : LineJoin?
+  head_end : ArrowEnd?
+  tail_end : ArrowEnd?
+} derive(Eq, @debug.Debug)
+pub fn Stroke::empty() -> Self
 
 pub(all) struct SysColor {
   val : String
