@@ -27,9 +27,32 @@ pub(all) struct AutoShape {
   geometry : Geometry?
 } derive(Eq, @debug.Debug)
 
+pub(all) struct ConnectionEnd {
+  shape_id : Int
+  idx : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Connector {
+  id : Int
+  name : String
+  transform : Transform?
+  geometry : Geometry?
+  start : ConnectionEnd?
+  end : ConnectionEnd?
+} derive(Eq, @debug.Debug)
+
 pub(all) enum Geometry {
   Preset(PresetShape, Array[ShapeAdjustValue])
   Custom
+} derive(Eq, @debug.Debug)
+
+pub(all) struct GroupShape {
+  id : Int
+  name : String
+  transform : Transform?
+  child_offset : Point?
+  child_extent : Size?
+  children : Array[Shape]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Picture {
@@ -246,6 +269,8 @@ pub fn PresetShape::to_xml(Self) -> String
 pub(all) enum Shape {
   AutoShape(AutoShape)
   Picture(Picture)
+  Connector(Connector)
+  Group(GroupShape)
   Unknown(String)
 } derive(Eq, @debug.Debug)
 

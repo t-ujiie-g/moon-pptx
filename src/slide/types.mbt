@@ -47,13 +47,16 @@ pub(all) struct Placeholder {
 
 ///|
 /// One shape in a `p:spTree`. Variants are filled in across Phase 3c
-/// commits; `Unknown` is the temporary catch-all that lets us preserve
-/// the slide-shape order even before every shape kind is modelled.
+/// commits; `Unknown` remains as the temporary catch-all for shape
+/// kinds that are not yet modelled (`p:graphicFrame` for tables /
+/// charts / SmartArt and `p:contentPart` for extensions).
 pub(all) enum Shape {
   AutoShape(AutoShape)
   Picture(Picture)
+  Connector(Connector)
+  Group(GroupShape)
   /// Placeholder for an as-yet-unmodelled shape kind. Payload is the
-  /// element's local name (`cxnSp`, `grpSp`, `graphicFrame`).
+  /// element's local name (`graphicFrame`, `contentPart`).
   Unknown(String)
 } derive(Eq, Debug)
 

@@ -91,8 +91,11 @@ fn parse_sp_tree(
           "grpSpPr" => skip_subtree(r)
           "sp" => shapes.push(AutoShape(parse_auto_shape(r, attrs)))
           "pic" => shapes.push(Picture(parse_picture(r)))
-          // Placeholder for shape kinds we'll fill in across later 3c slices.
-          "cxnSp" | "grpSp" | "graphicFrame" | "contentPart" => {
+          "cxnSp" => shapes.push(Connector(parse_connector(r)))
+          "grpSp" => shapes.push(Group(parse_group_shape(r)))
+          // Remaining placeholders for later phases (graphicFrame =
+          // table / chart / SmartArt host; contentPart = extension).
+          "graphicFrame" | "contentPart" => {
             shapes.push(Unknown(child.local_name))
             skip_subtree(r)
           }
@@ -102,6 +105,259 @@ fn parse_sp_tree(
       EndElement(_) => break
       _ => ()
     }
+  }
+}
+
+// --- Connector ---
+
+///|
+fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
+  let mut id = 0
+  let mut name = ""
+  let mut transform : Transform? = None
+  let mut geometry : Geometry? = None
+  let mut start : ConnectionEnd? = None
+  let mut end : ConnectionEnd? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, _) => {
+        if child.uri != @oxml.presentation_ns {
+          skip_subtree(r)
+          continue
+        }
+        match child.local_name {
+          "nvCxnSpPr" => {
+            let (parsed_id, parsed_name, st, en) = parse_nv_cxn_sp_pr(r)
+            id = parsed_id
+            name = parsed_name
+            start = st
+            end = en
+          }
+          "spPr" => {
+            let (xfrm, geom) = parse_sp_pr(r)
+            transform = xfrm
+            geometry = geom
+          }
+          // style, extLst — Phase 3 later slices
+          _ => skip_subtree(r)
+        }
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { id, name, transform, geometry, start, end }
+}
+
+///|
+fn parse_nv_cxn_sp_pr(
+  r : @xml.XmlReader,
+) -> (Int, String, ConnectionEnd?, ConnectionEnd?) raise SlideError {
+  let mut id = 0
+  let mut name = ""
+  let mut start : ConnectionEnd? = None
+  let mut end : ConnectionEnd? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) =>
+        if child.uri == @oxml.presentation_ns {
+          match child.local_name {
+            "cNvPr" => {
+              id = parse_int_attr(attrs, "id")
+              name = optional_attr(attrs, "name")
+              skip_subtree(r)
+            }
+            "cNvCxnSpPr" => {
+              let (st, en) = parse_cxn_sp_locks(r)
+              start = st
+              end = en
+            }
+            // nvPr — placeholder/extension info, not modelled here
+            _ => skip_subtree(r)
+          }
+        } else {
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  (id, name, start, end)
+}
+
+///|
+/// Parse the body of `<p:cNvCxnSpPr>` looking for `<a:stCxn>` and
+/// `<a:endCxn>` children.
+fn parse_cxn_sp_locks(
+  r : @xml.XmlReader,
+) -> (ConnectionEnd?, ConnectionEnd?) raise SlideError {
+  let mut start : ConnectionEnd? = None
+  let mut end : ConnectionEnd? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) => {
+        if child.uri == @oxml.drawing_ns {
+          match child.local_name {
+            "stCxn" => start = Some(parse_connection_end(attrs))
+            "endCxn" => end = Some(parse_connection_end(attrs))
+            _ => ()
+          }
+        }
+        skip_subtree(r)
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  (start, end)
+}
+
+///|
+fn parse_connection_end(
+  attrs : Array[(@xml.QName, String)],
+) -> ConnectionEnd raise SlideError {
+  { shape_id: parse_int_attr(attrs, "id"), idx: parse_int_attr(attrs, "idx") }
+}
+
+// --- GroupShape (recursive) ---
+
+///|
+fn parse_group_shape(r : @xml.XmlReader) -> GroupShape raise SlideError {
+  let mut id = 0
+  let mut name = ""
+  let mut transform : Transform? = None
+  let mut child_offset : Point? = None
+  let mut child_extent : Size? = None
+  let children : Array[Shape] = []
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) => {
+        if child.uri != @oxml.presentation_ns {
+          skip_subtree(r)
+          continue
+        }
+        match child.local_name {
+          "nvGrpSpPr" => {
+            // Same shape as nvSpPr/nvPicPr's first three children;
+            // re-use that extractor and discard the placeholder slot.
+            let (parsed_id, parsed_name, _) = parse_nv_sp_pr(r)
+            id = parsed_id
+            name = parsed_name
+          }
+          "grpSpPr" => {
+            let (xfrm, ch_off, ch_ext) = parse_grp_sp_pr(r)
+            transform = xfrm
+            child_offset = ch_off
+            child_extent = ch_ext
+          }
+          // Recurse into child shapes — same dispatch as parse_sp_tree.
+          "sp" => children.push(AutoShape(parse_auto_shape(r, child_attrs)))
+          "pic" => children.push(Picture(parse_picture(r)))
+          "cxnSp" => children.push(Connector(parse_connector(r)))
+          "grpSp" => children.push(Group(parse_group_shape(r)))
+          "graphicFrame" | "contentPart" => {
+            children.push(Unknown(child.local_name))
+            skip_subtree(r)
+          }
+          _ => skip_subtree(r)
+        }
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { id, name, transform, child_offset, child_extent, children }
+}
+
+///|
+/// Parse `<p:grpSpPr>` body. Returns `(transform?, child_offset?,
+/// child_extent?)`. The child-coordinate fields come from `<a:chOff>` /
+/// `<a:chExt>` which only appear inside group-shape `xfrm`s.
+fn parse_grp_sp_pr(
+  r : @xml.XmlReader,
+) -> (Transform?, Point?, Size?) raise SlideError {
+  let mut transform : Transform? = None
+  let mut child_offset : Point? = None
+  let mut child_extent : Size? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, _) =>
+        if child.uri != @oxml.drawing_ns {
+          skip_subtree(r)
+        } else if child.local_name == "xfrm" {
+          let (t, co, ce) = parse_group_xfrm(r)
+          transform = t
+          child_offset = co
+          child_extent = ce
+        } else {
+          // fill / line / effects / extLst — later phases
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  (transform, child_offset, child_extent)
+}
+
+///|
+/// Parse a group-shape `<a:xfrm>` body — accepts `<a:off>` / `<a:ext>`
+/// (the group's own placement) plus `<a:chOff>` / `<a:chExt>` (the child
+/// coordinate space). All four are optional; missing pairs collapse to
+/// `None`.
+fn parse_group_xfrm(
+  r : @xml.XmlReader,
+) -> (Transform?, Point?, Size?) raise SlideError {
+  let mut offset : Point? = None
+  let mut extent : Size? = None
+  let mut child_offset : Point? = None
+  let mut child_extent : Size? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) => {
+        if child.uri == @oxml.drawing_ns {
+          match child.local_name {
+            "off" => offset = Some(parse_point_xy(attrs))
+            "ext" => extent = Some(parse_size_xy(attrs))
+            "chOff" => child_offset = Some(parse_point_xy(attrs))
+            "chExt" => child_extent = Some(parse_size_xy(attrs))
+            _ => ()
+          }
+        }
+        skip_subtree(r)
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  let transform = match (offset, extent) {
+    (Some(o), Some(e)) => Some({ offset: o, extent: e })
+    _ => None
+  }
+  (transform, child_offset, child_extent)
+}
+
+///|
+fn parse_point_xy(
+  attrs : Array[(@xml.QName, String)],
+) -> Point raise SlideError {
+  {
+    x: @units.Emu(parse_int64_attr(attrs, "x")),
+    y: @units.Emu(parse_int64_attr(attrs, "y")),
+  }
+}
+
+///|
+fn parse_size_xy(attrs : Array[(@xml.QName, String)]) -> Size raise SlideError {
+  {
+    cx: @units.Emu(parse_int64_attr(attrs, "cx")),
+    cy: @units.Emu(parse_int64_attr(attrs, "cy")),
   }
 }
 
