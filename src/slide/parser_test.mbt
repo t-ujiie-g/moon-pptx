@@ -134,7 +134,7 @@ test "parse: shape order is preserved" {
   match slide.shapes[2] {
     Picture(p) => {
       assert_eq(p.id, 4)
-      assert_eq(p.embed_id, "rId2")
+      assert_eq(p.blip_fill.embed_id, "rId2")
     }
     _ => fail("expected Picture at index 2")
   }

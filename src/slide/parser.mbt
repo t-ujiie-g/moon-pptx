@@ -369,13 +369,11 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
   let mut name = ""
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
-  let mut embed_id = ""
-  let mut link_id = ""
-  let mut src_rect : SrcRect? = None
+  let mut blip_fill : @oxml.BlipFill? = None
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) => {
+      StartElement(child, attrs) => {
         if child.uri != @oxml.presentation_ns {
           skip_subtree(r)
           continue
@@ -389,10 +387,15 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
             name = parsed_name
           }
           "blipFill" => {
-            let (e, l, sr) = parse_blip_fill(r)
-            embed_id = e
-            link_id = l
-            src_rect = sr
+            // Delegate to the shared @oxml.parse_fill, which handles
+            // blip / srcRect / stretch / tile uniformly.
+            let f = @oxml.parse_fill(r, child, attrs) catch {
+              e => raise Malformed("p:blipFill: " + e.to_string())
+            }
+            blip_fill = match f {
+              BlipFillVariant(b) => Some(b)
+              _ => raise Malformed("p:blipFill resolved to non-blip fill")
+            }
           }
           "spPr" => {
             let (xfrm, geom) = parse_sp_pr(r)
@@ -407,98 +410,11 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
       _ => ()
     }
   }
-  if embed_id.length() == 0 && link_id.length() == 0 {
-    raise Malformed("<p:pic> blip is missing both r:embed and r:link")
+  let bf = match blip_fill {
+    Some(b) => b
+    None => raise Malformed("<p:pic> is missing <p:blipFill>")
   }
-  { id, name, transform, geometry, embed_id, link_id, src_rect }
-}
-
-///|
-/// Parse `<p:blipFill>` body. Returns `(embed_id, link_id, src_rect?)`.
-fn parse_blip_fill(
-  r : @xml.XmlReader,
-) -> (String, String, SrcRect?) raise SlideError {
-  let mut embed_id = ""
-  let mut link_id = ""
-  let mut src_rect : SrcRect? = None
-  while true {
-    let ev = next_event(r)
-    match ev {
-      StartElement(child, attrs) => {
-        if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "blip" => {
-            let (e, l) = extract_blip_rels(attrs)
-            embed_id = e
-            link_id = l
-            // colour modifications and image effects nested here are
-            // intentionally skipped for now.
-            skip_subtree(r)
-          }
-          "srcRect" => {
-            src_rect = Some(parse_src_rect_attrs(attrs))
-            skip_subtree(r)
-          }
-          // stretch / tile / fillRect — fill-mode handling lives outside
-          // this slice; consume and discard.
-          _ => skip_subtree(r)
-        }
-      }
-      EndElement(_) => break
-      _ => ()
-    }
-  }
-  (embed_id, link_id, src_rect)
-}
-
-///|
-fn extract_blip_rels(attrs : Array[(@xml.QName, String)]) -> (String, String) {
-  let mut embed_id = ""
-  let mut link_id = ""
-  for kv in attrs {
-    if kv.0.uri == @oxml.office_relationships_ns {
-      if kv.0.local_name == "embed" {
-        embed_id = kv.1
-      } else if kv.0.local_name == "link" {
-        link_id = kv.1
-      }
-    }
-  }
-  (embed_id, link_id)
-}
-
-///|
-fn parse_src_rect_attrs(
-  attrs : Array[(@xml.QName, String)],
-) -> SrcRect raise SlideError {
-  {
-    left: parse_percent_attr(attrs, "l"),
-    top: parse_percent_attr(attrs, "t"),
-    right: parse_percent_attr(attrs, "r"),
-    bottom: parse_percent_attr(attrs, "b"),
-  }
-}
-
-///|
-fn parse_percent_attr(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Percentage raise SlideError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int_decimal(kv.1) {
-        Some(n) => return @units.Percentage::from_ooxml(n)
-        None =>
-          raise Malformed(
-            "srcRect attribute " + name + " is not an integer: " + kv.1,
-          )
-      }
-    }
-  }
-  @units.Percentage(0.0)
+  { id, name, transform, geometry, blip_fill: bf }
 }
 
 // --- AutoShape ---

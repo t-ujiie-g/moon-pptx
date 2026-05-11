@@ -184,9 +184,7 @@ pub(all) struct Picture {
   name : String
   transform : Transform?
   geometry : Geometry?
-  embed_id : String
-  link_id : String
-  src_rect : SrcRect?
+  blip_fill : @oxml.BlipFill
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Placeholder {
@@ -436,13 +434,6 @@ pub(all) struct Slide {
   clr_map_override : @slide_master.ClrMapOverride
 } derive(Eq, @debug.Debug)
 pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
-
-pub(all) struct SrcRect {
-  left : @units.Percentage
-  top : @units.Percentage
-  right : @units.Percentage
-  bottom : @units.Percentage
-} derive(Eq, @debug.Debug)
 
 pub(all) enum StrikeKind {
   StNoStrike

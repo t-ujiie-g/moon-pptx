@@ -258,8 +258,12 @@ fn parse_bu_blip(r : @xml.XmlReader) -> Bullet raise SlideError {
     match ev {
       StartElement(child, child_attrs) => {
         if child.uri == @oxml.drawing_ns && child.local_name == "blip" {
-          let (embed, _) = extract_blip_rels(child_attrs)
-          rid = embed
+          for kv in child_attrs {
+            if kv.0.uri == @oxml.office_relationships_ns &&
+              kv.0.local_name == "embed" {
+              rid = kv.1
+            }
+          }
         }
         skip_subtree(r)
       }

@@ -40,9 +40,9 @@ test "parse: typical picture with embed and stretch" {
     Picture(p) => {
       assert_eq(p.id, 5)
       assert_eq(p.name, "Pic1")
-      assert_eq(p.embed_id, "rId7")
-      assert_eq(p.link_id, "")
-      assert_true(p.src_rect is None)
+      assert_eq(p.blip_fill.embed_id, "rId7")
+      assert_eq(p.blip_fill.link_id, "")
+      assert_true(p.blip_fill.src_rect is None)
       let xfrm = p.transform.unwrap()
       assert_eq(xfrm.offset.x, @units.Emu(100L))
       assert_eq(xfrm.extent.cy, @units.Emu(400L))
@@ -63,8 +63,8 @@ test "parse: picture with linked rId (no embed)" {
   let slide = @slide.Slide::parse(slide_with_pic(inner))
   match slide.shapes[0] {
     Picture(p) => {
-      assert_eq(p.embed_id, "")
-      assert_eq(p.link_id, "rId9")
+      assert_eq(p.blip_fill.embed_id, "")
+      assert_eq(p.blip_fill.link_id, "rId9")
     }
     _ => fail("expected Picture")
   }
@@ -82,7 +82,7 @@ test "parse: picture with srcRect crop" {
   let slide = @slide.Slide::parse(slide_with_pic(inner))
   match slide.shapes[0] {
     Picture(p) => {
-      let sr = p.src_rect.unwrap()
+      let sr = p.blip_fill.src_rect.unwrap()
       // l=10000 = 10% (1000ths-of-percent)
       assert_eq(sr.left, @units.Percentage(10.0))
       assert_eq(sr.top, @units.Percentage(20.0))
@@ -101,7 +101,7 @@ test "parse: srcRect with no attributes defaults to zeros" {
   let slide = @slide.Slide::parse(slide_with_pic(inner))
   match slide.shapes[0] {
     Picture(p) => {
-      let sr = p.src_rect.unwrap()
+      let sr = p.blip_fill.src_rect.unwrap()
       assert_eq(sr.left, @units.Percentage(0.0))
       assert_eq(sr.top, @units.Percentage(0.0))
       assert_eq(sr.right, @units.Percentage(0.0))
@@ -140,7 +140,7 @@ test "parse: blip with image effects nested children skipped cleanly" {
     "<p:spPr/>"
   let slide = @slide.Slide::parse(slide_with_pic(inner))
   match slide.shapes[0] {
-    Picture(p) => assert_eq(p.embed_id, "rId1")
+    Picture(p) => assert_eq(p.blip_fill.embed_id, "rId1")
     _ => fail("expected Picture")
   }
 }
