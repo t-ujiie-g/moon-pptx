@@ -180,17 +180,187 @@ pub fn CapsKind::from_xml(s : String) -> CapsKind? {
 }
 
 ///|
-/// Paragraph property record. Phase 3d1 only carries the bullet-style
-/// `lvl` indentation level (default 0); 3d3 fills in alignment / bullet
-/// / indent / margin fields.
+/// Paragraph alignment (`ST_TextAlignType`, ECMA-376 §20.1.10.59).
+pub(all) enum TextAlignment {
+  AlignLeft // "l"
+  AlignCenter // "ctr"
+  AlignRight // "r"
+  AlignJustify // "just"
+  AlignJustifyLow // "justLow"
+  AlignDistributed // "dist"
+  AlignThaiDistributed // "thaiDist"
+} derive(Eq, Debug)
+
+///|
+pub fn TextAlignment::from_xml(s : String) -> TextAlignment? {
+  match s {
+    "l" => Some(AlignLeft)
+    "ctr" => Some(AlignCenter)
+    "r" => Some(AlignRight)
+    "just" => Some(AlignJustify)
+    "justLow" => Some(AlignJustifyLow)
+    "dist" => Some(AlignDistributed)
+    "thaiDist" => Some(AlignThaiDistributed)
+    _ => None
+  }
+}
+
+///|
+/// Auto-number bullet scheme (`ST_TextAutonumberScheme`, §20.1.10.66).
+/// Covers every variant in the spec.
+pub(all) enum AutoNumType {
+  // Arabic
+  ArabicPeriod // "arabicPeriod" — "1."
+  ArabicParenR // "arabicParenR" — "1)"
+  ArabicParenBoth // "arabicParenBoth" — "(1)"
+  ArabicPlain // "arabicPlain" — "1"
+  // Arabic (DBNum / regional)
+  ArabicDbPeriod // "arabicDbPeriod"
+  ArabicDbPlain // "arabicDbPlain"
+  // Roman upper
+  RomanUcPeriod // "romanUcPeriod"
+  RomanUcParenR // "romanUcParenR"
+  RomanUcParenBoth // "romanUcParenBoth"
+  // Roman lower
+  RomanLcPeriod // "romanLcPeriod"
+  RomanLcParenR // "romanLcParenR"
+  RomanLcParenBoth // "romanLcParenBoth"
+  // Alpha upper
+  AlphaUcPeriod // "alphaUcPeriod"
+  AlphaUcParenR // "alphaUcParenR"
+  AlphaUcParenBoth // "alphaUcParenBoth"
+  // Alpha lower
+  AlphaLcPeriod // "alphaLcPeriod"
+  AlphaLcParenR // "alphaLcParenR"
+  AlphaLcParenBoth // "alphaLcParenBoth"
+  // Circle (numeric)
+  CircleNumDbPlain // "circleNumDbPlain"
+  CircleNumWdBlackPlain // "circleNumWdBlackPlain"
+  CircleNumWdWhitePlain // "circleNumWdWhitePlain"
+  // Ea / Hindi / Thai / Hebrew (rarely emitted but legal)
+  Ea1ChsPlain // "ea1ChsPlain"
+  Ea1ChsPeriod // "ea1ChsPeriod"
+  Ea1ChtPlain // "ea1ChtPlain"
+  Ea1ChtPeriod // "ea1ChtPeriod"
+  Ea1JpnChsDbPeriod // "ea1JpnChsDbPeriod"
+  Ea1JpnKorPlain // "ea1JpnKorPlain"
+  Ea1JpnKorPeriod // "ea1JpnKorPeriod"
+  Hebrew2Minus // "hebrew2Minus"
+  ThaiAlphaPeriod // "thaiAlphaPeriod"
+  ThaiAlphaParenR // "thaiAlphaParenR"
+  ThaiAlphaParenBoth // "thaiAlphaParenBoth"
+  ThaiNumPeriod // "thaiNumPeriod"
+  ThaiNumParenR // "thaiNumParenR"
+  ThaiNumParenBoth // "thaiNumParenBoth"
+  HindiAlphaPeriod // "hindiAlphaPeriod"
+  HindiNumPeriod // "hindiNumPeriod"
+  HindiNumParenR // "hindiNumParenR"
+  HindiAlpha1Period // "hindiAlpha1Period"
+} derive(Eq, Debug)
+
+///|
+pub fn AutoNumType::from_xml(s : String) -> AutoNumType? {
+  match s {
+    "arabicPeriod" => Some(ArabicPeriod)
+    "arabicParenR" => Some(ArabicParenR)
+    "arabicParenBoth" => Some(ArabicParenBoth)
+    "arabicPlain" => Some(ArabicPlain)
+    "arabicDbPeriod" => Some(ArabicDbPeriod)
+    "arabicDbPlain" => Some(ArabicDbPlain)
+    "romanUcPeriod" => Some(RomanUcPeriod)
+    "romanUcParenR" => Some(RomanUcParenR)
+    "romanUcParenBoth" => Some(RomanUcParenBoth)
+    "romanLcPeriod" => Some(RomanLcPeriod)
+    "romanLcParenR" => Some(RomanLcParenR)
+    "romanLcParenBoth" => Some(RomanLcParenBoth)
+    "alphaUcPeriod" => Some(AlphaUcPeriod)
+    "alphaUcParenR" => Some(AlphaUcParenR)
+    "alphaUcParenBoth" => Some(AlphaUcParenBoth)
+    "alphaLcPeriod" => Some(AlphaLcPeriod)
+    "alphaLcParenR" => Some(AlphaLcParenR)
+    "alphaLcParenBoth" => Some(AlphaLcParenBoth)
+    "circleNumDbPlain" => Some(CircleNumDbPlain)
+    "circleNumWdBlackPlain" => Some(CircleNumWdBlackPlain)
+    "circleNumWdWhitePlain" => Some(CircleNumWdWhitePlain)
+    "ea1ChsPlain" => Some(Ea1ChsPlain)
+    "ea1ChsPeriod" => Some(Ea1ChsPeriod)
+    "ea1ChtPlain" => Some(Ea1ChtPlain)
+    "ea1ChtPeriod" => Some(Ea1ChtPeriod)
+    "ea1JpnChsDbPeriod" => Some(Ea1JpnChsDbPeriod)
+    "ea1JpnKorPlain" => Some(Ea1JpnKorPlain)
+    "ea1JpnKorPeriod" => Some(Ea1JpnKorPeriod)
+    "hebrew2Minus" => Some(Hebrew2Minus)
+    "thaiAlphaPeriod" => Some(ThaiAlphaPeriod)
+    "thaiAlphaParenR" => Some(ThaiAlphaParenR)
+    "thaiAlphaParenBoth" => Some(ThaiAlphaParenBoth)
+    "thaiNumPeriod" => Some(ThaiNumPeriod)
+    "thaiNumParenR" => Some(ThaiNumParenR)
+    "thaiNumParenBoth" => Some(ThaiNumParenBoth)
+    "hindiAlphaPeriod" => Some(HindiAlphaPeriod)
+    "hindiNumPeriod" => Some(HindiNumPeriod)
+    "hindiNumParenR" => Some(HindiNumParenR)
+    "hindiAlpha1Period" => Some(HindiAlpha1Period)
+    _ => None
+  }
+}
+
+///|
+/// Bullet specification for a paragraph (`<a:buNone>` / `<a:buChar>` /
+/// `<a:buAutoNum>` / `<a:buBlip>`). The bullet font and colour children
+/// (`<a:buFont>`, `<a:buClr>`, etc.) are not modelled here; they live on
+/// the paragraph and ride along through `RunProperties` for bullet text
+/// rendering when 3e adds the full bullet-style ADT.
+pub(all) enum Bullet {
+  BulNone
+  /// `<a:buChar char="•"/>` — the most common bullet (Office defaults).
+  Char(String)
+  /// `<a:buAutoNum type="arabicPeriod" startAt="1"/>`. `start_at` is `1`
+  /// when the attribute is absent (the spec default).
+  AutoNum(AutoNumType, Int)
+  /// `<a:buBlip><a:blip r:embed="rIdN"/></a:buBlip>` — image bullet.
+  /// Payload is the relationship id.
+  Picture(String)
+} derive(Eq, Debug)
+
+///|
+/// Paragraph property record. Phase 3d3 widens the body to cover every
+/// `<a:pPr>` attribute and bullet child PowerPoint emits in practice.
+///
+/// All fields except `level` are `Option`. `level` defaults to `0`
+/// (matches OOXML's missing-attribute default for `lvl`).
 pub(all) struct ParagraphProperties {
-  /// Indentation level (`<a:pPr lvl="…">`); defaults to 0.
+  /// `lvl` indentation level (0-8 for normal lists).
   level : Int
+  /// `algn` — horizontal alignment.
+  alignment : TextAlignment?
+  /// `marL` — left margin in EMU.
+  margin_left : @units.Emu?
+  /// `indent` — first-line indent in EMU; negative = hanging indent.
+  indent : @units.Emu?
+  /// `lineSpacing` — line height (positive = percent, OOXML 1/1000 %).
+  /// Spec also allows an `<a:spcPts>` child for absolute spacing; for now
+  /// we only model the percent form. Widen the ADT if needed.
+  line_spacing : @units.Percentage?
+  /// `spaceBefore` — extra space above the paragraph in points.
+  space_before : @units.Pt?
+  /// `spaceAfter` — extra space below the paragraph in points.
+  space_after : @units.Pt?
+  /// Bullet specification — `None` means "inherit from list style".
+  bullet : Bullet?
 } derive(Eq, Debug)
 
 ///|
 pub fn ParagraphProperties::default() -> ParagraphProperties {
-  { level: 0 }
+  {
+    level: 0,
+    alignment: None,
+    margin_left: None,
+    indent: None,
+    line_spacing: None,
+    space_before: None,
+    space_after: None,
+    bullet: None,
+  }
 }
 
 ///|

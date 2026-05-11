@@ -19,6 +19,49 @@ pub(all) suberror SlideError {
 pub impl Show for SlideError
 
 // Types and methods
+pub(all) enum AutoNumType {
+  ArabicPeriod
+  ArabicParenR
+  ArabicParenBoth
+  ArabicPlain
+  ArabicDbPeriod
+  ArabicDbPlain
+  RomanUcPeriod
+  RomanUcParenR
+  RomanUcParenBoth
+  RomanLcPeriod
+  RomanLcParenR
+  RomanLcParenBoth
+  AlphaUcPeriod
+  AlphaUcParenR
+  AlphaUcParenBoth
+  AlphaLcPeriod
+  AlphaLcParenR
+  AlphaLcParenBoth
+  CircleNumDbPlain
+  CircleNumWdBlackPlain
+  CircleNumWdWhitePlain
+  Ea1ChsPlain
+  Ea1ChsPeriod
+  Ea1ChtPlain
+  Ea1ChtPeriod
+  Ea1JpnChsDbPeriod
+  Ea1JpnKorPlain
+  Ea1JpnKorPeriod
+  Hebrew2Minus
+  ThaiAlphaPeriod
+  ThaiAlphaParenR
+  ThaiAlphaParenBoth
+  ThaiNumPeriod
+  ThaiNumParenR
+  ThaiNumParenBoth
+  HindiAlphaPeriod
+  HindiNumPeriod
+  HindiNumParenR
+  HindiAlpha1Period
+} derive(Eq, @debug.Debug)
+pub fn AutoNumType::from_xml(String) -> Self?
+
 pub(all) struct AutoShape {
   id : Int
   name : String
@@ -26,6 +69,13 @@ pub(all) struct AutoShape {
   transform : Transform?
   geometry : Geometry?
   text_body : TextBody?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Bullet {
+  BulNone
+  Char(String)
+  AutoNum(AutoNumType, Int)
+  Picture(String)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum CapsKind {
@@ -84,6 +134,13 @@ pub(all) enum ParagraphContent {
 
 pub(all) struct ParagraphProperties {
   level : Int
+  alignment : TextAlignment?
+  margin_left : @units.Emu?
+  indent : @units.Emu?
+  line_spacing : @units.Percentage?
+  space_before : @units.Pt?
+  space_after : @units.Pt?
+  bullet : Bullet?
 } derive(Eq, @debug.Debug)
 pub fn ParagraphProperties::default() -> Self
 
@@ -363,6 +420,17 @@ pub(all) enum StrikeKind {
   StDouble
 } derive(Eq, @debug.Debug)
 pub fn StrikeKind::from_xml(String) -> Self?
+
+pub(all) enum TextAlignment {
+  AlignLeft
+  AlignCenter
+  AlignRight
+  AlignJustify
+  AlignJustifyLow
+  AlignDistributed
+  AlignThaiDistributed
+} derive(Eq, @debug.Debug)
+pub fn TextAlignment::from_xml(String) -> Self?
 
 pub(all) struct TextBody {
   paragraphs : Array[Paragraph]

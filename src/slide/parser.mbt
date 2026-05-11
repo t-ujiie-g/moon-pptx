@@ -583,11 +583,7 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
           skip_subtree(r)
         } else {
           match child.local_name {
-            "pPr" => {
-              // 3d3: parse alignment / level / bullet. For now consume.
-              properties = ParagraphProperties::default()
-              skip_subtree(r)
-            }
+            "pPr" => properties = parse_paragraph_properties(r, child_attrs)
             "r" => content.push(RunContent(parse_run(r)))
             "br" => content.push(Break(parse_break(r)))
             "fld" => content.push(FieldContent(parse_field(r, child_attrs)))
@@ -601,6 +597,144 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
     }
   }
   { properties, content }
+}
+
+///|
+/// Parse `<a:pPr>` — attributes off the start tag plus bullet children.
+fn parse_paragraph_properties(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> ParagraphProperties raise SlideError {
+  let level = parse_int_attr_default(attrs, "lvl", 0)
+  let alignment = parse_enum_attr(attrs, "algn", TextAlignment::from_xml)
+  let margin_left = parse_emu_attr(attrs, "marL")
+  let indent = parse_emu_attr(attrs, "indent")
+  let line_spacing = parse_thousandths_pct_attr(attrs, "lineSpacing")
+  let space_before = parse_hundredths_pt_attr(attrs, "spaceBefore")
+  let space_after = parse_hundredths_pt_attr(attrs, "spaceAfter")
+  let mut bullet : Bullet? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri != @oxml.drawing_ns {
+          skip_subtree(r)
+        } else {
+          match child.local_name {
+            "buNone" => {
+              bullet = Some(BulNone)
+              skip_subtree(r)
+            }
+            "buChar" => {
+              bullet = Some(Char(optional_attr(child_attrs, "char")))
+              skip_subtree(r)
+            }
+            "buAutoNum" => {
+              let type_raw = require_attr(child_attrs, "type")
+              let an = match AutoNumType::from_xml(type_raw) {
+                Some(t) => t
+                None => raise Malformed("unknown buAutoNum type: " + type_raw)
+              }
+              let start_at = parse_int_attr_default(child_attrs, "startAt", 1)
+              bullet = Some(AutoNum(an, start_at))
+              skip_subtree(r)
+            }
+            "buBlip" => bullet = Some(parse_bu_blip(r))
+            // buFont, buSzPct, buClr, buClrTx, tabLst — not modelled yet.
+            _ => skip_subtree(r)
+          }
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  {
+    level,
+    alignment,
+    margin_left,
+    indent,
+    line_spacing,
+    space_before,
+    space_after,
+    bullet,
+  }
+}
+
+///|
+/// Parse `<a:buBlip>` body looking for the embedded
+/// `<a:blip r:embed="…"/>`. The blip's relationship is in the
+/// office-relationships namespace under local name `embed` (NOT `id`).
+fn parse_bu_blip(r : @xml.XmlReader) -> Bullet raise SlideError {
+  let mut rid = ""
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) => {
+        if child.uri == @oxml.drawing_ns && child.local_name == "blip" {
+          let (embed, _) = extract_blip_rels(child_attrs)
+          rid = embed
+        }
+        skip_subtree(r)
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  Picture(rid)
+}
+
+///|
+/// Parse a decimal integer attribute and lift to `Emu`. Returns `None`
+/// for absent or unparseable values.
+fn parse_emu_attr(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Emu? {
+  for kv in attrs {
+    if kv.0.local_name == name && kv.0.uri == "" {
+      match parse_int64_decimal(kv.1) {
+        Some(n) => return Some(@units.Emu(n))
+        None => return None
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Parse an attribute encoded as 1/1000 of a percent (`lineSpacing` and
+/// similar) and lift to `Percentage`.
+fn parse_thousandths_pct_attr(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Percentage? {
+  for kv in attrs {
+    if kv.0.local_name == name && kv.0.uri == "" {
+      match parse_int_decimal(kv.1) {
+        Some(n) => return Some(@units.Percentage::from_ooxml(n))
+        None => return None
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Parse an attribute encoded as 1/100 of a point (`spaceBefore`,
+/// `spaceAfter`) and lift to `Pt`.
+fn parse_hundredths_pt_attr(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Pt? {
+  for kv in attrs {
+    if kv.0.local_name == name && kv.0.uri == "" {
+      match parse_int_decimal(kv.1) {
+        Some(n) => return Some(@units.Pt(n.to_double() / 100.0))
+        None => return None
+      }
+    }
+  }
+  None
 }
 
 ///|
