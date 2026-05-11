@@ -197,7 +197,7 @@ DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
   - [x] **3c4**: `Connector` (`<p:cxnSp>`) with `ConnectionEnd { shape_id, idx }` for bound endpoints; `GroupShape` (`<p:grpSp>`) with recursive `children : Array[Shape]` and `<a:chOff>` / `<a:chExt>` child-coord-space fields. New `Shape::Connector` and `Shape::Group` variants; `Unknown` now only catches `graphicFrame` and `contentPart`. 8 tests, 186 total × 4 backends. **Phase 3c (slide parser) closed.**, charts
 - [ ] **Phase 3d — Text parser: paragraph, run, list style, font, hyperlink**
   - [x] **3d1**: `TextBody` / `Paragraph` / `Run` / `Field` / `Break` skeleton; `plain_text()` convenience extractor; `AutoShape.text_body : Option<TextBody>`. RunProperties / ParagraphProperties currently carry only `lang` / `level` as placeholders; 3d2/3d3 fill them in. 10 tests, 196 total × 4 backends.
-  - [ ] 3d2: RunProperties (bold/italic/underline/size/color/font/hyperlink)
+  - [x] **3d2**: `RunProperties` widened — `font_size : Pt?` / `bold` / `italic` / `underline : UnderlineKind?` / `strikethrough : StrikeKind?` / `baseline : Percentage?` / `caps : CapsKind?` / `latin` / `east_asian` / `complex_script` / `fill : RunFill?` (SolidRgb/SolidTheme) / `hyperlink_click`. Bool attr accepts `1/0/true/false`. Unknown enum values collapse to `None` (graceful). `@units.Pt/Inch/Cm` now derive Eq. 16 tests, 212 total × 4 backends.
   - [ ] 3d3: ParagraphProperties (alignment/level/bullet)
   - [ ] 3d4: bodyPr / lstStyle / list style inheritance
 - [ ] Fill / stroke / effect parsers
@@ -450,5 +450,6 @@ Run all four before committing. CI enforces them.
 - **2026-05-11** — Phase 3c3 done: `Picture` shape parsed from `<p:pic>` (id, name, transform, geometry, blip embed/link rIds, srcRect crop). `Shape::Picture` variant added, `Unknown("pic")` placeholder removed. `@units.Percentage` and `@units.Angle` gained `derive(Eq)` so structural comparison works in tests. 8 tests, 178 total × 4 backends.
 - **2026-05-11** — Phase 3c4 done: `Connector` (`<p:cxnSp>`) with optional bound endpoints (`ConnectionEnd { shape_id, idx }`) and `GroupShape` (`<p:grpSp>`) with recursive `children : Array[Shape]` and the `<a:chOff>` / `<a:chExt>` child-coord-space fields. `Shape::Unknown` now only catches `graphicFrame` and `contentPart`. **Phase 3c (slide parser) closed.** 8 tests, 186 total × 4 backends.
 - **2026-05-11** — Phase 3d1 done: `TextBody` / `Paragraph` / `Run` / `Field` / `Break` model + `plain_text()` extractor; `AutoShape.text_body` field. `RunProperties` carries `lang` placeholder, `ParagraphProperties` carries `level`; the rest of the run/paragraph property surface lands across 3d2–3d4. 10 tests, 196 total × 4 backends.
+- **2026-05-11** — Phase 3d2 done: `RunProperties` now covers the practical `<a:rPr>` surface — font size (Pt) / bold / italic / underline / strikethrough / baseline (Percentage) / caps / latin+ea+cs typefaces / solid fill (RGB or theme) / hyperlink_click rId. Unknown enum values collapse to `None` gracefully. `@units.Pt/Inch/Cm` derive `Eq`. 16 tests, 212 total × 4 backends.
 
 (Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)

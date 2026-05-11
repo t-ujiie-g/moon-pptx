@@ -21,19 +21,162 @@
 // slices can fill them in without changing call sites.
 
 ///|
-/// Run property record. Phase 3d1 only carries the `lang` attribute
-/// (the most universally-present field on `<a:rPr>`); 3d2 fills in bold
-/// / italic / underline / size / colour / font / hyperlink fields.
-pub(all) struct RunProperties {
-  /// xml:lang on the run, empty string when absent.
-  lang : String
+/// Underline style (`ST_TextUnderlineType`, ECMA-376 §20.1.10.81). We
+/// keep only the variants real PPTX actually emits — `None`, `Words`
+/// (underline excluding spaces), and the 12 line styles. Less common
+/// fixed-pixel variants are mapped onto these on read; widen later if
+/// real-world files surface fidelity gaps.
+pub(all) enum UnderlineKind {
+  UlNone // "none"
+  UlWords // "words"
+  UlSingle // "sng"
+  UlDouble // "dbl"
+  UlHeavy // "heavy"
+  UlDotted // "dotted"
+  UlDottedHeavy // "dottedHeavy"
+  UlDash // "dash"
+  UlDashHeavy // "dashHeavy"
+  UlDashLong // "dashLong"
+  UlDashLongHeavy // "dashLongHeavy"
+  UlDotDash // "dotDash"
+  UlDotDashHeavy // "dotDashHeavy"
+  UlDotDotDash // "dotDotDash"
+  UlDotDotDashHeavy // "dotDotDashHeavy"
+  UlWavy // "wavy"
+  UlWavyHeavy // "wavyHeavy"
+  UlWavyDouble // "wavyDbl"
 } derive(Eq, Debug)
 
 ///|
-/// Empty default — used for runs / breaks whose `<a:rPr>` is absent or
-/// carries no fields we model yet.
+/// Strikethrough style (`ST_TextStrikeType`, §20.1.10.78).
+pub(all) enum StrikeKind {
+  StNoStrike // "noStrike"
+  StSingle // "sngStrike"
+  StDouble // "dblStrike"
+} derive(Eq, Debug)
+
+///|
+/// Capitalisation style (`ST_TextCapsType`, §20.1.10.7).
+pub(all) enum CapsKind {
+  CapsNone // "none"
+  CapsSmall // "small"
+  CapsAll // "all"
+} derive(Eq, Debug)
+
+///|
+/// Run-level fill. Phase 3d2 covers the two common shapes
+/// (`<a:solidFill><a:srgbClr/></a:solidFill>` and
+/// `<a:solidFill><a:schemeClr/></a:solidFill>`). Gradient, pattern,
+/// and blip fills land alongside the shape-level fill ADT in Phase 3e.
+pub(all) enum RunFill {
+  SolidRgb(@units.RgbColor)
+  SolidTheme(@units.ThemeColor)
+} derive(Eq, Debug)
+
+///|
+/// Run property record. Every field is `Option` because OOXML rPr is
+/// strictly additive over inherited values — a `None` means "inherit
+/// from the next layer up" (text body default → list style → master
+/// → theme). We don't synthesise defaults here; the inheritance
+/// resolver does that once the surrounding layers exist.
+pub(all) struct RunProperties {
+  /// `xml:lang` / `lang` on the run, empty string when absent.
+  lang : String
+  /// `sz` — text size. OOXML stores this in 1/100 of a point; we lift
+  /// to typed `Pt` at parse time.
+  font_size : @units.Pt?
+  /// `b` — bold.
+  bold : Bool?
+  /// `i` — italic.
+  italic : Bool?
+  /// `u` — underline style.
+  underline : UnderlineKind?
+  /// `strike` — strikethrough style.
+  strikethrough : StrikeKind?
+  /// `baseline` — vertical baseline offset in percent (negative =
+  /// subscript, positive = superscript). OOXML stores as 1/1000 percent.
+  baseline : @units.Percentage?
+  /// `cap` — capitalisation transform.
+  caps : CapsKind?
+  /// `<a:latin typeface="…"/>` font for Latin script.
+  latin : String?
+  /// `<a:ea typeface="…"/>` font for East Asian script.
+  east_asian : String?
+  /// `<a:cs typeface="…"/>` font for complex script.
+  complex_script : String?
+  /// `<a:solidFill>` resolved to a colour.
+  fill : RunFill?
+  /// `<a:hlinkClick r:id="…">` — relationship id of the click target.
+  hyperlink_click : String?
+} derive(Eq, Debug)
+
+///|
+/// Default `RunProperties` value — every field defaults to its
+/// "inherit" sentinel (`None` / empty `lang`).
 pub fn RunProperties::default() -> RunProperties {
-  { lang: "" }
+  {
+    lang: "",
+    font_size: None,
+    bold: None,
+    italic: None,
+    underline: None,
+    strikethrough: None,
+    baseline: None,
+    caps: None,
+    latin: None,
+    east_asian: None,
+    complex_script: None,
+    fill: None,
+    hyperlink_click: None,
+  }
+}
+
+///|
+/// Parse OOXML `ST_TextUnderlineType`. Returns `None` for an
+/// unrecognised value rather than raising — readers that wired up
+/// `<a:rPr>` should treat unknown enums as "not present".
+pub fn UnderlineKind::from_xml(s : String) -> UnderlineKind? {
+  match s {
+    "none" => Some(UlNone)
+    "words" => Some(UlWords)
+    "sng" => Some(UlSingle)
+    "dbl" => Some(UlDouble)
+    "heavy" => Some(UlHeavy)
+    "dotted" => Some(UlDotted)
+    "dottedHeavy" => Some(UlDottedHeavy)
+    "dash" => Some(UlDash)
+    "dashHeavy" => Some(UlDashHeavy)
+    "dashLong" => Some(UlDashLong)
+    "dashLongHeavy" => Some(UlDashLongHeavy)
+    "dotDash" => Some(UlDotDash)
+    "dotDashHeavy" => Some(UlDotDashHeavy)
+    "dotDotDash" => Some(UlDotDotDash)
+    "dotDotDashHeavy" => Some(UlDotDotDashHeavy)
+    "wavy" => Some(UlWavy)
+    "wavyHeavy" => Some(UlWavyHeavy)
+    "wavyDbl" => Some(UlWavyDouble)
+    _ => None
+  }
+}
+
+///|
+pub fn StrikeKind::from_xml(s : String) -> StrikeKind? {
+  match s {
+    "noStrike" => Some(StNoStrike)
+    "sngStrike" => Some(StSingle)
+    "dblStrike" => Some(StDouble)
+    _ => None
+  }
+}
+
+///|
+pub fn CapsKind::from_xml(s : String) -> CapsKind? {
+  match s {
+    "none" => Some(CapsNone)
+    "small" => Some(CapsSmall)
+    "all" => Some(CapsAll)
+    _ => None
+  }
 }
 
 ///|

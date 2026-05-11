@@ -30,7 +30,7 @@ pub fn Angle::from_ooxml(Int) -> Self
 pub fn Angle::to_ooxml(Self) -> Int
 pub impl Show for Angle
 
-pub(all) struct Cm(Double) derive(@debug.Debug)
+pub(all) struct Cm(Double) derive(Eq, @debug.Debug)
 pub fn Cm::to_emu(Self) -> Emu
 pub fn Cm::value(Self) -> Double
 pub impl Show for Cm
@@ -63,7 +63,7 @@ pub fn HslColor::new(Double, Double, Double) -> Self
 pub fn HslColor::to_rgb(Self) -> RgbColor
 pub impl Show for HslColor
 
-pub(all) struct Inch(Double) derive(@debug.Debug)
+pub(all) struct Inch(Double) derive(Eq, @debug.Debug)
 pub fn Inch::to_emu(Self) -> Emu
 pub fn Inch::value(Self) -> Double
 pub impl Show for Inch
@@ -74,7 +74,7 @@ pub fn Percentage::to_ooxml(Self) -> Int
 pub fn Percentage::value(Self) -> Double
 pub impl Show for Percentage
 
-pub(all) struct Pt(Double) derive(@debug.Debug)
+pub(all) struct Pt(Double) derive(Eq, @debug.Debug)
 pub fn Pt::to_emu(Self) -> Emu
 pub fn Pt::value(Self) -> Double
 pub impl Show for Pt

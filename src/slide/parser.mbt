@@ -604,30 +604,228 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
 }
 
 ///|
-/// Parse `<a:r>` body. `<a:rPr>` is skipped (3d2 will model it) and
-/// `<a:t>` is concatenated into a single `text` string so callers don't
-/// have to merge sibling `<a:t>` themselves.
+/// Parse `<a:r>` body — `<a:rPr>?` plus one or more `<a:t>` text runs.
 fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
   let buf = StringBuilder::new(size_hint=32)
-  let mut depth = 1
-  while depth > 0 {
+  let mut properties = RunProperties::default()
+  while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) =>
-        if child.uri == @oxml.drawing_ns && child.local_name == "t" {
-          depth = depth + 1
-          collect_text_until_end(r, buf)
-          depth = depth - 1
-        } else {
-          // rPr and anything else — skip subtree (which decrements its own
-          // depth via the standard helper, but we're already inside `r`).
+      StartElement(child, attrs) =>
+        if child.uri != @oxml.drawing_ns {
           skip_subtree(r)
+        } else {
+          match child.local_name {
+            "rPr" => properties = parse_run_properties(r, attrs)
+            "t" => collect_text_until_end(r, buf)
+            _ => skip_subtree(r)
+          }
         }
-      EndElement(_) => depth = depth - 1
+      EndElement(_) => break
       _ => ()
     }
   }
-  { properties: RunProperties::default(), text: buf.to_string() }
+  { properties, text: buf.to_string() }
+}
+
+///|
+/// Parse `<a:rPr>` — attributes off the start tag and a handful of
+/// children (`<a:solidFill>`, `<a:latin>`, `<a:ea>`, `<a:cs>`,
+/// `<a:hlinkClick>`). Other children (gradient/pattern fill, effects,
+/// underline fills, east-asian list) are skipped — they land alongside
+/// the shape-level fill ADT in Phase 3e.
+fn parse_run_properties(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> RunProperties raise SlideError {
+  let lang = optional_attr(attrs, "lang")
+  let font_size = parse_font_size_attr(attrs)
+  let bold = parse_bool_attr(attrs, "b")
+  let italic = parse_bool_attr(attrs, "i")
+  let underline = parse_enum_attr(attrs, "u", UnderlineKind::from_xml)
+  let strikethrough = parse_enum_attr(attrs, "strike", StrikeKind::from_xml)
+  let baseline = parse_baseline_attr(attrs)
+  let caps = parse_enum_attr(attrs, "cap", CapsKind::from_xml)
+  let mut latin : String? = None
+  let mut east_asian : String? = None
+  let mut complex_script : String? = None
+  let mut fill : RunFill? = None
+  let mut hyperlink_click : String? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.drawing_ns {
+          match child.local_name {
+            "latin" => {
+              latin = Some(optional_attr(child_attrs, "typeface"))
+              skip_subtree(r)
+            }
+            "ea" => {
+              east_asian = Some(optional_attr(child_attrs, "typeface"))
+              skip_subtree(r)
+            }
+            "cs" => {
+              complex_script = Some(optional_attr(child_attrs, "typeface"))
+              skip_subtree(r)
+            }
+            "solidFill" => fill = parse_solid_fill(r)
+            "hlinkClick" => {
+              hyperlink_click = Some(extract_rid(child_attrs))
+              skip_subtree(r)
+            }
+            _ => skip_subtree(r)
+          }
+        } else {
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  {
+    lang,
+    font_size,
+    bold,
+    italic,
+    underline,
+    strikethrough,
+    baseline,
+    caps,
+    latin,
+    east_asian,
+    complex_script,
+    fill,
+    hyperlink_click,
+  }
+}
+
+///|
+/// Parse `<a:solidFill>` looking for `<a:srgbClr>` or `<a:schemeClr>`.
+/// Returns `None` if the body is empty or carries an unsupported colour
+/// element (we expand the ADT when callers need them).
+fn parse_solid_fill(r : @xml.XmlReader) -> RunFill? raise SlideError {
+  let mut result : RunFill? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.drawing_ns {
+          match child.local_name {
+            "srgbClr" => {
+              let hex = require_attr(child_attrs, "val")
+              let rgb = @units.RgbColor::parse_hex(hex) catch {
+                _ =>
+                  raise Malformed(
+                    "srgbClr val is not a 6-hex-digit color: " + hex,
+                  )
+              }
+              if result is None {
+                result = Some(SolidRgb(rgb))
+              }
+              skip_subtree(r)
+            }
+            "schemeClr" => {
+              let raw = require_attr(child_attrs, "val")
+              let theme = @units.ThemeColor::from_xml(raw) catch {
+                _ =>
+                  raise Malformed(
+                    "schemeClr val is not a ST_SchemeColorVal: " + raw,
+                  )
+              }
+              if result is None {
+                result = Some(SolidTheme(theme))
+              }
+              skip_subtree(r)
+            }
+            // hsl, prst, scrgb — widen RunFill if a real PPTX needs them.
+            _ => skip_subtree(r)
+          }
+        } else {
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  result
+}
+
+///|
+/// Convert the `sz` attribute (1/100 of a point per spec) to `Pt`.
+/// Returns `None` if absent or unparseable so the caller's `Option<Pt>`
+/// reflects "inherit".
+fn parse_font_size_attr(attrs : Array[(@xml.QName, String)]) -> @units.Pt? {
+  for kv in attrs {
+    if kv.0.local_name == "sz" && kv.0.uri == "" {
+      match parse_int_decimal(kv.1) {
+        Some(n) => return Some(@units.Pt(n.to_double() / 100.0))
+        None => return None
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Parse an OOXML `xsd:boolean` attribute (`1` / `0` / `true` / `false`).
+/// Returns `None` if absent; rejects any other value as `Malformed`.
+fn parse_bool_attr(attrs : Array[(@xml.QName, String)], name : String) -> Bool? {
+  for kv in attrs {
+    if kv.0.local_name == name && kv.0.uri == "" {
+      match kv.1 {
+        "1" | "true" => return Some(true)
+        "0" | "false" => return Some(false)
+        _ => return None // tolerate by returning "inherit"
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Look up an attribute and map its string value through `from_xml`.
+/// Absent attribute returns `None`; unrecognised string value returns
+/// `None` (caller can decide whether to be strict elsewhere).
+fn[T] parse_enum_attr(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+  from_xml : (String) -> T?,
+) -> T? {
+  for kv in attrs {
+    if kv.0.local_name == name && kv.0.uri == "" {
+      return from_xml(kv.1)
+    }
+  }
+  None
+}
+
+///|
+/// `baseline` is `xsd:percentage` (1/1000 of a percent, may be negative).
+fn parse_baseline_attr(
+  attrs : Array[(@xml.QName, String)],
+) -> @units.Percentage? {
+  for kv in attrs {
+    if kv.0.local_name == "baseline" && kv.0.uri == "" {
+      match parse_int_decimal(kv.1) {
+        Some(n) => return Some(@units.Percentage::from_ooxml(n))
+        None => return None
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Extract the `r:id` value from a set of attributes (OOXML
+/// relationships namespace).
+fn extract_rid(attrs : Array[(@xml.QName, String)]) -> String {
+  for kv in attrs {
+    if kv.0.uri == @oxml.office_relationships_ns && kv.0.local_name == "id" {
+      return kv.1
+    }
+  }
+  ""
 }
 
 ///|

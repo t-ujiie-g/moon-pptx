@@ -31,15 +31,15 @@ pub(all) struct Emu(Int64) derive(Eq, Compare, Debug)
 
 ///|
 /// Length expressed in points (1/72 inch). Constructor accepts fractional values.
-pub(all) struct Pt(Double) derive(Debug)
+pub(all) struct Pt(Double) derive(Eq, Debug)
 
 ///|
 /// Length expressed in inches. Constructor accepts fractional values.
-pub(all) struct Inch(Double) derive(Debug)
+pub(all) struct Inch(Double) derive(Eq, Debug)
 
 ///|
 /// Length expressed in centimetres. Constructor accepts fractional values.
-pub(all) struct Cm(Double) derive(Debug)
+pub(all) struct Cm(Double) derive(Eq, Debug)
 
 // --- accessors ---
 
