@@ -513,6 +513,7 @@ fn parse_auto_shape(
   let mut placeholder : Placeholder? = None
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
+  let mut text_body : TextBody? = None
   while true {
     let ev = next_event(r)
     match ev {
@@ -533,7 +534,8 @@ fn parse_auto_shape(
             transform = xfrm
             geometry = geom
           }
-          // style, txBody, extLst — Phase 3c later slices
+          "txBody" => text_body = Some(parse_text_body(r))
+          // style, extLst — Phase 3 later slices
           _ => skip_subtree(r)
         }
       }
@@ -541,7 +543,150 @@ fn parse_auto_shape(
       _ => ()
     }
   }
-  { id, name, placeholder, transform, geometry }
+  { id, name, placeholder, transform, geometry, text_body }
+}
+
+// --- TextBody (Phase 3d1) ---
+
+///|
+/// Parse `<p:txBody>` body. Phase 3d1 collects paragraphs only;
+/// `<a:bodyPr>` and `<a:lstStyle>` are skipped until 3d4.
+fn parse_text_body(r : @xml.XmlReader) -> TextBody raise SlideError {
+  let paragraphs : Array[Paragraph] = []
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, _) =>
+        if child.uri == @oxml.drawing_ns && child.local_name == "p" {
+          paragraphs.push(parse_paragraph(r))
+        } else {
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { paragraphs, }
+}
+
+///|
+/// Parse `<a:p>` body — `<a:pPr>?`, then a sequence of `<a:r>` / `<a:br>` /
+/// `<a:fld>` content.
+fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
+  let content : Array[ParagraphContent] = []
+  let mut properties : ParagraphProperties = ParagraphProperties::default()
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri != @oxml.drawing_ns {
+          skip_subtree(r)
+        } else {
+          match child.local_name {
+            "pPr" => {
+              // 3d3: parse alignment / level / bullet. For now consume.
+              properties = ParagraphProperties::default()
+              skip_subtree(r)
+            }
+            "r" => content.push(RunContent(parse_run(r)))
+            "br" => content.push(Break(parse_break(r)))
+            "fld" => content.push(FieldContent(parse_field(r, child_attrs)))
+            // endParaRPr (run props for the implicit terminal break) and
+            // anything we don't yet model: skip.
+            _ => skip_subtree(r)
+          }
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { properties, content }
+}
+
+///|
+/// Parse `<a:r>` body. `<a:rPr>` is skipped (3d2 will model it) and
+/// `<a:t>` is concatenated into a single `text` string so callers don't
+/// have to merge sibling `<a:t>` themselves.
+fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
+  let buf = StringBuilder::new(size_hint=32)
+  let mut depth = 1
+  while depth > 0 {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, _) =>
+        if child.uri == @oxml.drawing_ns && child.local_name == "t" {
+          depth = depth + 1
+          collect_text_until_end(r, buf)
+          depth = depth - 1
+        } else {
+          // rPr and anything else — skip subtree (which decrements its own
+          // depth via the standard helper, but we're already inside `r`).
+          skip_subtree(r)
+        }
+      EndElement(_) => depth = depth - 1
+      _ => ()
+    }
+  }
+  { properties: RunProperties::default(), text: buf.to_string() }
+}
+
+///|
+/// Consume events until the EndElement closing the current text-bearing
+/// element. Text and CData are appended to `buf`; nested elements are
+/// not expected inside `<a:t>` per spec, but we handle them defensively.
+fn collect_text_until_end(
+  r : @xml.XmlReader,
+  buf : StringBuilder,
+) -> Unit raise SlideError {
+  let mut depth = 1
+  while depth > 0 {
+    let ev = next_event(r)
+    match ev {
+      StartElement(_, _) => depth = depth + 1
+      EndElement(_) => depth = depth - 1
+      Text(s) => buf.write_string(s)
+      CData(s) => buf.write_string(s)
+    }
+  }
+}
+
+///|
+/// Parse `<a:br>` body. `<a:rPr>` is currently skipped; we return an
+/// empty `RunProperties` placeholder so the variant stays well-typed.
+fn parse_break(r : @xml.XmlReader) -> RunProperties raise SlideError {
+  skip_subtree(r)
+  RunProperties::default()
+}
+
+///|
+/// Parse `<a:fld>` body. `id` and `type` come off the start tag; the
+/// body is one or more `<a:t>` runs whose text we concatenate.
+fn parse_field(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> Field raise SlideError {
+  let id = optional_attr(attrs, "id")
+  let field_type = optional_attr(attrs, "type")
+  let buf = StringBuilder::new(size_hint=16)
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, _) =>
+        if child.uri == @oxml.drawing_ns && child.local_name == "t" {
+          collect_text_until_end(r, buf)
+        } else {
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  {
+    id,
+    field_type,
+    properties: RunProperties::default(),
+    text: buf.to_string(),
+  }
 }
 
 ///|
