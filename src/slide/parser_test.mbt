@@ -1,38 +1,17 @@
 // Slide parser tests (Phase 3c1 skeleton).
 
 ///|
-let p_ns_s : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let a_ns_s : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-let r_ns_s : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-
-///|
-fn slide_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 fn typical_title_slide() -> FixedArray[Byte] {
   // A trimmed-down but realistic title slide: spTree with the implicit
   // root group + two placeholders, plus a body picture stand-in to verify
   // Unknown-shape preservation.
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    p_ns_s +
+    pml_ns +
     "\" xmlns:a=\"" +
-    a_ns_s +
+    dml_ns +
     "\" xmlns:r=\"" +
-    r_ns_s +
+    off_rel_ns +
     "\">" +
     "<p:cSld name=\"Title Slide\">" +
     "<p:spTree>" +
@@ -85,7 +64,7 @@ fn typical_title_slide() -> FixedArray[Byte] {
     "<p:transition><p:fade/></p:transition>" +
     "<p:timing/>" +
     "</p:sld>"
-  slide_ascii(xml)
+  fixture_bytes(xml)
 }
 
 // --- happy path ---
@@ -167,9 +146,9 @@ test "parse: shape order is preserved" {
 test "parse: clrMapOvr with overrideClrMapping carries through" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    p_ns_s +
+    pml_ns +
     "\" xmlns:a=\"" +
-    a_ns_s +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld>" +
     "<p:clrMapOvr>" +
@@ -179,7 +158,7 @@ test "parse: clrMapOvr with overrideClrMapping carries through" {
     " hlink=\"folHlink\" folHlink=\"hlink\"/>" +
     "</p:clrMapOvr>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(slide_ascii(xml))
+  let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.clr_map_override {
     Override(cm) => {
       assert_true(cm.bg1 is @units.ThemeColor::Dk1)
@@ -195,9 +174,9 @@ test "parse: clrMapOvr with overrideClrMapping carries through" {
 test "parse: missing xfrm components is rejected" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    p_ns_s +
+    pml_ns +
     "\" xmlns:a=\"" +
-    a_ns_s +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -207,7 +186,7 @@ test "parse: missing xfrm components is rejected" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let r = try? @slide.Slide::parse(slide_ascii(xml))
+  let r = try? @slide.Slide::parse(fixture_bytes(xml))
   assert_true(r is Err(@slide.SlideError::Malformed(_)))
 }
 
@@ -215,9 +194,9 @@ test "parse: missing xfrm components is rejected" {
 test "parse: non-integer offset attribute is rejected" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    p_ns_s +
+    pml_ns +
     "\" xmlns:a=\"" +
-    a_ns_s +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -227,13 +206,13 @@ test "parse: non-integer offset attribute is rejected" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let r = try? @slide.Slide::parse(slide_ascii(xml))
+  let r = try? @slide.Slide::parse(fixture_bytes(xml))
   assert_true(r is Err(@slide.SlideError::Malformed(_)))
 }
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
-  let r = try? @slide.Slide::parse(slide_ascii("<p:sld"))
+  let r = try? @slide.Slide::parse(fixture_bytes("<p:sld"))
   assert_true(r is Err(@slide.SlideError::XmlFailure(_, _)))
 }
 
@@ -241,9 +220,9 @@ test "parse: malformed XML wraps as XmlFailure" {
 test "parse: shape with no placeholder leaves field None" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    p_ns_s +
+    pml_ns +
     "\" xmlns:a=\"" +
-    a_ns_s +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -253,7 +232,7 @@ test "parse: shape with no placeholder leaves field None" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(slide_ascii(xml))
+  let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
       assert_true(s.placeholder is None)

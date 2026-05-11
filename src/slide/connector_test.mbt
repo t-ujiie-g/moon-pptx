@@ -1,30 +1,12 @@
 // Connector parser tests (Phase 3c4).
 
 ///|
-let cxn_pml : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let cxn_a : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-fn cxn_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 fn slide_with_cxn(inner : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    cxn_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    cxn_a +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -32,7 +14,7 @@ fn slide_with_cxn(inner : String) -> FixedArray[Byte] {
     inner +
     "</p:cxnSp>" +
     "</p:spTree></p:cSld></p:sld>"
-  cxn_ascii(xml)
+  fixture_bytes(xml)
 }
 
 // --- happy path ---

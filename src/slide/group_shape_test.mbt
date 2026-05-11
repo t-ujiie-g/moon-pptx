@@ -1,30 +1,12 @@
 // Group shape parser tests (Phase 3c4) — recursive nesting.
 
 ///|
-let grp_pml : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let grp_a : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-fn grp_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 fn slide_with_grp(inner : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    grp_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    grp_a +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -32,7 +14,7 @@ fn slide_with_grp(inner : String) -> FixedArray[Byte] {
     inner +
     "</p:grpSp>" +
     "</p:spTree></p:cSld></p:sld>"
-  grp_ascii(xml)
+  fixture_bytes(xml)
 }
 
 // --- happy path ---

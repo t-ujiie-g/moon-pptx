@@ -1,32 +1,14 @@
 // Text body parser tests (Phase 3d1).
 
 ///|
-let tb_pml : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let tb_a : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-fn tb_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// Build a slide containing a single auto-shape whose `<p:txBody>` body
 /// is supplied verbatim.
 fn slide_with_txbody(inner : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    tb_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    tb_a +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -38,7 +20,7 @@ fn slide_with_txbody(inner : String) -> FixedArray[Byte] {
     "</p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  tb_ascii(xml)
+  fixture_bytes(xml)
 }
 
 ///|
@@ -165,9 +147,9 @@ test "parse: bodyPr and lstStyle are silently skipped (3d4 will model them)" {
 test "parse: shape with no txBody leaves field None" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    tb_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    tb_a +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -176,7 +158,7 @@ test "parse: shape with no txBody leaves field None" {
     "<p:spPr/>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(tb_ascii(xml))
+  let slide = @slide.Slide::parse(fixture_bytes(xml))
   assert_true(first_auto_shape(slide).text_body is None)
 }
 

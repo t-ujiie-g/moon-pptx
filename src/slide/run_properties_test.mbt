@@ -1,37 +1,16 @@
 // RunProperties parser tests (Phase 3d2).
 
 ///|
-let rp_pml : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let rp_a : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-let rp_r : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-
-///|
-fn rp_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// Build a slide with one auto-shape whose `<p:txBody>` contains a single
 /// paragraph with a single run whose `<a:rPr>` body is `rpr_body`.
 fn slide_with_rpr(rpr_body : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    rp_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    rp_a +
+    dml_ns +
     "\" xmlns:r=\"" +
-    rp_r +
+    off_rel_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -43,7 +22,7 @@ fn slide_with_rpr(rpr_body : String) -> FixedArray[Byte] {
     "<a:t>x</a:t></a:r></a:p></p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  rp_ascii(xml)
+  fixture_bytes(xml)
 }
 
 ///|

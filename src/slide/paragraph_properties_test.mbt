@@ -1,57 +1,16 @@
 // ParagraphProperties parser tests (Phase 3d3).
 
 ///|
-let pp_pml : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let pp_a : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-let pp_r : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-
-///|
-/// UTF-8 encode a string to a `FixedArray[Byte]`. Needed for tests
-/// whose fixtures contain non-ASCII glyphs (e.g. the bullet character `•`).
-fn pp_ascii(s : String) -> FixedArray[Byte] {
-  let buf : Array[Int] = []
-  for c in s {
-    let cp = c.to_int()
-    if cp < 0x80 {
-      buf.push(cp)
-    } else if cp < 0x800 {
-      buf.push(0xC0 | (cp >> 6))
-      buf.push(0x80 | (cp & 0x3F))
-    } else if cp < 0x10000 {
-      buf.push(0xE0 | (cp >> 12))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    } else {
-      buf.push(0xF0 | (cp >> 18))
-      buf.push(0x80 | ((cp >> 12) & 0x3F))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    }
-  }
-  let bytes = FixedArray::make(buf.length(), b'\x00')
-  let mut i = 0
-  while i < buf.length() {
-    bytes[i] = buf[i].to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// Build a slide with one paragraph whose `<a:pPr>` body is `ppr_body`,
 /// followed by a single trivial run so the paragraph isn't empty.
 fn slide_with_ppr(ppr_body : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    pp_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    pp_a +
+    dml_ns +
     "\" xmlns:r=\"" +
-    pp_r +
+    off_rel_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -63,7 +22,7 @@ fn slide_with_ppr(ppr_body : String) -> FixedArray[Byte] {
     "<a:r><a:t>x</a:t></a:r></a:p></p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  pp_ascii(xml)
+  fixture_bytes(xml)
 }
 
 ///|

@@ -1,38 +1,17 @@
 // Picture parser tests (Phase 3c3).
 
 ///|
-let pic_pml : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let pic_a : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-let pic_r : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-
-///|
-fn pic_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// Build a slide containing a single `<p:pic>` whose body is provided
 /// verbatim. Caller controls the inner shape so we can exercise srcRect,
 /// stretch, etc. independently.
 fn slide_with_pic(inner : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    pic_pml +
+    pml_ns +
     "\" xmlns:a=\"" +
-    pic_a +
+    dml_ns +
     "\" xmlns:r=\"" +
-    pic_r +
+    off_rel_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -40,7 +19,7 @@ fn slide_with_pic(inner : String) -> FixedArray[Byte] {
     inner +
     "</p:pic>" +
     "</p:spTree></p:cSld></p:sld>"
-  pic_ascii(xml)
+  fixture_bytes(xml)
 }
 
 // --- happy path ---

@@ -1,7 +1,13 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "t-ujiie-g/moon_pptx/oxml"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
+pub fn bytes_to_string(FixedArray[Byte]) -> String raise Utf8Error
+
 pub let drawing_ns : String
 
 pub let office_relationships_ns : String
@@ -9,6 +15,11 @@ pub let office_relationships_ns : String
 pub let presentation_ns : String
 
 // Errors
+pub(all) suberror Utf8Error {
+  StrayContinuation(Int)
+  TruncatedSequence(Int)
+} derive(Eq, @debug.Debug)
+pub impl Show for Utf8Error
 
 // Types and methods
 

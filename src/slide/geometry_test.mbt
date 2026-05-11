@@ -1,32 +1,14 @@
 // Geometry parser tests (Phase 3c2).
 
 ///|
-let pg_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
-
-///|
-let ag_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-fn geom_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// Build a minimal slide containing one auto-shape whose `<p:spPr>` body
 /// is `inner_sp_pr_body` (the part between `<p:spPr>` and `</p:spPr>`).
 fn slide_with_sp_pr(inner_sp_pr_body : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
-    pg_ns +
+    pml_ns +
     "\" xmlns:a=\"" +
-    ag_ns +
+    dml_ns +
     "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
@@ -37,7 +19,7 @@ fn slide_with_sp_pr(inner_sp_pr_body : String) -> FixedArray[Byte] {
     "</p:spPr>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  geom_ascii(xml)
+  fixture_bytes(xml)
 }
 
 // --- PresetShape::from_xml / to_xml ---

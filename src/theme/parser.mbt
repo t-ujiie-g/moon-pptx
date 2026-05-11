@@ -17,54 +17,12 @@ pub fn Theme::parse(bytes : FixedArray[Byte]) -> Theme raise ThemeError {
 }
 
 ///|
-/// Decode UTF-8 bytes to a `String`. We don't depend on `@fzip.str_from_u8`
-/// here to keep the theme package free of the fzip dependency — the OPC
-/// layer above us already gave us bytes and is responsible for fzip.
+/// Decode UTF-8 bytes via the shared `@oxml.bytes_to_string` helper,
+/// mapping any `Utf8Error` into the domain error variant.
 fn bytes_to_string(bytes : FixedArray[Byte]) -> String raise ThemeError {
-  let chars : Array[Char] = []
-  let mut i = 0
-  while i < bytes.length() {
-    let b0 = bytes[i].to_int().land(0xFF)
-    if b0 < 0x80 {
-      chars.push(b0.unsafe_to_char())
-      i = i + 1
-    } else if b0 < 0xC0 {
-      raise MalformedTheme(
-        "stray UTF-8 continuation byte at offset " + i.to_string(),
-      )
-    } else if b0 < 0xE0 {
-      if i + 1 >= bytes.length() {
-        raise MalformedTheme("truncated 2-byte UTF-8 sequence")
-      }
-      let b1 = bytes[i + 1].to_int().land(0xFF)
-      let cp = (b0 - 0xC0) * 0x40 + (b1 - 0x80)
-      chars.push(cp.unsafe_to_char())
-      i = i + 2
-    } else if b0 < 0xF0 {
-      if i + 2 >= bytes.length() {
-        raise MalformedTheme("truncated 3-byte UTF-8 sequence")
-      }
-      let b1 = bytes[i + 1].to_int().land(0xFF)
-      let b2 = bytes[i + 2].to_int().land(0xFF)
-      let cp = (b0 - 0xE0) * 0x1000 + (b1 - 0x80) * 0x40 + (b2 - 0x80)
-      chars.push(cp.unsafe_to_char())
-      i = i + 3
-    } else {
-      if i + 3 >= bytes.length() {
-        raise MalformedTheme("truncated 4-byte UTF-8 sequence")
-      }
-      let b1 = bytes[i + 1].to_int().land(0xFF)
-      let b2 = bytes[i + 2].to_int().land(0xFF)
-      let b3 = bytes[i + 3].to_int().land(0xFF)
-      let cp = (b0 - 0xF0) * 0x40000 +
-        (b1 - 0x80) * 0x1000 +
-        (b2 - 0x80) * 0x40 +
-        (b3 - 0x80)
-      chars.push(cp.unsafe_to_char())
-      i = i + 4
-    }
+  @oxml.bytes_to_string(bytes) catch {
+    e => raise MalformedTheme(e.to_string())
   }
-  String::from_array(chars)
 }
 
 ///|

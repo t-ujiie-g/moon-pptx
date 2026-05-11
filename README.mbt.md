@@ -37,7 +37,7 @@ full feature comparison.
 | 0 | Bootstrap, deps, CI | ✅ Done |
 | 1 | Units & XML | ✅ Done |
 | 2 | OPC layer over fzip | ✅ Done |
-| 3 | Read path | 🔜 Next |
+| 3 | Read path | 🚧 In progress (3a–3d done; 3e fill/stroke/effect next) |
 | 4 | Write path | ⏳ |
 | 5 | Builder API (create from scratch) | ⏳ |
 | 6 | Tables | ⏳ |
