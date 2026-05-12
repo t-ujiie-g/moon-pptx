@@ -8,11 +8,25 @@ import {
 }
 
 // Values
+pub fn angle_attr_opt(Array[(@xml.QName, String)], String) -> @units.Angle?
+
+pub fn bool_attr_opt(Array[(@xml.QName, String)], String) -> Bool?
+
 pub fn bytes_to_string(FixedArray[Byte]) -> String raise Utf8Error
 
 pub let drawing_ns : String
 
+pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
+
+pub fn[T] enum_attr_opt(Array[(@xml.QName, String)], String, (String) -> T?) -> T?
+
+pub fn next_event(@xml.XmlReader) -> @xml.XmlEvent raise XmlReadError
+
 pub let office_relationships_ns : String
+
+pub fn optional_attr(Array[(@xml.QName, String)], String) -> String?
+
+pub fn optional_attr_or(Array[(@xml.QName, String)], String, String) -> String
 
 pub fn parse_color_element(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> Color raise ColorError
 
@@ -28,7 +42,19 @@ pub fn parse_signed_int64(String) -> Int64?
 
 pub fn parse_stroke(@xml.XmlReader, Array[(@xml.QName, String)]) -> Stroke raise StrokeError
 
+pub fn pct_attr_opt(Array[(@xml.QName, String)], String) -> @units.Percentage?
+
 pub let presentation_ns : String
+
+pub fn require_angle(Array[(@xml.QName, String)], String, String) -> @units.Angle raise XmlReadError
+
+pub fn require_attr(Array[(@xml.QName, String)], String, String) -> String raise XmlReadError
+
+pub fn require_emu(Array[(@xml.QName, String)], String, String) -> @units.Emu raise XmlReadError
+
+pub fn require_pct(Array[(@xml.QName, String)], String, String) -> @units.Percentage raise XmlReadError
+
+pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
 // Errors
 pub(all) suberror ColorError {
@@ -61,6 +87,11 @@ pub(all) suberror Utf8Error {
   TruncatedSequence(Int)
 } derive(Eq, @debug.Debug)
 pub impl Show for Utf8Error
+
+pub(all) suberror XmlReadError {
+  XmlReadError(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for XmlReadError
 
 // Types and methods
 pub(all) struct ArrowEnd {

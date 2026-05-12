@@ -404,31 +404,21 @@ fn parse_solid_fill(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
 /// Returns `None` if absent or unparseable so the caller's `Option<Pt>`
 /// reflects "inherit".
 fn parse_font_size_attr(attrs : Array[(@xml.QName, String)]) -> @units.Pt? {
-  for kv in attrs {
-    if kv.0.local_name == "sz" && kv.0.uri == "" {
-      match @oxml.parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Pt(n.to_double() / 100.0))
-        None => return None
+  match @oxml.optional_attr(attrs, "sz") {
+    Some(raw) =>
+      match @oxml.parse_signed_int(raw) {
+        Some(n) => Some(@units.Pt(n.to_double() / 100.0))
+        None => None
       }
-    }
+    None => None
   }
-  None
 }
 
 ///|
 /// Parse an OOXML `xsd:boolean` attribute (`1` / `0` / `true` / `false`).
 /// Returns `None` if absent; rejects any other value as `Malformed`.
 fn parse_bool_attr(attrs : Array[(@xml.QName, String)], name : String) -> Bool? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match kv.1 {
-        "1" | "true" => return Some(true)
-        "0" | "false" => return Some(false)
-        _ => return None // tolerate by returning "inherit"
-      }
-    }
-  }
-  None
+  @oxml.bool_attr_opt(attrs, name)
 }
 
 ///|
@@ -436,15 +426,7 @@ fn parse_bool_attr(attrs : Array[(@xml.QName, String)], name : String) -> Bool? 
 fn parse_baseline_attr(
   attrs : Array[(@xml.QName, String)],
 ) -> @units.Percentage? {
-  for kv in attrs {
-    if kv.0.local_name == "baseline" && kv.0.uri == "" {
-      match @oxml.parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Percentage::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
+  @oxml.pct_attr_opt(attrs, "baseline")
 }
 
 ///|

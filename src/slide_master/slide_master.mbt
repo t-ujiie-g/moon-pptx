@@ -167,16 +167,14 @@ fn require_clr_attr(
 }
 
 ///|
+/// Thin delegator to `@oxml.require_attr`.
 fn require_attr(
   attrs : Array[(@xml.QName, String)],
   name : String,
 ) -> String raise SlideMasterError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
+  @oxml.require_attr(attrs, name, name) catch {
+    e => raise Malformed(e.to_string())
   }
-  raise Malformed("missing required attribute: " + name)
 }
 
 ///|

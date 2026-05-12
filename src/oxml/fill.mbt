@@ -230,7 +230,9 @@ pub fn parse_fill(
 ) -> Fill raise FillError {
   match name.local_name {
     "noFill" => {
-      fill_skip_subtree(r)
+      skip_subtree(r) catch {
+        e => raise MalformedFill(e.to_string())
+      }
       NoFill
     }
     "solidFill" => SolidFill(parse_solid_fill_body(r))
@@ -247,7 +249,7 @@ pub fn parse_fill(
 fn parse_solid_fill_body(r : @xml.XmlReader) -> Color raise FillError {
   let mut found : Color? = None
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri == drawing_ns {
@@ -258,7 +260,9 @@ fn parse_solid_fill_body(r : @xml.XmlReader) -> Color raise FillError {
             found = Some(color)
           }
         } else {
-          fill_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedFill(e.to_string())
+          }
         }
       EndElement(_) => break
       _ => ()
@@ -277,45 +281,53 @@ fn parse_gradient_fill(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> Gradient raise FillError {
-  let rotate_with_shape = parse_bool_attr_opt(attrs, "rotWithShape")
-  let flip = parse_enum_attr_opt(attrs, "flip", TileFlip::from_xml)
+  let rotate_with_shape = bool_attr_opt(attrs, "rotWithShape")
+  let flip = enum_attr_opt(attrs, "flip", TileFlip::from_xml)
   let stops : Array[GradientStop] = []
   let mut direction : GradientDirection = Linear(@units.Angle(0.0), false)
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) => {
         if child.uri != drawing_ns {
-          fill_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedFill(e.to_string())
+          }
           continue
         }
         match child.local_name {
           "gsLst" => parse_gradient_stops(r, stops)
           "lin" => {
-            let ang_raw = fill_require_attr(child_attrs, "ang", "lin")
+            let ang_raw = require_attr(child_attrs, "ang", "lin") catch {
+              e => raise MalformedFill(e.to_string())
+            }
             let ang = match parse_signed_int(ang_raw) {
               Some(n) => @units.Angle::from_ooxml(n)
               None =>
                 raise MalformedFill("lin ang is not an integer: " + ang_raw)
             }
-            let scaled = parse_bool_attr_opt(child_attrs, "scaled").unwrap_or(
-              false,
-            )
+            let scaled = bool_attr_opt(child_attrs, "scaled").unwrap_or(false)
             direction = Linear(ang, scaled)
-            fill_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedFill(e.to_string())
+            }
           }
           "path" => {
-            let path_raw = fill_require_attr(child_attrs, "path", "path")
+            let path_raw = require_attr(child_attrs, "path", "path") catch {
+              e => raise MalformedFill(e.to_string())
+            }
             direction = match path_raw {
               "rect" => PathRect
               "circle" => PathCircle
               "shape" => PathShape
               other => raise MalformedFill("unknown gradient path: " + other)
             }
-            fill_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedFill(e.to_string())
+            }
           }
           // tileRect — sub-rectangle; rare. Skip for now.
-          _ => fill_skip_subtree(r)
+          _ => skip_subtree(r) catch { e => raise MalformedFill(e.to_string()) }
         }
       }
       EndElement(_) => break
@@ -334,11 +346,13 @@ fn parse_gradient_stops(
   out : Array[GradientStop],
 ) -> Unit raise FillError {
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri == drawing_ns && child.local_name == "gs" {
-          let pos_raw = fill_require_attr(child_attrs, "pos", "gs")
+          let pos_raw = require_attr(child_attrs, "pos", "gs") catch {
+            e => raise MalformedFill(e.to_string())
+          }
           let position = match parse_signed_int(pos_raw) {
             Some(n) => @units.Percentage::from_ooxml(n)
             None => raise MalformedFill("gs pos is not an integer: " + pos_raw)
@@ -346,7 +360,9 @@ fn parse_gradient_stops(
           let color = parse_first_color(r, "gradient stop")
           out.push({ position, color })
         } else {
-          fill_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedFill(e.to_string())
+          }
         }
       EndElement(_) => break
       _ => ()
@@ -361,21 +377,23 @@ fn parse_pattern_fill(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> Pattern raise FillError {
-  let preset = optional_attr_local(attrs, "prst")
+  let preset = optional_attr_or(attrs, "prst", "")
   let mut fg : Color? = None
   let mut bg : Color? = None
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, _) => {
         if child.uri != drawing_ns {
-          fill_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedFill(e.to_string())
+          }
           continue
         }
         match child.local_name {
           "fgClr" => fg = Some(parse_first_color(r, "pattFill fgClr"))
           "bgClr" => bg = Some(parse_first_color(r, "pattFill bgClr"))
-          _ => fill_skip_subtree(r)
+          _ => skip_subtree(r) catch { e => raise MalformedFill(e.to_string()) }
         }
       }
       EndElement(_) => break
@@ -397,11 +415,13 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
   let mut src_rect : SrcRect? = None
   let mut fill_mode : BlipFillMode = Stretch(None)
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) => {
         if child.uri != drawing_ns {
-          fill_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedFill(e.to_string())
+          }
           continue
         }
         match child.local_name {
@@ -411,18 +431,24 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
             link_id = l
             // colour modifications & image effects nested here are
             // intentionally skipped — they belong to effects parsing.
-            fill_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedFill(e.to_string())
+            }
           }
           "srcRect" => {
             src_rect = Some(parse_src_rect(child_attrs))
-            fill_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedFill(e.to_string())
+            }
           }
           "stretch" => fill_mode = parse_stretch(r)
           "tile" => {
             fill_mode = Tile(parse_tile_attrs(child_attrs))
-            fill_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedFill(e.to_string())
+            }
           }
-          _ => fill_skip_subtree(r)
+          _ => skip_subtree(r) catch { e => raise MalformedFill(e.to_string()) }
         }
       }
       EndElement(_) => break
@@ -439,13 +465,15 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
 fn parse_stretch(r : @xml.XmlReader) -> BlipFillMode raise FillError {
   let mut rect : FillRect? = None
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) => {
         if child.uri == drawing_ns && child.local_name == "fillRect" {
           rect = Some(parse_fill_rect(child_attrs))
         }
-        fill_skip_subtree(r)
+        skip_subtree(r) catch {
+          e => raise MalformedFill(e.to_string())
+        }
       }
       EndElement(_) => break
       _ => ()
@@ -457,12 +485,12 @@ fn parse_stretch(r : @xml.XmlReader) -> BlipFillMode raise FillError {
 ///|
 fn parse_tile_attrs(attrs : Array[(@xml.QName, String)]) -> TileSpec {
   {
-    tx: parse_emu_attr_opt(attrs, "tx"),
-    ty: parse_emu_attr_opt(attrs, "ty"),
-    sx: parse_percent_attr_opt_fill(attrs, "sx"),
-    sy: parse_percent_attr_opt_fill(attrs, "sy"),
-    flip: parse_enum_attr_opt(attrs, "flip", TileFlip::from_xml),
-    alignment: parse_enum_attr_opt(attrs, "algn", TileAlignment::from_xml),
+    tx: emu_attr_opt(attrs, "tx"),
+    ty: emu_attr_opt(attrs, "ty"),
+    sx: pct_attr_opt(attrs, "sx"),
+    sy: pct_attr_opt(attrs, "sy"),
+    flip: enum_attr_opt(attrs, "flip", TileFlip::from_xml),
+    alignment: enum_attr_opt(attrs, "algn", TileAlignment::from_xml),
   }
 }
 
@@ -498,18 +526,17 @@ fn parse_percent_attr_strict(
   name : String,
   on : String,
 ) -> @units.Percentage raise FillError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return @units.Percentage::from_ooxml(n)
+  match optional_attr(attrs, name) {
+    Some(raw) =>
+      match parse_signed_int(raw) {
+        Some(n) => @units.Percentage::from_ooxml(n)
         None =>
           raise MalformedFill(
-            on + " attribute " + name + " is not an integer: " + kv.1,
+            on + " attribute " + name + " is not an integer: " + raw,
           )
       }
-    }
+    None => @units.Percentage(0.0)
   }
-  @units.Percentage(0.0)
 }
 
 ///|
@@ -542,7 +569,7 @@ fn parse_first_color(
 ) -> Color raise FillError {
   let mut found : Color? = None
   while true {
-    let ev = fill_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri == drawing_ns {
@@ -553,7 +580,9 @@ fn parse_first_color(
             found = Some(color)
           }
         } else {
-          fill_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedFill(e.to_string())
+          }
         }
       EndElement(_) => break
       _ => ()
@@ -563,118 +592,4 @@ fn parse_first_color(
     Some(c) => c
     None => raise MalformedFill(context + " has no colour child")
   }
-}
-
-///|
-fn fill_next_event(r : @xml.XmlReader) -> @xml.XmlEvent raise FillError {
-  let event = r.next() catch {
-    e => raise MalformedFill("xml error: " + e.to_string())
-  }
-  match event {
-    Some(e) => e
-    None => raise MalformedFill("unexpected end of input inside fill body")
-  }
-}
-
-///|
-fn fill_skip_subtree(r : @xml.XmlReader) -> Unit raise FillError {
-  let mut depth = 1
-  while depth > 0 {
-    let ev = fill_next_event(r)
-    match ev {
-      StartElement(_, _) => depth = depth + 1
-      EndElement(_) => depth = depth - 1
-      _ => ()
-    }
-  }
-}
-
-///|
-fn fill_require_attr(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> String raise FillError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  raise MalformedFill(on + " is missing required attribute: " + name)
-}
-
-///|
-fn optional_attr_local(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> String {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  ""
-}
-
-///|
-fn parse_bool_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> Bool? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return match kv.1 {
-        "1" | "true" => Some(true)
-        "0" | "false" => Some(false)
-        _ => None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn[T] parse_enum_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  from_xml : (String) -> T?,
-) -> T? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return from_xml(kv.1)
-    }
-  }
-  None
-}
-
-///|
-fn parse_emu_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Emu? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int64(kv.1) {
-        Some(n) => return Some(@units.Emu(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn parse_percent_attr_opt_fill(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Percentage? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Percentage::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
 }

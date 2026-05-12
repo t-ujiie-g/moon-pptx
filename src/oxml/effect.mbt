@@ -178,17 +178,25 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
   let mut reflection : Reflection? = None
   let mut soft_edge : SoftEdge? = None
   while true {
-    let ev = effect_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedEffect(e.to_string()) }
     match ev {
       StartElement(child, attrs) => {
         if child.uri != drawing_ns {
-          effect_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedEffect(e.to_string())
+          }
           continue
         }
         match child.local_name {
           "blur" => {
-            blur = Some(parse_blur(attrs))
-            effect_skip_subtree(r)
+            blur = Some(
+              parse_blur(attrs) catch {
+                e => raise MalformedEffect(e.to_string())
+              },
+            )
+            skip_subtree(r) catch {
+              e => raise MalformedEffect(e.to_string())
+            }
           }
           "glow" => glow = Some(parse_glow(r, attrs))
           "innerShdw" => inner_shadow = Some(parse_inner_shadow(r, attrs))
@@ -196,14 +204,24 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
           "prstShdw" => preset_shadow = Some(parse_preset_shadow(r, attrs))
           "reflection" => {
             reflection = Some(parse_reflection(attrs))
-            effect_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedEffect(e.to_string())
+            }
           }
           "softEdge" => {
-            soft_edge = Some({ rad: require_emu(attrs, "rad", "softEdge") })
-            effect_skip_subtree(r)
+            let rad = require_emu(attrs, "rad", "softEdge") catch {
+              e => raise MalformedEffect(e.to_string())
+            }
+            soft_edge = Some({ rad, })
+            skip_subtree(r) catch {
+              e => raise MalformedEffect(e.to_string())
+            }
           }
           // fillOverlay — recognised but not yet modelled; drop.
-          _ => effect_skip_subtree(r)
+          _ =>
+            skip_subtree(r) catch {
+              e => raise MalformedEffect(e.to_string())
+            }
         }
       }
       EndElement(_) => break
@@ -221,12 +239,12 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
   }
 }
 
-// --- individual effect parsers ---
+// --- individual effect parsers (raise XmlReadError; lifted at call site) ---
 
 ///|
-fn parse_blur(attrs : Array[(@xml.QName, String)]) -> Blur raise EffectError {
+fn parse_blur(attrs : Array[(@xml.QName, String)]) -> Blur raise XmlReadError {
   let rad = require_emu(attrs, "rad", "blur")
-  let grow = effect_bool_attr_opt(attrs, "grow")
+  let grow = bool_attr_opt(attrs, "grow")
   { rad, grow }
 }
 
@@ -235,7 +253,9 @@ fn parse_glow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> Glow raise EffectError {
-  let rad = require_emu(attrs, "rad", "glow")
+  let rad = require_emu(attrs, "rad", "glow") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
   let color = read_first_color(r, "glow")
   { rad, color }
 }
@@ -245,9 +265,15 @@ fn parse_inner_shadow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> InnerShadow raise EffectError {
-  let blur_rad = require_emu(attrs, "blurRad", "innerShdw")
-  let dist = require_emu(attrs, "dist", "innerShdw")
-  let dir = require_angle(attrs, "dir", "innerShdw")
+  let blur_rad = require_emu(attrs, "blurRad", "innerShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let dist = require_emu(attrs, "dist", "innerShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let dir = require_angle(attrs, "dir", "innerShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
   let color = read_first_color(r, "innerShdw")
   { blur_rad, dist, dir, color }
 }
@@ -257,15 +283,21 @@ fn parse_outer_shadow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> OuterShadow raise EffectError {
-  let blur_rad = require_emu(attrs, "blurRad", "outerShdw")
-  let dist = require_emu(attrs, "dist", "outerShdw")
-  let dir = require_angle(attrs, "dir", "outerShdw")
-  let sx = effect_pct_attr_opt(attrs, "sx")
-  let sy = effect_pct_attr_opt(attrs, "sy")
-  let kx = effect_angle_attr_opt(attrs, "kx")
-  let ky = effect_angle_attr_opt(attrs, "ky")
-  let alignment = effect_enum_attr_opt(attrs, "algn", RectAlignment::from_xml)
-  let rotate_with_shape = effect_bool_attr_opt(attrs, "rotWithShape")
+  let blur_rad = require_emu(attrs, "blurRad", "outerShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let dist = require_emu(attrs, "dist", "outerShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let dir = require_angle(attrs, "dir", "outerShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let sx = pct_attr_opt(attrs, "sx")
+  let sy = pct_attr_opt(attrs, "sy")
+  let kx = angle_attr_opt(attrs, "kx")
+  let ky = angle_attr_opt(attrs, "ky")
+  let alignment = enum_attr_opt(attrs, "algn", RectAlignment::from_xml)
+  let rotate_with_shape = bool_attr_opt(attrs, "rotWithShape")
   let color = read_first_color(r, "outerShdw")
   { blur_rad, dist, dir, sx, sy, kx, ky, alignment, rotate_with_shape, color }
 }
@@ -275,9 +307,15 @@ fn parse_preset_shadow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> PresetShadow raise EffectError {
-  let preset = require_string_attr(attrs, "prst", "prstShdw")
-  let dist = require_emu(attrs, "dist", "prstShdw")
-  let dir = require_angle(attrs, "dir", "prstShdw")
+  let preset = require_attr(attrs, "prst", "prstShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let dist = require_emu(attrs, "dist", "prstShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
+  let dir = require_angle(attrs, "dir", "prstShdw") catch {
+    e => raise MalformedEffect(e.to_string())
+  }
   let color = read_first_color(r, "prstShdw")
   { preset, dist, dir, color }
 }
@@ -285,20 +323,20 @@ fn parse_preset_shadow(
 ///|
 fn parse_reflection(attrs : Array[(@xml.QName, String)]) -> Reflection {
   {
-    blur_rad: effect_emu_attr_opt(attrs, "blurRad"),
-    st_a: effect_pct_attr_opt(attrs, "stA"),
-    st_pos: effect_pct_attr_opt(attrs, "stPos"),
-    end_a: effect_pct_attr_opt(attrs, "endA"),
-    end_pos: effect_pct_attr_opt(attrs, "endPos"),
-    dist: effect_emu_attr_opt(attrs, "dist"),
-    dir: effect_angle_attr_opt(attrs, "dir"),
-    fade_dir: effect_angle_attr_opt(attrs, "fadeDir"),
-    sx: effect_pct_attr_opt(attrs, "sx"),
-    sy: effect_pct_attr_opt(attrs, "sy"),
-    kx: effect_angle_attr_opt(attrs, "kx"),
-    ky: effect_angle_attr_opt(attrs, "ky"),
-    alignment: effect_enum_attr_opt(attrs, "algn", RectAlignment::from_xml),
-    rotate_with_shape: effect_bool_attr_opt(attrs, "rotWithShape"),
+    blur_rad: emu_attr_opt(attrs, "blurRad"),
+    st_a: pct_attr_opt(attrs, "stA"),
+    st_pos: pct_attr_opt(attrs, "stPos"),
+    end_a: pct_attr_opt(attrs, "endA"),
+    end_pos: pct_attr_opt(attrs, "endPos"),
+    dist: emu_attr_opt(attrs, "dist"),
+    dir: angle_attr_opt(attrs, "dir"),
+    fade_dir: angle_attr_opt(attrs, "fadeDir"),
+    sx: pct_attr_opt(attrs, "sx"),
+    sy: pct_attr_opt(attrs, "sy"),
+    kx: angle_attr_opt(attrs, "kx"),
+    ky: angle_attr_opt(attrs, "ky"),
+    alignment: enum_attr_opt(attrs, "algn", RectAlignment::from_xml),
+    rotate_with_shape: bool_attr_opt(attrs, "rotWithShape"),
   }
 }
 
@@ -311,7 +349,7 @@ fn read_first_color(
 ) -> Color raise EffectError {
   let mut found : Color? = None
   while true {
-    let ev = effect_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedEffect(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri == drawing_ns {
@@ -322,7 +360,9 @@ fn read_first_color(
             found = Some(color)
           }
         } else {
-          effect_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedEffect(e.to_string())
+          }
         }
       EndElement(_) => break
       _ => ()
@@ -331,166 +371,5 @@ fn read_first_color(
   match found {
     Some(c) => c
     None => raise MalformedEffect(context + " has no colour child")
-  }
-}
-
-// --- attribute helpers ---
-
-///|
-fn require_emu(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> @units.Emu raise EffectError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int64(kv.1) {
-        Some(n) => return @units.Emu(n)
-        None =>
-          raise MalformedEffect(
-            on + " attribute " + name + " is not an integer: " + kv.1,
-          )
-      }
-    }
-  }
-  raise MalformedEffect(on + " is missing required attribute: " + name)
-}
-
-///|
-fn require_angle(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> @units.Angle raise EffectError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return @units.Angle::from_ooxml(n)
-        None =>
-          raise MalformedEffect(
-            on + " attribute " + name + " is not an integer: " + kv.1,
-          )
-      }
-    }
-  }
-  raise MalformedEffect(on + " is missing required attribute: " + name)
-}
-
-///|
-fn require_string_attr(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> String raise EffectError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  raise MalformedEffect(on + " is missing required attribute: " + name)
-}
-
-///|
-fn effect_emu_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Emu? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int64(kv.1) {
-        Some(n) => return Some(@units.Emu(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn effect_angle_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Angle? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Angle::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn effect_pct_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Percentage? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Percentage::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn effect_bool_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> Bool? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return match kv.1 {
-        "1" | "true" => Some(true)
-        "0" | "false" => Some(false)
-        _ => None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn[T] effect_enum_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  from_xml : (String) -> T?,
-) -> T? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return from_xml(kv.1)
-    }
-  }
-  None
-}
-
-// --- xml helpers (effect-local to avoid clashes with sibling parsers) ---
-
-///|
-fn effect_next_event(r : @xml.XmlReader) -> @xml.XmlEvent raise EffectError {
-  let event = r.next() catch {
-    e => raise MalformedEffect("xml error: " + e.to_string())
-  }
-  match event {
-    Some(e) => e
-    None => raise MalformedEffect("unexpected end of input inside effect")
-  }
-}
-
-///|
-fn effect_skip_subtree(r : @xml.XmlReader) -> Unit raise EffectError {
-  let mut depth = 1
-  while depth > 0 {
-    let ev = effect_next_event(r)
-    match ev {
-      StartElement(_, _) => depth = depth + 1
-      EndElement(_) => depth = depth - 1
-      _ => ()
-    }
   }
 }

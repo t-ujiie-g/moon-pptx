@@ -280,8 +280,8 @@ fn parse_font_collection(
 
 ///|
 /// Consume events until the EndElement that closes the most-recent
-/// StartElement is seen. Caller must invoke this when a StartElement has
-/// just been consumed (so depth is 1 deeper than the surrounding scope).
+/// StartElement is seen. Stays domain-local so it inherits `next_event`'s
+/// `XmlFailure` / `MalformedTheme` distinction.
 fn skip_subtree(r : @xml.XmlReader) -> Unit raise ThemeError {
   let mut depth = 1
   while depth > 0 {
@@ -295,7 +295,11 @@ fn skip_subtree(r : @xml.XmlReader) -> Unit raise ThemeError {
 }
 
 ///|
-/// Read the next event, mapping reader errors and EOF to `ThemeError`.
+/// Read the next event, mapping reader errors to `XmlFailure` and EOF
+/// to `MalformedTheme`. Kept domain-local (rather than delegating to
+/// `@oxml.next_event`) so the underlying `@xml.XmlError` variant can be
+/// preserved in `ThemeError::XmlFailure(kind, msg)` — the shared
+/// `XmlReadError` flattens both error kinds to a string.
 fn next_event(r : @xml.XmlReader) -> @xml.XmlEvent raise ThemeError {
   let event = r.next() catch { e => raise wrap_xml(e) }
   match event {
@@ -314,16 +318,17 @@ fn expect_name(name : @xml.QName, expected : String) -> Unit raise ThemeError {
 }
 
 ///|
+/// Thin delegator to `@oxml.require_attr`. The theme parser uses a 2-arg
+/// signature historically (no enclosing-element context), so we pass the
+/// attribute name itself as the context — the resulting error message
+/// remains readable.
 fn require_attr(
   attrs : Array[(@xml.QName, String)],
   attr_name : String,
 ) -> String raise ThemeError {
-  for kv in attrs {
-    if kv.0.local_name == attr_name {
-      return kv.1
-    }
+  @oxml.require_attr(attrs, attr_name, attr_name) catch {
+    e => raise MalformedTheme(e.to_string())
   }
-  raise MalformedTheme("missing required attribute: " + attr_name)
 }
 
 ///|
@@ -331,10 +336,5 @@ fn optional_attr(
   attrs : Array[(@xml.QName, String)],
   attr_name : String,
 ) -> String {
-  for kv in attrs {
-    if kv.0.local_name == attr_name {
-      return kv.1
-    }
-  }
-  ""
+  @oxml.optional_attr_or(attrs, attr_name, "")
 }

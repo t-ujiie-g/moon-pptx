@@ -230,21 +230,23 @@ pub fn parse_stroke(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> Stroke raise StrokeError {
-  let width = parse_emu_attr_stroke(attrs, "w")
-  let cap = parse_enum_attr_stroke(attrs, "cap", LineCap::from_xml)
-  let compound = parse_enum_attr_stroke(attrs, "cmpd", CompoundLine::from_xml)
-  let alignment = parse_enum_attr_stroke(attrs, "algn", PenAlignment::from_xml)
+  let width = emu_attr_opt(attrs, "w")
+  let cap = enum_attr_opt(attrs, "cap", LineCap::from_xml)
+  let compound = enum_attr_opt(attrs, "cmpd", CompoundLine::from_xml)
+  let alignment = enum_attr_opt(attrs, "algn", PenAlignment::from_xml)
   let mut fill : Fill? = None
   let mut dash : DashStyle? = None
   let mut join : LineJoin? = None
   let mut head_end : ArrowEnd? = None
   let mut tail_end : ArrowEnd? = None
   while true {
-    let ev = stroke_next_event(r)
+    let ev = next_event(r) catch { e => raise MalformedStroke(e.to_string()) }
     match ev {
       StartElement(child, child_attrs) => {
         if child.uri != drawing_ns {
-          stroke_skip_subtree(r)
+          skip_subtree(r) catch {
+            e => raise MalformedStroke(e.to_string())
+          }
           continue
         }
         match child.local_name {
@@ -258,35 +260,52 @@ pub fn parse_stroke(
             }
           }
           "prstDash" => {
-            let raw = stroke_optional_attr(child_attrs, "val")
-            dash = DashStyle::from_xml(raw)
-            stroke_skip_subtree(r)
+            dash = enum_attr_opt(child_attrs, "val", DashStyle::from_xml)
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           }
           // custDash — skip for now
-          "custDash" => stroke_skip_subtree(r)
+          "custDash" =>
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           "round" => {
             join = Some(JoinRound)
-            stroke_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           }
           "bevel" => {
             join = Some(JoinBevel)
-            stroke_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           }
           "miter" => {
-            let lim = parse_pct_attr_stroke(child_attrs, "lim")
+            let lim = pct_attr_opt(child_attrs, "lim")
             join = Some(JoinMiter(lim))
-            stroke_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           }
           "headEnd" => {
             head_end = Some(parse_arrow_end(child_attrs))
-            stroke_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           }
           "tailEnd" => {
             tail_end = Some(parse_arrow_end(child_attrs))
-            stroke_skip_subtree(r)
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
           }
           // extLst and any other unmodelled child
-          _ => stroke_skip_subtree(r)
+          _ =>
+            skip_subtree(r) catch {
+              e => raise MalformedStroke(e.to_string())
+            }
         }
       }
       EndElement(_) => break
@@ -298,98 +317,12 @@ pub fn parse_stroke(
 
 ///|
 fn parse_arrow_end(attrs : Array[(@xml.QName, String)]) -> ArrowEnd {
-  let arrow_type = match
-    parse_enum_attr_stroke(attrs, "type", ArrowType::from_xml) {
+  let arrow_type = match enum_attr_opt(attrs, "type", ArrowType::from_xml) {
     Some(t) => t
     // Spec default for missing type is "none".
     None => ArrowNone
   }
-  let width = parse_enum_attr_stroke(attrs, "w", ArrowSize::from_xml)
-  let length = parse_enum_attr_stroke(attrs, "len", ArrowSize::from_xml)
+  let width = enum_attr_opt(attrs, "w", ArrowSize::from_xml)
+  let length = enum_attr_opt(attrs, "len", ArrowSize::from_xml)
   { arrow_type, width, length }
-}
-
-// --- helpers (stroke-local to avoid clashing with @oxml.fill / @oxml.color) ---
-
-///|
-fn stroke_next_event(r : @xml.XmlReader) -> @xml.XmlEvent raise StrokeError {
-  let event = r.next() catch {
-    e => raise MalformedStroke("xml error: " + e.to_string())
-  }
-  match event {
-    Some(e) => e
-    None => raise MalformedStroke("unexpected end of input inside <a:ln>")
-  }
-}
-
-///|
-fn stroke_skip_subtree(r : @xml.XmlReader) -> Unit raise StrokeError {
-  let mut depth = 1
-  while depth > 0 {
-    let ev = stroke_next_event(r)
-    match ev {
-      StartElement(_, _) => depth = depth + 1
-      EndElement(_) => depth = depth - 1
-      _ => ()
-    }
-  }
-}
-
-///|
-fn stroke_optional_attr(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> String {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  ""
-}
-
-///|
-fn parse_emu_attr_stroke(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Emu? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int64(kv.1) {
-        Some(n) => return Some(@units.Emu(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn parse_pct_attr_stroke(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Percentage? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Percentage::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn[T] parse_enum_attr_stroke(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  from_xml : (String) -> T?,
-) -> T? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return from_xml(kv.1)
-    }
-  }
-  None
 }

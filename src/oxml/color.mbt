@@ -203,7 +203,9 @@ pub fn parse_color_element(
 ) -> Color raise ColorError {
   let base : ColorBase = match name.local_name {
     "srgbClr" => {
-      let hex = require_attr(attrs, "val", "srgbClr")
+      let hex = require_attr(attrs, "val", "srgbClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
       let rgb = @units.RgbColor::parse_hex(hex) catch {
         _ =>
           raise MalformedColor("srgbClr val is not a 6-hex-digit color: " + hex)
@@ -211,29 +213,39 @@ pub fn parse_color_element(
       Srgb(rgb)
     }
     "hslClr" => {
-      let hue = parse_angle_required(attrs, "hue", "hslClr")
-      let sat = parse_percent_required(attrs, "sat", "hslClr")
-      let lum = parse_percent_required(attrs, "lum", "hslClr")
+      let hue = (require_angle(attrs, "hue", "hslClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }).degrees()
+      let sat = (require_pct(attrs, "sat", "hslClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }).value()
+      let lum = (require_pct(attrs, "lum", "hslClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }).value()
       Hsl(@units.HslColor::new(hue, sat, lum))
     }
     "sysClr" => {
-      let val = require_attr(attrs, "val", "sysClr")
-      let last = optional_attr(attrs, "lastClr")
-      let last_clr = if last.length() > 0 {
-        let parsed = @units.RgbColor::parse_hex(last) catch {
-          _ =>
-            raise MalformedColor(
-              "sysClr lastClr is not a 6-hex-digit color: " + last,
-            )
+      let val = require_attr(attrs, "val", "sysClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
+      let last_clr = match optional_attr(attrs, "lastClr") {
+        Some(s) => {
+          let parsed = @units.RgbColor::parse_hex(s) catch {
+            _ =>
+              raise MalformedColor(
+                "sysClr lastClr is not a 6-hex-digit color: " + s,
+              )
+          }
+          Some(parsed)
         }
-        Some(parsed)
-      } else {
-        None
+        None => None
       }
       Sys({ val, last_clr })
     }
     "schemeClr" => {
-      let raw = require_attr(attrs, "val", "schemeClr")
+      let raw = require_attr(attrs, "val", "schemeClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
       let theme = @units.ThemeColor::from_xml(raw) catch {
         _ =>
           raise MalformedColor(
@@ -242,11 +254,22 @@ pub fn parse_color_element(
       }
       Scheme(theme)
     }
-    "prstClr" => Preset(require_attr(attrs, "val", "prstClr"))
+    "prstClr" => {
+      let v = require_attr(attrs, "val", "prstClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
+      Preset(v)
+    }
     "scrgbClr" => {
-      let red = parse_percent_required(attrs, "r", "scrgbClr")
-      let green = parse_percent_required(attrs, "g", "scrgbClr")
-      let blue = parse_percent_required(attrs, "b", "scrgbClr")
+      let red = require_pct(attrs, "r", "scrgbClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
+      let green = require_pct(attrs, "g", "scrgbClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
+      let blue = require_pct(attrs, "b", "scrgbClr") catch {
+        e => raise MalformedColor(e.to_string())
+      }
       Scrgb(red, green, blue)
     }
     _ => raise UnknownColorElement(name.local_name)
@@ -266,7 +289,9 @@ pub fn parse_color_element(
             None => () // unsupported transform — silently drop for now
           }
         }
-        skip_subtree(r)
+        skip_subtree(r) catch {
+          e => raise MalformedColor(e.to_string())
+        }
       }
       Some(EndElement(_)) => break
       Some(Text(_)) | Some(CData(_)) => ()
@@ -285,109 +310,19 @@ fn transform_from(
   attrs : Array[(@xml.QName, String)],
 ) -> @units.ColorTransform? {
   match local_name {
-    "tint" => parse_percent_attr_opt(attrs, "val").map(fn(p) { Tint(p) })
-    "shade" => parse_percent_attr_opt(attrs, "val").map(fn(p) { Shade(p) })
-    "satMod" => parse_percent_attr_opt(attrs, "val").map(fn(p) { SatMod(p) })
-    "lumMod" => parse_percent_attr_opt(attrs, "val").map(fn(p) { LumMod(p) })
-    "alpha" => parse_percent_attr_opt(attrs, "val").map(fn(p) { Alpha(p) })
+    "tint" => pct_attr_opt(attrs, "val").map(fn(p) { Tint(p) })
+    "shade" => pct_attr_opt(attrs, "val").map(fn(p) { Shade(p) })
+    "satMod" => pct_attr_opt(attrs, "val").map(fn(p) { SatMod(p) })
+    "lumMod" => pct_attr_opt(attrs, "val").map(fn(p) { LumMod(p) })
+    "alpha" => pct_attr_opt(attrs, "val").map(fn(p) { Alpha(p) })
     _ => None
   }
 }
 
 ///|
-/// Skip events until the closing tag for the element whose StartElement
-/// was just consumed. Local copy of the helper used by domain parsers.
-fn skip_subtree(r : @xml.XmlReader) -> Unit raise ColorError {
-  let mut depth = 1
-  while depth > 0 {
-    let event = r.next() catch {
-      e =>
-        raise MalformedColor(
-          "xml error inside skipped subtree: " + e.to_string(),
-        )
-    }
-    match event {
-      Some(StartElement(_, _)) => depth = depth + 1
-      Some(EndElement(_)) => depth = depth - 1
-      Some(_) => ()
-      None =>
-        raise MalformedColor("unexpected end of input inside skipped subtree")
-    }
-  }
-}
-
-// --- attribute helpers ---
-
-///|
-fn require_attr(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> String raise ColorError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  raise MalformedColor(on + " is missing required attribute: " + name)
-}
-
-///|
-fn optional_attr(attrs : Array[(@xml.QName, String)], name : String) -> String {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  ""
-}
-
-///|
-fn parse_angle_required(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> Double raise ColorError {
-  let raw = require_attr(attrs, name, on)
-  match parse_signed_int(raw) {
-    Some(n) => n.to_double() / 60_000.0
-    None => raise MalformedColor(on + " " + name + " is not an integer: " + raw)
-  }
-}
-
-///|
-fn parse_percent_required(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-  on : String,
-) -> Double raise ColorError {
-  let raw = require_attr(attrs, name, on)
-  match parse_signed_int(raw) {
-    Some(n) => n.to_double() / 1000.0
-    None => raise MalformedColor(on + " " + name + " is not an integer: " + raw)
-  }
-}
-
-///|
-fn parse_percent_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Percentage? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Percentage::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-/// Percentage parser for `<a:scrgbClr>` / `<a:hslClr>`. Same as the
-/// internal `_required` / `_attr_opt` helpers above but yields a typed
-/// `Percentage` from a raw string. Used by tests.
+/// Percentage parser for `<a:scrgbClr>` / `<a:hslClr>` raw strings.  Used
+/// by tests; production parsing goes through the shared `require_pct` /
+/// `pct_attr_opt` helpers in `@oxml`.
 pub fn parse_percent_value(raw : String) -> @units.Percentage? {
   match parse_signed_int(raw) {
     Some(n) => Some(@units.Percentage::from_ooxml(n))

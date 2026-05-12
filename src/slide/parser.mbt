@@ -481,15 +481,7 @@ fn parse_angle_attr(
   attrs : Array[(@xml.QName, String)],
   name : String,
 ) -> @units.Angle? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match @oxml.parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Angle::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
+  @oxml.angle_attr_opt(attrs, name)
 }
 
 ///|
@@ -499,15 +491,7 @@ fn parse_emu_attr(
   attrs : Array[(@xml.QName, String)],
   name : String,
 ) -> @units.Emu? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match @oxml.parse_signed_int64(kv.1) {
-        Some(n) => return Some(@units.Emu(n))
-        None => return None
-      }
-    }
-  }
-  None
+  @oxml.emu_attr_opt(attrs, name)
 }
 
 ///|
@@ -517,15 +501,7 @@ fn parse_thousandths_pct_attr(
   attrs : Array[(@xml.QName, String)],
   name : String,
 ) -> @units.Percentage? {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      match @oxml.parse_signed_int(kv.1) {
-        Some(n) => return Some(@units.Percentage::from_ooxml(n))
-        None => return None
-      }
-    }
-  }
-  None
+  @oxml.pct_attr_opt(attrs, name)
 }
 
 ///|
@@ -851,12 +827,7 @@ fn expect_pml(name : @xml.QName, expected : String) -> Unit raise SlideError {
 
 ///|
 fn optional_attr(attrs : Array[(@xml.QName, String)], name : String) -> String {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  ""
+  @oxml.optional_attr_or(attrs, name, "")
 }
 
 ///|
@@ -902,12 +873,9 @@ fn require_attr(
   attrs : Array[(@xml.QName, String)],
   name : String,
 ) -> String raise SlideError {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
+  @oxml.require_attr(attrs, name, name) catch {
+    e => raise Malformed(e.to_string())
   }
-  raise Malformed("missing required attribute: " + name)
 }
 
 ///|
