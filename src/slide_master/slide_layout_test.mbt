@@ -1,10 +1,10 @@
 // Slide layout parser tests.
 
 ///|
-let pl_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
+let pl_ns : String = @oxml.presentation_ns
 
 ///|
-let al_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
+let al_ns : String = @oxml.drawing_ns
 
 ///|
 fn layout_xml_with_master_mapping() -> FixedArray[Byte] {

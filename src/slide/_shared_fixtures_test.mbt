@@ -6,20 +6,16 @@
 // removes the per-file duplication that crept in across Phase 3c/3d.
 
 ///|
-/// PresentationML namespace. Mirrors `@oxml.presentation_ns` but is
-/// inlined here as a string because test fixtures interpolate it
-/// directly into XML literals (the writer-side `bind_namespace` API
-/// isn't relevant here).
-let pml_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
+/// Test-side aliases for the shared OOXML namespace URIs. Tests
+/// interpolate these directly into XML string literals, so we expose them
+/// under short names — the canonical definitions live in `@oxml`.
+let pml_ns : String = @oxml.presentation_ns
 
 ///|
-/// DrawingML namespace.
-let dml_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
+let dml_ns : String = @oxml.drawing_ns
 
 ///|
-/// OOXML relationships namespace (the content-XML `r:` prefix), distinct
-/// from the OPC packaging-side `.rels` namespace.
-let off_rel_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+let off_rel_ns : String = @oxml.office_relationships_ns
 
 ///|
 /// UTF-8 encode a string to a `FixedArray[Byte]`. Used by every test

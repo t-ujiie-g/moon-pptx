@@ -1,12 +1,9 @@
 // @oxml.Stroke parser tests (Phase 3e3).
 
 ///|
-let drawing_stroke : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
 fn parse_stroke_inner(inner : String) -> @oxml.Stroke raise @oxml.StrokeError {
   let xml = "<wrapper xmlns:a=\"" +
-    drawing_stroke +
+    @oxml.drawing_ns +
     "\">" +
     inner +
     "</wrapper>"

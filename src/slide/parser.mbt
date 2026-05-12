@@ -483,7 +483,7 @@ fn parse_angle_attr(
 ) -> @units.Angle? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int_decimal(kv.1) {
+      match @oxml.parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Angle::from_ooxml(n))
         None => return None
       }
@@ -501,7 +501,7 @@ fn parse_emu_attr(
 ) -> @units.Emu? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int64_decimal(kv.1) {
+      match @oxml.parse_signed_int64(kv.1) {
         Some(n) => return Some(@units.Emu(n))
         None => return None
       }
@@ -519,7 +519,7 @@ fn parse_thousandths_pct_attr(
 ) -> @units.Percentage? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int_decimal(kv.1) {
+      match @oxml.parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Percentage::from_ooxml(n))
         None => return None
       }
@@ -537,7 +537,7 @@ fn parse_hundredths_pt_attr(
 ) -> @units.Pt? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int_decimal(kv.1) {
+      match @oxml.parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Pt(n.to_double() / 100.0))
         None => return None
       }
@@ -865,7 +865,7 @@ fn parse_int_attr(
   name : String,
 ) -> Int raise SlideError {
   let raw = require_attr(attrs, name)
-  match parse_int_decimal(raw) {
+  match @oxml.parse_signed_int(raw) {
     Some(n) => n
     None => raise Malformed("attribute " + name + " is not an integer: " + raw)
   }
@@ -879,7 +879,7 @@ fn parse_int_attr_default(
 ) -> Int {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      return parse_int_decimal(kv.1).unwrap_or(default)
+      return @oxml.parse_signed_int(kv.1).unwrap_or(default)
     }
   }
   default
@@ -891,7 +891,7 @@ fn parse_int64_attr(
   name : String,
 ) -> Int64 raise SlideError {
   let raw = require_attr(attrs, name)
-  match parse_int64_decimal(raw) {
+  match @oxml.parse_signed_int64(raw) {
     Some(n) => n
     None => raise Malformed("attribute " + name + " is not an integer: " + raw)
   }
@@ -908,64 +908,6 @@ fn require_attr(
     }
   }
   raise Malformed("missing required attribute: " + name)
-}
-
-///|
-fn parse_int_decimal(s : String) -> Int? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign = 1
-  if chars[0] == '-' {
-    sign = -1
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10 + (c.to_int() - '0'.to_int())
-    i = i + 1
-  }
-  Some(acc * sign)
-}
-
-///|
-fn parse_int64_decimal(s : String) -> Int64? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign : Int64 = 1L
-  if chars[0] == '-' {
-    sign = -1L
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc : Int64 = 0L
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10L + (c.to_int() - '0'.to_int()).to_int64()
-    i = i + 1
-  }
-  Some(acc * sign)
 }
 
 ///|

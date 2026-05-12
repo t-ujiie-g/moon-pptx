@@ -1,17 +1,11 @@
 // @oxml.Fill parser tests (Phase 3e2).
 
 ///|
-let drawing_fill : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
-let rel_fill : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-
-///|
 fn parse_inner_fill(inner : String) -> @oxml.Fill raise @oxml.FillError {
   let xml = "<wrapper xmlns:a=\"" +
-    drawing_fill +
+    @oxml.drawing_ns +
     "\" xmlns:r=\"" +
-    rel_fill +
+    @oxml.office_relationships_ns +
     "\">" +
     inner +
     "</wrapper>"

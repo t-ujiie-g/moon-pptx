@@ -7,8 +7,10 @@
 // (typically `outerShdw` + `glow` for emphasis effects).
 //
 // Phase 3e4 introduces the typed model + `parse_effect_list`, and wires
-// `effects : EffectList?` into auto-shape / picture / connector and into
-// the run-level `RunProperties`.
+// `effects : EffectList?` into auto-shape / picture / connector via
+// `<p:spPr>`. Run-level effects on `<a:rPr>` are deferred — they exist
+// in the spec but are rare in practice; surface them when a real fixture
+// demands it.
 //
 // The richer `<a:effectDag>` element (effect graph with custom node
 // composition) is rare in real-world PPTX; we don't model it yet — its
@@ -138,19 +140,6 @@ pub(all) struct EffectList {
   reflection : Reflection?
   soft_edge : SoftEdge?
 } derive(Eq, Debug)
-
-///|
-pub fn EffectList::empty() -> EffectList {
-  {
-    blur: None,
-    glow: None,
-    inner_shadow: None,
-    outer_shadow: None,
-    preset_shadow: None,
-    reflection: None,
-    soft_edge: None,
-  }
-}
 
 ///|
 /// Errors raised by `parse_effect_list`.
@@ -355,7 +344,7 @@ fn require_emu(
 ) -> @units.Emu raise EffectError {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_effect_int64(kv.1) {
+      match parse_signed_int64(kv.1) {
         Some(n) => return @units.Emu(n)
         None =>
           raise MalformedEffect(
@@ -375,7 +364,7 @@ fn require_angle(
 ) -> @units.Angle raise EffectError {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_effect_int(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return @units.Angle::from_ooxml(n)
         None =>
           raise MalformedEffect(
@@ -408,7 +397,7 @@ fn effect_emu_attr_opt(
 ) -> @units.Emu? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_effect_int64(kv.1) {
+      match parse_signed_int64(kv.1) {
         Some(n) => return Some(@units.Emu(n))
         None => return None
       }
@@ -424,7 +413,7 @@ fn effect_angle_attr_opt(
 ) -> @units.Angle? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_effect_int(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Angle::from_ooxml(n))
         None => return None
       }
@@ -440,7 +429,7 @@ fn effect_pct_attr_opt(
 ) -> @units.Percentage? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_effect_int(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Percentage::from_ooxml(n))
         None => return None
       }
@@ -504,62 +493,4 @@ fn effect_skip_subtree(r : @xml.XmlReader) -> Unit raise EffectError {
       _ => ()
     }
   }
-}
-
-///|
-fn parse_effect_int(s : String) -> Int? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign = 1
-  if chars[0] == '-' {
-    sign = -1
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10 + (c.to_int() - '0'.to_int())
-    i = i + 1
-  }
-  Some(acc * sign)
-}
-
-///|
-fn parse_effect_int64(s : String) -> Int64? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign : Int64 = 1L
-  if chars[0] == '-' {
-    sign = -1L
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc : Int64 = 0L
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10L + (c.to_int() - '0'.to_int()).to_int64()
-    i = i + 1
-  }
-  Some(acc * sign)
 }

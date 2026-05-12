@@ -1,10 +1,10 @@
 // Slide master parser tests.
 
 ///|
-let p_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
+let p_ns : String = @oxml.presentation_ns
 
 ///|
-let r_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+let r_ns : String = @oxml.office_relationships_ns
 
 ///|
 fn ascii_bytes(s : String) -> FixedArray[Byte] {
@@ -22,7 +22,7 @@ fn ascii_bytes(s : String) -> FixedArray[Byte] {
 fn office_like_master() -> FixedArray[Byte] {
   // A trimmed-down sldMaster: clrMap, sldLayoutIdLst with three layouts,
   // plus a deliberately noisy cSld + txStyles to verify skip behaviour.
-  let a_ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+  let a_ns = @oxml.drawing_ns
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sldMaster xmlns:p=\"" +
     p_ns +

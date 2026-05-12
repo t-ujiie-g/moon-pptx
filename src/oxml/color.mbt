@@ -349,7 +349,7 @@ fn parse_angle_required(
   on : String,
 ) -> Double raise ColorError {
   let raw = require_attr(attrs, name, on)
-  match parse_int(raw) {
+  match parse_signed_int(raw) {
     Some(n) => n.to_double() / 60_000.0
     None => raise MalformedColor(on + " " + name + " is not an integer: " + raw)
   }
@@ -362,7 +362,7 @@ fn parse_percent_required(
   on : String,
 ) -> Double raise ColorError {
   let raw = require_attr(attrs, name, on)
-  match parse_int(raw) {
+  match parse_signed_int(raw) {
     Some(n) => n.to_double() / 1000.0
     None => raise MalformedColor(on + " " + name + " is not an integer: " + raw)
   }
@@ -375,7 +375,7 @@ fn parse_percent_attr_opt(
 ) -> @units.Percentage? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Percentage::from_ooxml(n))
         None => return None
       }
@@ -385,40 +385,11 @@ fn parse_percent_attr_opt(
 }
 
 ///|
-fn parse_int(s : String) -> Int? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign = 1
-  if chars[0] == '-' {
-    sign = -1
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10 + (c.to_int() - '0'.to_int())
-    i = i + 1
-  }
-  Some(acc * sign)
-}
-
-///|
-/// Percentage parser for `<a:scrgbClr>` / `<a:hslClr>`. Same as above
-/// but yields a typed `Percentage`. Used by tests; production parser
-/// uses the local helpers above.
+/// Percentage parser for `<a:scrgbClr>` / `<a:hslClr>`. Same as the
+/// internal `_required` / `_attr_opt` helpers above but yields a typed
+/// `Percentage` from a raw string. Used by tests.
 pub fn parse_percent_value(raw : String) -> @units.Percentage? {
-  match parse_int(raw) {
+  match parse_signed_int(raw) {
     Some(n) => Some(@units.Percentage::from_ooxml(n))
     None => None
   }

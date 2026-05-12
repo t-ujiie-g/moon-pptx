@@ -6,7 +6,7 @@
 // skip-subtree behaviour.
 
 ///|
-let drawing : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
+let drawing : String = @oxml.drawing_ns
 
 ///|
 fn office_like_theme() -> FixedArray[Byte] {

@@ -1,14 +1,11 @@
 // @oxml.EffectList parser tests (Phase 3e4).
 
 ///|
-let drawing_effect : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
 fn parse_effect_list_inner(
   inner : String,
 ) -> @oxml.EffectList raise @oxml.EffectError {
   let xml = "<wrapper xmlns:a=\"" +
-    drawing_effect +
+    @oxml.drawing_ns +
     "\"><a:effectLst>" +
     inner +
     "</a:effectLst></wrapper>"
@@ -103,6 +100,14 @@ test "EffectList: innerShdw full" {
   }
 }
 
+///|
+test "EffectList: innerShdw without colour raises" {
+  let res = try? parse_effect_list_inner(
+    "<a:innerShdw blurRad=\"50800\" dist=\"38100\" dir=\"2700000\"/>",
+  )
+  assert_true(res is Err(_))
+}
+
 // --- outerShdw ---
 
 ///|
@@ -148,6 +153,14 @@ test "EffectList: prstShdw" {
     Srgb(rgb) => assert_eq(rgb.to_hex(), "AABBCC")
     _ => fail("expected Srgb base")
   }
+}
+
+///|
+test "EffectList: prstShdw missing prst attribute raises" {
+  let res = try? parse_effect_list_inner(
+    "<a:prstShdw dist=\"38100\" dir=\"2700000\"><a:srgbClr val=\"AABBCC\"/></a:prstShdw>",
+  )
+  assert_true(res is Err(_))
 }
 
 // --- softEdge ---

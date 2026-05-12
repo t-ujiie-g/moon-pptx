@@ -406,7 +406,7 @@ fn parse_solid_fill(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
 fn parse_font_size_attr(attrs : Array[(@xml.QName, String)]) -> @units.Pt? {
   for kv in attrs {
     if kv.0.local_name == "sz" && kv.0.uri == "" {
-      match parse_int_decimal(kv.1) {
+      match @oxml.parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Pt(n.to_double() / 100.0))
         None => return None
       }
@@ -438,7 +438,7 @@ fn parse_baseline_attr(
 ) -> @units.Percentage? {
   for kv in attrs {
     if kv.0.local_name == "baseline" && kv.0.uri == "" {
-      match parse_int_decimal(kv.1) {
+      match @oxml.parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Percentage::from_ooxml(n))
         None => return None
       }

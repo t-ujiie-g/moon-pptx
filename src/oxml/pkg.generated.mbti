@@ -22,6 +22,10 @@ pub fn parse_fill(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> Fi
 
 pub fn parse_percent_value(String) -> @units.Percentage?
 
+pub fn parse_signed_int(String) -> Int?
+
+pub fn parse_signed_int64(String) -> Int64?
+
 pub fn parse_stroke(@xml.XmlReader, Array[(@xml.QName, String)]) -> Stroke raise StrokeError
 
 pub let presentation_ns : String
@@ -151,7 +155,6 @@ pub(all) struct EffectList {
   reflection : Reflection?
   soft_edge : SoftEdge?
 } derive(Eq, @debug.Debug)
-pub fn EffectList::empty() -> Self
 
 pub(all) enum Fill {
   NoFill
@@ -167,7 +170,6 @@ pub(all) struct FillRect {
   right : @units.Percentage
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
-pub fn FillRect::default() -> Self
 
 pub(all) struct Glow {
   rad : @units.Emu
@@ -285,7 +287,6 @@ pub(all) struct SrcRect {
   right : @units.Percentage
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
-pub fn SrcRect::default() -> Self
 
 pub(all) struct Stroke {
   width : @units.Emu?
@@ -298,7 +299,6 @@ pub(all) struct Stroke {
   head_end : ArrowEnd?
   tail_end : ArrowEnd?
 } derive(Eq, @debug.Debug)
-pub fn Stroke::empty() -> Self
 
 pub(all) struct SysColor {
   val : String
@@ -335,7 +335,6 @@ pub(all) struct TileSpec {
   flip : TileFlip?
   alignment : TileAlignment?
 } derive(Eq, @debug.Debug)
-pub fn TileSpec::default() -> Self
 
 // Type aliases
 

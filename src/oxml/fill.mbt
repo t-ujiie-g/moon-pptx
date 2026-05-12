@@ -31,18 +31,6 @@ pub(all) struct FillRect {
 } derive(Eq, Debug)
 
 ///|
-/// Default-zero `FillRect` (the common case when `<a:fillRect/>` is
-/// emitted with no attributes — the entire destination is filled).
-pub fn FillRect::default() -> FillRect {
-  {
-    left: @units.Percentage(0.0),
-    top: @units.Percentage(0.0),
-    right: @units.Percentage(0.0),
-    bottom: @units.Percentage(0.0),
-  }
-}
-
-///|
 /// Source rectangle (`<a:srcRect>`) — the crop inside the source image
 /// for a blip fill. Same `Percentage` scale as `FillRect`. Distinct
 /// type so the parser can keep src-vs-dst rectangles unambiguous.
@@ -52,16 +40,6 @@ pub(all) struct SrcRect {
   right : @units.Percentage
   bottom : @units.Percentage
 } derive(Eq, Debug)
-
-///|
-pub fn SrcRect::default() -> SrcRect {
-  {
-    left: @units.Percentage(0.0),
-    top: @units.Percentage(0.0),
-    right: @units.Percentage(0.0),
-    bottom: @units.Percentage(0.0),
-  }
-}
 
 ///|
 /// Tile flip mode (`ST_TileFlipMode`). `FlipNone` is the spec default.
@@ -125,11 +103,6 @@ pub(all) struct TileSpec {
   flip : TileFlip?
   alignment : TileAlignment?
 } derive(Eq, Debug)
-
-///|
-pub fn TileSpec::default() -> TileSpec {
-  { tx: None, ty: None, sx: None, sy: None, flip: None, alignment: None }
-}
 
 ///|
 /// Blip fill mode — either stretch with an optional clip rectangle, or
@@ -320,7 +293,7 @@ fn parse_gradient_fill(
           "gsLst" => parse_gradient_stops(r, stops)
           "lin" => {
             let ang_raw = fill_require_attr(child_attrs, "ang", "lin")
-            let ang = match parse_int_local(ang_raw) {
+            let ang = match parse_signed_int(ang_raw) {
               Some(n) => @units.Angle::from_ooxml(n)
               None =>
                 raise MalformedFill("lin ang is not an integer: " + ang_raw)
@@ -366,7 +339,7 @@ fn parse_gradient_stops(
       StartElement(child, child_attrs) =>
         if child.uri == drawing_ns && child.local_name == "gs" {
           let pos_raw = fill_require_attr(child_attrs, "pos", "gs")
-          let position = match parse_int_local(pos_raw) {
+          let position = match parse_signed_int(pos_raw) {
             Some(n) => @units.Percentage::from_ooxml(n)
             None => raise MalformedFill("gs pos is not an integer: " + pos_raw)
           }
@@ -527,7 +500,7 @@ fn parse_percent_attr_strict(
 ) -> @units.Percentage raise FillError {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int_local(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return @units.Percentage::from_ooxml(n)
         None =>
           raise MalformedFill(
@@ -644,64 +617,6 @@ fn optional_attr_local(
 }
 
 ///|
-fn parse_int_local(s : String) -> Int? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign = 1
-  if chars[0] == '-' {
-    sign = -1
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10 + (c.to_int() - '0'.to_int())
-    i = i + 1
-  }
-  Some(acc * sign)
-}
-
-///|
-fn parse_int64_local(s : String) -> Int64? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign : Int64 = 1L
-  if chars[0] == '-' {
-    sign = -1L
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc : Int64 = 0L
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10L + (c.to_int() - '0'.to_int()).to_int64()
-    i = i + 1
-  }
-  Some(acc * sign)
-}
-
-///|
 fn parse_bool_attr_opt(
   attrs : Array[(@xml.QName, String)],
   name : String,
@@ -739,7 +654,7 @@ fn parse_emu_attr_opt(
 ) -> @units.Emu? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int64_local(kv.1) {
+      match parse_signed_int64(kv.1) {
         Some(n) => return Some(@units.Emu(n))
         None => return None
       }
@@ -755,7 +670,7 @@ fn parse_percent_attr_opt_fill(
 ) -> @units.Percentage? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_int_local(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Percentage::from_ooxml(n))
         None => return None
       }

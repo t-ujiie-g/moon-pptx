@@ -1,14 +1,15 @@
 // @oxml.Color parser tests (Phase 3e1).
 
 ///|
-let drawing : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
-
-///|
 /// Drive `parse_color_element` against the body of a `<wrapper>` element
 /// whose payload is `inner`. The wrapper's outer namespace doesn't matter
 /// — we just want the colour element + its modifier children.
 fn parse_inner_color(inner : String) -> @oxml.Color raise @oxml.ColorError {
-  let xml = "<wrapper xmlns:a=\"" + drawing + "\">" + inner + "</wrapper>"
+  let xml = "<wrapper xmlns:a=\"" +
+    @oxml.drawing_ns +
+    "\">" +
+    inner +
+    "</wrapper>"
   let r = @xml.XmlReader::new(xml)
   // consume <wrapper>
   let _ = r.next() catch {

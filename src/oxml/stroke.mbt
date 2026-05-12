@@ -200,22 +200,6 @@ pub(all) struct Stroke {
 } derive(Eq, Debug)
 
 ///|
-/// All-`None` default. Used internally when a shape has no `<a:ln>`.
-pub fn Stroke::empty() -> Stroke {
-  {
-    width: None,
-    cap: None,
-    compound: None,
-    alignment: None,
-    fill: None,
-    dash: None,
-    join: None,
-    head_end: None,
-    tail_end: None,
-  }
-}
-
-///|
 /// Errors raised by `parse_stroke`.
 pub(all) suberror StrokeError {
   MalformedStroke(String)
@@ -371,7 +355,7 @@ fn parse_emu_attr_stroke(
 ) -> @units.Emu? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_stroke_int64(kv.1) {
+      match parse_signed_int64(kv.1) {
         Some(n) => return Some(@units.Emu(n))
         None => return None
       }
@@ -387,7 +371,7 @@ fn parse_pct_attr_stroke(
 ) -> @units.Percentage? {
   for kv in attrs {
     if kv.0.local_name == name && kv.0.uri == "" {
-      match parse_stroke_int(kv.1) {
+      match parse_signed_int(kv.1) {
         Some(n) => return Some(@units.Percentage::from_ooxml(n))
         None => return None
       }
@@ -408,62 +392,4 @@ fn[T] parse_enum_attr_stroke(
     }
   }
   None
-}
-
-///|
-fn parse_stroke_int(s : String) -> Int? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign = 1
-  if chars[0] == '-' {
-    sign = -1
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10 + (c.to_int() - '0'.to_int())
-    i = i + 1
-  }
-  Some(acc * sign)
-}
-
-///|
-fn parse_stroke_int64(s : String) -> Int64? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut i = 0
-  let mut sign : Int64 = 1L
-  if chars[0] == '-' {
-    sign = -1L
-    i = 1
-  } else if chars[0] == '+' {
-    i = 1
-  }
-  if i >= chars.length() {
-    return None
-  }
-  let mut acc : Int64 = 0L
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
-    acc = acc * 10L + (c.to_int() - '0'.to_int()).to_int64()
-    i = i + 1
-  }
-  Some(acc * sign)
 }
