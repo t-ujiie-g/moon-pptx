@@ -76,10 +76,16 @@ test "serialize -> parse round trip preserves entries" {
   assert_eq(reparsed.defaults.length(), original.defaults.length())
   assert_eq(reparsed.overrides.length(), original.overrides.length())
   for i in 0..<original.defaults.length() {
-    assert_eq(reparsed.defaults[i], original.defaults[i])
+    let (ext_r, ct_r) = reparsed.defaults[i]
+    let (ext_o, ct_o) = original.defaults[i]
+    assert_eq(ext_r, ext_o)
+    assert_eq(ct_r, ct_o)
   }
   for i in 0..<original.overrides.length() {
-    assert_eq(reparsed.overrides[i], original.overrides[i])
+    let (pn_r, ct_r) = reparsed.overrides[i]
+    let (pn_o, ct_o) = original.overrides[i]
+    assert_eq(pn_r, pn_o)
+    assert_eq(ct_r, ct_o)
   }
 }
 

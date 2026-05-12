@@ -12,7 +12,7 @@
 
 ///|
 fn collect_uris(events : Array[@xml.XmlEvent]) -> Array[String] {
-  let seen : Map[String, Unit] = Map::new(capacity=0)
+  let seen : Map[String, Unit] = Map([])
   let out : Array[String] = []
   for e in events {
     match e {
@@ -39,7 +39,7 @@ fn replay(events : Array[@xml.XmlEvent]) -> String raise @xml.XmlError {
   let w = @xml.XmlWriter::new()
   let uris = collect_uris(events)
   // Assign fresh prefixes ns0, ns1, … in first-seen order.
-  let prefix_for : Map[String, String] = Map::new(capacity=0)
+  let prefix_for : Map[String, String] = Map([])
   for i, uri in uris {
     let p = "ns" + i.to_string()
     prefix_for[uri] = p

@@ -110,7 +110,7 @@ fn parse_color_scheme(
   attrs : Array[(@xml.QName, String)],
 ) -> ColorScheme raise ThemeError {
   let name = optional_attr(attrs, "name")
-  let slots : Map[String, @oxml.Color] = Map::new(capacity=0)
+  let slots : Map[String, @oxml.Color] = Map([])
   while true {
     let event = next_event(r)
     match event {
