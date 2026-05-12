@@ -246,7 +246,7 @@ fn XmlReader::read_start_tag(self : XmlReader) -> XmlEvent raise XmlError {
   self.advance()
   let prefixed = self.read_name()
   // Push a new scope for namespace declarations made on this element.
-  let scope : Map[String, String] = Map::new()
+  let scope : Map[String, String] = Map::new(capacity=0)
   // Collect raw attributes; we resolve QNames *after* gathering the scope
   // so that `xmlns:*` decls on this element apply to its own attributes.
   let raw_attrs : Array[(String, String)] = Array::new()
@@ -318,7 +318,7 @@ fn XmlReader::read_end_tag(self : XmlReader) -> XmlEvent raise XmlError {
   let scope = if self.ns_stack.length() > 0 {
     self.ns_stack[self.ns_stack.length() - 1]
   } else {
-    Map::new()
+    Map::new(capacity=0)
   }
   let qname = self.resolve_qname(prefixed, scope, is_attribute=false)
   if self.element_stack.length() == 0 {

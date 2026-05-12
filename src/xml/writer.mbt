@@ -30,7 +30,7 @@ pub struct XmlWriter {
 pub fn XmlWriter::new() -> XmlWriter {
   {
     buf: StringBuilder::new(size_hint=256),
-    prefix_for_uri: Map::new(),
+    prefix_for_uri: Map::new(capacity=0),
     stack: Array::new(),
     in_start_tag: false,
   }
