@@ -162,9 +162,10 @@ test "ADR-004: AutoShape preserves <p:style> in extension" {
   let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
-      assert_eq(s.extension.length(), 1)
-      let style = s.extension[0]
-      assert_eq(style.name.local_name, "style")
+      // Find <p:style> in the extension. Phase 3f3e also captures
+      // <p:cNvPr>, <p:cNvSpPr> etc. from inside <p:nvSpPr>, so there
+      // are several entries — assert on the one we care about by name.
+      let style = find_local(s.extension, "style").unwrap()
       assert_eq(style.children.length(), 1)
       match style.children[0] {
         Element(ln_ref) => assert_eq(ln_ref.name.local_name, "lnRef")
@@ -173,6 +174,20 @@ test "ADR-004: AutoShape preserves <p:style> in extension" {
     }
     _ => fail("expected AutoShape")
   }
+}
+
+///|
+/// Locate an element by local name inside an `extension` array.
+fn find_local(
+  extension : Array[@xml.XmlElement],
+  local_name : String,
+) -> @xml.XmlElement? {
+  for el in extension {
+    if el.name.local_name == local_name {
+      return Some(el)
+    }
+  }
+  None
 }
 
 // --- Picture.extension and Connector.extension behave the same way. ---
@@ -199,10 +214,7 @@ test "ADR-004: Picture preserves <p:extLst> in extension" {
     "</p:sld>"
   let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.shapes[0] {
-    Picture(p) => {
-      assert_eq(p.extension.length(), 1)
-      assert_eq(p.extension[0].name.local_name, "extLst")
-    }
+    Picture(p) => assert_true(find_local(p.extension, "extLst") is Some(_))
     _ => fail("expected Picture")
   }
 }
@@ -226,10 +238,7 @@ test "ADR-004: Connector preserves <p:style> in extension" {
     "</p:sld>"
   let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.shapes[0] {
-    Connector(c) => {
-      assert_eq(c.extension.length(), 1)
-      assert_eq(c.extension[0].name.local_name, "style")
-    }
+    Connector(c) => assert_true(find_local(c.extension, "style") is Some(_))
     _ => fail("expected Connector")
   }
 }
@@ -254,9 +263,8 @@ test "ADR-004: GroupShape captures foreign-namespace siblings" {
   let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.shapes[0] {
     Group(g) => {
-      assert_eq(g.extension.length(), 1)
-      assert_eq(g.extension[0].name.uri, "http://example.org/ext")
-      assert_eq(g.extension[0].name.local_name, "special")
+      let special = find_local(g.extension, "special").unwrap()
+      assert_eq(special.name.uri, "http://example.org/ext")
     }
     _ => fail("expected Group")
   }

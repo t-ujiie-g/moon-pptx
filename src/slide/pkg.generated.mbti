@@ -145,7 +145,7 @@ pub(all) struct Field {
 
 pub(all) enum Geometry {
   Preset(PresetShape, Array[ShapeAdjustValue])
-  Custom
+  Custom(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct GroupShape {
