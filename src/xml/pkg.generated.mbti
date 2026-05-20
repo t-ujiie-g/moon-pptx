@@ -27,6 +27,14 @@ pub fn QName::new(String, String) -> Self
 pub fn QName::unqualified(String) -> Self
 pub impl Show for QName
 
+pub(all) struct XmlElement {
+  name : QName
+  attributes : Array[(QName, String)]
+  children : Array[XmlNode]
+} derive(Eq, @debug.Debug)
+pub fn XmlElement::new(QName, Array[(QName, String)], Array[XmlNode]) -> Self
+pub impl Show for XmlElement
+
 pub(all) enum XmlEvent {
   StartElement(QName, Array[(QName, String)])
   EndElement(QName)
@@ -34,6 +42,13 @@ pub(all) enum XmlEvent {
   CData(String)
 } derive(@debug.Debug)
 pub impl Show for XmlEvent
+
+pub(all) enum XmlNode {
+  Element(XmlElement)
+  Text(String)
+  CData(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for XmlNode
 
 pub struct XmlReader {
   chars : Array[Char]

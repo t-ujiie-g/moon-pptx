@@ -14,6 +14,8 @@ pub fn bool_attr_opt(Array[(@xml.QName, String)], String) -> Bool?
 
 pub fn bytes_to_string(FixedArray[Byte]) -> String raise Utf8Error
 
+pub fn collect_subtree(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> @xml.XmlElement raise XmlReadError
+
 pub let drawing_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?

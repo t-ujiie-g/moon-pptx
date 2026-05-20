@@ -71,6 +71,52 @@ pub fn skip_subtree(r : @xml.XmlReader) -> Unit raise XmlReadError {
   }
 }
 
+///|
+/// Like `skip_subtree`, but instead of discarding events captures the
+/// subtree into an ad-hoc `@xml.XmlElement` for lossless preservation
+/// (ADR-004). Call this when the enclosing parser does not model the
+/// element kind and wants to round-trip it verbatim.
+///
+/// Call site contract: the caller has already consumed the StartElement
+/// event for this subtree and passes its `name` and `attrs` in. The
+/// function then consumes everything up to and including the matching
+/// EndElement.
+pub fn collect_subtree(
+  r : @xml.XmlReader,
+  name : @xml.QName,
+  attrs : Array[(@xml.QName, String)],
+) -> @xml.XmlElement raise XmlReadError {
+  let children = collect_children(r)
+  @xml.XmlElement::new(name, attrs, children)
+}
+
+///|
+/// Consume events up to (and including) the matching EndElement for the
+/// currently open element, building the child list along the way.
+fn collect_children(
+  r : @xml.XmlReader,
+) -> Array[@xml.XmlNode] raise XmlReadError {
+  let children = Array::new()
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child_name, child_attrs) => {
+        let grandchildren = collect_children(r)
+        children.push(
+          @xml.XmlNode::Element(
+            @xml.XmlElement::new(child_name, child_attrs, grandchildren),
+          ),
+        )
+      }
+      EndElement(_) => return children
+      Text(s) => children.push(@xml.XmlNode::Text(s))
+      CData(s) => children.push(@xml.XmlNode::CData(s))
+    }
+  }
+  // Unreachable: the loop only exits via the EndElement branch's `return`.
+  children
+}
+
 // --- attribute lookups (no error type) ---
 
 ///|
