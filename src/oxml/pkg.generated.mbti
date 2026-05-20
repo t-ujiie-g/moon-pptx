@@ -124,6 +124,7 @@ pub(all) struct BlipFill {
   link_id : String
   src_rect : SrcRect?
   fill_mode : BlipFillMode
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) enum BlipFillMode {
@@ -139,6 +140,7 @@ pub(all) struct Blur {
 pub(all) struct Color {
   base : ColorBase
   transforms : Array[@units.ColorTransform]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Color::of(ColorBase) -> Self
 pub fn Color::scheme(@units.ThemeColor) -> Self
@@ -187,6 +189,7 @@ pub(all) struct EffectList {
   preset_shadow : PresetShadow?
   reflection : Reflection?
   soft_edge : SoftEdge?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) enum Fill {
@@ -214,6 +217,7 @@ pub(all) struct Gradient {
   direction : GradientDirection
   rotate_with_shape : Bool?
   flip : TileFlip?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) enum GradientDirection {
@@ -265,6 +269,7 @@ pub(all) struct Pattern {
   preset : String
   fg : Color
   bg : Color
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) enum PenAlignment {
@@ -331,6 +336,7 @@ pub(all) struct Stroke {
   join : LineJoin?
   head_end : ArrowEnd?
   tail_end : ArrowEnd?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct SysColor {

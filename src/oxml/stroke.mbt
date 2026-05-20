@@ -197,6 +197,9 @@ pub(all) struct Stroke {
   head_end : ArrowEnd?
   /// `<a:tailEnd …/>` — arrow on the end point.
   tail_end : ArrowEnd?
+  /// Lossless preservation (ADR-004): `<a:custDash>`, `<a:extLst>`, and
+  /// foreign-namespace `<a:ln>` children.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -239,80 +242,91 @@ pub fn parse_stroke(
   let mut join : LineJoin? = None
   let mut head_end : ArrowEnd? = None
   let mut tail_end : ArrowEnd? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r) catch { e => raise MalformedStroke(e.to_string()) }
     match ev {
-      StartElement(child, child_attrs) => {
+      StartElement(child, child_attrs) =>
         if child.uri != drawing_ns {
-          skip_subtree(r) catch {
-            e => raise MalformedStroke(e.to_string())
+          extension.push(
+            collect_subtree(r, child, child_attrs) catch {
+              e => raise MalformedStroke(e.to_string())
+            },
+          )
+        } else {
+          match child.local_name {
+            // Fill kinds — delegate to @oxml.parse_fill.
+            "noFill" | "solidFill" | "gradFill" | "pattFill" | "blipFill" => {
+              let f = parse_fill(r, child, child_attrs) catch {
+                e => raise FillFailure(e.to_string())
+              }
+              if fill is None {
+                fill = Some(f)
+              }
+            }
+            "prstDash" => {
+              dash = enum_attr_opt(child_attrs, "val", DashStyle::from_xml)
+              skip_subtree(r) catch {
+                e => raise MalformedStroke(e.to_string())
+              }
+            }
+            "round" => {
+              join = Some(JoinRound)
+              skip_subtree(r) catch {
+                e => raise MalformedStroke(e.to_string())
+              }
+            }
+            "bevel" => {
+              join = Some(JoinBevel)
+              skip_subtree(r) catch {
+                e => raise MalformedStroke(e.to_string())
+              }
+            }
+            "miter" => {
+              let lim = pct_attr_opt(child_attrs, "lim")
+              join = Some(JoinMiter(lim))
+              skip_subtree(r) catch {
+                e => raise MalformedStroke(e.to_string())
+              }
+            }
+            "headEnd" => {
+              head_end = Some(parse_arrow_end(child_attrs))
+              skip_subtree(r) catch {
+                e => raise MalformedStroke(e.to_string())
+              }
+            }
+            "tailEnd" => {
+              tail_end = Some(parse_arrow_end(child_attrs))
+              skip_subtree(r) catch {
+                e => raise MalformedStroke(e.to_string())
+              }
+            }
+            // custDash, extLst, and any other unmodelled child get
+            // captured verbatim per ADR-004.
+            _ =>
+              extension.push(
+                collect_subtree(r, child, child_attrs) catch {
+                  e => raise MalformedStroke(e.to_string())
+                },
+              )
           }
-          continue
         }
-        match child.local_name {
-          // Fill kinds — delegate to @oxml.parse_fill.
-          "noFill" | "solidFill" | "gradFill" | "pattFill" | "blipFill" => {
-            let f = parse_fill(r, child, child_attrs) catch {
-              e => raise FillFailure(e.to_string())
-            }
-            if fill is None {
-              fill = Some(f)
-            }
-          }
-          "prstDash" => {
-            dash = enum_attr_opt(child_attrs, "val", DashStyle::from_xml)
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          }
-          // custDash — skip for now
-          "custDash" =>
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          "round" => {
-            join = Some(JoinRound)
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          }
-          "bevel" => {
-            join = Some(JoinBevel)
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          }
-          "miter" => {
-            let lim = pct_attr_opt(child_attrs, "lim")
-            join = Some(JoinMiter(lim))
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          }
-          "headEnd" => {
-            head_end = Some(parse_arrow_end(child_attrs))
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          }
-          "tailEnd" => {
-            tail_end = Some(parse_arrow_end(child_attrs))
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-          }
-          // extLst and any other unmodelled child
-          _ =>
-            skip_subtree(r) catch {
-              e => raise MalformedStroke(e.to_string())
-            }
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
-  { width, cap, compound, alignment, fill, dash, join, head_end, tail_end }
+  {
+    width,
+    cap,
+    compound,
+    alignment,
+    fill,
+    dash,
+    join,
+    head_end,
+    tail_end,
+    extension,
+  }
 }
 
 ///|

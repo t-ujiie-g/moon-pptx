@@ -101,6 +101,10 @@ pub(all) struct RunProperties {
   fill : @oxml.Color?
   /// `<a:hlinkClick r:id="…">` — relationship id of the click target.
   hyperlink_click : String?
+  /// Lossless preservation (ADR-004): unmodelled `<a:rPr>` children
+  /// (`<a:ln>`, `<a:effectLst>`, `<a:highlight>`, `<a:uLn>`,
+  /// `<a:hlinkMouseOver>`, `<a:extLst>`, foreign-namespace siblings).
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -121,6 +125,7 @@ pub fn RunProperties::default() -> RunProperties {
     complex_script: None,
     fill: None,
     hyperlink_click: None,
+    extension: [],
   }
 }
 
@@ -340,6 +345,10 @@ pub(all) struct ParagraphProperties {
   space_after : @units.Pt?
   /// Bullet specification — `None` means "inherit from list style".
   bullet : Bullet?
+  /// Lossless preservation (ADR-004): unmodelled `<a:pPr>` children
+  /// (`<a:defRPr>`, `<a:tabLst>`, `<a:buFont>`, `<a:buClr>`,
+  /// `<a:buSzPct>`, `<a:extLst>`, foreign-namespace siblings).
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -353,6 +362,7 @@ pub fn ParagraphProperties::default() -> ParagraphProperties {
     space_before: None,
     space_after: None,
     bullet: None,
+    extension: [],
   }
 }
 
@@ -364,6 +374,10 @@ pub fn ParagraphProperties::default() -> ParagraphProperties {
 pub(all) struct Run {
   properties : RunProperties
   text : String
+  /// Lossless preservation (ADR-004): unmodelled `<a:r>` siblings of
+  /// `<a:rPr>` and `<a:t>`. The spec only defines those two children,
+  /// but some tools emit `<a:extLst>` or foreign-namespace decorations.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -376,6 +390,8 @@ pub(all) struct Field {
   field_type : String
   properties : RunProperties
   text : String
+  /// Lossless preservation (ADR-004): unmodelled `<a:fld>` siblings.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -394,6 +410,11 @@ pub(all) enum ParagraphContent {
 pub(all) struct Paragraph {
   properties : ParagraphProperties
   content : Array[ParagraphContent]
+  /// Lossless preservation (ADR-004): unmodelled `<a:p>` children that
+  /// are neither `<a:pPr>` nor `<a:r>` / `<a:br>` / `<a:fld>` —
+  /// typically `<a:endParaRPr>` (which we don't model yet) or foreign-
+  /// namespace extensions.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -502,6 +523,9 @@ pub(all) struct BodyProperties {
   right_inset : @units.Emu?
   bottom_inset : @units.Emu?
   auto_fit : AutoFit?
+  /// Lossless preservation (ADR-004): unmodelled `<a:bodyPr>` children
+  /// (`<a:prstTxWarp>`, `<a:scene3d>`, `<a:flatTx>`, `<a:extLst>`).
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -516,6 +540,7 @@ pub fn BodyProperties::default() -> BodyProperties {
     right_inset: None,
     bottom_inset: None,
     auto_fit: None,
+    extension: [],
   }
 }
 
@@ -528,6 +553,9 @@ pub fn BodyProperties::default() -> BodyProperties {
 pub(all) struct ListStyle {
   default_props : ParagraphProperties?
   level_props : Array[ParagraphProperties?]
+  /// Lossless preservation (ADR-004): unmodelled `<a:lstStyle>` children
+  /// (`<a:extLst>`, foreign-namespace siblings).
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -544,7 +572,7 @@ pub fn ListStyle::empty() -> ListStyle {
     None,
     None,
   ]
-  { default_props: None, level_props }
+  { default_props: None, level_props, extension: [] }
 }
 
 ///|
@@ -557,6 +585,12 @@ pub(all) struct TextBody {
   body_properties : BodyProperties?
   list_style : ListStyle?
   paragraphs : Array[Paragraph]
+  /// Lossless preservation (ADR-004): unmodelled `<p:txBody>` children
+  /// (foreign-namespace decorations). The three modelled children
+  /// `<a:bodyPr>`, `<a:lstStyle>`, `<a:p>` are the only DrawingML
+  /// children defined, but extension-aware tools (Office variants,
+  /// add-ins) may emit more.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|

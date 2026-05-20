@@ -120,6 +120,12 @@ pub impl Show for ColorBase with output(self, logger) {
 pub(all) struct Color {
   base : ColorBase
   transforms : Array[@units.ColorTransform]
+  /// Lossless preservation (ADR-004): colour-modifier children that the
+  /// model does not yet type — `hueMod`, `redMod`, `greenMod`, `blueMod`,
+  /// `comp`, `inv`, `gamma`, `gray`, … — and any foreign-namespace
+  /// children. Modeled modifiers (`tint`, `shade`, `satMod`, `lumMod`,
+  /// `alpha`) live in `transforms` and do NOT duplicate here.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -142,7 +148,7 @@ pub impl Show for Color with output(self, logger) {
 ///|
 /// Construct a colour with no modifiers.
 pub fn Color::of(base : ColorBase) -> Color {
-  { base, transforms: [] }
+  { base, transforms: [], extension: [] }
 }
 
 ///|
@@ -274,8 +280,13 @@ pub fn parse_color_element(
     }
     _ => raise UnknownColorElement(name.local_name)
   }
-  // Walk the body looking for colour-modifier children.
+  // Walk the body looking for colour-modifier children. Modeled
+  // modifiers (tint / shade / satMod / lumMod / alpha) fold into
+  // `transforms`; everything else (hueMod / redMod / comp / inv /
+  // gamma / gray / foreign-namespace) lands on `extension` per ADR-004
+  // so it round-trips.
   let transforms : Array[@units.ColorTransform] = []
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let event = r.next() catch {
       e =>
@@ -283,14 +294,26 @@ pub fn parse_color_element(
     }
     match event {
       Some(StartElement(child, child_attrs)) => {
-        if child.uri == name.uri {
+        let modeled = if child.uri == name.uri {
           match transform_from(child.local_name, child_attrs) {
-            Some(t) => transforms.push(t)
-            None => () // unsupported transform — silently drop for now
+            Some(t) => {
+              transforms.push(t)
+              true
+            }
+            None => false
           }
+        } else {
+          false
         }
-        skip_subtree(r) catch {
-          e => raise MalformedColor(e.to_string())
+        if modeled {
+          skip_subtree(r) catch {
+            e => raise MalformedColor(e.to_string())
+          }
+        } else {
+          let captured = collect_subtree(r, child, child_attrs) catch {
+            e => raise MalformedColor(e.to_string())
+          }
+          extension.push(captured)
         }
       }
       Some(EndElement(_)) => break
@@ -298,7 +321,7 @@ pub fn parse_color_element(
       None => raise MalformedColor("unexpected end of input inside colour body")
     }
   }
-  { base, transforms }
+  { base, transforms, extension }
 }
 
 ///|

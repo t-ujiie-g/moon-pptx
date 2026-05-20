@@ -16,4 +16,11 @@ pub(all) struct Theme {
   name : String
   color_scheme : ColorScheme
   font_scheme : FontScheme
+  /// Lossless preservation (ADR-004): captures any unmodelled child of
+  /// `<a:theme>` (`<a:extraClrSchemeLst>`, `<a:custClrLst>`, `<a:extLst>`,
+  /// foreign-namespace extensions) **and** any unmodelled child of the
+  /// nested `<a:themeElements>` (`<a:fmtScheme>`, `<a:objectDefaults>`).
+  /// The original parent is recoverable from the element's `name.uri` /
+  /// `name.local_name` when Phase 4 writers re-emit.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

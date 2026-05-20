@@ -127,6 +127,14 @@ pub(all) struct BlipFill {
   link_id : String
   src_rect : SrcRect?
   fill_mode : BlipFillMode
+  /// Lossless preservation (ADR-004): captures both unmodelled `<a:blipFill>`
+  /// siblings *and* unmodelled `<a:blip>` children (the colour-mod /
+  /// effect children listed in `EG_BlipEffect` — `alphaModFix`,
+  /// `biLevel`, `blur`, `clrChange`, `duotone`, `fillOverlay`, `lum`,
+  /// `tint`, `grayscl`, `extLst`). The two structural sources collapse
+  /// into one array; writers re-emit each element under its right parent
+  /// based on its OOXML position.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -162,6 +170,9 @@ pub(all) struct Gradient {
   direction : GradientDirection
   rotate_with_shape : Bool?
   flip : TileFlip?
+  /// Lossless preservation (ADR-004): `<a:tileRect>` and any foreign-
+  /// namespace `<a:gradFill>` children.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -172,6 +183,9 @@ pub(all) struct Pattern {
   preset : String
   fg : Color
   bg : Color
+  /// Lossless preservation (ADR-004): foreign-namespace `<a:pattFill>`
+  /// children. Spec only allows `<a:fgClr>` / `<a:bgClr>`.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -285,51 +299,58 @@ fn parse_gradient_fill(
   let flip = enum_attr_opt(attrs, "flip", TileFlip::from_xml)
   let stops : Array[GradientStop] = []
   let mut direction : GradientDirection = Linear(@units.Angle(0.0), false)
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
-      StartElement(child, child_attrs) => {
+      StartElement(child, child_attrs) =>
         if child.uri != drawing_ns {
-          skip_subtree(r) catch {
-            e => raise MalformedFill(e.to_string())
+          extension.push(
+            collect_subtree(r, child, child_attrs) catch {
+              e => raise MalformedFill(e.to_string())
+            },
+          )
+        } else {
+          match child.local_name {
+            "gsLst" => parse_gradient_stops(r, stops)
+            "lin" => {
+              let ang_raw = require_attr(child_attrs, "ang", "lin") catch {
+                e => raise MalformedFill(e.to_string())
+              }
+              let ang = match parse_signed_int(ang_raw) {
+                Some(n) => @units.Angle::from_ooxml(n)
+                None =>
+                  raise MalformedFill("lin ang is not an integer: " + ang_raw)
+              }
+              let scaled = bool_attr_opt(child_attrs, "scaled").unwrap_or(false)
+              direction = Linear(ang, scaled)
+              skip_subtree(r) catch {
+                e => raise MalformedFill(e.to_string())
+              }
+            }
+            "path" => {
+              let path_raw = require_attr(child_attrs, "path", "path") catch {
+                e => raise MalformedFill(e.to_string())
+              }
+              direction = match path_raw {
+                "rect" => PathRect
+                "circle" => PathCircle
+                "shape" => PathShape
+                other => raise MalformedFill("unknown gradient path: " + other)
+              }
+              skip_subtree(r) catch {
+                e => raise MalformedFill(e.to_string())
+              }
+            }
+            // tileRect and any other unmodelled <a:gradFill> child.
+            _ =>
+              extension.push(
+                collect_subtree(r, child, child_attrs) catch {
+                  e => raise MalformedFill(e.to_string())
+                },
+              )
           }
-          continue
         }
-        match child.local_name {
-          "gsLst" => parse_gradient_stops(r, stops)
-          "lin" => {
-            let ang_raw = require_attr(child_attrs, "ang", "lin") catch {
-              e => raise MalformedFill(e.to_string())
-            }
-            let ang = match parse_signed_int(ang_raw) {
-              Some(n) => @units.Angle::from_ooxml(n)
-              None =>
-                raise MalformedFill("lin ang is not an integer: " + ang_raw)
-            }
-            let scaled = bool_attr_opt(child_attrs, "scaled").unwrap_or(false)
-            direction = Linear(ang, scaled)
-            skip_subtree(r) catch {
-              e => raise MalformedFill(e.to_string())
-            }
-          }
-          "path" => {
-            let path_raw = require_attr(child_attrs, "path", "path") catch {
-              e => raise MalformedFill(e.to_string())
-            }
-            direction = match path_raw {
-              "rect" => PathRect
-              "circle" => PathCircle
-              "shape" => PathShape
-              other => raise MalformedFill("unknown gradient path: " + other)
-            }
-            skip_subtree(r) catch {
-              e => raise MalformedFill(e.to_string())
-            }
-          }
-          // tileRect — sub-rectangle; rare. Skip for now.
-          _ => skip_subtree(r) catch { e => raise MalformedFill(e.to_string()) }
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -337,7 +358,7 @@ fn parse_gradient_fill(
   if stops.length() == 0 {
     raise MalformedFill("gradFill has no gradient stops")
   }
-  { stops, direction, rotate_with_shape, flip }
+  { stops, direction, rotate_with_shape, flip, extension }
 }
 
 ///|
@@ -380,28 +401,35 @@ fn parse_pattern_fill(
   let preset = optional_attr_or(attrs, "prst", "")
   let mut fg : Color? = None
   let mut bg : Color? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
-      StartElement(child, _) => {
+      StartElement(child, child_attrs) =>
         if child.uri != drawing_ns {
-          skip_subtree(r) catch {
-            e => raise MalformedFill(e.to_string())
+          extension.push(
+            collect_subtree(r, child, child_attrs) catch {
+              e => raise MalformedFill(e.to_string())
+            },
+          )
+        } else {
+          match child.local_name {
+            "fgClr" => fg = Some(parse_first_color(r, "pattFill fgClr"))
+            "bgClr" => bg = Some(parse_first_color(r, "pattFill bgClr"))
+            _ =>
+              extension.push(
+                collect_subtree(r, child, child_attrs) catch {
+                  e => raise MalformedFill(e.to_string())
+                },
+              )
           }
-          continue
         }
-        match child.local_name {
-          "fgClr" => fg = Some(parse_first_color(r, "pattFill fgClr"))
-          "bgClr" => bg = Some(parse_first_color(r, "pattFill bgClr"))
-          _ => skip_subtree(r) catch { e => raise MalformedFill(e.to_string()) }
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
   match (fg, bg) {
-    (Some(f), Some(b)) => { preset, fg: f, bg: b }
+    (Some(f), Some(b)) => { preset, fg: f, bg: b, extension }
     _ => raise MalformedFill("pattFill is missing fgClr or bgClr (need both)")
   }
 }
@@ -414,43 +442,54 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
   let mut link_id = ""
   let mut src_rect : SrcRect? = None
   let mut fill_mode : BlipFillMode = Stretch(None)
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r) catch { e => raise MalformedFill(e.to_string()) }
     match ev {
-      StartElement(child, child_attrs) => {
+      StartElement(child, child_attrs) =>
         if child.uri != drawing_ns {
-          skip_subtree(r) catch {
-            e => raise MalformedFill(e.to_string())
+          extension.push(
+            collect_subtree(r, child, child_attrs) catch {
+              e => raise MalformedFill(e.to_string())
+            },
+          )
+        } else {
+          match child.local_name {
+            "blip" => {
+              let (e, l) = extract_blip_relationships(child_attrs)
+              embed_id = e
+              link_id = l
+              // The `<a:blip>` element may carry colour-mod / image
+              // effect children (alphaModFix, biLevel, blur, clrChange,
+              // duotone, fillOverlay, lum, tint, grayscl, extLst). Capture
+              // the entire `<a:blip>` subtree so those children survive.
+              extension.push(
+                collect_subtree(r, child, child_attrs) catch {
+                  e => raise MalformedFill(e.to_string())
+                },
+              )
+            }
+            "srcRect" => {
+              src_rect = Some(parse_src_rect(child_attrs))
+              skip_subtree(r) catch {
+                e => raise MalformedFill(e.to_string())
+              }
+            }
+            "stretch" => fill_mode = parse_stretch(r)
+            "tile" => {
+              fill_mode = Tile(parse_tile_attrs(child_attrs))
+              skip_subtree(r) catch {
+                e => raise MalformedFill(e.to_string())
+              }
+            }
+            _ =>
+              extension.push(
+                collect_subtree(r, child, child_attrs) catch {
+                  e => raise MalformedFill(e.to_string())
+                },
+              )
           }
-          continue
         }
-        match child.local_name {
-          "blip" => {
-            let (e, l) = extract_blip_relationships(child_attrs)
-            embed_id = e
-            link_id = l
-            // colour modifications & image effects nested here are
-            // intentionally skipped — they belong to effects parsing.
-            skip_subtree(r) catch {
-              e => raise MalformedFill(e.to_string())
-            }
-          }
-          "srcRect" => {
-            src_rect = Some(parse_src_rect(child_attrs))
-            skip_subtree(r) catch {
-              e => raise MalformedFill(e.to_string())
-            }
-          }
-          "stretch" => fill_mode = parse_stretch(r)
-          "tile" => {
-            fill_mode = Tile(parse_tile_attrs(child_attrs))
-            skip_subtree(r) catch {
-              e => raise MalformedFill(e.to_string())
-            }
-          }
-          _ => skip_subtree(r) catch { e => raise MalformedFill(e.to_string()) }
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -458,7 +497,7 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
   if embed_id.length() == 0 && link_id.length() == 0 {
     raise MalformedFill("blipFill is missing both r:embed and r:link")
   }
-  { embed_id, link_id, src_rect, fill_mode }
+  { embed_id, link_id, src_rect, fill_mode, extension }
 }
 
 ///|

@@ -128,6 +128,11 @@ pub(all) struct SlideLayout {
   /// `<p:clrMapOvr>` resolution. Empty `<p:clrMapOvr>` is treated the same
   /// as an explicit `<a:masterClrMapping/>`.
   clr_map_override : ClrMapOverride
+  /// Lossless preservation (ADR-004): unmodelled `<p:sldLayout>` children
+  /// (`<p:cSld>` shape tree once it's pulled out of the name-only stub,
+  /// `<p:transition>`, `<p:timing>`, `<p:hf>`, `<p:extLst>`, foreign-
+  /// namespace siblings).
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -157,37 +162,48 @@ fn parse_slide_layout_xml(xml : String) -> SlideLayout raise SlideMasterError {
   // Default per ECMA-376: inherit the master's color map if `clrMapOvr`
   // is absent.
   let mut clr_map_override : ClrMapOverride = MasterMapping
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, child_attrs) => {
+      StartElement(child, child_attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
+        } else {
+          match child.local_name {
+            "cSld" => {
+              // Layout-level <p:cSld> still has its full body — name out,
+              // remainder onto extension so the shape tree round-trips.
+              let (parsed_name, captured) = parse_cSld_for_name(
+                r, child, child_attrs,
+              )
+              name = parsed_name
+              extension.push(captured)
+            }
+            "clrMapOvr" => clr_map_override = parse_clr_map_ovr(r)
+            // transition / timing / hf / extLst / etc.
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
+          }
         }
-        match child.local_name {
-          "cSld" => name = parse_cSld_for_name(r, child_attrs)
-          "clrMapOvr" => clr_map_override = parse_clr_map_ovr(r)
-          _ => skip_subtree(r)
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
-  { name, layout_type, clr_map_override }
+  { name, layout_type, clr_map_override, extension }
 }
 
 ///|
-/// Read the `name` attribute off `<p:cSld>` and skip its body. Phase 3c
-/// will replace this with full shape-tree parsing.
+/// Read the `name` attribute off `<p:cSld>` and capture its body into an
+/// XmlElement so Phase 4 writers can re-emit the shape tree verbatim until
+/// Phase 3 wires a typed layout shape-tree parser.
 fn parse_cSld_for_name(
   r : @xml.XmlReader,
+  name : @xml.QName,
   attrs : Array[(@xml.QName, String)],
-) -> String raise SlideMasterError {
-  let name = optional_attr(attrs, "name")
-  skip_subtree(r)
-  name
+) -> (String, @xml.XmlElement) raise SlideMasterError {
+  let cSld_name = optional_attr(attrs, "name")
+  let captured = collect_subtree_unknown(r, name, attrs)
+  (cSld_name, captured)
 }
 
 ///|

@@ -53,6 +53,7 @@ pub(all) struct SlideLayout {
   name : String
   layout_type : SlideLayoutType
   clr_map_override : ClrMapOverride
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn SlideLayout::parse(FixedArray[Byte]) -> Self raise SlideMasterError
 
@@ -104,6 +105,7 @@ pub fn SlideLayoutType::from_xml(String) -> Self raise SlideMasterError
 pub(all) struct SlideMaster {
   color_mapping : ColorMapping
   layout_refs : Array[SlideLayoutRef]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn SlideMaster::parse(FixedArray[Byte]) -> Self raise SlideMasterError
 

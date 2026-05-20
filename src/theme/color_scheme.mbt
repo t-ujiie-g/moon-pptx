@@ -28,4 +28,7 @@ pub(all) struct ColorScheme {
   accent6 : @oxml.Color
   hlink : @oxml.Color
   fol_hlink : @oxml.Color
+  /// Lossless preservation (ADR-004): foreign-namespace slot extensions
+  /// or any other unmodelled child of `<a:clrScheme>`.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

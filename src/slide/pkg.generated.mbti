@@ -100,6 +100,7 @@ pub(all) struct BodyProperties {
   right_inset : @units.Emu?
   bottom_inset : @units.Emu?
   auto_fit : AutoFit?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn BodyProperties::default() -> Self
 
@@ -139,6 +140,7 @@ pub(all) struct Field {
   field_type : String
   properties : RunProperties
   text : String
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) enum Geometry {
@@ -159,12 +161,14 @@ pub(all) struct GroupShape {
 pub(all) struct ListStyle {
   default_props : ParagraphProperties?
   level_props : Array[ParagraphProperties?]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ListStyle::empty() -> Self
 
 pub(all) struct Paragraph {
   properties : ParagraphProperties
   content : Array[ParagraphContent]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Paragraph::plain_text(Self) -> String
 
@@ -183,6 +187,7 @@ pub(all) struct ParagraphProperties {
   space_before : @units.Pt?
   space_after : @units.Pt?
   bullet : Bullet?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ParagraphProperties::default() -> Self
 
@@ -401,6 +406,7 @@ pub fn PresetShape::to_xml(Self) -> String
 pub(all) struct Run {
   properties : RunProperties
   text : String
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct RunProperties {
@@ -417,6 +423,7 @@ pub(all) struct RunProperties {
   complex_script : String?
   fill : @oxml.Color?
   hyperlink_click : String?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn RunProperties::default() -> Self
 
@@ -468,6 +475,7 @@ pub(all) struct TextBody {
   body_properties : BodyProperties?
   list_style : ListStyle?
   paragraphs : Array[Paragraph]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TextBody::plain_text(Self) -> String
 

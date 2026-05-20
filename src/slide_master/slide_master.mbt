@@ -29,6 +29,11 @@ pub(all) struct SlideLayoutRef {
 pub(all) struct SlideMaster {
   color_mapping : ColorMapping
   layout_refs : Array[SlideLayoutRef]
+  /// Lossless preservation (ADR-004): unmodelled `<p:sldMaster>` children
+  /// (`<p:cSld>`, `<p:txStyles>`, `<p:hf>`, `<p:transition>`, `<p:timing>`,
+  /// `<p:extLst>`, foreign-namespace siblings). Once those subdomains
+  /// gain typed parsers their entries will graduate off this field.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -50,30 +55,30 @@ fn parse_slide_master_xml(xml : String) -> SlideMaster raise SlideMasterError {
   }
   let mut color_mapping : ColorMapping? = None
   let layout_refs : Array[SlideLayoutRef] = []
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "clrMap" => {
-            color_mapping = Some(parse_clr_map_attrs(attrs))
-            skip_subtree(r) // clrMap is empty per schema
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "clrMap" => {
+              color_mapping = Some(parse_clr_map_attrs(attrs))
+              skip_subtree(r) // clrMap is empty per schema
+            }
+            "sldLayoutIdLst" => parse_layout_id_lst(r, layout_refs, extension)
+            // cSld, txStyles, hf, transition, timing, extLst, …
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
-          "sldLayoutIdLst" => parse_layout_id_lst(r, layout_refs)
-          // cSld, txStyles, hf, transition, timing, extLst, etc.
-          _ => skip_subtree(r)
         }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
   match color_mapping {
-    Some(cm) => { color_mapping: cm, layout_refs }
+    Some(cm) => { color_mapping: cm, layout_refs, extension }
     None => raise Malformed("slide master is missing required <p:clrMap>")
   }
 }
@@ -107,21 +112,23 @@ pub fn parse_clr_map_attrs(
 fn parse_layout_id_lst(
   r : @xml.XmlReader,
   out : Array[SlideLayoutRef],
+  master_extension : Array[@xml.XmlElement],
 ) -> Unit raise SlideMasterError {
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns ||
           child.local_name != "sldLayoutId" {
+          // Unknown sibling inside <p:sldLayoutIdLst> — fold onto the
+          // master's extension so it round-trips at the right depth.
+          master_extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          let id = parse_id_attr(attrs)
+          let r_id = require_r_id(attrs)
+          out.push({ id, r_id })
           skip_subtree(r)
-          continue
         }
-        let id = parse_id_attr(attrs)
-        let r_id = require_r_id(attrs)
-        out.push({ id, r_id })
-        skip_subtree(r)
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -218,6 +225,19 @@ fn skip_subtree(r : @xml.XmlReader) -> Unit raise SlideMasterError {
       EndElement(_) => depth = depth - 1
       _ => ()
     }
+  }
+}
+
+///|
+/// Thin wrapper around `@oxml.collect_subtree` that re-raises as the
+/// `SlideMasterError::Malformed` domain variant.
+fn collect_subtree_unknown(
+  r : @xml.XmlReader,
+  name : @xml.QName,
+  attrs : Array[(@xml.QName, String)],
+) -> @xml.XmlElement raise SlideMasterError {
+  @oxml.collect_subtree(r, name, attrs) catch {
+    e => raise Malformed(e.to_string())
   }
 }
 

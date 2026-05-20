@@ -189,7 +189,74 @@ test "parse: unsupported color element rejected" {
   assert_true(r is Err(@theme.ThemeError::MalformedTheme(_)))
 }
 
-// --- helper ---
+// --- ADR-004 lossless preservation ---
+
+///|
+test "ADR-004: theme captures fmtScheme/objectDefaults/extraClrSchemeLst" {
+  let theme = @theme.Theme::parse(office_like_theme())
+  // The fixture has:
+  //   <a:fmtScheme> inside <a:themeElements> → folded onto Theme.extension
+  //   <a:objectDefaults/>                    → captured here too
+  //   <a:extraClrSchemeLst/>                 → and here
+  // Total: 3 distinct unmodelled children survive.
+  let names = []
+  for el in theme.extension {
+    names.push(el.name.local_name)
+  }
+  assert_true(names.contains("fmtScheme"))
+  assert_true(names.contains("objectDefaults"))
+  assert_true(names.contains("extraClrSchemeLst"))
+  assert_eq(theme.extension.length(), 3)
+}
+
+///|
+test "ADR-004: fmtScheme subtree is preserved verbatim" {
+  let theme = @theme.Theme::parse(office_like_theme())
+  let mut fmt_scheme : @xml.XmlElement? = None
+  for el in theme.extension {
+    if el.name.local_name == "fmtScheme" {
+      fmt_scheme = Some(el)
+    }
+  }
+  let fs = fmt_scheme.unwrap()
+  // fmtScheme has a single <a:fillStyleLst> child.
+  assert_eq(fs.attributes.length(), 1)
+  assert_eq(fs.attributes[0].0.local_name, "name")
+  assert_eq(fs.children.length(), 1)
+  match fs.children[0] {
+    Element(fl) => {
+      assert_eq(fl.name.local_name, "fillStyleLst")
+      // fillStyleLst has two children: solidFill + gradFill.
+      assert_eq(fl.children.length(), 2)
+    }
+    _ => fail("expected <a:fillStyleLst> child")
+  }
+}
+
+///|
+test "ADR-004: foreign-namespace child of <a:theme> is preserved" {
+  let xml = "<?xml version=\"1.0\"?>" +
+    "<a:theme xmlns:a=\"" +
+    drawing +
+    "\" xmlns:x=\"http://example.org/ext\" name=\"x\">" +
+    "<a:themeElements>" +
+    "<a:clrScheme name=\"x\">" +
+    twelve_slots_body() +
+    "</a:clrScheme>" +
+    "<a:fontScheme name=\"x\">" +
+    "<a:majorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:majorFont>" +
+    "<a:minorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont>" +
+    "</a:fontScheme>" +
+    "</a:themeElements>" +
+    "<x:tag flag=\"yes\"/>" +
+    "</a:theme>"
+  let theme = @theme.Theme::parse(ascii_bytes(xml))
+  assert_eq(theme.extension.length(), 1)
+  assert_eq(theme.extension[0].name.uri, "http://example.org/ext")
+  assert_eq(theme.extension[0].name.local_name, "tag")
+}
+
+// --- helpers ---
 
 ///|
 fn ascii_bytes(s : String) -> FixedArray[Byte] {
@@ -201,4 +268,23 @@ fn ascii_bytes(s : String) -> FixedArray[Byte] {
     i = i + 1
   }
   bytes
+}
+
+///|
+/// Twelve-slot `<a:clrScheme>` body shared by extension-preservation
+/// tests that need a syntactically-complete colour scheme but don't care
+/// about the values.
+fn twelve_slots_body() -> String {
+  "<a:dk1><a:srgbClr val=\"000000\"/></a:dk1>" +
+  "<a:lt1><a:srgbClr val=\"FFFFFF\"/></a:lt1>" +
+  "<a:dk2><a:srgbClr val=\"000000\"/></a:dk2>" +
+  "<a:lt2><a:srgbClr val=\"FFFFFF\"/></a:lt2>" +
+  "<a:accent1><a:srgbClr val=\"112233\"/></a:accent1>" +
+  "<a:accent2><a:srgbClr val=\"112233\"/></a:accent2>" +
+  "<a:accent3><a:srgbClr val=\"112233\"/></a:accent3>" +
+  "<a:accent4><a:srgbClr val=\"112233\"/></a:accent4>" +
+  "<a:accent5><a:srgbClr val=\"112233\"/></a:accent5>" +
+  "<a:accent6><a:srgbClr val=\"112233\"/></a:accent6>" +
+  "<a:hlink><a:srgbClr val=\"112233\"/></a:hlink>" +
+  "<a:folHlink><a:srgbClr val=\"112233\"/></a:folHlink>"
 }

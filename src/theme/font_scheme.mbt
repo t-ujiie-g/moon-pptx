@@ -40,6 +40,9 @@ pub(all) struct FontCollection {
   cs : String
   /// `<a:font script="…" typeface="…"/>` overrides, in source order.
   scripts : Array[ScriptFont]
+  /// Lossless preservation (ADR-004): per-typeface decoration children
+  /// (`<a:fill>`, `<a:effectLst>`, …) and unmodelled siblings.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -48,4 +51,6 @@ pub(all) struct FontScheme {
   name : String
   major_font : FontCollection
   minor_font : FontCollection
+  /// Lossless preservation (ADR-004): `<a:extLst>` etc. on `<a:fontScheme>`.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

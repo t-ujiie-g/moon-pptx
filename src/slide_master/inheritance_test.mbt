@@ -49,6 +49,7 @@ fn fixture_scheme() -> @theme.ColorScheme raise @units.UnitsError {
     accent6: srgb("AAAA06"),
     hlink: srgb("BBBB01"),
     fol_hlink: srgb("BBBB02"),
+    extension: [],
   }
 }
 
@@ -61,6 +62,7 @@ fn fixture_master() -> @slide_master.SlideMaster {
       @units.ThemeColor::Dk1,
     ),
     layout_refs: [],
+    extension: [],
   }
 }
 
@@ -70,6 +72,7 @@ fn layout_inheriting() -> @slide_master.SlideLayout {
     name: "Inherits",
     layout_type: @slide_master.SlideLayoutType::Title,
     clr_map_override: @slide_master.ClrMapOverride::MasterMapping,
+    extension: [],
   }
 }
 
@@ -81,6 +84,7 @@ fn layout_overriding() -> @slide_master.SlideLayout {
     name: "Override",
     layout_type: @slide_master.SlideLayoutType::Title,
     clr_map_override: @slide_master.ClrMapOverride::Override(cm),
+    extension: [],
   }
 }
 

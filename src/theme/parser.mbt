@@ -40,56 +40,64 @@ fn parse_theme_xml(xml : String) -> Theme raise ThemeError {
   let name = optional_attr(theme_attrs, "name")
   let mut color_scheme : ColorScheme? = None
   let mut font_scheme : FontScheme? = None
+  let extension : Array[@xml.XmlElement] = []
   // Walk children of <a:theme>.
   while true {
     let event = next_event(r)
     match event {
-      StartElement(child, _) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "themeElements" => {
-            let (cs, fs) = parse_theme_elements(r)
-            color_scheme = Some(cs)
-            font_scheme = Some(fs)
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "themeElements" => {
+              let (cs, fs) = parse_theme_elements(r, extension)
+              color_scheme = Some(cs)
+              font_scheme = Some(fs)
+            }
+            // objectDefaults, extraClrSchemeLst, custClrLst, extLst, …
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
-          _ => skip_subtree(r) // objectDefaults, extraClrSchemeLst, etc.
         }
-      }
       EndElement(_) => break // </a:theme>
       _ => () // text/cdata between elements is ignorable here
     }
   }
   match (color_scheme, font_scheme) {
-    (Some(cs), Some(fs)) => { name, color_scheme: cs, font_scheme: fs }
+    (Some(cs), Some(fs)) =>
+      { name, color_scheme: cs, font_scheme: fs, extension }
     (None, _) => raise MalformedTheme("theme is missing <a:clrScheme>")
     (_, None) => raise MalformedTheme("theme is missing <a:fontScheme>")
   }
 }
 
 ///|
-/// Parse the children of `<a:themeElements>`. Returns `(color_scheme, font_scheme)`.
+/// Parse the children of `<a:themeElements>`. Returns `(color_scheme,
+/// font_scheme)`. Unmodelled `<a:themeElements>` children
+/// (`<a:fmtScheme>`, `<a:objectDefaults>`, …) are folded into the
+/// theme-level `extension` array supplied by the caller — they
+/// structurally belong to a different parent, but `name.local_name`
+/// tells writers where to re-emit them.
 fn parse_theme_elements(
   r : @xml.XmlReader,
+  theme_extension : Array[@xml.XmlElement],
 ) -> (ColorScheme, FontScheme) raise ThemeError {
   let mut cs : ColorScheme? = None
   let mut fs : FontScheme? = None
   while true {
     let event = next_event(r)
     match event {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
-          continue
+          theme_extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "clrScheme" => cs = Some(parse_color_scheme(r, attrs))
+            "fontScheme" => fs = Some(parse_font_scheme(r, attrs))
+            // fmtScheme, objectDefaults, …
+            _ => theme_extension.push(collect_subtree_unknown(r, child, attrs))
+          }
         }
-        match child.local_name {
-          "clrScheme" => cs = Some(parse_color_scheme(r, attrs))
-          "fontScheme" => fs = Some(parse_font_scheme(r, attrs))
-          _ => skip_subtree(r) // fmtScheme, etc.
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -111,17 +119,17 @@ fn parse_color_scheme(
 ) -> ColorScheme raise ThemeError {
   let name = optional_attr(attrs, "name")
   let slots : Map[String, @oxml.Color] = Map([])
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let event = next_event(r)
     match event {
-      StartElement(slot_name, _) => {
+      StartElement(slot_name, slot_attrs) =>
         if slot_name.uri != @oxml.drawing_ns {
-          skip_subtree(r)
-          continue
+          extension.push(collect_subtree_unknown(r, slot_name, slot_attrs))
+        } else {
+          let choice = parse_color_inside_wrapper(r, slot_name)
+          slots[slot_name.local_name] = choice
         }
-        let choice = parse_color_inside_wrapper(r, slot_name)
-        slots[slot_name.local_name] = choice
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -140,6 +148,7 @@ fn parse_color_scheme(
     accent6: require_slot(slots, "accent6"),
     hlink: require_slot(slots, "hlink"),
     fol_hlink: require_slot(slots, "folHlink"),
+    extension,
   }
 }
 
@@ -205,26 +214,26 @@ fn parse_font_scheme(
   let name = optional_attr(attrs, "name")
   let mut major : FontCollection? = None
   let mut minor : FontCollection? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let event = next_event(r)
     match event {
-      StartElement(child, _) => {
+      StartElement(child, child_attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
-          continue
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
+        } else {
+          match child.local_name {
+            "majorFont" => major = Some(parse_font_collection(r, child))
+            "minorFont" => minor = Some(parse_font_collection(r, child))
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
+          }
         }
-        match child.local_name {
-          "majorFont" => major = Some(parse_font_collection(r, child))
-          "minorFont" => minor = Some(parse_font_collection(r, child))
-          _ => skip_subtree(r)
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
   match (major, minor) {
-    (Some(mj), Some(mn)) => { name, major_font: mj, minor_font: mn }
+    (Some(mj), Some(mn)) => { name, major_font: mj, minor_font: mn, extension }
     (None, _) => raise MalformedTheme("fontScheme missing majorFont")
     (_, None) => raise MalformedTheme("fontScheme missing minorFont")
   }
@@ -239,41 +248,41 @@ fn parse_font_collection(
   let mut ea = ""
   let mut cs = ""
   let scripts : Array[ScriptFont] = []
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let event = next_event(r)
     match event {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
-          continue
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "latin" => {
+              latin = require_attr(attrs, "typeface")
+              skip_subtree(r)
+            }
+            "ea" => {
+              ea = optional_attr(attrs, "typeface")
+              skip_subtree(r)
+            }
+            "cs" => {
+              cs = optional_attr(attrs, "typeface")
+              skip_subtree(r)
+            }
+            "font" => {
+              let script = require_attr(attrs, "script")
+              let typeface = require_attr(attrs, "typeface")
+              scripts.push({ script, typeface })
+              skip_subtree(r)
+            }
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
+          }
         }
-        match child.local_name {
-          "latin" => {
-            latin = require_attr(attrs, "typeface")
-            skip_subtree(r)
-          }
-          "ea" => {
-            ea = optional_attr(attrs, "typeface")
-            skip_subtree(r)
-          }
-          "cs" => {
-            cs = optional_attr(attrs, "typeface")
-            skip_subtree(r)
-          }
-          "font" => {
-            let script = require_attr(attrs, "script")
-            let typeface = require_attr(attrs, "typeface")
-            scripts.push({ script, typeface })
-            skip_subtree(r)
-          }
-          _ => skip_subtree(r)
-        }
-      }
       EndElement(en) => if en == wrapper_name { break }
       _ => ()
     }
   }
-  { latin, ea, cs, scripts }
+  { latin, ea, cs, scripts, extension }
 }
 
 // --- shared event helpers ---
@@ -337,4 +346,19 @@ fn optional_attr(
   attr_name : String,
 ) -> String {
   @oxml.optional_attr_or(attrs, attr_name, "")
+}
+
+///|
+/// Thin wrapper around `@oxml.collect_subtree` that translates the neutral
+/// `XmlReadError` into `ThemeError::MalformedTheme`. Centralises the
+/// conversion so the unknown-element capture sites in the theme parser
+/// stay one-liners.
+fn collect_subtree_unknown(
+  r : @xml.XmlReader,
+  name : @xml.QName,
+  attrs : Array[(@xml.QName, String)],
+) -> @xml.XmlElement raise ThemeError {
+  @oxml.collect_subtree(r, name, attrs) catch {
+    e => raise MalformedTheme(e.to_string())
+  }
 }

@@ -12,26 +12,27 @@ fn parse_text_body(r : @xml.XmlReader) -> TextBody raise SlideError {
   let paragraphs : Array[Paragraph] = []
   let mut body_properties : BodyProperties? = None
   let mut list_style : ListStyle? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
             "bodyPr" =>
               body_properties = Some(parse_body_properties(r, child_attrs))
             "lstStyle" => list_style = Some(parse_list_style(r))
             "p" => paragraphs.push(parse_paragraph(r))
-            _ => skip_subtree(r)
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
       EndElement(_) => break
       _ => ()
     }
   }
-  { body_properties, list_style, paragraphs }
+  { body_properties, list_style, paragraphs, extension }
 }
 
 ///|
@@ -49,12 +50,13 @@ fn parse_body_properties(
   let right_inset = parse_emu_attr(attrs, "rIns")
   let bottom_inset = parse_emu_attr(attrs, "bIns")
   let mut auto_fit : AutoFit? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
             "noAutofit" => {
@@ -75,8 +77,9 @@ fn parse_body_properties(
               auto_fit = Some(SpAutoFit)
               skip_subtree(r)
             }
-            // prstTxWarp, scene3d, sp3d, flatTx, extLst — deferred.
-            _ => skip_subtree(r)
+            // prstTxWarp, scene3d, sp3d, flatTx, extLst — preserved
+            // verbatim so writers can re-emit them in Phase 4.
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
       EndElement(_) => break
@@ -93,6 +96,7 @@ fn parse_body_properties(
     right_inset,
     bottom_inset,
     auto_fit,
+    extension,
   }
 }
 
@@ -113,12 +117,13 @@ fn parse_list_style(r : @xml.XmlReader) -> ListStyle raise SlideError {
     None,
   ]
   let mut default_props : ParagraphProperties? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else if child.local_name == "defPPr" {
           default_props = Some(parse_paragraph_properties(r, child_attrs))
         } else {
@@ -128,14 +133,15 @@ fn parse_list_style(r : @xml.XmlReader) -> ListStyle raise SlideError {
               level_props[idx] = Some(
                 parse_paragraph_properties(r, child_attrs),
               )
-            None => skip_subtree(r)
+            None =>
+              extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
       EndElement(_) => break
       _ => ()
     }
   }
-  { default_props, level_props }
+  { default_props, level_props, extension }
 }
 
 ///|
@@ -162,12 +168,13 @@ fn match_level_name(name : String) -> Int? {
 fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
   let content : Array[ParagraphContent] = []
   let mut properties : ParagraphProperties = ParagraphProperties::default()
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
             "pPr" => properties = parse_paragraph_properties(r, child_attrs)
@@ -175,15 +182,16 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
             "br" => content.push(Break(parse_break(r)))
             "fld" => content.push(FieldContent(parse_field(r, child_attrs)))
             // endParaRPr (run props for the implicit terminal break) and
-            // anything we don't yet model: skip.
-            _ => skip_subtree(r)
+            // anything we don't yet model land on `extension` so writers
+            // can re-emit them verbatim.
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
       EndElement(_) => break
       _ => ()
     }
   }
-  { properties, content }
+  { properties, content, extension }
 }
 
 ///|
@@ -200,12 +208,13 @@ fn parse_paragraph_properties(
   let space_before = parse_hundredths_pt_attr(attrs, "spaceBefore")
   let space_after = parse_hundredths_pt_attr(attrs, "spaceAfter")
   let mut bullet : Bullet? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, child_attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
             "buNone" => {
@@ -227,8 +236,9 @@ fn parse_paragraph_properties(
               skip_subtree(r)
             }
             "buBlip" => bullet = Some(parse_bu_blip(r))
-            // buFont, buSzPct, buClr, buClrTx, tabLst — not modelled yet.
-            _ => skip_subtree(r)
+            // buFont, buSzPct, buClr, buClrTx, tabLst, defRPr, extLst —
+            // preserved verbatim for round-trip.
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
       EndElement(_) => break
@@ -244,6 +254,7 @@ fn parse_paragraph_properties(
     space_before,
     space_after,
     bullet,
+    extension,
   }
 }
 
@@ -279,24 +290,25 @@ fn parse_bu_blip(r : @xml.XmlReader) -> Bullet raise SlideError {
 fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
   let buf = StringBuilder::new(size_hint=32)
   let mut properties = RunProperties::default()
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
       StartElement(child, attrs) =>
         if child.uri != @oxml.drawing_ns {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, attrs))
         } else {
           match child.local_name {
             "rPr" => properties = parse_run_properties(r, attrs)
             "t" => collect_text_until_end(r, buf)
-            _ => skip_subtree(r)
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
         }
       EndElement(_) => break
       _ => ()
     }
   }
-  { properties, text: buf.to_string() }
+  { properties, text: buf.to_string(), extension }
 }
 
 ///|
@@ -322,6 +334,7 @@ fn parse_run_properties(
   let mut complex_script : String? = None
   let mut fill : @oxml.Color? = None
   let mut hyperlink_click : String? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
@@ -345,10 +358,12 @@ fn parse_run_properties(
               hyperlink_click = Some(extract_rid(child_attrs))
               skip_subtree(r)
             }
-            _ => skip_subtree(r)
+            // ln / gradFill / pattFill / blipFill / effectLst /
+            // highlight / uLn / hlinkMouseOver / extLst etc.
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         } else {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         }
       EndElement(_) => break
       _ => ()
@@ -368,6 +383,7 @@ fn parse_run_properties(
     complex_script,
     fill,
     hyperlink_click,
+    extension,
   }
 }
 
@@ -430,11 +446,27 @@ fn parse_baseline_attr(
 }
 
 ///|
-/// Parse `<a:br>` body. `<a:rPr>` is currently skipped; we return an
-/// empty `RunProperties` placeholder so the variant stays well-typed.
+/// Parse `<a:br>` body. The break may carry an `<a:rPr>` controlling the
+/// break's font metrics; we parse it through the shared run-property
+/// reader so any rPr extensions ride along on the returned record. Any
+/// other `<a:br>` children (none defined in the spec but tools sometimes
+/// add foreign-namespace decorations) land on the rPr's `extension`.
 fn parse_break(r : @xml.XmlReader) -> RunProperties raise SlideError {
-  skip_subtree(r)
-  RunProperties::default()
+  let mut properties = RunProperties::default()
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) =>
+        if child.uri == @oxml.drawing_ns && child.local_name == "rPr" {
+          properties = parse_run_properties(r, attrs)
+        } else {
+          properties.extension.push(collect_subtree_unknown(r, child, attrs))
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  properties
 }
 
 ///|
@@ -447,23 +479,24 @@ fn parse_field(
   let id = optional_attr(attrs, "id")
   let field_type = optional_attr(attrs, "type")
   let buf = StringBuilder::new(size_hint=16)
+  let mut properties = RunProperties::default()
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) =>
-        if child.uri == @oxml.drawing_ns && child.local_name == "t" {
-          collect_text_until_end(r, buf)
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.drawing_ns {
+          match child.local_name {
+            "rPr" => properties = parse_run_properties(r, child_attrs)
+            "t" => collect_text_until_end(r, buf)
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
+          }
         } else {
-          skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
         }
       EndElement(_) => break
       _ => ()
     }
   }
-  {
-    id,
-    field_type,
-    properties: RunProperties::default(),
-    text: buf.to_string(),
-  }
+  { id, field_type, properties, text: buf.to_string(), extension }
 }

@@ -139,6 +139,10 @@ pub(all) struct EffectList {
   preset_shadow : PresetShadow?
   reflection : Reflection?
   soft_edge : SoftEdge?
+  /// Lossless preservation (ADR-004): `<a:fillOverlay>` (which carries a
+  /// nested `Fill` plus blend mode and is not yet typed), `<a:extLst>`,
+  /// and foreign-namespace `<a:effectLst>` children.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -177,53 +181,58 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
   let mut preset_shadow : PresetShadow? = None
   let mut reflection : Reflection? = None
   let mut soft_edge : SoftEdge? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r) catch { e => raise MalformedEffect(e.to_string()) }
     match ev {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != drawing_ns {
-          skip_subtree(r) catch {
-            e => raise MalformedEffect(e.to_string())
-          }
-          continue
-        }
-        match child.local_name {
-          "blur" => {
-            blur = Some(
-              parse_blur(attrs) catch {
+          extension.push(
+            collect_subtree(r, child, attrs) catch {
+              e => raise MalformedEffect(e.to_string())
+            },
+          )
+        } else {
+          match child.local_name {
+            "blur" => {
+              blur = Some(
+                parse_blur(attrs) catch {
+                  e => raise MalformedEffect(e.to_string())
+                },
+              )
+              skip_subtree(r) catch {
                 e => raise MalformedEffect(e.to_string())
-              },
-            )
-            skip_subtree(r) catch {
-              e => raise MalformedEffect(e.to_string())
+              }
             }
+            "glow" => glow = Some(parse_glow(r, attrs))
+            "innerShdw" => inner_shadow = Some(parse_inner_shadow(r, attrs))
+            "outerShdw" => outer_shadow = Some(parse_outer_shadow(r, attrs))
+            "prstShdw" => preset_shadow = Some(parse_preset_shadow(r, attrs))
+            "reflection" => {
+              reflection = Some(parse_reflection(attrs))
+              skip_subtree(r) catch {
+                e => raise MalformedEffect(e.to_string())
+              }
+            }
+            "softEdge" => {
+              let rad = require_emu(attrs, "rad", "softEdge") catch {
+                e => raise MalformedEffect(e.to_string())
+              }
+              soft_edge = Some({ rad, })
+              skip_subtree(r) catch {
+                e => raise MalformedEffect(e.to_string())
+              }
+            }
+            // fillOverlay (not yet modelled), extLst, etc. survive
+            // round-trip via `extension`.
+            _ =>
+              extension.push(
+                collect_subtree(r, child, attrs) catch {
+                  e => raise MalformedEffect(e.to_string())
+                },
+              )
           }
-          "glow" => glow = Some(parse_glow(r, attrs))
-          "innerShdw" => inner_shadow = Some(parse_inner_shadow(r, attrs))
-          "outerShdw" => outer_shadow = Some(parse_outer_shadow(r, attrs))
-          "prstShdw" => preset_shadow = Some(parse_preset_shadow(r, attrs))
-          "reflection" => {
-            reflection = Some(parse_reflection(attrs))
-            skip_subtree(r) catch {
-              e => raise MalformedEffect(e.to_string())
-            }
-          }
-          "softEdge" => {
-            let rad = require_emu(attrs, "rad", "softEdge") catch {
-              e => raise MalformedEffect(e.to_string())
-            }
-            soft_edge = Some({ rad, })
-            skip_subtree(r) catch {
-              e => raise MalformedEffect(e.to_string())
-            }
-          }
-          // fillOverlay — recognised but not yet modelled; drop.
-          _ =>
-            skip_subtree(r) catch {
-              e => raise MalformedEffect(e.to_string())
-            }
         }
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -236,6 +245,7 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
     preset_shadow,
     reflection,
     soft_edge,
+    extension,
   }
 }
 

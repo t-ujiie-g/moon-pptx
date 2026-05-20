@@ -32,6 +32,7 @@ pub(all) struct ColorScheme {
   accent6 : @oxml.Color
   hlink : @oxml.Color
   fol_hlink : @oxml.Color
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct FontCollection {
@@ -39,12 +40,14 @@ pub(all) struct FontCollection {
   ea : String
   cs : String
   scripts : Array[ScriptFont]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct FontScheme {
   name : String
   major_font : FontCollection
   minor_font : FontCollection
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ScriptFont {
@@ -57,6 +60,7 @@ pub(all) struct Theme {
   name : String
   color_scheme : ColorScheme
   font_scheme : FontScheme
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Theme::parse(FixedArray[Byte]) -> Self raise ThemeError
 
