@@ -47,17 +47,20 @@ pub(all) struct Placeholder {
 
 ///|
 /// One shape in a `p:spTree`. Variants are filled in across Phase 3c
-/// commits; `Unknown` remains as the temporary catch-all for shape
-/// kinds that are not yet modelled (`p:graphicFrame` for tables /
-/// charts / SmartArt and `p:contentPart` for extensions).
+/// commits; `Unknown` remains as the catch-all for shape kinds that are
+/// not yet modelled (`p:graphicFrame` for tables / charts / SmartArt and
+/// `p:contentPart` for extensions). Per ADR-004 the variant carries the
+/// full captured element so unknown shapes survive a read → write
+/// round-trip verbatim.
 pub(all) enum Shape {
   AutoShape(AutoShape)
   Picture(Picture)
   Connector(Connector)
   Group(GroupShape)
-  /// Placeholder for an as-yet-unmodelled shape kind. Payload is the
-  /// element's local name (`graphicFrame`, `contentPart`).
-  Unknown(String)
+  /// The full XML subtree of an unmodelled shape kind. The element's
+  /// local name (`graphicFrame`, `contentPart`, …) is reachable via
+  /// `el.name.local_name`.
+  Unknown(@xml.XmlElement)
 } derive(Eq, Debug)
 
 ///|
@@ -82,6 +85,10 @@ pub(all) struct AutoShape {
   /// `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
   effects : @oxml.EffectList?
   text_body : TextBody?
+  /// Lossless preservation (ADR-004): unmodelled `<p:sp>` siblings
+  /// (`<p:style>`, `<p:extLst>`, foreign-namespace extensions, …)
+  /// captured verbatim for round-trip writers.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
@@ -91,11 +98,19 @@ pub(all) struct Slide {
   /// (which is the common case — slides are usually unnamed).
   name : String
   /// Top-level shapes inside `<p:spTree>` in source order. The root
-  /// group's own metadata (`<p:nvGrpSpPr>` / `<p:grpSpPr>`) is consumed
-  /// but not preserved here — it's nearly always trivial.
+  /// group's own metadata (`<p:nvGrpSpPr>` / `<p:grpSpPr>`) is captured
+  /// into `extension` for round-trip preservation.
   shapes : Array[Shape]
   /// Per ECMA-376, slides may carry a `<p:clrMapOvr>` exactly like slide
   /// layouts do. Reuses the layout's enum so the inheritance resolver
   /// works uniformly.
   clr_map_override : @slide_master.ClrMapOverride
+  /// Lossless preservation (ADR-004): unmodelled `<p:sld>` children
+  /// (`<p:transition>`, `<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
+  /// unmodelled `<p:cSld>` children (`<p:bg>`, …), and unmodelled
+  /// `<p:spTree>` siblings (root group metadata, foreign-namespace
+  /// extensions). Source order is preserved within the array; cross-
+  /// section ordering is *not* — Phase 4 writers re-emit each captured
+  /// element under its original parent based on the element's name.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

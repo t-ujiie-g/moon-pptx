@@ -43,4 +43,7 @@ pub(all) struct Connector {
   effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
+  /// Lossless preservation (ADR-004): unmodelled `<p:cxnSp>` siblings
+  /// (`<p:style>`, `<p:extLst>`, …) captured verbatim.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

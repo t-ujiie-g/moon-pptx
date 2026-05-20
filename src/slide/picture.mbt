@@ -35,4 +35,7 @@ pub(all) struct Picture {
   /// `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
+  /// Lossless preservation (ADR-004): unmodelled `<p:pic>` siblings
+  /// (`<p:style>`, `<p:extLst>`, …) captured verbatim.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

@@ -87,6 +87,7 @@ pub(all) struct AutoShape {
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   text_body : TextBody?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct BodyProperties {
@@ -130,6 +131,7 @@ pub(all) struct Connector {
   effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Field {
@@ -151,6 +153,7 @@ pub(all) struct GroupShape {
   child_offset : Point?
   child_extent : Size?
   children : Array[Shape]
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ListStyle {
@@ -191,6 +194,7 @@ pub(all) struct Picture {
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Placeholder {
@@ -421,7 +425,7 @@ pub(all) enum Shape {
   Picture(Picture)
   Connector(Connector)
   Group(GroupShape)
-  Unknown(String)
+  Unknown(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct ShapeAdjustValue {
@@ -438,6 +442,7 @@ pub(all) struct Slide {
   name : String
   shapes : Array[Shape]
   clr_map_override : @slide_master.ClrMapOverride
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
 

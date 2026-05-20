@@ -22,25 +22,28 @@ fn parse_slide_xml(xml : String) -> Slide raise SlideError {
   let mut slide_name = ""
   let shapes : Array[Shape] = []
   let mut clr_map_override : @slide_master.ClrMapOverride = MasterMapping
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
+          // Foreign-namespace child of <p:sld> — capture verbatim.
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "cSld" => slide_name = parse_c_sld(r, attrs, shapes, extension)
+            "clrMapOvr" => clr_map_override = parse_clr_map_ovr(r)
+            // transition, timing, custDataLst, extLst, and any future
+            // <p:sld> children we don't yet model.
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
+          }
         }
-        match child.local_name {
-          "cSld" => slide_name = parse_c_sld(r, attrs, shapes)
-          "clrMapOvr" => clr_map_override = parse_clr_map_ovr(r)
-          _ => skip_subtree(r) // transition, timing, custDataLst, extLst
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
-  { name: slide_name, shapes, clr_map_override }
+  { name: slide_name, shapes, clr_map_override, extension }
 }
 
 ///|
@@ -48,21 +51,22 @@ fn parse_c_sld(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
   shapes : Array[Shape],
+  extension : Array[@xml.XmlElement],
 ) -> String raise SlideError {
   let name = optional_attr(attrs, "name")
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) => {
+      StartElement(child, child_attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
+        } else {
+          match child.local_name {
+            "spTree" => parse_sp_tree(r, shapes, extension)
+            // bg, custDataLst, extLst, and any future <p:cSld> children.
+            _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
+          }
         }
-        match child.local_name {
-          "spTree" => parse_sp_tree(r, shapes)
-          _ => skip_subtree(r) // bg, custDataLst, extLst
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -74,37 +78,49 @@ fn parse_c_sld(
 fn parse_sp_tree(
   r : @xml.XmlReader,
   shapes : Array[Shape],
+  extension : Array[@xml.XmlElement],
 ) -> Unit raise SlideError {
-  // The first two children of every spTree are nvGrpSpPr + grpSpPr — they
-  // describe the implicit root group, which we don't surface in our shape
-  // list. Skip them by name; everything else falls into the shape switch.
+  // The first two children of every spTree are nvGrpSpPr + grpSpPr —
+  // metadata for the implicit root group. We don't model them as part
+  // of the shape list, but per ADR-004 they round-trip through the
+  // slide-level `extension` so writers can re-emit them.
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "nvGrpSpPr" => skip_subtree(r)
-          "grpSpPr" => skip_subtree(r)
-          "sp" => shapes.push(AutoShape(parse_auto_shape(r, attrs)))
-          "pic" => shapes.push(Picture(parse_picture(r)))
-          "cxnSp" => shapes.push(Connector(parse_connector(r)))
-          "grpSp" => shapes.push(Group(parse_group_shape(r)))
-          // Remaining placeholders for later phases (graphicFrame =
-          // table / chart / SmartArt host; contentPart = extension).
-          "graphicFrame" | "contentPart" => {
-            shapes.push(Unknown(child.local_name))
-            skip_subtree(r)
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "nvGrpSpPr" | "grpSpPr" =>
+              extension.push(collect_subtree_unknown(r, child, attrs))
+            "sp" => shapes.push(AutoShape(parse_auto_shape(r, attrs)))
+            "pic" => shapes.push(Picture(parse_picture(r)))
+            "cxnSp" => shapes.push(Connector(parse_connector(r)))
+            "grpSp" => shapes.push(Group(parse_group_shape(r)))
+            // graphicFrame (tables / charts / SmartArt) and contentPart
+            // (extensions) are not yet typed — preserve the full XML so
+            // they round-trip verbatim.
+            _ => shapes.push(Unknown(collect_subtree_unknown(r, child, attrs)))
           }
-          _ => skip_subtree(r)
         }
-      }
       EndElement(_) => break
       _ => ()
     }
+  }
+}
+
+///|
+/// Thin wrapper around `@oxml.collect_subtree` that maps the neutral
+/// `XmlReadError` into `SlideError::Malformed`. Centralises the conversion
+/// so every shape parser uses the same one-liner.
+fn collect_subtree_unknown(
+  r : @xml.XmlReader,
+  name : @xml.QName,
+  attrs : Array[(@xml.QName, String)],
+) -> @xml.XmlElement raise SlideError {
+  @oxml.collect_subtree(r, name, attrs) catch {
+    e => raise Malformed(e.to_string())
   }
 }
 
@@ -120,38 +136,38 @@ fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
   let mut effects : @oxml.EffectList? = None
   let mut start : ConnectionEnd? = None
   let mut end : ConnectionEnd? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "nvCxnSpPr" => {
-            let (parsed_id, parsed_name, st, en) = parse_nv_cxn_sp_pr(r)
-            id = parsed_id
-            name = parsed_name
-            start = st
-            end = en
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "nvCxnSpPr" => {
+              let (parsed_id, parsed_name, st, en) = parse_nv_cxn_sp_pr(r)
+              id = parsed_id
+              name = parsed_name
+              start = st
+              end = en
+            }
+            "spPr" => {
+              let (xfrm, geom, ln, fx) = parse_sp_pr(r)
+              transform = xfrm
+              geometry = geom
+              stroke = ln
+              effects = fx
+            }
+            // style, extLst, and any future <p:cxnSp> children.
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
-          "spPr" => {
-            let (xfrm, geom, ln, fx) = parse_sp_pr(r)
-            transform = xfrm
-            geometry = geom
-            stroke = ln
-            effects = fx
-          }
-          // style, extLst — Phase 3 later slices
-          _ => skip_subtree(r)
         }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
-  { id, name, transform, geometry, stroke, effects, start, end }
+  { id, name, transform, geometry, stroke, effects, start, end, extension }
 }
 
 ///|
@@ -236,45 +252,45 @@ fn parse_group_shape(r : @xml.XmlReader) -> GroupShape raise SlideError {
   let mut child_offset : Point? = None
   let mut child_extent : Size? = None
   let children : Array[Shape] = []
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, child_attrs) => {
+      StartElement(child, child_attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
+        } else {
+          match child.local_name {
+            "nvGrpSpPr" => {
+              // Same shape as nvSpPr/nvPicPr's first three children;
+              // re-use that extractor and discard the placeholder slot.
+              let (parsed_id, parsed_name, _) = parse_nv_sp_pr(r)
+              id = parsed_id
+              name = parsed_name
+            }
+            "grpSpPr" => {
+              let (xfrm, ch_off, ch_ext) = parse_grp_sp_pr(r)
+              transform = xfrm
+              child_offset = ch_off
+              child_extent = ch_ext
+            }
+            // Recurse into child shapes — same dispatch as parse_sp_tree.
+            "sp" => children.push(AutoShape(parse_auto_shape(r, child_attrs)))
+            "pic" => children.push(Picture(parse_picture(r)))
+            "cxnSp" => children.push(Connector(parse_connector(r)))
+            "grpSp" => children.push(Group(parse_group_shape(r)))
+            // graphicFrame / contentPart — preserve the full subtree.
+            _ =>
+              children.push(
+                Unknown(collect_subtree_unknown(r, child, child_attrs)),
+              )
+          }
         }
-        match child.local_name {
-          "nvGrpSpPr" => {
-            // Same shape as nvSpPr/nvPicPr's first three children;
-            // re-use that extractor and discard the placeholder slot.
-            let (parsed_id, parsed_name, _) = parse_nv_sp_pr(r)
-            id = parsed_id
-            name = parsed_name
-          }
-          "grpSpPr" => {
-            let (xfrm, ch_off, ch_ext) = parse_grp_sp_pr(r)
-            transform = xfrm
-            child_offset = ch_off
-            child_extent = ch_ext
-          }
-          // Recurse into child shapes — same dispatch as parse_sp_tree.
-          "sp" => children.push(AutoShape(parse_auto_shape(r, child_attrs)))
-          "pic" => children.push(Picture(parse_picture(r)))
-          "cxnSp" => children.push(Connector(parse_connector(r)))
-          "grpSp" => children.push(Group(parse_group_shape(r)))
-          "graphicFrame" | "contentPart" => {
-            children.push(Unknown(child.local_name))
-            skip_subtree(r)
-          }
-          _ => skip_subtree(r)
-        }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
-  { id, name, transform, child_offset, child_extent, children }
+  { id, name, transform, child_offset, child_extent, children, extension }
 }
 
 ///|
@@ -376,44 +392,44 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
   let mut stroke : @oxml.Stroke? = None
   let mut effects : @oxml.EffectList? = None
   let mut blip_fill : @oxml.BlipFill? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, attrs) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "nvPicPr" => {
-            // Same shape as nvSpPr (cNvPr + cNvPicPr + nvPr); reuse the
-            // (id, name, _) extractor and discard the placeholder slot.
-            let (parsed_id, parsed_name, _) = parse_nv_sp_pr(r)
-            id = parsed_id
-            name = parsed_name
-          }
-          "blipFill" => {
-            // Delegate to the shared @oxml.parse_fill, which handles
-            // blip / srcRect / stretch / tile uniformly.
-            let f = @oxml.parse_fill(r, child, attrs) catch {
-              e => raise Malformed("p:blipFill: " + e.to_string())
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "nvPicPr" => {
+              // Same shape as nvSpPr (cNvPr + cNvPicPr + nvPr); reuse the
+              // (id, name, _) extractor and discard the placeholder slot.
+              let (parsed_id, parsed_name, _) = parse_nv_sp_pr(r)
+              id = parsed_id
+              name = parsed_name
             }
-            blip_fill = match f {
-              BlipFillVariant(b) => Some(b)
-              _ => raise Malformed("p:blipFill resolved to non-blip fill")
+            "blipFill" => {
+              // Delegate to the shared @oxml.parse_fill, which handles
+              // blip / srcRect / stretch / tile uniformly.
+              let f = @oxml.parse_fill(r, child, attrs) catch {
+                e => raise Malformed("p:blipFill: " + e.to_string())
+              }
+              blip_fill = match f {
+                BlipFillVariant(b) => Some(b)
+                _ => raise Malformed("p:blipFill resolved to non-blip fill")
+              }
             }
+            "spPr" => {
+              let (xfrm, geom, ln, fx) = parse_sp_pr(r)
+              transform = xfrm
+              geometry = geom
+              stroke = ln
+              effects = fx
+            }
+            // style, extLst, and any future <p:pic> children.
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
-          "spPr" => {
-            let (xfrm, geom, ln, fx) = parse_sp_pr(r)
-            transform = xfrm
-            geometry = geom
-            stroke = ln
-            effects = fx
-          }
-          // style, extLst — Phase 3 later slices
-          _ => skip_subtree(r)
         }
-      }
       EndElement(_) => break
       _ => ()
     }
@@ -422,7 +438,7 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
     Some(b) => b
     None => raise Malformed("<p:pic> is missing <p:blipFill>")
   }
-  { id, name, transform, geometry, stroke, effects, blip_fill: bf }
+  { id, name, transform, geometry, stroke, effects, blip_fill: bf, extension }
 }
 
 // --- AutoShape ---
@@ -440,38 +456,48 @@ fn parse_auto_shape(
   let mut stroke : @oxml.Stroke? = None
   let mut effects : @oxml.EffectList? = None
   let mut text_body : TextBody? = None
+  let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
     match ev {
-      StartElement(child, _) => {
+      StartElement(child, attrs) =>
         if child.uri != @oxml.presentation_ns {
-          skip_subtree(r)
-          continue
-        }
-        match child.local_name {
-          "nvSpPr" => {
-            let (parsed_id, parsed_name, ph) = parse_nv_sp_pr(r)
-            id = parsed_id
-            name = parsed_name
-            placeholder = ph
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          match child.local_name {
+            "nvSpPr" => {
+              let (parsed_id, parsed_name, ph) = parse_nv_sp_pr(r)
+              id = parsed_id
+              name = parsed_name
+              placeholder = ph
+            }
+            "spPr" => {
+              let (xfrm, geom, ln, fx) = parse_sp_pr(r)
+              transform = xfrm
+              geometry = geom
+              stroke = ln
+              effects = fx
+            }
+            "txBody" => text_body = Some(parse_text_body(r))
+            // style, extLst, and any future <p:sp> children.
+            _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
-          "spPr" => {
-            let (xfrm, geom, ln, fx) = parse_sp_pr(r)
-            transform = xfrm
-            geometry = geom
-            stroke = ln
-            effects = fx
-          }
-          "txBody" => text_body = Some(parse_text_body(r))
-          // style, extLst — Phase 3 later slices
-          _ => skip_subtree(r)
         }
-      }
       EndElement(_) => break
       _ => ()
     }
   }
-  { id, name, placeholder, transform, geometry, stroke, effects, text_body }
+  {
+    id,
+    name,
+    placeholder,
+    transform,
+    geometry,
+    stroke,
+    effects,
+    text_body,
+    extension,
+  }
 }
 
 ///|

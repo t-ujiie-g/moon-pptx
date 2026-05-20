@@ -36,4 +36,8 @@ pub(all) struct GroupShape {
   child_offset : Point?
   child_extent : Size?
   children : Array[Shape]
+  /// Lossless preservation (ADR-004): unmodelled `<p:grpSp>` siblings
+  /// (foreign-namespace extensions, future shape kinds, …) captured
+  /// verbatim.
+  extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
