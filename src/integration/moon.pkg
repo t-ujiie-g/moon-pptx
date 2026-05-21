@@ -1,0 +1,16 @@
+// Test-only package: no source files, only `*_test.mbt`.  Every import
+// is therefore test-scoped — the `for "test"` block keeps `moon check`
+// from flagging them as unused at the package-proper level.
+import {
+} // (no package-level imports — the package has no `.mbt` sources)
+
+import {
+  "hustcer/fzip" @fzip,
+  "t-ujiie-g/moon_pptx/comments" @comments,
+  "t-ujiie-g/moon_pptx/notes" @notes,
+  "t-ujiie-g/moon_pptx/opc" @opc,
+  "t-ujiie-g/moon_pptx/slide" @slide,
+  "t-ujiie-g/moon_pptx/slide_master" @slide_master,
+  "t-ujiie-g/moon_pptx/theme" @theme,
+  "t-ujiie-g/moon_pptx/units" @units,
+} for "test"
