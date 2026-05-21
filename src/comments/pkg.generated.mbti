@@ -41,12 +41,14 @@ pub(all) struct CommentAuthorList {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn CommentAuthorList::parse(FixedArray[Byte]) -> Self raise CommentsError
+pub fn CommentAuthorList::serialize(Self) -> FixedArray[Byte] raise CommentsError
 
 pub(all) struct CommentList {
   comments : Array[Comment]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn CommentList::parse(FixedArray[Byte]) -> Self raise CommentsError
+pub fn CommentList::serialize(Self) -> FixedArray[Byte] raise CommentsError
 
 pub(all) struct CommentPos {
   x : @units.Emu

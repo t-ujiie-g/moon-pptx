@@ -222,15 +222,25 @@ DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
 
 ---
 
-### Phase 4 — Write path: serialize model to OOXML
+### Phase 4 — Write path: serialize model to OOXML *(in progress)*
 
 DoD: any model produced by Phase 3 reads can be re-serialized and reopened by
 PowerPoint with no warnings or visual diffs.
 
-- [ ] Per-element writers (mirror parsers from Phase 3)
-- [ ] Auto-generation of `[Content_Types].xml` and rels from model
+Per-element writers mirror the Phase 3 parsers and are sliced by package so
+each slice can ship in isolation. The Phase 4 floor for every slice is the
+round-trip property `parse → serialize → parse → Eq`; this catches any
+silent data loss without requiring a stable canonical XML serialisation.
+
+- [x] **Phase 4a — `@comments` writers** *(complete)* — `CommentAuthorList::serialize` and `CommentList::serialize` mirror their parsers. Shared `@oxml.WriteCtx` + `@oxml.write_xml_element` helper round-trips captured `extension` subtrees (including foreign-namespace siblings via on-the-fly `extN` prefixes). `@oxml.string_to_bytes` converts the writer output to part bytes. 11 new tests, 424 total × 4 backends.
+- [ ] **Phase 4b — `@theme` writer**
+- [ ] **Phase 4c — `@oxml` shared writers** (Color / Fill / Stroke / EffectList)
+- [ ] **Phase 4d — `@slide_master` writers**
+- [ ] **Phase 4e — `@slide` + `@slide.CustomGeometry` writers**
+- [ ] **Phase 4f — `@notes` writer**
+- [ ] **Phase 4g — round-trip golden test** in `@integration`
+- [ ] Auto-generation of `[Content_Types].xml` and rels from model (deferred to Phase 5)
 - [ ] Numeric ID assignment (shape IDs, rId, etc.) is deterministic
-- [ ] Round-trip golden test: read sample, write back, byte-equal after canonical XML pass
 - [ ] PowerPoint open verification: manual checklist for sample decks
 - [ ] LibreOffice open verification (cross-implementation sanity)
 

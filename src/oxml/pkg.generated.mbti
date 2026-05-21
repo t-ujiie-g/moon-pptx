@@ -58,6 +58,10 @@ pub fn require_pct(Array[(@xml.QName, String)], String, String) -> @units.Percen
 
 pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
+pub fn string_to_bytes(String) -> FixedArray[Byte]
+
+pub fn write_xml_element(@xml.XmlWriter, WriteCtx, @xml.XmlElement) -> Unit raise @xml.XmlError
+
 // Errors
 pub(all) suberror ColorError {
   UnknownColorElement(String)
@@ -374,6 +378,12 @@ pub(all) struct TileSpec {
   flip : TileFlip?
   alignment : TileAlignment?
 } derive(Eq, @debug.Debug)
+
+pub(all) struct WriteCtx {
+  known_prefixes : Map[String, String]
+  mut next_ext : Int
+}
+pub fn WriteCtx::with_well_known_prefixes() -> Self
 
 // Type aliases
 
