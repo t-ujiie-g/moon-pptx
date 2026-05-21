@@ -60,6 +60,8 @@ pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
 pub fn string_to_bytes(String) -> FixedArray[Byte]
 
+pub fn write_color(@xml.XmlWriter, WriteCtx, Color) -> Unit raise @xml.XmlError
+
 pub fn write_xml_element(@xml.XmlWriter, WriteCtx, @xml.XmlElement) -> Unit raise @xml.XmlError
 
 // Errors

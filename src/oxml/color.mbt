@@ -163,6 +163,89 @@ pub fn Color::scheme(slot : @units.ThemeColor) -> Color {
   Color::of(Scheme(slot))
 }
 
+// --- writer ---
+
+///|
+/// Emit a `Color` onto `w` as the DrawingML colour element matching
+/// its base kind (`<a:srgbClr>` / `<a:hslClr>` / `<a:sysClr>` /
+/// `<a:schemeClr>` / `<a:prstClr>` / `<a:scrgbClr>`). Modifier
+/// children come from `transforms` (modeled) and `extension`
+/// (unmodelled — replayed verbatim via `write_xml_element`).
+///
+/// Caller must have already bound the drawing-ml namespace (e.g. via
+/// `WriteCtx::with_well_known_prefixes` + `bind_namespace("a", …)`).
+pub fn write_color(
+  w : @xml.XmlWriter,
+  ctx : WriteCtx,
+  c : Color,
+) -> Unit raise @xml.XmlError {
+  let name = match c.base {
+    Srgb(_) => "srgbClr"
+    Hsl(_) => "hslClr"
+    Sys(_) => "sysClr"
+    Scheme(_) => "schemeClr"
+    Preset(_) => "prstClr"
+    Scrgb(_, _, _) => "scrgbClr"
+  }
+  w.start_element(@xml.QName::new(drawing_ns, name))
+  match c.base {
+    Srgb(rgb) => w.attribute(@xml.QName::unqualified("val"), rgb.to_hex())
+    Hsl(hsl) => {
+      let hue_ooxml = @units.Angle(hsl.hue).to_ooxml()
+      let sat_ooxml = @units.Percentage(hsl.saturation).to_ooxml()
+      let lum_ooxml = @units.Percentage(hsl.lightness).to_ooxml()
+      w.attribute(@xml.QName::unqualified("hue"), hue_ooxml.to_string())
+      w.attribute(@xml.QName::unqualified("sat"), sat_ooxml.to_string())
+      w.attribute(@xml.QName::unqualified("lum"), lum_ooxml.to_string())
+    }
+    Sys(sys) => {
+      w.attribute(@xml.QName::unqualified("val"), sys.val)
+      match sys.last_clr {
+        Some(rgb) =>
+          w.attribute(@xml.QName::unqualified("lastClr"), rgb.to_hex())
+        None => ()
+      }
+    }
+    Scheme(slot) => w.attribute(@xml.QName::unqualified("val"), slot.to_xml())
+    Preset(s) => w.attribute(@xml.QName::unqualified("val"), s)
+    Scrgb(r, g, b) => {
+      w.attribute(@xml.QName::unqualified("r"), r.to_ooxml().to_string())
+      w.attribute(@xml.QName::unqualified("g"), g.to_ooxml().to_string())
+      w.attribute(@xml.QName::unqualified("b"), b.to_ooxml().to_string())
+    }
+  }
+  // Modeled modifiers — emit in the recorded order.
+  for t in c.transforms {
+    write_color_transform(w, t)
+  }
+  // Unmodelled modifier tail (hueMod, redMod, comp, inv, gamma, gray,
+  // and any foreign-namespace children) — replay verbatim.
+  for ext in c.extension {
+    write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+/// Emit one modeled colour transform child (`<a:tint>` / `<a:shade>` /
+/// `<a:satMod>` / `<a:lumMod>` / `<a:alpha>`). All five take a single
+/// `val="..."` attribute in 1/1000-percent units.
+fn write_color_transform(
+  w : @xml.XmlWriter,
+  t : @units.ColorTransform,
+) -> Unit raise @xml.XmlError {
+  let (local_name, pct) = match t {
+    Tint(p) => ("tint", p)
+    Shade(p) => ("shade", p)
+    SatMod(p) => ("satMod", p)
+    LumMod(p) => ("lumMod", p)
+    Alpha(p) => ("alpha", p)
+  }
+  w.start_element(@xml.QName::new(drawing_ns, local_name))
+  w.attribute(@xml.QName::unqualified("val"), pct.to_ooxml().to_string())
+  w.end_element()
+}
+
 // --- parser ---
 
 ///|
