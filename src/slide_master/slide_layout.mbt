@@ -107,6 +107,50 @@ pub fn SlideLayoutType::from_xml(
 }
 
 ///|
+/// Render a `SlideLayoutType` back to its `ST_SlideLayoutType` attribute
+/// value. Inverse of `from_xml`.
+pub fn SlideLayoutType::to_xml(self : SlideLayoutType) -> String {
+  match self {
+    Title => "title"
+    Tx => "tx"
+    TwoColTx => "twoColTx"
+    Tbl => "tbl"
+    TxAndChart => "txAndChart"
+    ChartAndTx => "chartAndTx"
+    Diagram => "dgm"
+    Chart => "chart"
+    TxAndClipArt => "txAndClipArt"
+    ClipArtAndTx => "clipArtAndTx"
+    TitleOnly => "titleOnly"
+    Blank => "blank"
+    TxAndObj => "txAndObj"
+    ObjAndTx => "objAndTx"
+    ObjOnly => "objOnly"
+    Object => "obj"
+    TxAndMedia => "txAndMedia"
+    MediaAndTx => "mediaAndTx"
+    ObjOverTx => "objOverTx"
+    TxOverObj => "txOverObj"
+    TxAndTwoObj => "txAndTwoObj"
+    TwoObjAndTx => "twoObjAndTx"
+    TwoObjOverTx => "twoObjOverTx"
+    FourObj => "fourObj"
+    VertTx => "vertTx"
+    ClipArtAndVertTx => "clipArtAndVertTx"
+    VertTitleAndTx => "vertTitleAndTx"
+    VertTitleAndTxOverChart => "vertTitleAndTxOverChart"
+    TwoObj => "twoObj"
+    ObjAndTwoObj => "objAndTwoObj"
+    TwoObjAndObj => "twoObjAndObj"
+    Custom => "cust"
+    SecHead => "secHead"
+    TwoTxTwoObj => "twoTxTwoObj"
+    ObjTx => "objTx"
+    PicTx => "picTx"
+  }
+}
+
+///|
 /// Color-map override on a slide layout.
 ///
 /// `MasterMapping` means "inherit the master's `clrMap` verbatim" (the

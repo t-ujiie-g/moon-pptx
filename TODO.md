@@ -237,7 +237,7 @@ silent data loss without requiring a stable canonical XML serialisation.
 - [ ] **Phase 4c — `@oxml` shared writers** (Color *done*; Fill / Stroke / EffectList pending)
   - [x] Color writer (`@oxml.write_color`) — handles all six base kinds (srgb / hsl / sys / scheme / preset / scrgb) plus the five modeled transforms (tint / shade / satMod / lumMod / alpha). Unmodelled modifier tail rides on `Color.extension`. 11 new tests.
   - [ ] Fill / Stroke / EffectList writers (needed for Phase 4e slide writer)
-- [ ] **Phase 4d — `@slide_master` writers**
+- [x] **Phase 4d — `@slide_master` writers** *(complete)* — `SlideMaster::serialize` and `SlideLayout::serialize` mirror their parsers; the captured `<p:cSld>` body (extension) is re-emitted before the modeled `<p:clrMap>` / `<p:clrMapOvr>` to preserve the schema-required element order. `SlideLayoutType::to_xml` added as the inverse of `from_xml`. Layout's `cSld` name attribute is re-injected on write since the parser pulled it onto the typed field. 10 new tests, 451 total × 4 backends.
 - [ ] **Phase 4e — `@slide` + `@slide.CustomGeometry` writers**
 - [ ] **Phase 4f — `@notes` writer**
 - [ ] **Phase 4g — round-trip golden test** in `@integration`
