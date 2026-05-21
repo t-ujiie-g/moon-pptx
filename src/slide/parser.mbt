@@ -19,16 +19,32 @@
 ///|
 /// Parse a slide part from raw XML bytes.
 pub fn Slide::parse(bytes : FixedArray[Byte]) -> Slide raise SlideError {
-  parse_slide_xml(bytes_to_string(bytes))
+  parse_slide_xml(bytes_to_string(bytes), "sld")
 }
 
 ///|
-fn parse_slide_xml(xml : String) -> Slide raise SlideError {
+/// Parse a slide-shaped XML part whose root element local-name is
+/// `root_local_name`. `<p:sld>` (slides) and `<p:notes>` (speaker notes)
+/// share the same `<p:cSld>` + `<p:clrMapOvr>` content model, so the
+/// `@notes` package re-uses this entry point with `"notes"` instead of
+/// re-implementing the spTree walk.
+pub fn Slide::parse_with_root(
+  bytes : FixedArray[Byte],
+  root_local_name : String,
+) -> Slide raise SlideError {
+  parse_slide_xml(bytes_to_string(bytes), root_local_name)
+}
+
+///|
+fn parse_slide_xml(
+  xml : String,
+  expected_root : String,
+) -> Slide raise SlideError {
   let r = @xml.XmlReader::new(xml)
   let event = next_event(r)
   match event {
-    StartElement(name, _) => expect_pml(name, "sld")
-    _ => raise Malformed("expected <p:sld> root element")
+    StartElement(name, _) => expect_pml(name, expected_root)
+    _ => raise Malformed("expected <p:" + expected_root + "> root element")
   }
   let mut slide_name = ""
   let shapes : Array[Shape] = []

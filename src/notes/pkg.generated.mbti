@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/notes"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/slide",
+  "t-ujiie-g/moon_pptx/slide_master",
+  "t-ujiie-g/moon_pptx/xml",
+}
+
+// Values
+
+// Errors
+pub(all) suberror NotesError {
+  XmlFailure(String, String)
+  Malformed(String)
+  SlideFailure(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for NotesError
+
+// Types and methods
+pub(all) struct NotesSlide {
+  name : String
+  shapes : Array[@slide.Shape]
+  clr_map_override : @slide_master.ClrMapOverride
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn NotesSlide::parse(FixedArray[Byte]) -> Self raise NotesError
+
+// Type aliases
+
+// Traits
+

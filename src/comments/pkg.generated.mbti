@@ -1,0 +1,59 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/comments"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
+}
+
+// Values
+pub fn wrap_xml(@xml.XmlError) -> CommentsError
+
+// Errors
+pub(all) suberror CommentsError {
+  XmlFailure(String, String)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for CommentsError
+
+// Types and methods
+pub(all) struct Comment {
+  author_id : Int
+  dt : String?
+  idx : Int
+  pos : CommentPos
+  text : String
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CommentAuthor {
+  id : Int
+  name : String
+  initials : String
+  last_idx : Int
+  clr_idx : Int
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CommentAuthorList {
+  authors : Array[CommentAuthor]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn CommentAuthorList::parse(FixedArray[Byte]) -> Self raise CommentsError
+
+pub(all) struct CommentList {
+  comments : Array[Comment]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn CommentList::parse(FixedArray[Byte]) -> Self raise CommentsError
+
+pub(all) struct CommentPos {
+  x : @units.Emu
+  y : @units.Emu
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+
