@@ -20,6 +20,16 @@ pub(all) suberror SlideError {
 pub impl Show for SlideError
 
 // Types and methods
+pub(all) enum AdjAngle {
+  Literal(@units.Angle)
+  GuideRef(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum AdjCoordinate {
+  Literal(@units.Emu)
+  GuideRef(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) enum Anchor {
   AnchorTop
   AnchorCenter
@@ -123,6 +133,12 @@ pub(all) struct ConnectionEnd {
   idx : Int
 } derive(Eq, @debug.Debug)
 
+pub(all) struct ConnectionSite {
+  ang : AdjAngle
+  pos : PathPoint
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Connector {
   id : Int
   name : String
@@ -135,6 +151,15 @@ pub(all) struct Connector {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
+pub(all) struct CustomGeometry {
+  adjust_values : Array[ShapeAdjustValue]
+  guides : Array[ShapeAdjustValue]
+  connection_sites : Array[ConnectionSite]
+  rect : GeomRect?
+  paths : Array[Path]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Field {
   id : String
   field_type : String
@@ -143,9 +168,16 @@ pub(all) struct Field {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
+pub(all) struct GeomRect {
+  l : AdjCoordinate
+  t : AdjCoordinate
+  r : AdjCoordinate
+  b : AdjCoordinate
+} derive(Eq, @debug.Debug)
+
 pub(all) enum Geometry {
   Preset(PresetShape, Array[ShapeAdjustValue])
-  Custom(@xml.XmlElement)
+  Custom(CustomGeometry)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct GroupShape {
@@ -190,6 +222,41 @@ pub(all) struct ParagraphProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ParagraphProperties::default() -> Self
+
+pub(all) struct Path {
+  w : @units.Emu
+  h : @units.Emu
+  fill : PathFillMode
+  stroke : Bool
+  extrusion_ok : Bool
+  commands : Array[PathCommand]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PathCommand {
+  MoveTo(PathPoint)
+  LnTo(PathPoint)
+  CubicBezTo(PathPoint, PathPoint, PathPoint)
+  QuadBezTo(PathPoint, PathPoint)
+  ArcTo(AdjCoordinate, AdjCoordinate, AdjAngle, AdjAngle)
+  Close
+} derive(Eq, @debug.Debug)
+
+pub(all) enum PathFillMode {
+  PathFillNone
+  PathFillNorm
+  PathFillLighten
+  PathFillLightenLess
+  PathFillDarken
+  PathFillDarkenLess
+} derive(Eq, @debug.Debug)
+pub fn PathFillMode::from_xml(String) -> Self
+pub fn PathFillMode::to_xml(Self) -> String
+
+pub(all) struct PathPoint {
+  x : AdjCoordinate
+  y : AdjCoordinate
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Picture {
   id : Int

@@ -744,11 +744,11 @@ fn parse_sp_pr(
             "prstGeom" =>
               geometry = Some(parse_prst_geom(r, attrs, parent_extension))
             "custGeom" =>
-              // Capture the entire <a:custGeom> subtree (path data,
-              // guides, connection sites) so Phase 4 writers can
-              // re-emit it verbatim. Once a typed custGeom parser
-              // lands, this widens to Custom(typed).
-              geometry = Some(Custom(collect_subtree_unknown(r, child, attrs)))
+              // Phase 3h: typed `<a:custGeom>` parser. Path commands,
+              // guides, connection sites, and rect lift into the
+              // `CustomGeometry` AST; unknown siblings round-trip via
+              // its own `extension` per ADR-004.
+              geometry = Some(Custom(parse_custom_geometry(r)))
             "ln" => {
               let s = @oxml.parse_stroke(r, attrs) catch {
                 e => raise Malformed("a:ln: " + e.to_string())

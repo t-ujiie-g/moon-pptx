@@ -109,7 +109,7 @@ test "parse: prstGeom roundRect carries adjustment values in source order" {
 }
 
 ///|
-test "parse: custGeom records Custom and preserves <a:pathLst>" {
+test "parse: custGeom lifts into typed CustomGeometry (Phase 3h)" {
   let body = "<a:custGeom>" +
     "<a:pathLst><a:path w=\"100\" h=\"100\"><a:moveTo><a:pt x=\"0\" y=\"0\"/></a:moveTo></a:path></a:pathLst>" +
     "</a:custGeom>"
@@ -117,13 +117,15 @@ test "parse: custGeom records Custom and preserves <a:pathLst>" {
   match slide.shapes[0] {
     AutoShape(s) =>
       match s.geometry.unwrap() {
-        Custom(el) => {
-          assert_eq(el.name.local_name, "custGeom")
-          // The <a:pathLst> body round-trips verbatim per ADR-004.
-          assert_eq(el.children.length(), 1)
-          match el.children[0] {
-            Element(path_lst) => assert_eq(path_lst.name.local_name, "pathLst")
-            _ => fail("expected <a:pathLst> child")
+        Custom(cg) => {
+          assert_eq(cg.paths.length(), 1)
+          let p = cg.paths[0]
+          assert_eq(p.w, @units.Emu(100L))
+          assert_eq(p.h, @units.Emu(100L))
+          assert_eq(p.commands.length(), 1)
+          match p.commands[0] {
+            MoveTo(pt) => assert_true(pt.x is Literal(_) && pt.y is Literal(_))
+            _ => fail("expected MoveTo command")
           }
         }
         _ => fail("expected Geometry::Custom")

@@ -28,14 +28,14 @@ pub(all) struct ShapeAdjustValue {
 
 ///|
 /// A shape's geometry. `Preset(kind, adj)` covers `<a:prstGeom>` (with its
-/// `<a:avLst>` adjustment list); `Custom(el)` retains the full
-/// `<a:custGeom>` subtree (path lists, guides, connections, rectangle)
-/// per ADR-004 so a future typed parser can fill in fields without
-/// reading the XML again, and Phase 4 writers re-emit the geometry
-/// verbatim in the meantime.
+/// `<a:avLst>` adjustment list); `Custom(cg)` carries the typed
+/// `<a:custGeom>` body (`avLst`, `gdLst`, `cxnLst`, `rect`, `pathLst`)
+/// from Phase 3h onwards — see `CustomGeometry` for the field-by-field
+/// breakdown. Adjust handles (`<a:ahLst>`) round-trip via
+/// `CustomGeometry.extension` per ADR-004.
 pub(all) enum Geometry {
   Preset(PresetShape, Array[ShapeAdjustValue])
-  Custom(@xml.XmlElement)
+  Custom(CustomGeometry)
 } derive(Eq, Debug)
 
 ///|
