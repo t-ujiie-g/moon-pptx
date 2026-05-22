@@ -155,7 +155,7 @@ pub(all) suberror EffectError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for EffectError with output(self, logger) {
+pub impl Show for EffectError with fn output(self, logger) {
   match self {
     MalformedEffect(s) => {
       logger.write_string("MalformedEffect(")

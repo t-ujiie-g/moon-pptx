@@ -19,7 +19,7 @@ pub(all) suberror Utf8Error {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for Utf8Error with output(self, logger) {
+pub impl Show for Utf8Error with fn output(self, logger) {
   match self {
     StrayContinuation(off) => {
       logger.write_string("StrayContinuation(offset=")

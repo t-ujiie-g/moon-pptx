@@ -29,7 +29,7 @@ pub(all) enum XmlEvent {
 } derive(Debug)
 
 ///|
-pub impl Show for XmlEvent with output(self, logger) {
+pub impl Show for XmlEvent with fn output(self, logger) {
   match self {
     StartElement(n, _) => {
       logger.write_string("StartElement(")

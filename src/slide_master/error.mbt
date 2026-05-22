@@ -31,7 +31,7 @@ pub fn wrap_xml(e : @xml.XmlError) -> SlideMasterError {
 }
 
 ///|
-pub impl Show for SlideMasterError with output(self, logger) {
+pub impl Show for SlideMasterError with fn output(self, logger) {
   match self {
     XmlFailure(kind, msg) => {
       logger.write_string("XmlFailure(")

@@ -1,5 +1,5 @@
 import {
-  "t-ujiie-g/moon_pptx/slide" @slide,
-  "t-ujiie-g/moon_pptx/slide_master" @slide_master,
-  "t-ujiie-g/moon_pptx/xml" @xml,
+  "t-ujiie-g/moon_pptx/slide",
+  "t-ujiie-g/moon_pptx/slide_master",
+  "t-ujiie-g/moon_pptx/xml",
 }

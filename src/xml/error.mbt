@@ -22,7 +22,7 @@ pub(all) suberror XmlError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for XmlError with output(self, logger) {
+pub impl Show for XmlError with fn output(self, logger) {
   match self {
     Malformed(s) => {
       logger.write_string("Malformed(")

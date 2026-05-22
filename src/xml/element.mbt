@@ -45,7 +45,7 @@ pub fn XmlElement::new(
 }
 
 ///|
-pub impl Show for XmlElement with output(self, logger) {
+pub impl Show for XmlElement with fn output(self, logger) {
   logger.write_string("XmlElement(")
   logger.write_object(self.name)
   logger.write_string(", attrs=")
@@ -56,7 +56,7 @@ pub impl Show for XmlElement with output(self, logger) {
 }
 
 ///|
-pub impl Show for XmlNode with output(self, logger) {
+pub impl Show for XmlNode with fn output(self, logger) {
   match self {
     Element(e) => logger.write_object(e)
     Text(s) => {

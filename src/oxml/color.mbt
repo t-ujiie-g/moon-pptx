@@ -32,7 +32,7 @@ pub(all) struct SysColor {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for SysColor with output(self, logger) {
+pub impl Show for SysColor with fn output(self, logger) {
   logger.write_string("SysColor(")
   logger.write_object(self.val)
   match self.last_clr {
@@ -67,7 +67,7 @@ pub(all) enum ColorBase {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for ColorBase with output(self, logger) {
+pub impl Show for ColorBase with fn output(self, logger) {
   match self {
     Srgb(c) => {
       logger.write_string("Srgb(")
@@ -129,7 +129,7 @@ pub(all) struct Color {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for Color with output(self, logger) {
+pub impl Show for Color with fn output(self, logger) {
   logger.write_string("Color(")
   logger.write_object(self.base)
   if self.transforms.length() > 0 {
@@ -259,7 +259,7 @@ pub(all) suberror ColorError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for ColorError with output(self, logger) {
+pub impl Show for ColorError with fn output(self, logger) {
   match self {
     UnknownColorElement(s) => {
       logger.write_string("UnknownColorElement(")

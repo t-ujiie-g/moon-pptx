@@ -20,7 +20,7 @@ pub(all) struct ScriptFont {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for ScriptFont with output(self, logger) {
+pub impl Show for ScriptFont with fn output(self, logger) {
   logger.write_string("ScriptFont(")
   logger.write_object(self.script)
   logger.write_string(" -> ")

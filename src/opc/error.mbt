@@ -28,7 +28,7 @@ pub fn wrap_fzip(e : @fzip.FzipError) -> OpcError {
 }
 
 ///|
-pub impl Show for OpcError with output(self, logger) {
+pub impl Show for OpcError with fn output(self, logger) {
   match self {
     ZipFailure(code, msg) => {
       logger.write_string("ZipFailure(")

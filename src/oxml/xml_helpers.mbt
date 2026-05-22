@@ -34,7 +34,7 @@ pub(all) suberror XmlReadError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for XmlReadError with output(self, logger) {
+pub impl Show for XmlReadError with fn output(self, logger) {
   let XmlReadError(s) = self
   logger.write_string("XmlReadError(")
   logger.write_object(s)

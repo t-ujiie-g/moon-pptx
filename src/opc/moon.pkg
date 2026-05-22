@@ -1,4 +1,4 @@
 import {
-  "hustcer/fzip" @fzip,
-  "t-ujiie-g/moon_pptx/xml" @xml,
+  "hustcer/fzip",
+  "t-ujiie-g/moon_pptx/xml",
 }

@@ -22,7 +22,7 @@ pub fn wrap_xml(e : @xml.XmlError) -> SlideError {
 }
 
 ///|
-pub impl Show for SlideError with output(self, logger) {
+pub impl Show for SlideError with fn output(self, logger) {
   match self {
     XmlFailure(kind, msg) => {
       logger.write_string("XmlFailure(")

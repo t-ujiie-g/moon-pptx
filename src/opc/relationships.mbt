@@ -46,7 +46,7 @@ pub(all) struct Relationship {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for Relationship with output(self, logger) {
+pub impl Show for Relationship with fn output(self, logger) {
   logger.write_string("Relationship(")
   logger.write_object(self.id)
   logger.write_string(", ")

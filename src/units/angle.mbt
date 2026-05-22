@@ -35,7 +35,7 @@ pub fn Angle::from_ooxml(n : Int) -> Angle {
 }
 
 ///|
-pub impl Show for Angle with output(self, logger) {
+pub impl Show for Angle with fn output(self, logger) {
   logger.write_string("Angle(")
   logger.write_object(self.0)
   logger.write_string("deg)")

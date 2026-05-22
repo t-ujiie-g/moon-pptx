@@ -213,7 +213,7 @@ pub(all) suberror FillError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for FillError with output(self, logger) {
+pub impl Show for FillError with fn output(self, logger) {
   match self {
     UnknownFillElement(s) => {
       logger.write_string("UnknownFillElement(")

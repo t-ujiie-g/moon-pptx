@@ -37,7 +37,7 @@ pub fn Percentage::from_ooxml(n : Int) -> Percentage {
 }
 
 ///|
-pub impl Show for Percentage with output(self, logger) {
+pub impl Show for Percentage with fn output(self, logger) {
   logger.write_string("Percentage(")
   logger.write_object(self.0)
   logger.write_string("%)")

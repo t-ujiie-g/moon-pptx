@@ -147,7 +147,7 @@ fn round_byte(x : Double) -> Int {
 }
 
 ///|
-pub impl Show for HslColor with output(self, logger) {
+pub impl Show for HslColor with fn output(self, logger) {
   logger.write_string("HslColor(")
   logger.write_object(self.hue)
   logger.write_string("deg, ")

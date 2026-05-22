@@ -104,7 +104,7 @@ fn string_drop(s : String, n : Int) -> String {
 }
 
 ///|
-pub impl Show for Part with output(self, logger) {
+pub impl Show for Part with fn output(self, logger) {
   logger.write_string("Part(")
   logger.write_object(self.name)
   if self.content_type.length() > 0 {

@@ -22,7 +22,7 @@ pub fn wrap_xml(e : @xml.XmlError) -> CommentsError {
 }
 
 ///|
-pub impl Show for CommentsError with output(self, logger) {
+pub impl Show for CommentsError with fn output(self, logger) {
   match self {
     XmlFailure(kind, msg) => {
       logger.write_string("XmlFailure(")

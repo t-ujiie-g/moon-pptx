@@ -210,7 +210,7 @@ pub(all) suberror StrokeError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for StrokeError with output(self, logger) {
+pub impl Show for StrokeError with fn output(self, logger) {
   match self {
     MalformedStroke(s) => {
       logger.write_string("MalformedStroke(")

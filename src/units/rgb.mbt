@@ -94,7 +94,7 @@ fn hex_char(n : Int) -> Char {
 }
 
 ///|
-pub impl Show for RgbColor with output(self, logger) {
+pub impl Show for RgbColor with fn output(self, logger) {
   logger.write_string("RgbColor(#")
   logger.write_string(self.to_hex())
   logger.write_string(")")

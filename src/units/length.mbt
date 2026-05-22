@@ -106,28 +106,28 @@ pub fn Emu::to_cm(self : Emu) -> Cm {
 // --- Show (for assert_eq diagnostics) ---
 
 ///|
-pub impl Show for Emu with output(self, logger) {
+pub impl Show for Emu with fn output(self, logger) {
   logger.write_string("Emu(")
   logger.write_object(self.0)
   logger.write_string(")")
 }
 
 ///|
-pub impl Show for Pt with output(self, logger) {
+pub impl Show for Pt with fn output(self, logger) {
   logger.write_string("Pt(")
   logger.write_object(self.0)
   logger.write_string(")")
 }
 
 ///|
-pub impl Show for Inch with output(self, logger) {
+pub impl Show for Inch with fn output(self, logger) {
   logger.write_string("Inch(")
   logger.write_object(self.0)
   logger.write_string(")")
 }
 
 ///|
-pub impl Show for Cm with output(self, logger) {
+pub impl Show for Cm with fn output(self, logger) {
   logger.write_string("Cm(")
   logger.write_object(self.0)
   logger.write_string(")")

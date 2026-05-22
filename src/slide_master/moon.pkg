@@ -1,6 +1,6 @@
 import {
-  "t-ujiie-g/moon_pptx/oxml" @oxml,
-  "t-ujiie-g/moon_pptx/theme" @theme,
-  "t-ujiie-g/moon_pptx/units" @units,
-  "t-ujiie-g/moon_pptx/xml" @xml,
+  "t-ujiie-g/moon_pptx/oxml",
+  "t-ujiie-g/moon_pptx/theme",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
 }

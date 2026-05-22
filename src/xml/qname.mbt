@@ -35,7 +35,7 @@ pub fn QName::is_qualified(self : QName) -> Bool {
 }
 
 ///|
-pub impl Show for QName with output(self, logger) {
+pub impl Show for QName with fn output(self, logger) {
   if self.uri.length() == 0 {
     logger.write_string(self.local_name)
   } else {

@@ -5,12 +5,12 @@ import {
 } // (no package-level imports — the package has no `.mbt` sources)
 
 import {
-  "hustcer/fzip" @fzip,
-  "t-ujiie-g/moon_pptx/comments" @comments,
-  "t-ujiie-g/moon_pptx/notes" @notes,
-  "t-ujiie-g/moon_pptx/opc" @opc,
-  "t-ujiie-g/moon_pptx/slide" @slide,
-  "t-ujiie-g/moon_pptx/slide_master" @slide_master,
-  "t-ujiie-g/moon_pptx/theme" @theme,
-  "t-ujiie-g/moon_pptx/units" @units,
+  "hustcer/fzip",
+  "t-ujiie-g/moon_pptx/comments",
+  "t-ujiie-g/moon_pptx/notes",
+  "t-ujiie-g/moon_pptx/opc",
+  "t-ujiie-g/moon_pptx/slide",
+  "t-ujiie-g/moon_pptx/slide_master",
+  "t-ujiie-g/moon_pptx/theme",
+  "t-ujiie-g/moon_pptx/units",
 } for "test"

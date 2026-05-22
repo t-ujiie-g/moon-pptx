@@ -15,7 +15,7 @@ pub(all) suberror NotesError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for NotesError with output(self, logger) {
+pub impl Show for NotesError with fn output(self, logger) {
   match self {
     XmlFailure(kind, msg) => {
       logger.write_string("XmlFailure(")

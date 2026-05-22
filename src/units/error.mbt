@@ -13,7 +13,7 @@ pub(all) suberror UnitsError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for UnitsError with output(self, logger) {
+pub impl Show for UnitsError with fn output(self, logger) {
   match self {
     InvalidHexColor(s) => {
       logger.write_string("InvalidHexColor(")

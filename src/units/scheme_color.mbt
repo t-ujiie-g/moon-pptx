@@ -86,7 +86,7 @@ pub fn ThemeColor::from_xml(s : String) -> ThemeColor raise UnitsError {
 }
 
 ///|
-pub impl Show for ThemeColor with output(self, logger) {
+pub impl Show for ThemeColor with fn output(self, logger) {
   logger.write_string("ThemeColor::")
   logger.write_string(self.to_xml())
 }
@@ -110,7 +110,7 @@ pub(all) enum ColorTransform {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for ColorTransform with output(self, logger) {
+pub impl Show for ColorTransform with fn output(self, logger) {
   match self {
     Tint(p) => logger.write_string("Tint(\{p.value()}%)")
     Shade(p) => logger.write_string("Shade(\{p.value()}%)")
@@ -149,7 +149,7 @@ pub fn SchemeColor::with_transform(
 }
 
 ///|
-pub impl Show for SchemeColor with output(self, logger) {
+pub impl Show for SchemeColor with fn output(self, logger) {
   logger.write_string("SchemeColor(")
   logger.write_object(self.base)
   if self.transforms.length() > 0 {
