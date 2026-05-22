@@ -34,28 +34,33 @@ let ns_p : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
 let ns_r : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 ///|
-let ct_presentation : String = "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"
+/// Aliases for the canonical content-type strings exported by
+/// `@oxml.content_types`. Test helpers and `parse_everything` use
+/// these for dispatch. Keeping them as `let`s here (rather than
+/// referencing `@oxml.ct_*` inline) preserves the local short names
+/// the original tests were built around.
+let ct_presentation : String = @oxml.ct_presentation
 
 ///|
-let ct_theme : String = "application/vnd.openxmlformats-officedocument.theme+xml"
+let ct_theme : String = @oxml.ct_theme
 
 ///|
-let ct_slide_master : String = "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"
+let ct_slide_master : String = @oxml.ct_slide_master
 
 ///|
-let ct_slide_layout : String = "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"
+let ct_slide_layout : String = @oxml.ct_slide_layout
 
 ///|
-let ct_slide : String = "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+let ct_slide : String = @oxml.ct_slide
 
 ///|
-let ct_notes_slide : String = "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"
+let ct_notes_slide : String = @oxml.ct_notes_slide
 
 ///|
-let ct_comment_authors : String = "application/vnd.openxmlformats-officedocument.presentationml.commentAuthors+xml"
+let ct_comment_authors : String = @oxml.ct_comment_authors
 
 ///|
-let ct_comments : String = "application/vnd.openxmlformats-officedocument.presentationml.comments+xml"
+let ct_comments : String = @oxml.ct_comments
 
 // --- fixture pieces ---
 

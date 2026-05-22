@@ -200,7 +200,13 @@ fn write_c_sld_from_extension(
 }
 
 ///|
-fn write_clr_map_override(
+/// Emit a `<p:clrMapOvr>` wrapping either `<a:masterClrMapping/>` (the
+/// inherit-from-master default) or `<a:overrideClrMapping bg1=… …/>`
+/// (an explicit 12-slot override). Public because both the slide
+/// layout writer and the slide writer in `@slide` use this — keeping
+/// it here avoids the duplicated 28-line block we had through phase
+/// 4d / 4e.
+pub fn write_clr_map_override(
   w : @xml.XmlWriter,
   ovr : ClrMapOverride,
 ) -> Unit raise @xml.XmlError {

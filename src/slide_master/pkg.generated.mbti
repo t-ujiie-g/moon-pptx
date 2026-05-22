@@ -20,6 +20,8 @@ pub fn resolve_slide_color(@units.ThemeColor, SlideMaster, SlideLayout, @theme.C
 
 pub fn wrap_xml(@xml.XmlError) -> SlideMasterError
 
+pub fn write_clr_map_override(@xml.XmlWriter, ClrMapOverride) -> Unit raise @xml.XmlError
+
 // Errors
 pub(all) suberror SlideMasterError {
   XmlFailure(String, String)

@@ -99,8 +99,8 @@ fn write_slide_xml(
   }
   w.end_element() // spTree
   w.end_element() // cSld
-  // <p:clrMapOvr>
-  write_clr_map_override(w, s.clr_map_override)
+  // <p:clrMapOvr> — shared writer in @slide_master.
+  @slide_master.write_clr_map_override(w, s.clr_map_override)
   // sld-level extensions (transition / timing / custDataLst / extLst
   // / foreign-namespace).
   for ext in s.extension {
@@ -110,35 +110,4 @@ fn write_slide_xml(
   }
   w.end_element() // sld / notes
   w.to_string()
-}
-
-///|
-fn write_clr_map_override(
-  w : @xml.XmlWriter,
-  ovr : @slide_master.ClrMapOverride,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.presentation_ns, "clrMapOvr"))
-  match ovr {
-    MasterMapping => {
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "masterClrMapping"))
-      w.end_element()
-    }
-    Override(cm) => {
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "overrideClrMapping"))
-      w.attribute(@xml.QName::unqualified("bg1"), cm.bg1.to_xml())
-      w.attribute(@xml.QName::unqualified("tx1"), cm.tx1.to_xml())
-      w.attribute(@xml.QName::unqualified("bg2"), cm.bg2.to_xml())
-      w.attribute(@xml.QName::unqualified("tx2"), cm.tx2.to_xml())
-      w.attribute(@xml.QName::unqualified("accent1"), cm.accent1.to_xml())
-      w.attribute(@xml.QName::unqualified("accent2"), cm.accent2.to_xml())
-      w.attribute(@xml.QName::unqualified("accent3"), cm.accent3.to_xml())
-      w.attribute(@xml.QName::unqualified("accent4"), cm.accent4.to_xml())
-      w.attribute(@xml.QName::unqualified("accent5"), cm.accent5.to_xml())
-      w.attribute(@xml.QName::unqualified("accent6"), cm.accent6.to_xml())
-      w.attribute(@xml.QName::unqualified("hlink"), cm.hlink.to_xml())
-      w.attribute(@xml.QName::unqualified("folHlink"), cm.fol_hlink.to_xml())
-      w.end_element()
-    }
-  }
-  w.end_element()
 }

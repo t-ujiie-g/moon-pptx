@@ -16,6 +16,24 @@ pub fn bytes_to_string(FixedArray[Byte]) -> String raise Utf8Error
 
 pub fn collect_subtree(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> @xml.XmlElement raise XmlReadError
 
+pub let ct_comment_authors : String
+
+pub let ct_comments : String
+
+pub let ct_notes_master : String
+
+pub let ct_notes_slide : String
+
+pub let ct_presentation : String
+
+pub let ct_slide : String
+
+pub let ct_slide_layout : String
+
+pub let ct_slide_master : String
+
+pub let ct_theme : String
+
 pub let drawing_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?

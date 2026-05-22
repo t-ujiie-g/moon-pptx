@@ -9,6 +9,7 @@ import {
   "t-ujiie-g/moon_pptx/comments",
   "t-ujiie-g/moon_pptx/notes",
   "t-ujiie-g/moon_pptx/opc",
+  "t-ujiie-g/moon_pptx/oxml",
   "t-ujiie-g/moon_pptx/slide",
   "t-ujiie-g/moon_pptx/slide_master",
   "t-ujiie-g/moon_pptx/theme",
