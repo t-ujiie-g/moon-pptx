@@ -62,6 +62,12 @@ pub fn string_to_bytes(String) -> FixedArray[Byte]
 
 pub fn write_color(@xml.XmlWriter, WriteCtx, Color) -> Unit raise @xml.XmlError
 
+pub fn write_effect_list(@xml.XmlWriter, WriteCtx, EffectList) -> Unit raise @xml.XmlError
+
+pub fn write_fill(@xml.XmlWriter, WriteCtx, Fill) -> Unit raise @xml.XmlError
+
+pub fn write_stroke(@xml.XmlWriter, WriteCtx, Stroke) -> Unit raise @xml.XmlError
+
 pub fn write_xml_element(@xml.XmlWriter, WriteCtx, @xml.XmlElement) -> Unit raise @xml.XmlError
 
 // Errors

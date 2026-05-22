@@ -234,9 +234,11 @@ silent data loss without requiring a stable canonical XML serialisation.
 
 - [x] **Phase 4a — `@comments` writers** *(complete)* — `CommentAuthorList::serialize` and `CommentList::serialize` mirror their parsers. Shared `@oxml.WriteCtx` + `@oxml.write_xml_element` helper round-trips captured `extension` subtrees (including foreign-namespace siblings via on-the-fly `extN` prefixes). `@oxml.string_to_bytes` converts the writer output to part bytes. 11 new tests, 424 total × 4 backends.
 - [x] **Phase 4b — `@theme` writer** *(complete)* — `Theme::serialize` mirrors the parser: `<a:theme>` → `<a:themeElements>` → `<a:clrScheme>` (all 12 slots in canonical order) + `<a:fontScheme>` (majorFont / minorFont with latin / ea / cs leaves + script overrides). Theme-level extensions (`fmtScheme` / `objectDefaults` / `extraClrSchemeLst` and foreign-namespace siblings) round-trip via `extension`. 6 new tests, 441 total × 4 backends.
-- [ ] **Phase 4c — `@oxml` shared writers** (Color *done*; Fill / Stroke / EffectList pending)
-  - [x] Color writer (`@oxml.write_color`) — handles all six base kinds (srgb / hsl / sys / scheme / preset / scrgb) plus the five modeled transforms (tint / shade / satMod / lumMod / alpha). Unmodelled modifier tail rides on `Color.extension`. 11 new tests.
-  - [ ] Fill / Stroke / EffectList writers (needed for Phase 4e slide writer)
+- [x] **Phase 4c — `@oxml` shared writers** *(complete)*
+  - [x] Color writer (`@oxml.write_color`) — six base kinds + five modeled transforms; long-tail modifiers ride on `Color.extension`. 11 tests.
+  - [x] Fill writer (`@oxml.write_fill`) — all five variants (`NoFill` / `SolidFill` / `GradientFill` / `PatternFill` / `BlipFillVariant`). Gradient stops + Linear / PathRect / PathCircle / PathShape directions. BlipFill re-emits the captured `<a:blip>` subtree verbatim (so `<a:duotone>` / `<a:clrChange>` etc. round-trip even though they're not modeled). 9 tests.
+  - [x] Stroke writer (`@oxml.write_stroke`) — every modeled attribute / child + `<a:round>` / `<a:bevel>` / `<a:miter>` joins + `<a:headEnd>` / `<a:tailEnd>` arrows. Reuses `write_fill` for line fills. 8 tests.
+  - [x] EffectList writer (`@oxml.write_effect_list`) — blur / glow / innerShdw / outerShdw / prstShdw / reflection / softEdge plus `<a:fillOverlay>` preservation via `extension`. 9 tests.
 - [x] **Phase 4d — `@slide_master` writers** *(complete)* — `SlideMaster::serialize` and `SlideLayout::serialize` mirror their parsers; the captured `<p:cSld>` body (extension) is re-emitted before the modeled `<p:clrMap>` / `<p:clrMapOvr>` to preserve the schema-required element order. `SlideLayoutType::to_xml` added as the inverse of `from_xml`. Layout's `cSld` name attribute is re-injected on write since the parser pulled it onto the typed field. 10 new tests, 451 total × 4 backends.
 - [ ] **Phase 4e — `@slide` + `@slide.CustomGeometry` writers**
 - [ ] **Phase 4f — `@notes` writer**
