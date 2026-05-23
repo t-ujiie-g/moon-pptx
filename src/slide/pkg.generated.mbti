@@ -192,6 +192,7 @@ pub(all) struct GraphicFrame {
   content : GraphicFrameContent
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn GraphicFrame::of_table(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, Table) -> Self
 
 pub(all) enum GraphicFrameContent {
   TableContent(Table)
@@ -557,6 +558,8 @@ pub(all) struct Table {
   rows : Array[TableRow]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Table::of_grid(rows~ : Int, cols~ : Int, col_width~ : @units.Emu, row_height~ : @units.Emu) -> Self
+pub fn Table::of_rows(Array[TableRow], col_widths~ : Array[@units.Emu]) -> Self
 
 pub(all) struct TableCell {
   grid_span : Int
@@ -567,12 +570,19 @@ pub(all) struct TableCell {
   properties : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn TableCell::empty() -> Self
+pub fn TableCell::h_merge_covered() -> Self
+pub fn TableCell::hv_merge_covered() -> Self
+pub fn TableCell::merged_origin(String, grid_span? : Int, row_span? : Int) -> Self
+pub fn TableCell::of_text(String) -> Self
+pub fn TableCell::v_merge_covered() -> Self
 
 pub(all) struct TableRow {
   height : @units.Emu
   cells : Array[TableCell]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn TableRow::of_cells(Array[TableCell], height~ : @units.Emu) -> Self
 
 pub(all) enum TextAlignment {
   AlignLeft
