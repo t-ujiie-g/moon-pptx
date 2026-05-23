@@ -399,14 +399,14 @@ Open:
 
 | # | Question | Owner | Needed by |
 |---|---|---|---|
-| Q3 | How do we ship the embedded blank template (binary file vs hex literal in source)? | — | start of Phase 5 |
 | Q5 | Chart embedded XLSX — do we generate it or treat as opaque cache? | — | start of Phase 7 |
-| Q6 | How do we expose backend differences (Native file APIs vs Wasm-GC byte-only) cleanly? | — | start of Phase 5 |
+| Q6 | How do we expose backend differences (Native file APIs vs Wasm-GC byte-only) cleanly? | — | Phase 5 polish (when we add `Presentation::open_path` / `save_path`) |
 
 Resolved:
 
 - **Q1 (Native + Int64)** — resolved at Phase 1.1 (2026-05-10): `Emu = Int64` round-trips on `native` / `wasm-gc` / `wasm` / `js`.
 - **Q2 (XML reader)** — resolved at Phase 1.3 (2026-05-10): self-implemented event-based reader (`src/xml/`) per ADR-008. No suitable mooncakes lib at the time.
+- **Q3 (blank template shipping)** — resolved at Phase 5b2 (2026-05-23): no binary template ships; `Presentation::new()` assembles a blank deck programmatically from XML-literal templates in `src/presentation/template.mbt` plus the Phase 4 writers. Lets us tune the template by editing MoonBit instead of regenerating a `.pptx` and re-encoding bytes.
 - **Q4 (real-world fixtures)** — resolved at Phase 3i (2026-05-21): synthetic-but-realistic fixtures hand-built in `src/integration/` cover the no-panic + round-trip floor without license concerns.
 
 ---
