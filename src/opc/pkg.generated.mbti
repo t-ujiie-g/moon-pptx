@@ -17,9 +17,31 @@ pub let package_root : String
 
 pub let relationships_ns : String
 
+pub let rels_content_type : String
+
 pub fn rels_path_for(String) -> String
 
 pub fn resolve_target(String, String, TargetMode) -> String
+
+pub let rt_comment_authors : String
+
+pub let rt_comments : String
+
+pub let rt_image : String
+
+pub let rt_notes_master : String
+
+pub let rt_notes_slide : String
+
+pub let rt_office_document : String
+
+pub let rt_slide : String
+
+pub let rt_slide_layout : String
+
+pub let rt_slide_master : String
+
+pub let rt_theme : String
 
 pub fn validate_part_name(String) -> Unit raise OpcError
 

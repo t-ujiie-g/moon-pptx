@@ -164,8 +164,7 @@ fn Presentation::ordered_slide_parts(
 /// but cheap to handle gracefully.
 fn Presentation::main_document_part_name(self : Presentation) -> String? {
   let rels = self.pkg.relationships_for("/") catch { _ => return None }
-  let office_doc_type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
-  let matches = rels.by_type(office_doc_type)
+  let matches = rels.by_type(@opc.rt_office_document)
   if matches.length() == 0 {
     return None
   }

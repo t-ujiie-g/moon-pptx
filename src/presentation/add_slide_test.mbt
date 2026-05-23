@@ -43,9 +43,7 @@ test "add_slide_mut: presentation.xml.rels gains a rel per slide" {
   let _ = prs.add_slide_mut(0)
   let _ = prs.add_slide_mut(0)
   let pres_rels = prs.pkg.relationships_for("/ppt/presentation.xml")
-  let slide_rels = pres_rels.by_type(
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
-  )
+  let slide_rels = pres_rels.by_type(@opc.rt_slide)
   assert_eq(slide_rels.length(), 2)
 }
 
@@ -55,10 +53,7 @@ test "add_slide_mut: new slide.xml.rels points at the layout" {
   let _ = prs.add_slide_mut(0)
   let slide_rels = prs.pkg.relationships_for("/ppt/slides/slide1.xml")
   assert_eq(slide_rels.items.length(), 1)
-  assert_eq(
-    slide_rels.items[0].rel_type,
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout",
-  )
+  assert_eq(slide_rels.items[0].rel_type, @opc.rt_slide_layout)
   // Target is relative — `../slideLayouts/slideLayout1.xml`.
   assert_eq(slide_rels.items[0].target, "../slideLayouts/slideLayout1.xml")
 }

@@ -88,38 +88,52 @@ let blank_presentation_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" 
 // --- relationships templates ---
 
 ///|
-let blank_pkg_rels_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-  "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
-  "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"ppt/presentation.xml\"/>" +
-  "</Relationships>"
+let blank_pkg_rels_xml : String = relationships_doc([
+  ("rId1", @opc.rt_office_document, "ppt/presentation.xml"),
+])
 
 ///|
-let blank_presentation_rels_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-  "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
-  "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster\" Target=\"slideMasters/slideMaster1.xml\"/>" +
-  "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme\" Target=\"theme/theme1.xml\"/>" +
-  "</Relationships>"
+let blank_presentation_rels_xml : String = relationships_doc([
+  ("rId1", @opc.rt_slide_master, "slideMasters/slideMaster1.xml"),
+  ("rId2", @opc.rt_theme, "theme/theme1.xml"),
+])
 
 ///|
-let blank_slide_master_rels_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-  "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
-  "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout\" Target=\"../slideLayouts/slideLayout1.xml\"/>" +
-  "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme\" Target=\"../theme/theme1.xml\"/>" +
-  "</Relationships>"
+let blank_slide_master_rels_xml : String = relationships_doc([
+  ("rId1", @opc.rt_slide_layout, "../slideLayouts/slideLayout1.xml"),
+  ("rId2", @opc.rt_theme, "../theme/theme1.xml"),
+])
 
 ///|
-let blank_slide_layout_rels_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
-  "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
-  "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster\" Target=\"../slideMasters/slideMaster1.xml\"/>" +
-  "</Relationships>"
+let blank_slide_layout_rels_xml : String = relationships_doc([
+  ("rId1", @opc.rt_slide_master, "../slideMasters/slideMaster1.xml"),
+])
+
+///|
+/// Build a `.rels` XML document from `(Id, Type, Target)` triples.
+/// Inverse of what `@opc.Relationships::parse` consumes; written here
+/// (rather than calling `Relationships::serialize`) because we need
+/// it at top-level `let`-binding time and the structured builder
+/// raises on duplicate ids.
+fn relationships_doc(rels : Array[(String, String, String)]) -> String {
+  let mut out = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+    "<Relationships xmlns=\"" +
+    @opc.relationships_ns +
+    "\">"
+  for r in rels {
+    out = out +
+      "<Relationship Id=\"" +
+      r.0 +
+      "\" Type=\"" +
+      r.1 +
+      "\" Target=\"" +
+      r.2 +
+      "\"/>"
+  }
+  out + "</Relationships>"
+}
 
 // --- package builder ---
-
-///|
-/// Content type for `.rels` files — the OPC packaging relationships
-/// namespace. Used as a `Default` extension match so every part-level
-/// `.rels` file is routed automatically.
-let ct_relationships : String = "application/vnd.openxmlformats-package.relationships+xml"
 
 ///|
 /// Assemble blank-deck OPC bytes from the list of OOXML parts plus
@@ -151,11 +165,11 @@ fn build_blank_package_bytes(
   // type, picked up via the `Default Extension="rels"` match below.
   for r in rels {
     let part_bytes = @oxml.string_to_bytes(r.1)
-    let part = @opc.Part::new(r.0, ct_relationships, part_bytes)
+    let part = @opc.Part::new(r.0, @opc.rels_content_type, part_bytes)
     pkg.add_part(part)
   }
   let mut ct = @opc.ContentTypes::new()
-    .with_default("rels", ct_relationships)
+    .with_default("rels", @opc.rels_content_type)
     .with_default("xml", "application/xml")
   for p in parts {
     ct = ct.with_override(p.0, p.1)

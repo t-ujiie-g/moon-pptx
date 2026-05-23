@@ -3,12 +3,16 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phase 4 closed).** Read- and write-path parsers
-> + writers are in for theme / slide master / slide layout / slide /
-> notes slide / comments, with `parse → serialize → parse → Eq`
-> round-trip verified across three synthetic decks. High-level
-> `Presentation` builder API does not exist yet — see
-> [TODO.md](TODO.md) for the phase-by-phase roadmap.
+> **Status: pre-alpha (Phase 5 substantially closed).** Read + write
+> parsers and writers are in for theme / slide master / slide layout
+> / slide / notes slide / comments, with `parse → serialize → parse
+> → Eq` round-trip verified across three synthetic decks. The
+> high-level `Presentation` API supports `open` / `save` / `new` and
+> a mutating builder loop (`add_slide_mut` + `Slide::with_shape` +
+> `update_slide_mut`). The remaining Phase 5 work is the immutable
+> builder variants (need a `Package::clone`) and PowerPoint /
+> LibreOffice open-verification. See [TODO.md](TODO.md) for the
+> phase-by-phase roadmap.
 
 A pure-MoonBit library for reading, building, and writing PowerPoint
 presentations (`.pptx` / OOXML), with a type-safe builder API.
@@ -42,7 +46,7 @@ full feature comparison.
 | 2 | OPC layer over fzip | ✅ Done |
 | 3 | Read path | ✅ Done |
 | 4 | Write path | ✅ Done |
-| 5 | Builder API (create from scratch) | 🔜 Next |
+| 5 | Builder API (create from scratch) | 🚧 In progress (5a–5e done) |
 | 6 | Tables | ⏳ |
 | 7 | Charts | ⏳ |
 | 8 | Differentiators (SmartArt, animation, …) | ⏳ |
@@ -58,22 +62,40 @@ Once published to mooncakes:
 moon add t-ujiie-g/moon_pptx
 ```
 
-## Quickstart (planned API — does not work yet)
+## Quickstart
+
+Build a one-slide deck from scratch and serialise it to PPTX bytes:
 
 ```moonbit nocheck
-///|
-let prs = @moon_pptx.Presentation::new()
+// (Replace the import aliases with however your project pins them.)
+let prs = @presentation.Presentation::new()
 
-///|
-let slide = prs
-  .slides()
-  .add(@moon_pptx.SlideLayout::title_and_content())
-  .with_title("Hello, MoonBit")
-  .with_body("This deck was built without touching XML.")
+// Append a Blank-layout slide; index 0 is the layout from
+// `Presentation::new()`'s built-in template.
+let _ = prs.add_slide_mut(0)
 
-///|
-let bytes = prs.save()
+// Add a text box to the new slide. EMU constants: 914_400 per
+// inch, so 914_400 × 457_200 ≈ 1" × ½".
+let s = prs.slides()[0]
+let tb = @slide.AutoShape::textbox(
+  2, "Title",
+  @units.Emu(457_200L),    // x = ½" margin
+  @units.Emu(2_438_400L),  // y ≈ 2.7" from top
+  @units.Emu(8_229_600L),  // width = slide width − 2× margin
+  @units.Emu(914_400L),    // height = 1"
+  "Hello, MoonBit",
+)
+prs.update_slide_mut(0, s.with_shape(@slide.AutoShape(tb)))
+
+// Save returns the PPTX bytes.  Write them to disk however your
+// backend supports — `@native.write_file` on Native, `Blob` on JS.
+let bytes : FixedArray[Byte] = prs.save()
 ```
+
+For a richer end-to-end example see
+[`src/integration/cookbook_test.mbt`](src/integration/cookbook_test.mbt)
+— it builds a five-slide pitch deck via the same APIs and round-trips
+through `save() → open()`.
 
 ## Development
 

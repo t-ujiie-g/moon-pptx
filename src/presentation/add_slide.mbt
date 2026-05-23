@@ -60,7 +60,7 @@ pub fn Presentation::add_slide_mut(
   //    new slide.
   let updated_pres_rels = pres_rels.with_relationship(@opc.Relationship::{
     id: new_slide_rid,
-    rel_type: rels_slide,
+    rel_type: @opc.rt_slide,
     target: relative_target(pres_name, new_slide_name),
     target_mode: Internal,
   }) catch {
@@ -84,7 +84,7 @@ pub fn Presentation::add_slide_mut(
   let slide_rels_name = @opc.rels_path_for(new_slide_name)
   let slide_rels_part = @opc.Part::new(
     slide_rels_name,
-    rels_content_type,
+    @opc.rels_content_type,
     @oxml.string_to_bytes(slide_rels_xml),
   ) catch {
     e => raise OpcFailure(e.to_string())
@@ -104,19 +104,6 @@ pub fn Presentation::add_slide_mut(
 }
 
 // --- helpers ---
-
-///|
-/// Content type for `.rels` parts. Shared with `template.mbt`'s
-/// blank-deck builder.
-let rels_content_type : String = "application/vnd.openxmlformats-package.relationships+xml"
-
-///|
-/// Rel type for slide ↔ presentation / slide ↔ layout references.
-let rels_slide : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide"
-
-///|
-/// Rel type for slide ↔ slide-layout references.
-let rels_slide_layout : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout"
 
 ///|
 /// Body of a slide that just inherits its layout's master color
@@ -140,7 +127,7 @@ fn build_slide_rels_xml(layout_target : String) -> String {
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
   "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
   "<Relationship Id=\"rId1\" Type=\"" +
-  rels_slide_layout +
+  @opc.rt_slide_layout +
   "\" Target=\"" +
   layout_target +
   "\"/>" +
@@ -377,5 +364,5 @@ fn Presentation::write_rels_for_part(
 ) -> Unit raise PptxError {
   let bytes = rels.serialize() catch { e => raise OpcFailure(e.to_string()) }
   let rels_name = @opc.rels_path_for(source_part)
-  self.replace_part_bytes(rels_name, bytes, rels_content_type)
+  self.replace_part_bytes(rels_name, bytes, @opc.rels_content_type)
 }
