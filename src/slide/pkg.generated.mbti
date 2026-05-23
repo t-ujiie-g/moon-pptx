@@ -99,6 +99,11 @@ pub(all) struct AutoShape {
   text_body : TextBody?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn AutoShape::ellipse(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn AutoShape::of_preset(Int, String, PresetShape, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn AutoShape::rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn AutoShape::round_rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn AutoShape::textbox(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 
 pub(all) struct BodyProperties {
   rotation : @units.Angle?
@@ -202,6 +207,7 @@ pub(all) struct Paragraph {
   content : Array[ParagraphContent]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Paragraph::of_text(String) -> Self
 pub fn Paragraph::plain_text(Self) -> String
 
 pub(all) enum ParagraphContent {
@@ -522,6 +528,7 @@ pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
 pub fn Slide::parse_with_root(FixedArray[Byte], String) -> Self raise SlideError
 pub fn Slide::serialize(Self) -> FixedArray[Byte] raise SlideError
 pub fn Slide::serialize_with_root(Self, String) -> FixedArray[Byte] raise SlideError
+pub fn Slide::with_shape(Self, Shape) -> Self
 
 pub(all) enum StrikeKind {
   StNoStrike
@@ -547,6 +554,7 @@ pub(all) struct TextBody {
   paragraphs : Array[Paragraph]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn TextBody::of_text(String) -> Self
 pub fn TextBody::plain_text(Self) -> String
 
 pub(all) struct Transform {

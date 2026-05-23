@@ -48,6 +48,7 @@ pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] rai
 pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] raise PptxError
 pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
 pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
+pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
 
 pub(all) struct PresentationPart {
   sld_master_ids : Array[SlideMasterIdRef]
