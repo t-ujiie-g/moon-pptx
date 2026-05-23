@@ -3,15 +3,15 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phase 5 substantially closed).** Read + write
-> parsers and writers are in for theme / slide master / slide layout
-> / slide / notes slide / comments, with `parse → serialize → parse
-> → Eq` round-trip verified across three synthetic decks. The
-> high-level `Presentation` API supports `open` / `save` / `new` and
-> a mutating builder loop (`add_slide_mut` + `Slide::with_shape` +
-> `update_slide_mut`). The remaining Phase 5 work is the immutable
-> builder variants (need a `Package::clone`) and PowerPoint /
-> LibreOffice open-verification. See [TODO.md](TODO.md) for the
+> **Status: pre-alpha (Phase 5 closed except for open-verification).**
+> Read + write parsers and writers cover theme / slide master / slide
+> layout / slide / notes slide / comments, with `parse → serialize →
+> parse → Eq` round-trip verified across three synthetic decks. The
+> high-level `Presentation` API supports `open` / `save` / `new`
+> plus both mutating (`add_slide_mut`, `update_slide_mut`) and
+> immutable (`with_added_slide`, `with_slide_updated`) builders.
+> Remaining Phase 5 work is PowerPoint / LibreOffice open-
+> verification on the produced bytes. See [TODO.md](TODO.md) for the
 > phase-by-phase roadmap.
 
 A pure-MoonBit library for reading, building, and writing PowerPoint
@@ -46,7 +46,7 @@ full feature comparison.
 | 2 | OPC layer over fzip | ✅ Done |
 | 3 | Read path | ✅ Done |
 | 4 | Write path | ✅ Done |
-| 5 | Builder API (create from scratch) | 🚧 In progress (5a–5e done) |
+| 5 | Builder API (create from scratch) | 🚧 5a–5f done; open-verification pending |
 | 6 | Tables | ⏳ |
 | 7 | Charts | ⏳ |
 | 8 | Differentiators (SmartArt, animation, …) | ⏳ |

@@ -37,6 +37,7 @@ pub(all) struct Presentation {
   pkg : @opc.Package
 }
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
+pub fn Presentation::clone(Self) -> Self
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
 pub fn Presentation::new() -> Self raise PptxError
@@ -49,6 +50,8 @@ pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] rai
 pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
 pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
 pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
+pub fn Presentation::with_added_slide(Self, layout_index~ : Int) -> (Self, String) raise PptxError
+pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError
 
 pub(all) struct PresentationPart {
   sld_master_ids : Array[SlideMasterIdRef]
