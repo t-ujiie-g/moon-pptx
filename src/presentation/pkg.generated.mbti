@@ -36,6 +36,7 @@ pub(all) struct NotesSize {
 pub(all) struct Presentation {
   pkg : @opc.Package
 }
+pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
 pub fn Presentation::new() -> Self raise PptxError
