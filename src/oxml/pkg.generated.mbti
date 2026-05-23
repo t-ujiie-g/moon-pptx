@@ -40,6 +40,12 @@ pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
 
 pub fn[T] enum_attr_opt(Array[(@xml.QName, String)], String, (String) -> T?) -> T?
 
+pub let graphic_data_chart_uri : String
+
+pub let graphic_data_diagram_uri : String
+
+pub let graphic_data_table_uri : String
+
 pub fn next_event(@xml.XmlReader) -> @xml.XmlEvent raise XmlReadError
 
 pub let office_relationships_ns : String

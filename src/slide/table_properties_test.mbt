@@ -1,9 +1,6 @@
 // TableProperties / TableCellProperties tests — Phase 6d.
 
 ///|
-let tbl_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/table"
-
-///|
 fn slide_with_table_xml(table_body : String) -> FixedArray[Byte] {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
@@ -20,7 +17,7 @@ fn slide_with_table_xml(table_body : String) -> FixedArray[Byte] {
     "<p:nvGraphicFramePr><p:cNvPr id=\"2\" name=\"T\"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>" +
     "<p:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"100\" cy=\"100\"/></p:xfrm>" +
     "<a:graphic><a:graphicData uri=\"" +
-    tbl_uri +
+    @oxml.graphic_data_table_uri +
     "\">" +
     table_body +
     "</a:graphicData></a:graphic>" +
@@ -177,4 +174,71 @@ test "TableCellProperties::with_margins / with_fill / with_anchor: fluent set" {
   assert_eq(p.margin_r.unwrap(), @units.Emu(45720L))
   assert_true(p.fill is Some(SolidFill(_)))
   assert_true(p.anchor == Some(@slide.Anchor::AnchorCenter))
+}
+
+///|
+test "TableCellProperties: builder-produced values survive serialize → reparse" {
+  // Build a cell with properties set via fluent builders, drop it
+  // into a graphicFrame on a slide, serialise the slide, re-parse,
+  // and confirm every typed field comes back with the same value.
+  let yellow = @units.RgbColor::parse_hex("FFFF00")
+  let props = @slide.TableCellProperties::default()
+    .with_margins(
+      left=Some(@units.Emu(45720L)),
+      right=Some(@units.Emu(45720L)),
+      top=Some(@units.Emu(30480L)),
+      bottom=Some(@units.Emu(30480L)),
+    )
+    .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(yellow)))
+    .with_anchor(@slide.Anchor::AnchorCenter)
+  let cell : @slide.TableCell = {
+    grid_span: 1,
+    row_span: 1,
+    h_merge: false,
+    v_merge: false,
+    text_body: Some(@slide.TextBody::of_text("X")),
+    properties: Some(props),
+    extension: [],
+  }
+  let row = @slide.TableRow::of_cells([cell], height=@units.Emu(457200L))
+  let t = @slide.Table::of_rows([row], col_widths=[@units.Emu(914400L)])
+  let gf = @slide.GraphicFrame::of_table(
+    7,
+    "T",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(914400L),
+    @units.Emu(457200L),
+    t,
+  )
+  let base_xml = "<?xml version=\"1.0\"?>" +
+    "<p:sld xmlns:p=\"" +
+    pml_ns +
+    "\" xmlns:a=\"" +
+    dml_ns +
+    "\" xmlns:r=\"" +
+    off_rel_ns +
+    "\"><p:cSld><p:spTree>" +
+    "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
+    "<p:grpSpPr/>" +
+    "</p:spTree></p:cSld></p:sld>"
+  let base = @slide.Slide::parse(fixture_bytes(base_xml))
+  let s = base.with_shape(@slide.GraphicFrame(gf))
+  let reparsed = @slide.Slide::parse(s.serialize())
+  match reparsed.shapes[0] {
+    GraphicFrame(parsed_gf) =>
+      match parsed_gf.content {
+        TableContent(parsed_t) => {
+          let p = parsed_t.rows[0].cells[0].properties.unwrap()
+          assert_eq(p.margin_l.unwrap(), @units.Emu(45720L))
+          assert_eq(p.margin_r.unwrap(), @units.Emu(45720L))
+          assert_eq(p.margin_t.unwrap(), @units.Emu(30480L))
+          assert_eq(p.margin_b.unwrap(), @units.Emu(30480L))
+          assert_true(p.anchor == Some(@slide.Anchor::AnchorCenter))
+          assert_true(p.fill is Some(SolidFill(_)))
+        }
+        _ => fail("expected TableContent")
+      }
+    _ => fail("expected GraphicFrame")
+  }
 }

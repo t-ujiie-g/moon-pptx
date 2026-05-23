@@ -49,3 +49,23 @@ pub let ct_comment_authors : String = "application/vnd.openxmlformats-officedocu
 ///|
 /// `ppt/comments/commentN.xml` — per-slide review comment list.
 pub let ct_comments : String = "application/vnd.openxmlformats-officedocument.presentationml.comments+xml"
+
+// --- <a:graphicData uri="…"> values ---
+//
+// `<p:graphicFrame>` hosts foreign-namespace content through
+// `<a:graphic><a:graphicData uri="…">`. The URI discriminates the
+// payload kind: tables, charts, SmartArt, OLE-embedded content. We
+// centralise the URIs here so parser dispatch + writer emission +
+// future builders all reference the same strings.
+
+///|
+/// `<a:graphicData uri="…">` value for embedded tables.
+pub let graphic_data_table_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/table"
+
+///|
+/// `<a:graphicData uri="…">` value for embedded charts.
+pub let graphic_data_chart_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/chart"
+
+///|
+/// `<a:graphicData uri="…">` value for embedded SmartArt diagrams.
+pub let graphic_data_diagram_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/diagram"

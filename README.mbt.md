@@ -3,16 +3,18 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phase 5 closed except for open-verification).**
+> **Status: pre-alpha (Phases 1–6 closed except for open-verification).**
 > Read + write parsers and writers cover theme / slide master / slide
-> layout / slide / notes slide / comments, with `parse → serialize →
-> parse → Eq` round-trip verified across three synthetic decks. The
-> high-level `Presentation` API supports `open` / `save` / `new`
-> plus both mutating (`add_slide_mut`, `update_slide_mut`) and
-> immutable (`with_added_slide`, `with_slide_updated`) builders.
-> Remaining Phase 5 work is PowerPoint / LibreOffice open-
-> verification on the produced bytes. See [TODO.md](TODO.md) for the
-> phase-by-phase roadmap.
+> layout / slide / notes slide / comments / tables (graphicFrame with
+> typed cell properties — margins / anchor / fill / borders), with
+> `parse → serialize → parse → Eq` round-trip verified across
+> synthetic decks. The high-level `Presentation` API supports `open`
+> / `save` / `new` plus both mutating (`add_slide_mut`,
+> `update_slide_mut`) and immutable (`with_added_slide`,
+> `with_slide_updated`) builders. Outstanding: PowerPoint /
+> LibreOffice open-verification on the produced bytes, plus Phase 7
+> (Charts) and beyond. See [TODO.md](TODO.md) for the phase-by-phase
+> roadmap.
 
 A pure-MoonBit library for reading, building, and writing PowerPoint
 presentations (`.pptx` / OOXML), with a type-safe builder API.
@@ -48,7 +50,7 @@ full feature comparison.
 | 4 | Write path | ✅ Done |
 | 5 | Builder API (create from scratch) | 🚧 5a–5f done; open-verification pending |
 | 6 | Tables | ✅ Done |
-| 7 | Charts | ⏳ |
+| 7 | Charts | 🔜 Next |
 | 8 | Differentiators (SmartArt, animation, …) | ⏳ |
 | 9 | 1.0 release | ⏳ |
 
@@ -90,6 +92,46 @@ prs.update_slide_mut(0, s.with_shape(@slide.AutoShape(tb)))
 // Save returns the PPTX bytes.  Write them to disk however your
 // backend supports — `@native.write_file` on Native, `Blob` on JS.
 let bytes : FixedArray[Byte] = prs.save()
+```
+
+### Tables
+
+Tables sit inside a `<p:graphicFrame>` shape. The builders cover the
+common cases (empty grid, custom cell contents, merged cells, cell
+fills / borders / margins) without any XmlElement surface area:
+
+```moonbit nocheck
+// 2×2 table with merged top row + a coloured first cell.
+let yellow = @units.RgbColor::parse_hex("FFFF00")
+let header_props = @slide.TableCellProperties::default()
+  .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(yellow)))
+  .with_anchor(@slide.Anchor::AnchorCenter)
+let header = @slide.TableCell::merged_origin("Header", grid_span=2)
+// Replace its default properties with the highlighted variant.
+let header = { ..header, properties: Some(header_props) }
+
+let row0 = @slide.TableRow::of_cells(
+  [header, @slide.TableCell::h_merge_covered()],
+  height=@units.Emu(457_200L),
+)
+let row1 = @slide.TableRow::of_cells(
+  [
+    @slide.TableCell::of_text("A2"),
+    @slide.TableCell::of_text("B2"),
+  ],
+  height=@units.Emu(457_200L),
+)
+let t = @slide.Table::of_rows(
+  [row0, row1],
+  col_widths=[@units.Emu(2_286_000L), @units.Emu(2_286_000L)],
+)
+let gf = @slide.GraphicFrame::of_table(
+  10, "Summary",
+  @units.Emu(914_400L), @units.Emu(914_400L),
+  @units.Emu(4_572_000L), @units.Emu(914_400L),
+  t,
+)
+prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
 ```
 
 For a richer end-to-end example see

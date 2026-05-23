@@ -11,10 +11,6 @@
 // own phases arrive.
 
 ///|
-/// Canonical `<a:graphicData uri="…">` value for embedded tables.
-let graphic_data_table_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/table"
-
-///|
 fn parse_graphic_frame(r : @xml.XmlReader) -> GraphicFrame raise SlideError {
   let mut id = 0
   let mut name = ""
@@ -100,8 +96,8 @@ fn parse_graphic_body(
     None =>
       raise Malformed("<a:graphic> is missing required <a:graphicData> child")
   }
-  let uri = lookup_attr(data.attributes, "uri")
-  if uri == graphic_data_table_uri {
+  let uri = @oxml.optional_attr_or(data.attributes, "uri", "")
+  if uri == @oxml.graphic_data_table_uri {
     // Find <a:tbl> inside.
     let mut tbl_child : @xml.XmlElement? = None
     for node in data.children {
@@ -124,16 +120,6 @@ fn parse_graphic_body(
   } else {
     OtherGraphic(uri, data)
   }
-}
-
-///|
-fn lookup_attr(attrs : Array[(@xml.QName, String)], name : String) -> String {
-  for kv in attrs {
-    if kv.0.local_name == name && kv.0.uri == "" {
-      return kv.1
-    }
-  }
-  ""
 }
 
 ///|
@@ -189,44 +175,16 @@ fn parse_tbl_pr(el : @xml.XmlElement) -> TableProperties raise SlideError {
     }
   }
   {
-    first_row: bool_attr_opt(attrs, "firstRow"),
-    first_col: bool_attr_opt(attrs, "firstCol"),
-    last_row: bool_attr_opt(attrs, "lastRow"),
-    last_col: bool_attr_opt(attrs, "lastCol"),
-    band_row: bool_attr_opt(attrs, "bandRow"),
-    band_col: bool_attr_opt(attrs, "bandCol"),
-    rtl: bool_attr_opt(attrs, "rtl"),
+    first_row: @oxml.bool_attr_opt(attrs, "firstRow"),
+    first_col: @oxml.bool_attr_opt(attrs, "firstCol"),
+    last_row: @oxml.bool_attr_opt(attrs, "lastRow"),
+    last_col: @oxml.bool_attr_opt(attrs, "lastCol"),
+    band_row: @oxml.bool_attr_opt(attrs, "bandRow"),
+    band_col: @oxml.bool_attr_opt(attrs, "bandCol"),
+    rtl: @oxml.bool_attr_opt(attrs, "rtl"),
     fill,
     table_style_id,
     extension,
-  }
-}
-
-///|
-/// Look up an attribute and parse it as a boolean.  Accepts `1` /
-/// `0` / `true` / `false` per OOXML; anything else (including
-/// absent) returns `None`.
-fn bool_attr_opt(attrs : Array[(@xml.QName, String)], name : String) -> Bool? {
-  match lookup_attr(attrs, name) {
-    "1" | "true" => Some(true)
-    "0" | "false" => Some(false)
-    _ => None
-  }
-}
-
-///|
-/// Look up an attribute and parse it as a non-negative integer EMU.
-fn emu_attr_opt(
-  attrs : Array[(@xml.QName, String)],
-  name : String,
-) -> @units.Emu? {
-  let raw = lookup_attr(attrs, name)
-  if raw == "" {
-    return None
-  }
-  match @oxml.parse_signed_int64(raw) {
-    Some(n) => Some(@units.Emu(n))
-    None => None
   }
 }
 
@@ -255,7 +213,7 @@ fn parse_tbl_grid(
     match node {
       Element(c) =>
         if c.name.uri == @oxml.drawing_ns && c.name.local_name == "gridCol" {
-          let w_raw = lookup_attr(c.attributes, "w")
+          let w_raw = @oxml.optional_attr_or(c.attributes, "w", "")
           match @oxml.parse_signed_int64(w_raw) {
             Some(n) => out.push(@units.Emu(n))
             None => raise Malformed("gridCol w is not an integer: " + w_raw)
@@ -268,7 +226,7 @@ fn parse_tbl_grid(
 
 ///|
 fn parse_tr(tr : @xml.XmlElement) -> TableRow raise SlideError {
-  let h_raw = lookup_attr(tr.attributes, "h")
+  let h_raw = @oxml.optional_attr_or(tr.attributes, "h", "")
   let height = match @oxml.parse_signed_int64(h_raw) {
     Some(n) => @units.Emu(n)
     None => raise Malformed("tr h is not an integer: " + h_raw)
@@ -292,15 +250,19 @@ fn parse_tr(tr : @xml.XmlElement) -> TableRow raise SlideError {
 ///|
 fn parse_tc(tc : @xml.XmlElement) -> TableCell raise SlideError {
   let grid_span = parse_int_attr_default_or(
-    lookup_attr(tc.attributes, "gridSpan"),
+    @oxml.optional_attr_or(tc.attributes, "gridSpan", ""),
     1,
   )
   let row_span = parse_int_attr_default_or(
-    lookup_attr(tc.attributes, "rowSpan"),
+    @oxml.optional_attr_or(tc.attributes, "rowSpan", ""),
     1,
   )
-  let h_merge = parse_bool_string(lookup_attr(tc.attributes, "hMerge"))
-  let v_merge = parse_bool_string(lookup_attr(tc.attributes, "vMerge"))
+  let h_merge = parse_bool_string(
+    @oxml.optional_attr_or(tc.attributes, "hMerge", ""),
+  )
+  let v_merge = parse_bool_string(
+    @oxml.optional_attr_or(tc.attributes, "vMerge", ""),
+  )
   let mut text_body : TextBody? = None
   let mut properties : TableCellProperties? = None
   let extension : Array[@xml.XmlElement] = []
@@ -366,12 +328,12 @@ fn parse_tc_pr(el : @xml.XmlElement) -> TableCellProperties raise SlideError {
     VerticalText::from_xml,
   )
   {
-    margin_l: emu_attr_opt(attrs, "marL"),
-    margin_r: emu_attr_opt(attrs, "marR"),
-    margin_t: emu_attr_opt(attrs, "marT"),
-    margin_b: emu_attr_opt(attrs, "marB"),
+    margin_l: @oxml.emu_attr_opt(attrs, "marL"),
+    margin_r: @oxml.emu_attr_opt(attrs, "marR"),
+    margin_t: @oxml.emu_attr_opt(attrs, "marT"),
+    margin_b: @oxml.emu_attr_opt(attrs, "marB"),
     anchor,
-    anchor_ctr: bool_attr_opt(attrs, "anchorCtr"),
+    anchor_ctr: @oxml.bool_attr_opt(attrs, "anchorCtr"),
     vertical_text,
     border_left,
     border_right,

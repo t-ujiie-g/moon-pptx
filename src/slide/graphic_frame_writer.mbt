@@ -75,7 +75,7 @@ fn write_graphic_body(
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "graphicData"))
   match content {
     TableContent(tbl) => {
-      w.attribute(@xml.QName::unqualified("uri"), graphic_data_table_uri)
+      w.attribute(@xml.QName::unqualified("uri"), @oxml.graphic_data_table_uri)
       write_table(w, ctx, tbl)
     }
     OtherGraphic(uri, captured) => {
