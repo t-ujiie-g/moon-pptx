@@ -38,6 +38,7 @@ pub(all) struct Presentation {
 }
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
+pub fn Presentation::new() -> Self raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
 pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
 pub fn Presentation::presentation_part(Self) -> PresentationPart? raise PptxError

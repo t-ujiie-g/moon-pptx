@@ -403,6 +403,66 @@ fn two_slide_pptx_reversed_storage() -> FixedArray[Byte] {
   @fzip.zip_sync(entries)
 }
 
+// --- Phase 5b2: Presentation::new ---
+
+///|
+test "Presentation::new: produces a deck with one master + one layout + zero slides" {
+  let prs = @presentation.Presentation::new()
+  assert_eq(prs.themes().length(), 1)
+  assert_eq(prs.slide_masters().length(), 1)
+  assert_eq(prs.slide_layouts().length(), 1)
+  assert_eq(prs.slides().length(), 0)
+  assert_eq(prs.notes_slides().length(), 0)
+}
+
+///|
+test "Presentation::new: theme and master carry the expected names" {
+  let prs = @presentation.Presentation::new()
+  let t = prs.themes()[0]
+  assert_eq(t.name, "Office")
+  assert_eq(t.color_scheme.name, "Office")
+  let m = prs.slide_masters()[0]
+  assert_true(m.color_mapping.bg1 == @units.ThemeColor::Lt1)
+  assert_true(m.color_mapping.tx1 == @units.ThemeColor::Dk1)
+  assert_eq(m.layout_refs.length(), 1)
+}
+
+///|
+test "Presentation::new: presentation.xml has one master ref, zero slide refs" {
+  let prs = @presentation.Presentation::new()
+  let pres = prs.presentation_part().unwrap()
+  assert_eq(pres.sld_master_ids.length(), 1)
+  assert_eq(pres.sld_ids.length(), 0)
+  // The blank deck uses screen4x3 by default.
+  let sz = pres.sld_sz.unwrap()
+  assert_eq(sz.size_type, "screen4x3")
+  assert_eq(sz.cx, @units.Emu(9144000L))
+  assert_eq(sz.cy, @units.Emu(6858000L))
+}
+
+///|
+test "Presentation::new: save → open round-trips identically" {
+  let prs_in = @presentation.Presentation::new()
+  let bytes = prs_in.save()
+  let prs_out = @presentation.Presentation::open(bytes)
+  // Each accessor's parsed value should compare equal across the
+  // save / reopen boundary.
+  assert_true(prs_in.themes()[0] == prs_out.themes()[0])
+  assert_true(prs_in.slide_masters()[0] == prs_out.slide_masters()[0])
+  assert_true(prs_in.slide_layouts()[0] == prs_out.slide_layouts()[0])
+  assert_true(
+    prs_in.presentation_part().unwrap() == prs_out.presentation_part().unwrap(),
+  )
+}
+
+///|
+test "Presentation::new: layout type is Blank" {
+  let prs = @presentation.Presentation::new()
+  let l = prs.slide_layouts()[0]
+  assert_eq(l.name, "Blank")
+  assert_true(l.layout_type is @slide_master.SlideLayoutType::Blank)
+}
+
 ///|
 /// Same as `minimal_pptx` but the package-level rels file is empty,
 /// so `main_document_part_name` returns `None` and `slides()` falls

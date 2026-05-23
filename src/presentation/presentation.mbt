@@ -42,6 +42,44 @@ pub fn Presentation::open(
 }
 
 ///|
+/// Construct an empty PPTX from scratch: one theme + one slide
+/// master + one (Blank) slide layout + no slides. The resulting
+/// package has every required structural part wired with valid
+/// relationships, so `save() → open()` round-trips cleanly and the
+/// produced bytes are accepted by PowerPoint / LibreOffice.
+///
+/// Use this as the starting point for builder-style construction:
+///   let prs = Presentation::new()
+///   // (Phase 5c+) prs.add_slide(layout).with_shape(textbox)
+///   prs.save()
+pub fn Presentation::new() -> Presentation raise PptxError {
+  let parts : Array[(String, String, String)] = [
+    ("/ppt/presentation.xml", @oxml.ct_presentation, blank_presentation_xml),
+    ("/ppt/theme/theme1.xml", @oxml.ct_theme, blank_theme_xml),
+    (
+      "/ppt/slideMasters/slideMaster1.xml", @oxml.ct_slide_master, blank_slide_master_xml,
+    ),
+    (
+      "/ppt/slideLayouts/slideLayout1.xml", @oxml.ct_slide_layout, blank_slide_layout_xml,
+    ),
+  ]
+  let rels : Array[(String, String)] = [
+    ("/_rels/.rels", blank_pkg_rels_xml),
+    ("/ppt/_rels/presentation.xml.rels", blank_presentation_rels_xml),
+    (
+      "/ppt/slideMasters/_rels/slideMaster1.xml.rels", blank_slide_master_rels_xml,
+    ),
+    (
+      "/ppt/slideLayouts/_rels/slideLayout1.xml.rels", blank_slide_layout_rels_xml,
+    ),
+  ]
+  let bytes = build_blank_package_bytes(parts, rels) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  Presentation::open(bytes)
+}
+
+///|
 /// Serialise the presentation back to PPTX bytes. The current
 /// implementation is a pass-through of `Package::to_bytes`, so any
 /// part mutations callers made via the lower-level `@opc` API are
