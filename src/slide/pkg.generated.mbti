@@ -185,6 +185,19 @@ pub(all) enum Geometry {
   Custom(CustomGeometry)
 } derive(Eq, @debug.Debug)
 
+pub(all) struct GraphicFrame {
+  id : Int
+  name : String
+  transform : Transform?
+  content : GraphicFrameContent
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum GraphicFrameContent {
+  TableContent(Table)
+  OtherGraphic(String, @xml.XmlElement)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct GroupShape {
   id : Int
   name : String
@@ -505,6 +518,7 @@ pub(all) enum Shape {
   Picture(Picture)
   Connector(Connector)
   Group(GroupShape)
+  GraphicFrame(GraphicFrame)
   Unknown(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
 
@@ -536,6 +550,29 @@ pub(all) enum StrikeKind {
   StDouble
 } derive(Eq, @debug.Debug)
 pub fn StrikeKind::from_xml(String) -> Self?
+
+pub(all) struct Table {
+  properties : @xml.XmlElement?
+  grid : Array[@units.Emu]
+  rows : Array[TableRow]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TableCell {
+  grid_span : Int
+  row_span : Int
+  h_merge : Bool
+  v_merge : Bool
+  text_body : TextBody?
+  properties : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TableRow {
+  height : @units.Emu
+  cells : Array[TableCell]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
 
 pub(all) enum TextAlignment {
   AlignLeft

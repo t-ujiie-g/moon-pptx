@@ -78,6 +78,7 @@ fn write_shape(
     Picture(p) => write_picture(w, ctx, p)
     Connector(c) => write_connector(w, ctx, c)
     Group(g) => write_group_shape(w, ctx, g)
+    GraphicFrame(gf) => write_graphic_frame(w, ctx, gf)
     Unknown(el) => @oxml.write_xml_element(w, ctx, el)
   }
 }

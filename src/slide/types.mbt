@@ -57,9 +57,14 @@ pub(all) enum Shape {
   Picture(Picture)
   Connector(Connector)
   Group(GroupShape)
-  /// The full XML subtree of an unmodelled shape kind. The element's
-  /// local name (`graphicFrame`, `contentPart`, …) is reachable via
-  /// `el.name.local_name`.
+  /// `<p:graphicFrame>` hosting a table / chart / SmartArt / OLE
+  /// payload. Phase 6 types the table case end-to-end; other
+  /// content kinds keep round-tripping via `GraphicFrameContent::
+  /// OtherGraphic` until their own phases land.
+  GraphicFrame(GraphicFrame)
+  /// The full XML subtree of an unmodelled shape kind. After Phase
+  /// 6 this only catches `<p:contentPart>` (extension shapes); any
+  /// future shape kind starts here and graduates to a typed variant.
   Unknown(@xml.XmlElement)
 } derive(Eq, Debug)
 

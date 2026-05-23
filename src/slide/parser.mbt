@@ -125,9 +125,9 @@ fn parse_sp_tree(
             "pic" => shapes.push(Picture(parse_picture(r)))
             "cxnSp" => shapes.push(Connector(parse_connector(r)))
             "grpSp" => shapes.push(Group(parse_group_shape(r)))
-            // graphicFrame (tables / charts / SmartArt) and contentPart
-            // (extensions) are not yet typed — preserve the full XML so
-            // they round-trip verbatim.
+            "graphicFrame" => shapes.push(GraphicFrame(parse_graphic_frame(r)))
+            // contentPart (extensions) and any future shape kind we
+            // haven't typed yet round-trip via the captured XML.
             _ => shapes.push(Unknown(collect_subtree_unknown(r, child, attrs)))
           }
         }
@@ -320,7 +320,10 @@ fn parse_group_shape(r : @xml.XmlReader) -> GroupShape raise SlideError {
             "pic" => children.push(Picture(parse_picture(r)))
             "cxnSp" => children.push(Connector(parse_connector(r)))
             "grpSp" => children.push(Group(parse_group_shape(r)))
-            // graphicFrame / contentPart — preserve the full subtree.
+            "graphicFrame" =>
+              children.push(GraphicFrame(parse_graphic_frame(r)))
+            // contentPart and future shape kinds — preserve the full
+            // subtree.
             _ =>
               children.push(
                 Unknown(collect_subtree_unknown(r, child, child_attrs)),

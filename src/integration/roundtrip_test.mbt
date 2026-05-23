@@ -182,6 +182,7 @@ test "rich_deck: rich slide contains every shape kind" {
       Picture(_) => picture_count = picture_count + 1
       Connector(_) => connector_count = connector_count + 1
       Group(_) => group_count = group_count + 1
+      GraphicFrame(_) => fail("rich deck has no tables / charts / SmartArt")
       Unknown(_) => fail("rich deck should not produce Unknown shapes")
     }
   }

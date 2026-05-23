@@ -12,7 +12,23 @@ fn write_text_body(
   ctx : @oxml.WriteCtx,
   tb : TextBody,
 ) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.presentation_ns, "txBody"))
+  write_text_body_with_wrapper(w, ctx, tb, @oxml.presentation_ns, "txBody")
+}
+
+///|
+/// Emit a text body inside a wrapper of the caller's choice. Slide
+/// AutoShapes wrap with `<p:txBody>` (presentation-ns); table cells
+/// wrap with `<a:txBody>` (drawing-ns). The body structure is
+/// identical between the two callers, so the wrapper is the only
+/// parameter that varies.
+fn write_text_body_with_wrapper(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  tb : TextBody,
+  wrapper_uri : String,
+  wrapper_local : String,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(wrapper_uri, wrapper_local))
   match tb.body_properties {
     Some(bp) => write_body_properties(w, ctx, bp)
     None => {

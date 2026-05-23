@@ -107,10 +107,15 @@ test "ADR-004: foreign-namespace <p:sld> child is preserved" {
   assert_eq(c.attributes[0].1, "42")
 }
 
-// --- Shape::Unknown carries the full XML subtree. ---
+// --- Shape::GraphicFrame carries non-table content via OtherGraphic. ---
 
 ///|
-test "ADR-004: graphicFrame round-trips as Unknown(XmlElement)" {
+test "ADR-004: non-table graphicFrame lifts to GraphicFrame(OtherGraphic)" {
+  // Chart embedded in a graphicFrame. Phase 6a types the graphicFrame
+  // wrapper but only the `table` uri gets a typed content lift; the
+  // chart uri keeps round-tripping via `OtherGraphic(uri, captured)`
+  // until Phase 7 (charts) lands.
+  let chart_uri = "http://schemas.openxmlformats.org/drawingml/2006/chart"
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
     pml_ns +
@@ -118,25 +123,39 @@ test "ADR-004: graphicFrame round-trips as Unknown(XmlElement)" {
     dml_ns +
     "\" xmlns:r=\"" +
     off_rel_ns +
-    "\" xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\">" +
+    "\" xmlns:c=\"" +
+    chart_uri +
+    "\">" +
     "<p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
     "<p:graphicFrame>" +
     "<p:nvGraphicFramePr><p:cNvPr id=\"5\" name=\"Chart 1\"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>" +
     "<p:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"100\" cy=\"200\"/></p:xfrm>" +
-    "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/chart\"><c:chart r:id=\"rId7\"/></a:graphicData></a:graphic>" +
+    "<a:graphic><a:graphicData uri=\"" +
+    chart_uri +
+    "\"><c:chart r:id=\"rId7\"/></a:graphicData></a:graphic>" +
     "</p:graphicFrame>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
   let slide = @slide.Slide::parse(fixture_bytes(xml))
   assert_eq(slide.shapes.length(), 1)
   match slide.shapes[0] {
-    Unknown(el) => {
-      assert_eq(el.name.local_name, "graphicFrame")
-      // The full subtree is there — at least nvGraphicFramePr, xfrm, graphic.
-      assert_eq(el.children.length(), 3)
+    GraphicFrame(gf) => {
+      assert_eq(gf.id, 5)
+      assert_eq(gf.name, "Chart 1")
+      // Non-table uri lands on OtherGraphic with the captured
+      // <a:graphicData> body.
+      match gf.content {
+        OtherGraphic(uri, captured) => {
+          assert_eq(uri, chart_uri)
+          // The captured element is <a:graphicData> with one child.
+          assert_eq(captured.name.local_name, "graphicData")
+          assert_eq(captured.children.length(), 1)
+        }
+        _ => fail("expected OtherGraphic for chart uri")
+      }
     }
-    _ => fail("expected Unknown(graphicFrame) shape")
+    _ => fail("expected GraphicFrame shape")
   }
 }
 
