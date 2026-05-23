@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/presentation"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/comments",
+  "t-ujiie-g/moon_pptx/notes",
+  "t-ujiie-g/moon_pptx/opc",
+  "t-ujiie-g/moon_pptx/slide",
+  "t-ujiie-g/moon_pptx/slide_master",
+  "t-ujiie-g/moon_pptx/theme",
+}
+
+// Values
+
+// Errors
+pub(all) suberror PptxError {
+  OpcFailure(String)
+  ThemeFailure(String)
+  SlideMasterFailure(String)
+  SlideFailure(String)
+  NotesFailure(String)
+  CommentsFailure(String)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for PptxError
+
+// Types and methods
+pub(all) struct Presentation {
+  pkg : @opc.Package
+}
+pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
+pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
+pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
+pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
+pub fn Presentation::save(Self) -> FixedArray[Byte]
+pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] raise PptxError
+pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] raise PptxError
+pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
+pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
+
+// Type aliases
+
+// Traits
+
