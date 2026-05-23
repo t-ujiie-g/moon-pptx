@@ -553,7 +553,7 @@ pub(all) enum StrikeKind {
 pub fn StrikeKind::from_xml(String) -> Self?
 
 pub(all) struct Table {
-  properties : @xml.XmlElement?
+  properties : TableProperties?
   grid : Array[@units.Emu]
   rows : Array[TableRow]
   extension : Array[@xml.XmlElement]
@@ -567,7 +567,7 @@ pub(all) struct TableCell {
   h_merge : Bool
   v_merge : Bool
   text_body : TextBody?
-  properties : @xml.XmlElement?
+  properties : TableCellProperties?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TableCell::empty() -> Self
@@ -576,6 +576,47 @@ pub fn TableCell::hv_merge_covered() -> Self
 pub fn TableCell::merged_origin(String, grid_span? : Int, row_span? : Int) -> Self
 pub fn TableCell::of_text(String) -> Self
 pub fn TableCell::v_merge_covered() -> Self
+
+pub(all) struct TableCellProperties {
+  margin_l : @units.Emu?
+  margin_r : @units.Emu?
+  margin_t : @units.Emu?
+  margin_b : @units.Emu?
+  anchor : Anchor?
+  anchor_ctr : Bool?
+  vertical_text : VerticalText?
+  border_left : @oxml.Stroke?
+  border_right : @oxml.Stroke?
+  border_top : @oxml.Stroke?
+  border_bottom : @oxml.Stroke?
+  border_tl_to_br : @oxml.Stroke?
+  border_bl_to_tr : @oxml.Stroke?
+  fill : @oxml.Fill?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn TableCellProperties::default() -> Self
+pub fn TableCellProperties::with_anchor(Self, Anchor) -> Self
+pub fn TableCellProperties::with_border_all(Self, @oxml.Stroke) -> Self
+pub fn TableCellProperties::with_border_bottom(Self, @oxml.Stroke) -> Self
+pub fn TableCellProperties::with_border_left(Self, @oxml.Stroke) -> Self
+pub fn TableCellProperties::with_border_right(Self, @oxml.Stroke) -> Self
+pub fn TableCellProperties::with_border_top(Self, @oxml.Stroke) -> Self
+pub fn TableCellProperties::with_fill(Self, @oxml.Fill) -> Self
+pub fn TableCellProperties::with_margins(Self, left? : @units.Emu?, right? : @units.Emu?, top? : @units.Emu?, bottom? : @units.Emu?) -> Self
+
+pub(all) struct TableProperties {
+  first_row : Bool?
+  first_col : Bool?
+  last_row : Bool?
+  last_col : Bool?
+  band_row : Bool?
+  band_col : Bool?
+  rtl : Bool?
+  fill : @oxml.Fill?
+  table_style_id : String?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn TableProperties::default() -> Self
 
 pub(all) struct TableRow {
   height : @units.Emu

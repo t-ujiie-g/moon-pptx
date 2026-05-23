@@ -27,21 +27,11 @@
 // hand-built cell has no styling. Parsed cells that already carry a
 // `tcPr` keep their captured properties on round-trip.
 
-///|
-/// Build an empty `<a:tcPr/>` `XmlElement`. PowerPoint expects
-/// every cell to carry one, even an empty one, so the builders
-/// synthesise it eagerly rather than letting the writer skip it.
-fn empty_tc_pr() -> @xml.XmlElement {
-  @xml.XmlElement::new(@xml.QName::new(@oxml.drawing_ns, "tcPr"), [], [])
-}
-
-///|
-/// Build an empty `<a:tblPr/>` `XmlElement`. Same rationale as
-/// `empty_tc_pr`: every table emits one, even if it carries no
-/// style hints.
-fn empty_tbl_pr() -> @xml.XmlElement {
-  @xml.XmlElement::new(@xml.QName::new(@oxml.drawing_ns, "tblPr"), [], [])
-}
+// PowerPoint expects every cell to carry an `<a:tcPr/>` and every
+// table to carry an `<a:tblPr/>`, even if both are empty. The
+// builders synthesise `TableCellProperties::default()` /
+// `TableProperties::default()` so the resulting XML always has
+// those elements.
 
 // --- TableCell builders ---
 
@@ -54,7 +44,7 @@ pub fn TableCell::of_text(text : String) -> TableCell {
     h_merge: false,
     v_merge: false,
     text_body: Some(TextBody::of_text(text)),
-    properties: Some(empty_tc_pr()),
+    properties: Some(TableCellProperties::default()),
     extension: [],
   }
 }
@@ -80,7 +70,7 @@ pub fn TableCell::merged_origin(
     h_merge: false,
     v_merge: false,
     text_body: Some(TextBody::of_text(text)),
-    properties: Some(empty_tc_pr()),
+    properties: Some(TableCellProperties::default()),
     extension: [],
   }
 }
@@ -96,7 +86,7 @@ pub fn TableCell::h_merge_covered() -> TableCell {
     h_merge: true,
     v_merge: false,
     text_body: Some(TextBody::of_text("")),
-    properties: Some(empty_tc_pr()),
+    properties: Some(TableCellProperties::default()),
     extension: [],
   }
 }
@@ -111,7 +101,7 @@ pub fn TableCell::v_merge_covered() -> TableCell {
     h_merge: false,
     v_merge: true,
     text_body: Some(TextBody::of_text("")),
-    properties: Some(empty_tc_pr()),
+    properties: Some(TableCellProperties::default()),
     extension: [],
   }
 }
@@ -126,7 +116,7 @@ pub fn TableCell::hv_merge_covered() -> TableCell {
     h_merge: true,
     v_merge: true,
     text_body: Some(TextBody::of_text("")),
-    properties: Some(empty_tc_pr()),
+    properties: Some(TableCellProperties::default()),
     extension: [],
   }
 }
@@ -150,7 +140,12 @@ pub fn Table::of_rows(
   rows : Array[TableRow],
   col_widths~ : Array[@units.Emu],
 ) -> Table {
-  { properties: Some(empty_tbl_pr()), grid: col_widths, rows, extension: [] }
+  {
+    properties: Some(TableProperties::default()),
+    grid: col_widths,
+    rows,
+    extension: [],
+  }
 }
 
 ///|

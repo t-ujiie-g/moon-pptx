@@ -13,7 +13,22 @@ pub fn write_stroke(
   ctx : WriteCtx,
   s : Stroke,
 ) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(drawing_ns, "ln"))
+  write_stroke_with_local_name(w, ctx, s, "ln")
+}
+
+///|
+/// Emit a stroke element with a caller-chosen drawing-ns local name.
+/// Table-cell borders (`<a:lnL>` / `<a:lnR>` / `<a:lnT>` / `<a:lnB>` /
+/// `<a:lnTlToBr>` / `<a:lnBlToTr>`) share the `CT_LineProperties`
+/// schema with `<a:ln>` — same attributes, same body — so the cell-
+/// border writer reuses this helper with the appropriate local name.
+pub fn write_stroke_with_local_name(
+  w : @xml.XmlWriter,
+  ctx : WriteCtx,
+  s : Stroke,
+  local_name : String,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(drawing_ns, local_name))
   match s.width {
     Some(@units.Emu(n)) =>
       w.attribute(@xml.QName::unqualified("w"), n.to_string())

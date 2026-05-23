@@ -86,6 +86,8 @@ pub fn write_fill(@xml.XmlWriter, WriteCtx, Fill) -> Unit raise @xml.XmlError
 
 pub fn write_stroke(@xml.XmlWriter, WriteCtx, Stroke) -> Unit raise @xml.XmlError
 
+pub fn write_stroke_with_local_name(@xml.XmlWriter, WriteCtx, Stroke, String) -> Unit raise @xml.XmlError
+
 pub fn write_xml_element(@xml.XmlWriter, WriteCtx, @xml.XmlElement) -> Unit raise @xml.XmlError
 
 // Errors

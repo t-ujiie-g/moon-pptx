@@ -102,9 +102,9 @@ fn write_table(
   tbl : Table,
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "tbl"))
-  // <a:tblPr> — emit the captured element if present.
+  // <a:tblPr> — typed body.
   match tbl.properties {
-    Some(p) => @oxml.write_xml_element(w, ctx, p)
+    Some(p) => write_tbl_pr(w, ctx, p)
     None => ()
   }
   // <a:tblGrid> — generated from typed widths.
@@ -171,15 +171,136 @@ fn write_tc(
     Some(tb) => write_table_cell_text_body(w, ctx, tb)
     None => ()
   }
-  // <a:tcPr> — emit the captured element if present.
+  // <a:tcPr> — typed body.
   match cell.properties {
-    Some(p) => @oxml.write_xml_element(w, ctx, p)
+    Some(p) => write_tc_pr(w, ctx, p)
     None => ()
   }
   for ext in cell.extension {
     @oxml.write_xml_element(w, ctx, ext)
   }
   w.end_element()
+}
+
+///|
+/// Emit `<a:tblPr>` from typed `TableProperties`. Body order
+/// follows the ECMA-376 schema: fill choice → `<a:tableStyleId>` →
+/// captured extension tail.
+fn write_tbl_pr(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  p : TableProperties,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "tblPr"))
+  emit_bool_attr(w, "firstRow", p.first_row)
+  emit_bool_attr(w, "firstCol", p.first_col)
+  emit_bool_attr(w, "lastRow", p.last_row)
+  emit_bool_attr(w, "lastCol", p.last_col)
+  emit_bool_attr(w, "bandRow", p.band_row)
+  emit_bool_attr(w, "bandCol", p.band_col)
+  emit_bool_attr(w, "rtl", p.rtl)
+  match p.fill {
+    Some(f) => @oxml.write_fill(w, ctx, f)
+    None => ()
+  }
+  match p.table_style_id {
+    Some(s) => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "tableStyleId"))
+      w.text(s)
+      w.end_element()
+    }
+    None => ()
+  }
+  for ext in p.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+/// Emit `<a:tcPr>` from typed `TableCellProperties`. Body order
+/// follows the ECMA-376 schema: lnL → lnR → lnT → lnB → lnTlToBr
+/// → lnBlToTr → fill choice → captured extension tail.
+fn write_tc_pr(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  p : TableCellProperties,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "tcPr"))
+  emit_emu_attr(w, "marL", p.margin_l)
+  emit_emu_attr(w, "marT", p.margin_t)
+  emit_emu_attr(w, "marR", p.margin_r)
+  emit_emu_attr(w, "marB", p.margin_b)
+  match p.vertical_text {
+    Some(v) =>
+      w.attribute(@xml.QName::unqualified("vert"), vertical_text_to_xml(v))
+    None => ()
+  }
+  match p.anchor {
+    Some(a) => w.attribute(@xml.QName::unqualified("anchor"), anchor_to_xml(a))
+    None => ()
+  }
+  emit_bool_attr(w, "anchorCtr", p.anchor_ctr)
+  match p.border_left {
+    Some(s) => @oxml.write_stroke_with_local_name(w, ctx, s, "lnL")
+    None => ()
+  }
+  match p.border_right {
+    Some(s) => @oxml.write_stroke_with_local_name(w, ctx, s, "lnR")
+    None => ()
+  }
+  match p.border_top {
+    Some(s) => @oxml.write_stroke_with_local_name(w, ctx, s, "lnT")
+    None => ()
+  }
+  match p.border_bottom {
+    Some(s) => @oxml.write_stroke_with_local_name(w, ctx, s, "lnB")
+    None => ()
+  }
+  match p.border_tl_to_br {
+    Some(s) => @oxml.write_stroke_with_local_name(w, ctx, s, "lnTlToBr")
+    None => ()
+  }
+  match p.border_bl_to_tr {
+    Some(s) => @oxml.write_stroke_with_local_name(w, ctx, s, "lnBlToTr")
+    None => ()
+  }
+  match p.fill {
+    Some(f) => @oxml.write_fill(w, ctx, f)
+    None => ()
+  }
+  for ext in p.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+/// Emit an attribute holding "1" or "0" iff the option is `Some`.
+fn emit_bool_attr(
+  w : @xml.XmlWriter,
+  name : String,
+  v : Bool?,
+) -> Unit raise @xml.XmlError {
+  match v {
+    Some(b) =>
+      w.attribute(@xml.QName::unqualified(name), if b { "1" } else { "0" })
+    None => ()
+  }
+}
+
+///|
+/// Emit an attribute holding the EMU value iff the option is `Some`.
+fn emit_emu_attr(
+  w : @xml.XmlWriter,
+  name : String,
+  v : @units.Emu?,
+) -> Unit raise @xml.XmlError {
+  match v {
+    Some(@units.Emu(n)) =>
+      w.attribute(@xml.QName::unqualified(name), n.to_string())
+    None => ()
+  }
 }
 
 ///|

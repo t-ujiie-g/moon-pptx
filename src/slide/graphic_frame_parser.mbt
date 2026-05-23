@@ -138,7 +138,7 @@ fn lookup_attr(attrs : Array[(@xml.QName, String)], name : String) -> String {
 
 ///|
 fn parse_table(tbl : @xml.XmlElement) -> Table raise SlideError {
-  let mut properties : @xml.XmlElement? = None
+  let mut properties : TableProperties? = None
   let grid : Array[@units.Emu] = []
   let rows : Array[TableRow] = []
   let extension : Array[@xml.XmlElement] = []
@@ -149,7 +149,7 @@ fn parse_table(tbl : @xml.XmlElement) -> Table raise SlideError {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "tblPr" => properties = Some(c)
+            "tblPr" => properties = Some(parse_tbl_pr(c))
             "tblGrid" => parse_tbl_grid(c, grid)
             "tr" => rows.push(parse_tr(c))
             _ => extension.push(c)
@@ -159,6 +159,91 @@ fn parse_table(tbl : @xml.XmlElement) -> Table raise SlideError {
     }
   }
   { properties, grid, rows, extension }
+}
+
+///|
+/// Parse an `<a:tblPr>` body into typed `TableProperties`. The
+/// attributes carry the seven style-hint booleans + `rtl`; the
+/// children are a fill choice (optional) and / or `<a:tableStyleId>`
+/// (optional). `<a:tableStyle>` (inline-style) and any other
+/// children ride on `extension`.
+fn parse_tbl_pr(el : @xml.XmlElement) -> TableProperties raise SlideError {
+  let attrs = el.attributes
+  let mut fill : @oxml.Fill? = None
+  let mut table_style_id : String? = None
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.drawing_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "noFill" | "solidFill" | "gradFill" | "blipFill" | "pattFill" =>
+              fill = Some(parse_fill_from_element(c))
+            "tableStyleId" => table_style_id = Some(extract_text(c))
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  {
+    first_row: bool_attr_opt(attrs, "firstRow"),
+    first_col: bool_attr_opt(attrs, "firstCol"),
+    last_row: bool_attr_opt(attrs, "lastRow"),
+    last_col: bool_attr_opt(attrs, "lastCol"),
+    band_row: bool_attr_opt(attrs, "bandRow"),
+    band_col: bool_attr_opt(attrs, "bandCol"),
+    rtl: bool_attr_opt(attrs, "rtl"),
+    fill,
+    table_style_id,
+    extension,
+  }
+}
+
+///|
+/// Look up an attribute and parse it as a boolean.  Accepts `1` /
+/// `0` / `true` / `false` per OOXML; anything else (including
+/// absent) returns `None`.
+fn bool_attr_opt(attrs : Array[(@xml.QName, String)], name : String) -> Bool? {
+  match lookup_attr(attrs, name) {
+    "1" | "true" => Some(true)
+    "0" | "false" => Some(false)
+    _ => None
+  }
+}
+
+///|
+/// Look up an attribute and parse it as a non-negative integer EMU.
+fn emu_attr_opt(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Emu? {
+  let raw = lookup_attr(attrs, name)
+  if raw == "" {
+    return None
+  }
+  match @oxml.parse_signed_int64(raw) {
+    Some(n) => Some(@units.Emu(n))
+    None => None
+  }
+}
+
+///|
+/// Extract the text content of an element (concatenating Text and
+/// CData nodes). Used for `<a:tableStyleId>` which has the GUID as
+/// plain text content.
+fn extract_text(el : @xml.XmlElement) -> String {
+  let mut out = ""
+  for node in el.children {
+    match node {
+      Text(s) => out = out + s
+      CData(s) => out = out + s
+      _ => ()
+    }
+  }
+  out
 }
 
 ///|
@@ -217,7 +302,7 @@ fn parse_tc(tc : @xml.XmlElement) -> TableCell raise SlideError {
   let h_merge = parse_bool_string(lookup_attr(tc.attributes, "hMerge"))
   let v_merge = parse_bool_string(lookup_attr(tc.attributes, "vMerge"))
   let mut text_body : TextBody? = None
-  let mut properties : @xml.XmlElement? = None
+  let mut properties : TableCellProperties? = None
   let extension : Array[@xml.XmlElement] = []
   for node in tc.children {
     match node {
@@ -227,7 +312,7 @@ fn parse_tc(tc : @xml.XmlElement) -> TableCell raise SlideError {
         } else {
           match c.name.local_name {
             "txBody" => text_body = Some(parse_text_body_from_element(c))
-            "tcPr" => properties = Some(c)
+            "tcPr" => properties = Some(parse_tc_pr(c))
             _ => extension.push(c)
           }
         }
@@ -235,6 +320,103 @@ fn parse_tc(tc : @xml.XmlElement) -> TableCell raise SlideError {
     }
   }
   { grid_span, row_span, h_merge, v_merge, text_body, properties, extension }
+}
+
+///|
+/// Parse an `<a:tcPr>` body into typed `TableCellProperties`.
+///
+/// Attributes carry margins / anchor / vertical-text-direction;
+/// children carry six possible borders (left / right / top / bottom
+/// / TL→BR / BL→TR) and a fill choice. Unrecognised children
+/// (`<a:cell3D>`, `<a:headers>`, `<a:extLst>`, foreign-namespace)
+/// ride on `extension`.
+fn parse_tc_pr(el : @xml.XmlElement) -> TableCellProperties raise SlideError {
+  let attrs = el.attributes
+  let mut border_left : @oxml.Stroke? = None
+  let mut border_right : @oxml.Stroke? = None
+  let mut border_top : @oxml.Stroke? = None
+  let mut border_bottom : @oxml.Stroke? = None
+  let mut border_tl_to_br : @oxml.Stroke? = None
+  let mut border_bl_to_tr : @oxml.Stroke? = None
+  let mut fill : @oxml.Fill? = None
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.drawing_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "lnL" => border_left = Some(parse_stroke_from_element(c))
+            "lnR" => border_right = Some(parse_stroke_from_element(c))
+            "lnT" => border_top = Some(parse_stroke_from_element(c))
+            "lnB" => border_bottom = Some(parse_stroke_from_element(c))
+            "lnTlToBr" => border_tl_to_br = Some(parse_stroke_from_element(c))
+            "lnBlToTr" => border_bl_to_tr = Some(parse_stroke_from_element(c))
+            "noFill" | "solidFill" | "gradFill" | "blipFill" | "pattFill" =>
+              fill = Some(parse_fill_from_element(c))
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let anchor = @oxml.optional_attr(attrs, "anchor").bind(Anchor::from_xml)
+  let vertical_text = @oxml.optional_attr(attrs, "vert").bind(
+    VerticalText::from_xml,
+  )
+  {
+    margin_l: emu_attr_opt(attrs, "marL"),
+    margin_r: emu_attr_opt(attrs, "marR"),
+    margin_t: emu_attr_opt(attrs, "marT"),
+    margin_b: emu_attr_opt(attrs, "marB"),
+    anchor,
+    anchor_ctr: bool_attr_opt(attrs, "anchorCtr"),
+    vertical_text,
+    border_left,
+    border_right,
+    border_top,
+    border_bottom,
+    border_tl_to_br,
+    border_bl_to_tr,
+    fill,
+    extension,
+  }
+}
+
+///|
+/// Re-serialise a captured stroke / fill element to a standalone
+/// XML string and re-parse via `@oxml.parse_stroke / parse_fill`.
+/// Same bridge as `parse_text_body_from_element` for the same
+/// reason: lets us reuse the well-tested streaming parsers without
+/// duplicating their logic on top of the captured DOM.
+fn parse_stroke_from_element(
+  el : @xml.XmlElement,
+) -> @oxml.Stroke raise SlideError {
+  let serialized = serialize_standalone_xml(el)
+  let r = @xml.XmlReader::new(serialized)
+  let ev = next_event(r)
+  let attrs = match ev {
+    StartElement(_, a) => a
+    _ => raise Malformed("stroke re-parse: expected StartElement")
+  }
+  @oxml.parse_stroke(r, attrs) catch {
+    e => raise Malformed(e.to_string())
+  }
+}
+
+///|
+fn parse_fill_from_element(el : @xml.XmlElement) -> @oxml.Fill raise SlideError {
+  let serialized = serialize_standalone_xml(el)
+  let r = @xml.XmlReader::new(serialized)
+  let ev = next_event(r)
+  let (name, attrs) = match ev {
+    StartElement(n, a) => (n, a)
+    _ => raise Malformed("fill re-parse: expected StartElement")
+  }
+  @oxml.parse_fill(r, name, attrs) catch {
+    e => raise Malformed(e.to_string())
+  }
 }
 
 ///|

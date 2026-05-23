@@ -47,7 +47,7 @@ full feature comparison.
 | 3 | Read path | ✅ Done |
 | 4 | Write path | ✅ Done |
 | 5 | Builder API (create from scratch) | 🚧 5a–5f done; open-verification pending |
-| 6 | Tables | ⏳ |
+| 6 | Tables | ✅ Done |
 | 7 | Charts | ⏳ |
 | 8 | Differentiators (SmartArt, animation, …) | ⏳ |
 | 9 | 1.0 release | ⏳ |

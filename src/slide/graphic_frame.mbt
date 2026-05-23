@@ -69,14 +69,10 @@ pub(all) enum GraphicFrameContent {
 /// `<a:tbl>` — a parsed table. Source order is preserved: rows are
 /// emitted in array order, and cells within a row likewise.
 pub(all) struct Table {
-  /// `<a:tblPr>` body captured wholesale. The table-properties
-  /// schema mixes simple booleans (`firstRow`, `firstCol`,
-  /// `bandRow`, etc.) with nested elements (`<a:tableStyleId>`,
-  /// `<a:tableStyle>`); typing it gradually is fine because the
-  /// writer just re-emits the captured element. The `Option`
-  /// distinguishes "absent" (PowerPoint sometimes omits) from
-  /// "present but empty".
-  properties : @xml.XmlElement?
+  /// `<a:tblPr>` typed body — style-hint flags + table style ID +
+  /// fill. `None` when the spec-optional element is absent.
+  /// `Some(TableProperties::default())` writes an empty `<a:tblPr/>`.
+  properties : TableProperties?
   /// `<a:tblGrid>` — column widths in EMU, one entry per
   /// `<a:gridCol>`. Cell positions in `Table.rows[i].cells` line
   /// up with these positions.
@@ -125,12 +121,9 @@ pub(all) struct TableCell {
   /// `<a:txBody>` cell contents. Empty when the cell is purely
   /// decorative or part of a merge.
   text_body : TextBody?
-  /// `<a:tcPr>` body captured wholesale. Cell margins (`marL` /
-  /// `marR` / `marT` / `marB`), text anchor, fill choice, borders
-  /// (`lnL` / `lnR` / `lnT` / `lnB` / `lnTlToBr` / `lnBlToTr`) all
-  /// live inside it. Phase 6d lifts the common fields into typed
-  /// `TableCellProperties`.
-  properties : @xml.XmlElement?
+  /// `<a:tcPr>` typed body — margins, anchor, fill, borders.
+  /// `None` when the spec-optional element is absent.
+  properties : TableCellProperties?
   /// Lossless preservation (ADR-004) for any other captured `<a:tc>`
   /// children — `<a:extLst>` and similar.
   extension : Array[@xml.XmlElement]
