@@ -24,14 +24,19 @@ let ns_r : String = "http://schemas.openxmlformats.org/officeDocument/2006/relat
 
 ///|
 /// Build a PPTX byte stream containing one theme + one master + one
-/// layout + one slide. Sufficient to verify every Presentation
-/// accessor returns the expected count, without the full surface area
-/// of `@integration`'s fixtures.
+/// layout + one slide. The presentation.xml carries a real
+/// `<p:sldIdLst>` so the Phase 5b1 ordered-slide path resolves the
+/// slide via its relationship instead of falling back to package
+/// order.
 fn minimal_pptx() -> FixedArray[Byte] {
   let entries : Array[(String, FixedArray[Byte])] = [
     ("[Content_Types].xml", @fzip.str_to_u8(content_types_xml())),
     ("_rels/.rels", @fzip.str_to_u8(pkg_rels_xml())),
     ("ppt/presentation.xml", @fzip.str_to_u8(presentation_xml())),
+    (
+      "ppt/_rels/presentation.xml.rels",
+      @fzip.str_to_u8(presentation_rels_xml()),
+    ),
     ("ppt/theme/theme1.xml", @fzip.str_to_u8(theme_xml())),
     ("ppt/slideMasters/slideMaster1.xml", @fzip.str_to_u8(master_xml())),
     ("ppt/slideLayouts/slideLayout1.xml", @fzip.str_to_u8(layout_xml())),
@@ -78,10 +83,35 @@ fn pkg_rels_xml() -> String {
 
 ///|
 fn presentation_xml() -> String {
-  // Stub presentation.xml; we don't parse it via Phase 5a, just keep
-  // a well-formed shell so `Package::open` doesn't choke on missing
-  // content.
-  "<?xml version=\"1.0\"?><p:presentation xmlns:p=\"" + ns_p + "\"/>"
+  // Realistic presentation.xml: one master + one slide + the canonical
+  // slide / notes coordinate spaces. Drives the Phase 5b1 ordered-
+  // slides path through its happy case.
+  "<?xml version=\"1.0\"?>" +
+  "<p:presentation xmlns:p=\"" +
+  ns_p +
+  "\" xmlns:r=\"" +
+  ns_r +
+  "\">" +
+  "<p:sldMasterIdLst>" +
+  "<p:sldMasterId id=\"2147483648\" r:id=\"rId1\"/>" +
+  "</p:sldMasterIdLst>" +
+  "<p:sldIdLst>" +
+  "<p:sldId id=\"256\" r:id=\"rId2\"/>" +
+  "</p:sldIdLst>" +
+  "<p:sldSz cx=\"9144000\" cy=\"6858000\" type=\"screen4x3\"/>" +
+  "<p:notesSz cx=\"6858000\" cy=\"9144000\"/>" +
+  "</p:presentation>"
+}
+
+///|
+fn presentation_rels_xml() -> String {
+  "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+  "<Relationships xmlns=\"" +
+  ns_pkg_rels +
+  "\">" +
+  "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster\" Target=\"slideMasters/slideMaster1.xml\"/>" +
+  "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide1.xml\"/>" +
+  "</Relationships>"
 }
 
 ///|
@@ -237,4 +267,159 @@ test "Presentation: notes + comments accessors handle decks that omit them" {
   assert_eq(prs.notes_slides().length(), 0)
   assert_eq(prs.comment_lists().length(), 0)
   assert_true(prs.comment_authors() is None)
+}
+
+// --- Phase 5b1: presentation.xml + ordered slides ---
+
+///|
+test "PresentationPart::parse: extracts sldMasterId / sldId / sizes" {
+  let prs = @presentation.Presentation::open(minimal_pptx())
+  let pres = prs.presentation_part().unwrap()
+  assert_eq(pres.sld_master_ids.length(), 1)
+  assert_eq(pres.sld_master_ids[0].id, 2147483648L)
+  assert_eq(pres.sld_master_ids[0].r_id, "rId1")
+  assert_eq(pres.sld_ids.length(), 1)
+  assert_eq(pres.sld_ids[0].id, 256L)
+  assert_eq(pres.sld_ids[0].r_id, "rId2")
+  let sz = pres.sld_sz.unwrap()
+  assert_eq(sz.cx, @units.Emu(9144000L))
+  assert_eq(sz.cy, @units.Emu(6858000L))
+  assert_eq(sz.size_type, "screen4x3")
+  let nsz = pres.notes_sz.unwrap()
+  assert_eq(nsz.cx, @units.Emu(6858000L))
+  assert_eq(nsz.cy, @units.Emu(9144000L))
+}
+
+///|
+test "PresentationPart: round-trip parse → serialize → parse" {
+  let prs = @presentation.Presentation::open(minimal_pptx())
+  let pres0 = prs.presentation_part().unwrap()
+  let bytes = pres0.serialize()
+  let pres1 = @presentation.PresentationPart::parse(bytes)
+  assert_true(pres0 == pres1)
+}
+
+///|
+test "Presentation::slides: uses sldIdLst order, not package order" {
+  // Build a deck with two slides where the package stores them as
+  // slide2.xml before slide1.xml (insertion order), but presentation
+  // .xml's sldIdLst references slide1 first.  `slides()` should
+  // return slide1 first.
+  let bytes = two_slide_pptx_reversed_storage()
+  let prs = @presentation.Presentation::open(bytes)
+  let slides = prs.slides()
+  assert_eq(slides.length(), 2)
+  // slide1 (first in sldIdLst) carries name="Slide 1" in our fixture;
+  // slide2 carries name="Slide 2".
+  assert_eq(slides[0].name, "Slide 1")
+  assert_eq(slides[1].name, "Slide 2")
+}
+
+///|
+test "Presentation::slides: missing main-document rel falls back to package order" {
+  // Strip the package rels so there's no officeDocument relationship.
+  // The fallback path scans by content-type, which gives one slide
+  // in this fixture.
+  let prs = @presentation.Presentation::open(minimal_pptx_without_pkg_rel())
+  assert_eq(prs.slides().length(), 1)
+}
+
+// --- supporting fixtures ---
+
+///|
+/// Build a 2-slide deck where ZIP storage order is slide2 → slide1 but
+/// presentation.xml's `<p:sldIdLst>` lists rId2 (→ slide1) first.
+fn two_slide_pptx_reversed_storage() -> FixedArray[Byte] {
+  let pres_xml = "<?xml version=\"1.0\"?>" +
+    "<p:presentation xmlns:p=\"" +
+    ns_p +
+    "\" xmlns:r=\"" +
+    ns_r +
+    "\">" +
+    "<p:sldMasterIdLst>" +
+    "<p:sldMasterId id=\"2147483648\" r:id=\"rId1\"/>" +
+    "</p:sldMasterIdLst>" +
+    "<p:sldIdLst>" +
+    "<p:sldId id=\"256\" r:id=\"rId2\"/>" +
+    "<p:sldId id=\"257\" r:id=\"rId3\"/>" +
+    "</p:sldIdLst>" +
+    "</p:presentation>"
+  let rels = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+    "<Relationships xmlns=\"" +
+    ns_pkg_rels +
+    "\">" +
+    "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster\" Target=\"slideMasters/slideMaster1.xml\"/>" +
+    "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide1.xml\"/>" +
+    "<Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide2.xml\"/>" +
+    "</Relationships>"
+  let slide2_xml = "<?xml version=\"1.0\"?>" +
+    "<p:sld xmlns:p=\"" +
+    ns_p +
+    "\" xmlns:a=\"" +
+    ns_a +
+    "\">" +
+    "<p:cSld name=\"Slide 2\"><p:spTree>" +
+    "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
+    "<p:grpSpPr/>" +
+    "</p:spTree></p:cSld></p:sld>"
+  let ct_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+    "<Types xmlns=\"" +
+    ns_ct +
+    "\">" +
+    "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>" +
+    "<Default Extension=\"xml\" ContentType=\"application/xml\"/>" +
+    "<Override PartName=\"/ppt/presentation.xml\" ContentType=\"" +
+    @oxml.ct_presentation +
+    "\"/>" +
+    "<Override PartName=\"/ppt/theme/theme1.xml\" ContentType=\"" +
+    @oxml.ct_theme +
+    "\"/>" +
+    "<Override PartName=\"/ppt/slideMasters/slideMaster1.xml\" ContentType=\"" +
+    @oxml.ct_slide_master +
+    "\"/>" +
+    "<Override PartName=\"/ppt/slideLayouts/slideLayout1.xml\" ContentType=\"" +
+    @oxml.ct_slide_layout +
+    "\"/>" +
+    "<Override PartName=\"/ppt/slides/slide1.xml\" ContentType=\"" +
+    @oxml.ct_slide +
+    "\"/>" +
+    "<Override PartName=\"/ppt/slides/slide2.xml\" ContentType=\"" +
+    @oxml.ct_slide +
+    "\"/>" +
+    "</Types>"
+  // Note: slide2 is inserted into the zip BEFORE slide1 so package
+  // storage order is reversed relative to sldIdLst.
+  let entries : Array[(String, FixedArray[Byte])] = [
+    ("[Content_Types].xml", @fzip.str_to_u8(ct_xml)),
+    ("_rels/.rels", @fzip.str_to_u8(pkg_rels_xml())),
+    ("ppt/presentation.xml", @fzip.str_to_u8(pres_xml)),
+    ("ppt/_rels/presentation.xml.rels", @fzip.str_to_u8(rels)),
+    ("ppt/theme/theme1.xml", @fzip.str_to_u8(theme_xml())),
+    ("ppt/slideMasters/slideMaster1.xml", @fzip.str_to_u8(master_xml())),
+    ("ppt/slideLayouts/slideLayout1.xml", @fzip.str_to_u8(layout_xml())),
+    ("ppt/slides/slide2.xml", @fzip.str_to_u8(slide2_xml)),
+    ("ppt/slides/slide1.xml", @fzip.str_to_u8(slide_xml())),
+  ]
+  @fzip.zip_sync(entries)
+}
+
+///|
+/// Same as `minimal_pptx` but the package-level rels file is empty,
+/// so `main_document_part_name` returns `None` and `slides()` falls
+/// back to package order.
+fn minimal_pptx_without_pkg_rel() -> FixedArray[Byte] {
+  let empty_pkg_rels = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+    "<Relationships xmlns=\"" +
+    ns_pkg_rels +
+    "\"/>"
+  let entries : Array[(String, FixedArray[Byte])] = [
+    ("[Content_Types].xml", @fzip.str_to_u8(content_types_xml())),
+    ("_rels/.rels", @fzip.str_to_u8(empty_pkg_rels)),
+    ("ppt/presentation.xml", @fzip.str_to_u8(presentation_xml())),
+    ("ppt/theme/theme1.xml", @fzip.str_to_u8(theme_xml())),
+    ("ppt/slideMasters/slideMaster1.xml", @fzip.str_to_u8(master_xml())),
+    ("ppt/slideLayouts/slideLayout1.xml", @fzip.str_to_u8(layout_xml())),
+    ("ppt/slides/slide1.xml", @fzip.str_to_u8(slide_xml())),
+  ]
+  @fzip.zip_sync(entries)
 }

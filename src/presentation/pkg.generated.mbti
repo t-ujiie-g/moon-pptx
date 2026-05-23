@@ -9,6 +9,8 @@ import {
   "t-ujiie-g/moon_pptx/slide",
   "t-ujiie-g/moon_pptx/slide_master",
   "t-ujiie-g/moon_pptx/theme",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
 }
 
 // Values
@@ -26,6 +28,11 @@ pub(all) suberror PptxError {
 pub impl Show for PptxError
 
 // Types and methods
+pub(all) struct NotesSize {
+  cx : @units.Emu
+  cy : @units.Emu
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Presentation {
   pkg : @opc.Package
 }
@@ -33,11 +40,40 @@ pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
 pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
+pub fn Presentation::presentation_part(Self) -> PresentationPart? raise PptxError
 pub fn Presentation::save(Self) -> FixedArray[Byte]
 pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] raise PptxError
 pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] raise PptxError
 pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
 pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
+
+pub(all) struct PresentationPart {
+  sld_master_ids : Array[SlideMasterIdRef]
+  sld_ids : Array[SlideIdRef]
+  notes_master_id : SlideIdRef?
+  handout_master_id : SlideIdRef?
+  sld_sz : SlideSize?
+  notes_sz : NotesSize?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn PresentationPart::parse(FixedArray[Byte]) -> Self raise PptxError
+pub fn PresentationPart::serialize(Self) -> FixedArray[Byte] raise PptxError
+
+pub(all) struct SlideIdRef {
+  id : Int64
+  r_id : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SlideMasterIdRef {
+  id : Int64
+  r_id : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SlideSize {
+  cx : @units.Emu
+  cy : @units.Emu
+  size_type : String
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

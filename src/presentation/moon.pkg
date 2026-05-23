@@ -6,6 +6,8 @@ import {
   "t-ujiie-g/moon_pptx/slide",
   "t-ujiie-g/moon_pptx/slide_master",
   "t-ujiie-g/moon_pptx/theme",
+  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon_pptx/xml",
 }
 
 import {
