@@ -208,11 +208,12 @@ fn write_plot(
     Pie3DChart(body) => write_pie_3d_chart(w, ctx, body)
     DoughnutChart(body) => write_doughnut_chart(w, ctx, body)
     RadarChart(body) => write_radar_chart(w, ctx, body)
-    _ =>
-      match p.element() {
-        Some(e) => @oxml.write_xml_element(w, ctx, e)
-        None => () // unreachable: only typed variants return None
-      }
+    ScatterChart(body) => write_scatter_chart(w, ctx, body)
+    BubbleChart(body) => write_bubble_chart(w, ctx, body)
+    StockChart(body) => write_stock_chart(w, ctx, body)
+    SurfaceChart(body) => write_surface_chart(w, ctx, body)
+    Surface3DChart(body) => write_surface_3d_chart(w, ctx, body)
+    OfPieChart(body) => write_of_pie_chart(w, ctx, body)
   }
 }
 
@@ -579,6 +580,216 @@ fn write_radar_chart(
   }
   for id in b.ax_ids {
     emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+// --- scatter / bubble / stock / surface / surface3D / ofPie writers ---
+
+///|
+fn write_scatter_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : ScatterChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "scatterChart"))
+  emit_val_string(w, "scatterStyle", b.scatter_style.to_xml())
+  match b.vary_colors {
+    Some(v) => emit_val_bool(w, "varyColors", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+fn write_bubble_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : BubbleChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "bubbleChart"))
+  match b.vary_colors {
+    Some(v) => emit_val_bool(w, "varyColors", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.bubble_3d {
+    Some(v) => emit_val_bool(w, "bubble3D", v)
+    None => ()
+  }
+  match b.bubble_scale {
+    Some(n) => emit_val_int(w, "bubbleScale", n)
+    None => ()
+  }
+  match b.show_neg_bubbles {
+    Some(v) => emit_val_bool(w, "showNegBubbles", v)
+    None => ()
+  }
+  match b.size_represents {
+    Some(s) => emit_val_string(w, "sizeRepresents", s.to_xml())
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+fn write_stock_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : StockChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "stockChart"))
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.drop_lines {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.hi_low_lines {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.up_down_bars {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+fn write_surface_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : SurfaceChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "surfaceChart"))
+  match b.wireframe {
+    Some(v) => emit_val_bool(w, "wireframe", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.band_fmts {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+fn write_surface_3d_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : Surface3DChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "surface3DChart"))
+  match b.wireframe {
+    Some(v) => emit_val_bool(w, "wireframe", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.band_fmts {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+fn write_of_pie_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : OfPieChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "ofPieChart"))
+  emit_val_string(w, "ofPieType", b.of_pie_type.to_xml())
+  match b.vary_colors {
+    Some(v) => emit_val_bool(w, "varyColors", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.gap_width {
+    Some(n) => emit_val_int(w, "gapWidth", n)
+    None => ()
+  }
+  match b.split_type {
+    Some(s) => emit_val_string(w, "splitType", s.to_xml())
+    None => ()
+  }
+  match b.split_pos {
+    Some(s) => emit_val_string(w, "splitPos", s)
+    None => ()
+  }
+  match b.cust_split {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.second_pie_size {
+    Some(n) => emit_val_int(w, "secondPieSize", n)
+    None => ()
+  }
+  for sl in b.ser_lines {
+    @oxml.write_xml_element(w, ctx, sl)
   }
   for ext in b.extension {
     @oxml.write_xml_element(w, ctx, ext)

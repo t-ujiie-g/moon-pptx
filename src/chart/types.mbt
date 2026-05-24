@@ -219,12 +219,12 @@ pub(all) enum Plot {
   LineChart(LineChartBody)
   /// `<c:line3DChart>` — typed body.
   Line3DChart(Line3DChartBody)
-  /// `<c:stockChart>` — body still captured as XmlElement.
-  StockChart(@xml.XmlElement)
+  /// `<c:stockChart>` — typed body.
+  StockChart(StockChartBody)
   /// `<c:radarChart>` — typed body.
   RadarChart(RadarChartBody)
-  /// `<c:scatterChart>` — body still captured as XmlElement.
-  ScatterChart(@xml.XmlElement)
+  /// `<c:scatterChart>` — typed body.
+  ScatterChart(ScatterChartBody)
   /// `<c:pieChart>` — typed body.
   PieChart(PieChartBody)
   /// `<c:pie3DChart>` — typed body.
@@ -235,14 +235,14 @@ pub(all) enum Plot {
   BarChart(BarChartBody)
   /// `<c:bar3DChart>` — typed body.
   Bar3DChart(Bar3DChartBody)
-  /// `<c:ofPieChart>` — body still captured as XmlElement.
-  OfPieChart(@xml.XmlElement)
-  /// `<c:surfaceChart>` — body still captured as XmlElement.
-  SurfaceChart(@xml.XmlElement)
-  /// `<c:surface3DChart>` — body still captured as XmlElement.
-  Surface3DChart(@xml.XmlElement)
-  /// `<c:bubbleChart>` — body still captured as XmlElement.
-  BubbleChart(@xml.XmlElement)
+  /// `<c:ofPieChart>` — typed body.
+  OfPieChart(OfPieChartBody)
+  /// `<c:surfaceChart>` — typed body.
+  SurfaceChart(SurfaceChartBody)
+  /// `<c:surface3DChart>` — typed body.
+  Surface3DChart(Surface3DChartBody)
+  /// `<c:bubbleChart>` — typed body.
+  BubbleChart(BubbleChartBody)
 } derive(Eq, Debug)
 
 ///|
@@ -277,30 +277,12 @@ pub fn Plot::local_name(self : Plot) -> String {
 }
 
 ///|
-/// The captured XmlElement payload that backs untyped `Plot`
-/// variants. Returns `None` for typed variants (`BarChart`,
-/// `LineChart`, `PieChart`, …). Callers that need the raw element
-/// for an untyped kind can use this; typed variants expose their
-/// own typed accessor via pattern matching.
-pub fn Plot::element(self : Plot) -> @xml.XmlElement? {
-  match self {
-    StockChart(e)
-    | ScatterChart(e)
-    | OfPieChart(e)
-    | SurfaceChart(e)
-    | Surface3DChart(e)
-    | BubbleChart(e) => Some(e)
-    BarChart(_)
-    | LineChart(_)
-    | PieChart(_)
-    | AreaChart(_)
-    | Area3DChart(_)
-    | Line3DChart(_)
-    | RadarChart(_)
-    | Pie3DChart(_)
-    | DoughnutChart(_)
-    | Bar3DChart(_) => None
-  }
+/// Returns the captured `XmlElement` for `Plot` variants that haven't
+/// been lifted to a typed body. Every variant is now typed, so this
+/// always returns `None`; kept on the public surface for callers that
+/// were probing for "is this variant still capture-only?".
+pub fn Plot::element(_self : Plot) -> @xml.XmlElement? {
+  None
 }
 
 ///|

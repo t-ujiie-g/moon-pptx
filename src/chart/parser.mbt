@@ -222,18 +222,18 @@ fn plot_from_local_name(
     "area3DChart" => Some(Area3DChart(parse_area_3d_chart(el)))
     "lineChart" => Some(LineChart(parse_line_chart(el)))
     "line3DChart" => Some(Line3DChart(parse_line_3d_chart(el)))
-    "stockChart" => Some(StockChart(el))
+    "stockChart" => Some(StockChart(parse_stock_chart(el)))
     "radarChart" => Some(RadarChart(parse_radar_chart(el)))
-    "scatterChart" => Some(ScatterChart(el))
+    "scatterChart" => Some(ScatterChart(parse_scatter_chart(el)))
     "pieChart" => Some(PieChart(parse_pie_chart(el)))
     "pie3DChart" => Some(Pie3DChart(parse_pie_3d_chart(el)))
     "doughnutChart" => Some(DoughnutChart(parse_doughnut_chart(el)))
     "barChart" => Some(BarChart(parse_bar_chart(el)))
     "bar3DChart" => Some(Bar3DChart(parse_bar_3d_chart(el)))
-    "ofPieChart" => Some(OfPieChart(el))
-    "surfaceChart" => Some(SurfaceChart(el))
-    "surface3DChart" => Some(Surface3DChart(el))
-    "bubbleChart" => Some(BubbleChart(el))
+    "ofPieChart" => Some(OfPieChart(parse_of_pie_chart(el)))
+    "surfaceChart" => Some(SurfaceChart(parse_surface_chart(el)))
+    "surface3DChart" => Some(Surface3DChart(parse_surface_3d_chart(el)))
+    "bubbleChart" => Some(BubbleChart(parse_bubble_chart(el)))
     _ => None
   }
 }
@@ -713,6 +713,263 @@ fn parse_radar_chart(el : @xml.XmlElement) -> RadarChartBody raise ChartError {
     None => raise Malformed("<c:radarChart> is missing required <c:radarStyle>")
   }
   { radar_style: rs, vary_colors, series, d_lbls, ax_ids, extension }
+}
+
+// --- scatter / bubble / stock / surface / surface3D / ofPie parsers ---
+
+///|
+fn parse_scatter_chart(
+  el : @xml.XmlElement,
+) -> ScatterChartBody raise ChartError {
+  let mut scatter_style : ScatterStyle? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "scatterStyle" =>
+              scatter_style = parse_val_string_attr(c.attributes).bind(
+                ScatterStyle::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let ss = match scatter_style {
+    Some(s) => s
+    None =>
+      raise Malformed("<c:scatterChart> is missing required <c:scatterStyle>")
+  }
+  { scatter_style: ss, vary_colors, series, d_lbls, ax_ids, extension }
+}
+
+///|
+fn parse_bubble_chart(el : @xml.XmlElement) -> BubbleChartBody {
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut bubble_3d : Bool? = None
+  let mut bubble_scale : Int? = None
+  let mut show_neg_bubbles : Bool? = None
+  let mut size_represents : SizeRepresents? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "bubble3D" => bubble_3d = parse_val_bool_attr(c.attributes)
+            "bubbleScale" => bubble_scale = parse_val_int_attr(c.attributes)
+            "showNegBubbles" =>
+              show_neg_bubbles = parse_val_bool_attr(c.attributes)
+            "sizeRepresents" =>
+              size_represents = parse_val_string_attr(c.attributes).bind(
+                SizeRepresents::from_xml,
+              )
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  {
+    vary_colors,
+    series,
+    d_lbls,
+    bubble_3d,
+    bubble_scale,
+    show_neg_bubbles,
+    size_represents,
+    ax_ids,
+    extension,
+  }
+}
+
+///|
+fn parse_stock_chart(el : @xml.XmlElement) -> StockChartBody {
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut drop_lines : @xml.XmlElement? = None
+  let mut hi_low_lines : @xml.XmlElement? = None
+  let mut up_down_bars : @xml.XmlElement? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "dropLines" => drop_lines = Some(c)
+            "hiLowLines" => hi_low_lines = Some(c)
+            "upDownBars" => up_down_bars = Some(c)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { series, d_lbls, drop_lines, hi_low_lines, up_down_bars, ax_ids, extension }
+}
+
+///|
+fn parse_surface_chart(el : @xml.XmlElement) -> SurfaceChartBody {
+  let mut wireframe : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut band_fmts : @xml.XmlElement? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "wireframe" => wireframe = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "bandFmts" => band_fmts = Some(c)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { wireframe, series, band_fmts, ax_ids, extension }
+}
+
+///|
+fn parse_surface_3d_chart(el : @xml.XmlElement) -> Surface3DChartBody {
+  let mut wireframe : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut band_fmts : @xml.XmlElement? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "wireframe" => wireframe = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "bandFmts" => band_fmts = Some(c)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { wireframe, series, band_fmts, ax_ids, extension }
+}
+
+///|
+fn parse_of_pie_chart(el : @xml.XmlElement) -> OfPieChartBody raise ChartError {
+  let mut of_pie_type : OfPieType? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut gap_width : Int? = None
+  let mut split_type : SplitType? = None
+  let mut split_pos : String? = None
+  let mut cust_split : @xml.XmlElement? = None
+  let mut second_pie_size : Int? = None
+  let ser_lines : Array[@xml.XmlElement] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "ofPieType" =>
+              of_pie_type = parse_val_string_attr(c.attributes).bind(
+                OfPieType::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "gapWidth" => gap_width = parse_val_int_attr(c.attributes)
+            "splitType" =>
+              split_type = parse_val_string_attr(c.attributes).bind(
+                SplitType::from_xml,
+              )
+            "splitPos" => split_pos = parse_val_string_attr(c.attributes)
+            "custSplit" => cust_split = Some(c)
+            "secondPieSize" =>
+              second_pie_size = parse_val_int_attr(c.attributes)
+            "serLines" => ser_lines.push(c)
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let opt = match of_pie_type {
+    Some(t) => t
+    None => raise Malformed("<c:ofPieChart> is missing required <c:ofPieType>")
+  }
+  {
+    of_pie_type: opt,
+    vary_colors,
+    series,
+    d_lbls,
+    gap_width,
+    split_type,
+    split_pos,
+    cust_split,
+    second_pie_size,
+    ser_lines,
+    extension,
+  }
 }
 
 // --- attribute helpers ---

@@ -107,6 +107,19 @@ pub fn BarShape::from_xml(String) -> Self?
 pub fn BarShape::to_xml(Self) -> String
 pub impl Show for BarShape
 
+pub(all) struct BubbleChartBody {
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  bubble_3d : Bool?
+  bubble_scale : Int?
+  show_neg_bubbles : Bool?
+  size_represents : SizeRepresents?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for BubbleChartBody
+
 pub(all) struct Chart {
   date1904 : Bool?
   lang : String?
@@ -191,6 +204,29 @@ pub(all) struct LineChartBody {
 } derive(Eq, @debug.Debug)
 pub impl Show for LineChartBody
 
+pub(all) struct OfPieChartBody {
+  of_pie_type : OfPieType
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  gap_width : Int?
+  split_type : SplitType?
+  split_pos : String?
+  cust_split : @xml.XmlElement?
+  second_pie_size : Int?
+  ser_lines : Array[@xml.XmlElement]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for OfPieChartBody
+
+pub(all) enum OfPieType {
+  Pie
+  Bar
+} derive(Eq, @debug.Debug)
+pub fn OfPieType::from_xml(String) -> Self?
+pub fn OfPieType::to_xml(Self) -> String
+pub impl Show for OfPieType
+
 pub(all) struct Pie3DChartBody {
   vary_colors : Bool?
   series : Array[@xml.XmlElement]
@@ -213,18 +249,18 @@ pub(all) enum Plot {
   Area3DChart(Area3DChartBody)
   LineChart(LineChartBody)
   Line3DChart(Line3DChartBody)
-  StockChart(@xml.XmlElement)
+  StockChart(StockChartBody)
   RadarChart(RadarChartBody)
-  ScatterChart(@xml.XmlElement)
+  ScatterChart(ScatterChartBody)
   PieChart(PieChartBody)
   Pie3DChart(Pie3DChartBody)
   DoughnutChart(DoughnutChartBody)
   BarChart(BarChartBody)
   Bar3DChart(Bar3DChartBody)
-  OfPieChart(@xml.XmlElement)
-  SurfaceChart(@xml.XmlElement)
-  Surface3DChart(@xml.XmlElement)
-  BubbleChart(@xml.XmlElement)
+  OfPieChart(OfPieChartBody)
+  SurfaceChart(SurfaceChartBody)
+  Surface3DChart(Surface3DChartBody)
+  BubbleChart(BubbleChartBody)
 } derive(Eq, @debug.Debug)
 pub fn Plot::element(Self) -> @xml.XmlElement?
 pub fn Plot::local_name(Self) -> String
@@ -258,6 +294,76 @@ pub(all) enum RadarStyle {
 pub fn RadarStyle::from_xml(String) -> Self?
 pub fn RadarStyle::to_xml(Self) -> String
 pub impl Show for RadarStyle
+
+pub(all) struct ScatterChartBody {
+  scatter_style : ScatterStyle
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ScatterChartBody
+
+pub(all) enum ScatterStyle {
+  Line
+  LineMarker
+  Marker
+  None_
+  Smooth
+  SmoothMarker
+} derive(Eq, @debug.Debug)
+pub fn ScatterStyle::from_xml(String) -> Self?
+pub fn ScatterStyle::to_xml(Self) -> String
+pub impl Show for ScatterStyle
+
+pub(all) enum SizeRepresents {
+  Area
+  Width
+} derive(Eq, @debug.Debug)
+pub fn SizeRepresents::from_xml(String) -> Self?
+pub fn SizeRepresents::to_xml(Self) -> String
+pub impl Show for SizeRepresents
+
+pub(all) enum SplitType {
+  Auto
+  Cust
+  Percent
+  Pos
+  Val
+} derive(Eq, @debug.Debug)
+pub fn SplitType::from_xml(String) -> Self?
+pub fn SplitType::to_xml(Self) -> String
+pub impl Show for SplitType
+
+pub(all) struct StockChartBody {
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  drop_lines : @xml.XmlElement?
+  hi_low_lines : @xml.XmlElement?
+  up_down_bars : @xml.XmlElement?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for StockChartBody
+
+pub(all) struct Surface3DChartBody {
+  wireframe : Bool?
+  series : Array[@xml.XmlElement]
+  band_fmts : @xml.XmlElement?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Surface3DChartBody
+
+pub(all) struct SurfaceChartBody {
+  wireframe : Bool?
+  series : Array[@xml.XmlElement]
+  band_fmts : @xml.XmlElement?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for SurfaceChartBody
 
 // Type aliases
 
