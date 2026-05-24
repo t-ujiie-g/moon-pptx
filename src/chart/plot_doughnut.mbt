@@ -9,7 +9,7 @@
 ///|
 pub(all) struct DoughnutChartBody {
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   d_lbls : @xml.XmlElement?
   /// `<c:firstSliceAng val="…"/>` — integer degrees 0..360.
   first_slice_ang : Int?

@@ -19,7 +19,7 @@ pub(all) struct PieChartBody {
   /// `val="1"` because slice-by-slice colouring is the visual point.
   vary_colors : Bool?
   /// `<c:ser>` series — usually one for pie charts. Captured `<XmlElement>`.
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   /// `<c:dLbls>` — optional data labels. Captured verbatim.
   d_lbls : @xml.XmlElement?
   /// `<c:firstSliceAng val="…"/>` — integer degrees 0..360 for the

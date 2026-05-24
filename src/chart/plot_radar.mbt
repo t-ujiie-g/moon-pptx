@@ -8,7 +8,7 @@
 pub(all) struct RadarChartBody {
   radar_style : RadarStyle
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   d_lbls : @xml.XmlElement?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]

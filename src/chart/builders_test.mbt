@@ -212,10 +212,8 @@ test "Chart::of_scatter: series carry xVal + yVal (not cat+val)" {
   match chart.chart.plot_area.plots[0] {
     ScatterChart(b) => {
       let s = b.series[0]
-      assert_true(has_child(s, "xVal"))
-      assert_true(has_child(s, "yVal"))
-      assert_false(has_child(s, "cat"))
-      assert_false(has_child(s, "val"))
+      assert_true(s.x_val is Some(_))
+      assert_true(s.y_val is Some(_))
     }
     _ => fail("expected ScatterChart")
   }
@@ -245,9 +243,9 @@ test "Chart::of_bubble: series carry xVal + yVal + bubbleSize" {
   match chart.chart.plot_area.plots[0] {
     BubbleChart(b) => {
       let s = b.series[0]
-      assert_true(has_child(s, "xVal"))
-      assert_true(has_child(s, "yVal"))
-      assert_true(has_child(s, "bubbleSize"))
+      assert_true(s.x_val is Some(_))
+      assert_true(s.y_val is Some(_))
+      assert_true(s.bubble_size is Some(_))
     }
     _ => fail("expected BubbleChart")
   }
@@ -475,16 +473,12 @@ test "synthesized series: idx + order assigned sequentially" {
   let chart = @chart.Chart::of_bar(quarterly_revenue())
   match chart.chart.plot_area.plots[0] {
     BarChart(b) => {
-      // First series carries <c:idx val="0"/> <c:order val="0"/>.
       let s0 = b.series[0]
-      let idx_val = find_val(s0, "idx")
-      let order_val = find_val(s0, "order")
-      assert_eq(idx_val, "0")
-      assert_eq(order_val, "0")
-      // Second series → idx=1, order=1.
+      assert_eq(s0.idx, 0)
+      assert_eq(s0.order, 0)
       let s1 = b.series[1]
-      assert_eq(find_val(s1, "idx"), "1")
-      assert_eq(find_val(s1, "order"), "1")
+      assert_eq(s1.idx, 1)
+      assert_eq(s1.order, 1)
     }
     _ => fail("expected BarChart")
   }
@@ -496,9 +490,9 @@ test "synthesized series: every series carries cat + val children" {
   match chart.chart.plot_area.plots[0] {
     BarChart(b) =>
       for s in b.series {
-        assert_true(has_child(s, "cat"))
-        assert_true(has_child(s, "val"))
-        assert_true(has_child(s, "tx"))
+        assert_true(s.cat is Some(_))
+        assert_true(s.val is Some(_))
+        assert_true(s.tx is Some(_))
       }
     _ => fail("expected BarChart")
   }
@@ -516,8 +510,8 @@ test "synthesized series: shorter values array gets zero-padded" {
   match chart.chart.plot_area.plots[0] {
     BarChart(b) => {
       let s = b.series[0]
-      // Find <c:val><c:numLit><c:ptCount val="3"/>…
-      let val = find_child(s, "val")
+      // <c:val><c:numLit><c:ptCount val="3"/>…
+      let val = s.val.unwrap()
       let num_lit = find_child(val, "numLit")
       let pt_count = find_val(num_lit, "ptCount")
       assert_eq(pt_count, "3")
@@ -558,15 +552,4 @@ fn find_child(
     }
   }
   fail("child <" + local_name + "> not found")
-}
-
-///|
-fn has_child(el : @xml.XmlElement, local_name : String) -> Bool {
-  for node in el.children {
-    match node {
-      Element(c) => if c.name.local_name == local_name { return true }
-      _ => ()
-    }
-  }
-  false
 }

@@ -1,11 +1,11 @@
 // High-level chart-from-scratch builders.
 //
 // The chart-family typed bodies (BarChartBody, LineChartBody,
-// PieChartBody, …) carry their `<c:ser>` children as captured
-// `XmlElement` payloads — series will get their own typed AST in a
-// later slice. Builders here hide that XmlElement plumbing behind a
-// data-oriented `ChartData` value, so callers can produce a complete
-// `Chart` without touching the DOM:
+// PieChartBody, …) carry their series as typed `ChartSeriesCore` /
+// `ScatterSeriesCore` / `BubbleSeriesCore` values (see series.mbt).
+// Builders here hide that plumbing behind a data-oriented
+// `ChartData` value, so callers can produce a complete `Chart`
+// without touching the DOM:
 //
 //   let data = ChartData::new()
 //     .with_category("Q1").with_category("Q2").with_category("Q3")
@@ -354,7 +354,7 @@ pub fn Chart::of_scatter(
   data : ScatterData,
   scatter_style? : ScatterStyle = LineMarker,
 ) -> Chart {
-  let series_xml : Array[@xml.XmlElement] = []
+  let series_xml : Array[ScatterSeriesCore] = []
   for i, s in data.series {
     series_xml.push(synthesize_scatter_series(i, s))
   }
@@ -386,7 +386,7 @@ pub fn Chart::of_scatter(
 /// scatter, both axes are value axes. Each series contributes
 /// X, Y, and bubble-size values.
 pub fn Chart::of_bubble(data : BubbleData) -> Chart {
-  let series_xml : Array[@xml.XmlElement] = []
+  let series_xml : Array[BubbleSeriesCore] = []
   for i, s in data.series {
     series_xml.push(synthesize_bubble_series(i, s))
   }
@@ -745,14 +745,14 @@ fn wrap_chart(plot_area : PlotArea) -> Chart {
   }
 }
 
-// --- inline series-XmlElement synthesis ---
+// --- inline series synthesis ---
 
 ///|
-/// Build one `<c:ser>` element per `ChartSeries`, each carrying
+/// Build one `ChartSeriesCore` per `ChartSeries`, each carrying
 /// inline `<c:strLit>` categories and `<c:numLit>` values. The
-/// series `idx` and `order` attributes are assigned sequentially.
-fn synthesize_series(data : ChartData) -> Array[@xml.XmlElement] {
-  let out : Array[@xml.XmlElement] = []
+/// series `idx` and `order` are assigned sequentially.
+fn synthesize_series(data : ChartData) -> Array[ChartSeriesCore] {
+  let out : Array[ChartSeriesCore] = []
   for i, s in data.series {
     out.push(synthesize_one_series(i, s, data.categories))
   }
@@ -764,54 +764,67 @@ fn synthesize_one_series(
   index : Int,
   s : ChartSeries,
   categories : Array[String],
-) -> @xml.XmlElement {
-  let children : Array[@xml.XmlNode] = []
-  children.push(Element(val_leaf("idx", index.to_string())))
-  children.push(Element(val_leaf("order", index.to_string())))
+) -> ChartSeriesCore {
   // <c:tx><c:v>label</c:v></c:tx> — series-title alternative to strRef
-  children.push(
-    Element(c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])),
-  )
-  children.push(Element(category_axis_data_lit(categories)))
-  children.push(Element(numeric_data_lit("val", s.values, categories.length())))
-  c_elem("ser", [], children)
+  let tx = c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])
+  let cat = category_axis_data_lit(categories)
+  let val = numeric_data_lit("val", s.values, categories.length())
+  {
+    idx: index,
+    order: index,
+    tx: Some(tx),
+    sp_pr: None,
+    cat: Some(cat),
+    val: Some(val),
+    extension: [],
+  }
 }
 
 ///|
-/// Build a `<c:ser>` element for `ScatterChart` series. Body:
+/// Build a `ScatterSeriesCore` from a `ScatterSeries`. Body:
 /// idx / order / tx / xVal / yVal.
-fn synthesize_scatter_series(index : Int, s : ScatterSeries) -> @xml.XmlElement {
-  let children : Array[@xml.XmlNode] = []
-  children.push(Element(val_leaf("idx", index.to_string())))
-  children.push(Element(val_leaf("order", index.to_string())))
-  children.push(
-    Element(c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])),
-  )
+fn synthesize_scatter_series(
+  index : Int,
+  s : ScatterSeries,
+) -> ScatterSeriesCore {
+  let tx = c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])
   let count = if s.x.length() > s.y.length() {
     s.x.length()
   } else {
     s.y.length()
   }
-  children.push(Element(numeric_data_lit("xVal", s.x, count)))
-  children.push(Element(numeric_data_lit("yVal", s.y, count)))
-  c_elem("ser", [], children)
+  let x_val = numeric_data_lit("xVal", s.x, count)
+  let y_val = numeric_data_lit("yVal", s.y, count)
+  {
+    idx: index,
+    order: index,
+    tx: Some(tx),
+    sp_pr: None,
+    x_val: Some(x_val),
+    y_val: Some(y_val),
+    extension: [],
+  }
 }
 
 ///|
-/// Build a `<c:ser>` element for `BubbleChart` series. Body:
+/// Build a `BubbleSeriesCore` from a `BubbleSeries`. Body:
 /// idx / order / tx / xVal / yVal / bubbleSize.
-fn synthesize_bubble_series(index : Int, s : BubbleSeries) -> @xml.XmlElement {
-  let children : Array[@xml.XmlNode] = []
-  children.push(Element(val_leaf("idx", index.to_string())))
-  children.push(Element(val_leaf("order", index.to_string())))
-  children.push(
-    Element(c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])),
-  )
+fn synthesize_bubble_series(index : Int, s : BubbleSeries) -> BubbleSeriesCore {
+  let tx = c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])
   let count = max3(s.x.length(), s.y.length(), s.size.length())
-  children.push(Element(numeric_data_lit("xVal", s.x, count)))
-  children.push(Element(numeric_data_lit("yVal", s.y, count)))
-  children.push(Element(numeric_data_lit("bubbleSize", s.size, count)))
-  c_elem("ser", [], children)
+  let x_val = numeric_data_lit("xVal", s.x, count)
+  let y_val = numeric_data_lit("yVal", s.y, count)
+  let bubble_size = numeric_data_lit("bubbleSize", s.size, count)
+  {
+    idx: index,
+    order: index,
+    tx: Some(tx),
+    sp_pr: None,
+    x_val: Some(x_val),
+    y_val: Some(y_val),
+    bubble_size: Some(bubble_size),
+    extension: [],
+  }
 }
 
 ///|

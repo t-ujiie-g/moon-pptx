@@ -16,7 +16,7 @@
 ///|
 pub(all) struct SurfaceChartBody {
   wireframe : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   /// `<c:bandFmts>` (CT_BandFmts) — band formatting overrides.
   /// Captured XmlElement.
   band_fmts : @xml.XmlElement?
@@ -34,7 +34,7 @@ pub impl Show for SurfaceChartBody with fn output(self, logger) {
 ///|
 pub(all) struct Surface3DChartBody {
   wireframe : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   band_fmts : @xml.XmlElement?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]

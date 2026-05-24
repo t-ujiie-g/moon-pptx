@@ -22,7 +22,7 @@ fn parse_bar_chart(el : @xml.XmlElement) -> BarChartBody raise ChartError {
   let mut bar_dir : BarDir? = None
   let mut grouping : BarGrouping? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut gap_width : Int? = None
   let mut overlap : Int? = None
@@ -44,7 +44,7 @@ fn parse_bar_chart(el : @xml.XmlElement) -> BarChartBody raise ChartError {
                 BarGrouping::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "gapWidth" => gap_width = parse_val_int_attr(c.attributes)
             "overlap" => overlap = parse_val_int_attr(c.attributes)
@@ -81,7 +81,7 @@ fn parse_bar_chart(el : @xml.XmlElement) -> BarChartBody raise ChartError {
 fn parse_line_chart(el : @xml.XmlElement) -> LineChartBody raise ChartError {
   let mut grouping : Grouping? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut drop_lines : @xml.XmlElement? = None
   let mut hi_low_lines : @xml.XmlElement? = None
@@ -102,7 +102,7 @@ fn parse_line_chart(el : @xml.XmlElement) -> LineChartBody raise ChartError {
                 Grouping::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "dropLines" => drop_lines = Some(c)
             "hiLowLines" => hi_low_lines = Some(c)
@@ -144,9 +144,9 @@ fn parse_line_chart(el : @xml.XmlElement) -> LineChartBody raise ChartError {
 /// Pie charts have no axIds and the schema doesn't mark any leaf as
 /// required, so the parser never raises Malformed for a missing-child
 /// reason here.
-fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody {
+fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody raise ChartError {
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut first_slice_ang : Int? = None
   let extension : Array[@xml.XmlElement] = []
@@ -158,7 +158,7 @@ fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody {
         } else {
           match c.name.local_name {
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "firstSliceAng" =>
               first_slice_ang = parse_val_int_attr(c.attributes)
@@ -174,10 +174,10 @@ fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody {
 // --- area / 3-D variants / doughnut / radar ---
 
 ///|
-fn parse_area_chart(el : @xml.XmlElement) -> AreaChartBody {
+fn parse_area_chart(el : @xml.XmlElement) -> AreaChartBody raise ChartError {
   let mut grouping : Grouping? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut drop_lines : @xml.XmlElement? = None
   let ax_ids : Array[Int] = []
@@ -194,7 +194,7 @@ fn parse_area_chart(el : @xml.XmlElement) -> AreaChartBody {
                 Grouping::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "dropLines" => drop_lines = Some(c)
             "axId" =>
@@ -212,10 +212,12 @@ fn parse_area_chart(el : @xml.XmlElement) -> AreaChartBody {
 }
 
 ///|
-fn parse_area_3d_chart(el : @xml.XmlElement) -> Area3DChartBody {
+fn parse_area_3d_chart(
+  el : @xml.XmlElement,
+) -> Area3DChartBody raise ChartError {
   let mut grouping : Grouping? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut drop_lines : @xml.XmlElement? = None
   let mut gap_depth : Int? = None
@@ -233,7 +235,7 @@ fn parse_area_3d_chart(el : @xml.XmlElement) -> Area3DChartBody {
                 Grouping::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "dropLines" => drop_lines = Some(c)
             "gapDepth" => gap_depth = parse_val_int_attr(c.attributes)
@@ -265,7 +267,7 @@ fn parse_bar_3d_chart(el : @xml.XmlElement) -> Bar3DChartBody raise ChartError {
   let mut bar_dir : BarDir? = None
   let mut grouping : BarGrouping? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut gap_width : Int? = None
   let mut gap_depth : Int? = None
@@ -288,7 +290,7 @@ fn parse_bar_3d_chart(el : @xml.XmlElement) -> Bar3DChartBody raise ChartError {
                 BarGrouping::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "gapWidth" => gap_width = parse_val_int_attr(c.attributes)
             "gapDepth" => gap_depth = parse_val_int_attr(c.attributes)
@@ -331,7 +333,7 @@ fn parse_line_3d_chart(
 ) -> Line3DChartBody raise ChartError {
   let mut grouping : Grouping? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut drop_lines : @xml.XmlElement? = None
   let mut gap_depth : Int? = None
@@ -349,7 +351,7 @@ fn parse_line_3d_chart(
                 Grouping::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "dropLines" => drop_lines = Some(c)
             "gapDepth" => gap_depth = parse_val_int_attr(c.attributes)
@@ -381,9 +383,9 @@ fn parse_line_3d_chart(
 }
 
 ///|
-fn parse_pie_3d_chart(el : @xml.XmlElement) -> Pie3DChartBody {
+fn parse_pie_3d_chart(el : @xml.XmlElement) -> Pie3DChartBody raise ChartError {
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let extension : Array[@xml.XmlElement] = []
   for node in el.children {
@@ -394,7 +396,7 @@ fn parse_pie_3d_chart(el : @xml.XmlElement) -> Pie3DChartBody {
         } else {
           match c.name.local_name {
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             _ => extension.push(c)
           }
@@ -406,9 +408,11 @@ fn parse_pie_3d_chart(el : @xml.XmlElement) -> Pie3DChartBody {
 }
 
 ///|
-fn parse_doughnut_chart(el : @xml.XmlElement) -> DoughnutChartBody {
+fn parse_doughnut_chart(
+  el : @xml.XmlElement,
+) -> DoughnutChartBody raise ChartError {
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut first_slice_ang : Int? = None
   let mut hole_size : Int? = None
@@ -421,7 +425,7 @@ fn parse_doughnut_chart(el : @xml.XmlElement) -> DoughnutChartBody {
         } else {
           match c.name.local_name {
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "firstSliceAng" =>
               first_slice_ang = parse_val_int_attr(c.attributes)
@@ -439,7 +443,7 @@ fn parse_doughnut_chart(el : @xml.XmlElement) -> DoughnutChartBody {
 fn parse_radar_chart(el : @xml.XmlElement) -> RadarChartBody raise ChartError {
   let mut radar_style : RadarStyle? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let ax_ids : Array[Int] = []
   let extension : Array[@xml.XmlElement] = []
@@ -455,7 +459,7 @@ fn parse_radar_chart(el : @xml.XmlElement) -> RadarChartBody raise ChartError {
                 RadarStyle::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "axId" =>
               match parse_val_int_attr(c.attributes) {
@@ -483,7 +487,7 @@ fn parse_scatter_chart(
 ) -> ScatterChartBody raise ChartError {
   let mut scatter_style : ScatterStyle? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ScatterSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let ax_ids : Array[Int] = []
   let extension : Array[@xml.XmlElement] = []
@@ -499,7 +503,7 @@ fn parse_scatter_chart(
                 ScatterStyle::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_scatter_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "axId" =>
               match parse_val_int_attr(c.attributes) {
@@ -521,9 +525,9 @@ fn parse_scatter_chart(
 }
 
 ///|
-fn parse_bubble_chart(el : @xml.XmlElement) -> BubbleChartBody {
+fn parse_bubble_chart(el : @xml.XmlElement) -> BubbleChartBody raise ChartError {
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[BubbleSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut bubble_3d : Bool? = None
   let mut bubble_scale : Int? = None
@@ -539,7 +543,7 @@ fn parse_bubble_chart(el : @xml.XmlElement) -> BubbleChartBody {
         } else {
           match c.name.local_name {
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_bubble_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "bubble3D" => bubble_3d = parse_val_bool_attr(c.attributes)
             "bubbleScale" => bubble_scale = parse_val_int_attr(c.attributes)
@@ -574,8 +578,8 @@ fn parse_bubble_chart(el : @xml.XmlElement) -> BubbleChartBody {
 }
 
 ///|
-fn parse_stock_chart(el : @xml.XmlElement) -> StockChartBody {
-  let series : Array[@xml.XmlElement] = []
+fn parse_stock_chart(el : @xml.XmlElement) -> StockChartBody raise ChartError {
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut drop_lines : @xml.XmlElement? = None
   let mut hi_low_lines : @xml.XmlElement? = None
@@ -589,7 +593,7 @@ fn parse_stock_chart(el : @xml.XmlElement) -> StockChartBody {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "dropLines" => drop_lines = Some(c)
             "hiLowLines" => hi_low_lines = Some(c)
@@ -609,9 +613,11 @@ fn parse_stock_chart(el : @xml.XmlElement) -> StockChartBody {
 }
 
 ///|
-fn parse_surface_chart(el : @xml.XmlElement) -> SurfaceChartBody {
+fn parse_surface_chart(
+  el : @xml.XmlElement,
+) -> SurfaceChartBody raise ChartError {
   let mut wireframe : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut band_fmts : @xml.XmlElement? = None
   let ax_ids : Array[Int] = []
   let extension : Array[@xml.XmlElement] = []
@@ -623,7 +629,7 @@ fn parse_surface_chart(el : @xml.XmlElement) -> SurfaceChartBody {
         } else {
           match c.name.local_name {
             "wireframe" => wireframe = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "bandFmts" => band_fmts = Some(c)
             "axId" =>
               match parse_val_int_attr(c.attributes) {
@@ -640,9 +646,11 @@ fn parse_surface_chart(el : @xml.XmlElement) -> SurfaceChartBody {
 }
 
 ///|
-fn parse_surface_3d_chart(el : @xml.XmlElement) -> Surface3DChartBody {
+fn parse_surface_3d_chart(
+  el : @xml.XmlElement,
+) -> Surface3DChartBody raise ChartError {
   let mut wireframe : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut band_fmts : @xml.XmlElement? = None
   let ax_ids : Array[Int] = []
   let extension : Array[@xml.XmlElement] = []
@@ -654,7 +662,7 @@ fn parse_surface_3d_chart(el : @xml.XmlElement) -> Surface3DChartBody {
         } else {
           match c.name.local_name {
             "wireframe" => wireframe = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "bandFmts" => band_fmts = Some(c)
             "axId" =>
               match parse_val_int_attr(c.attributes) {
@@ -674,7 +682,7 @@ fn parse_surface_3d_chart(el : @xml.XmlElement) -> Surface3DChartBody {
 fn parse_of_pie_chart(el : @xml.XmlElement) -> OfPieChartBody raise ChartError {
   let mut of_pie_type : OfPieType? = None
   let mut vary_colors : Bool? = None
-  let series : Array[@xml.XmlElement] = []
+  let series : Array[ChartSeriesCore] = []
   let mut d_lbls : @xml.XmlElement? = None
   let mut gap_width : Int? = None
   let mut split_type : SplitType? = None
@@ -695,7 +703,7 @@ fn parse_of_pie_chart(el : @xml.XmlElement) -> OfPieChartBody raise ChartError {
                 OfPieType::from_xml,
               )
             "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
-            "ser" => series.push(c)
+            "ser" => series.push(parse_chart_series_core(c))
             "dLbls" => d_lbls = Some(c)
             "gapWidth" => gap_width = parse_val_int_attr(c.attributes)
             "splitType" =>

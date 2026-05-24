@@ -29,7 +29,7 @@ pub(all) struct BarChartBody {
   vary_colors : Bool?
   /// `<c:ser>` — zero or more series in source order. Captured
   /// verbatim; typed (CT_BarSer body) by a later 7a slice.
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   /// `<c:dLbls>` — optional data labels. Captured verbatim.
   d_lbls : @xml.XmlElement?
   /// `<c:gapWidth val="…"/>` — percentage; integer in the source.

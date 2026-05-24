@@ -20,7 +20,7 @@
 pub(all) struct StockChartBody {
   /// `<c:ser>` — three for HLC charts, four for OHLC. Captured
   /// XmlElement payloads.
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   d_lbls : @xml.XmlElement?
   drop_lines : @xml.XmlElement?
   hi_low_lines : @xml.XmlElement?

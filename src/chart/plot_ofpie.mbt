@@ -23,7 +23,7 @@
 pub(all) struct OfPieChartBody {
   of_pie_type : OfPieType
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   d_lbls : @xml.XmlElement?
   gap_width : Int?
   split_type : SplitType?

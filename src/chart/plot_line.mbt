@@ -26,7 +26,7 @@ pub(all) struct LineChartBody {
   /// `<c:varyColors>` — optional bool.
   vary_colors : Bool?
   /// `<c:ser>` series in source order — captured `<XmlElement>`.
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   /// `<c:dLbls>` — optional. Captured verbatim.
   d_lbls : @xml.XmlElement?
   /// `<c:dropLines>` (CT_ChartLines) — optional. Vertical drop

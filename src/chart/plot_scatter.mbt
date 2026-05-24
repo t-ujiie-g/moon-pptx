@@ -17,7 +17,7 @@
 pub(all) struct ScatterChartBody {
   scatter_style : ScatterStyle
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ScatterSeriesCore]
   d_lbls : @xml.XmlElement?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]

@@ -13,7 +13,7 @@
 pub(all) struct AreaChartBody {
   grouping : Grouping?
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   d_lbls : @xml.XmlElement?
   drop_lines : @xml.XmlElement?
   ax_ids : Array[Int]
@@ -31,7 +31,7 @@ pub impl Show for AreaChartBody with fn output(self, logger) {
 pub(all) struct Area3DChartBody {
   grouping : Grouping?
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[ChartSeriesCore]
   d_lbls : @xml.XmlElement?
   drop_lines : @xml.XmlElement?
   /// `<c:gapDepth val="…"/>` — depth of the gap between data

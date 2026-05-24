@@ -15,7 +15,7 @@
 ///|
 pub(all) struct BubbleChartBody {
   vary_colors : Bool?
-  series : Array[@xml.XmlElement]
+  series : Array[BubbleSeriesCore]
   d_lbls : @xml.XmlElement?
   bubble_3d : Bool?
   /// `<c:bubbleScale val="…"/>` — integer percentage 0..300.

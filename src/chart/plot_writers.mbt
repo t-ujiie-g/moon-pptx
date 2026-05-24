@@ -25,7 +25,7 @@ fn write_bar_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -62,7 +62,7 @@ fn write_line_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -110,7 +110,7 @@ fn write_pie_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -144,7 +144,7 @@ fn write_area_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -179,7 +179,7 @@ fn write_area_3d_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -219,7 +219,7 @@ fn write_bar_3d_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -259,7 +259,7 @@ fn write_line_3d_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -294,7 +294,7 @@ fn write_pie_3d_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -318,7 +318,7 @@ fn write_doughnut_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -351,7 +351,7 @@ fn write_radar_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -381,7 +381,7 @@ fn write_scatter_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_scatter_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -408,7 +408,7 @@ fn write_bubble_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_bubble_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -447,7 +447,7 @@ fn write_stock_chart(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "stockChart"))
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -486,7 +486,7 @@ fn write_surface_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.band_fmts {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -513,7 +513,7 @@ fn write_surface_3d_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.band_fmts {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -541,7 +541,7 @@ fn write_of_pie_chart(
     None => ()
   }
   for s in b.series {
-    @oxml.write_xml_element(w, ctx, s)
+    write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
