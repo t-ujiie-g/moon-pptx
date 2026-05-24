@@ -45,6 +45,16 @@ pub let rt_theme : String = "http://schemas.openxmlformats.org/officeDocument/20
 pub let rt_image : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
 
 ///|
+/// `…/relationships/chart` — slide → embedded chart part rel.
+pub let rt_chart : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"
+
+///|
+/// `…/2014/relationships/chartEx` — slide → embedded extended-chart
+/// (Microsoft 2016 chartEx) rel. Distinct from `rt_chart`: chart
+/// and chartEx parts use separate content types and rel types.
+pub let rt_chart_ex : String = "http://schemas.microsoft.com/office/2014/relationships/chartEx"
+
+///|
 /// `…/relationships/notesSlide` — slide → notes-slide rel.
 pub let rt_notes_slide : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide"
 

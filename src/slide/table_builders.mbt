@@ -203,3 +203,48 @@ pub fn GraphicFrame::of_table(
     extension: [],
   }
 }
+
+///|
+/// Wrap a chart relationship id in a `GraphicFrame`. The actual
+/// chart bytes live in a separate `/ppt/charts/chartN.xml` part;
+/// `embed_rid` is the slide's relationship id pointing at that
+/// part. Pair with `@presentation.Presentation::add_chart_mut`
+/// for the full OPC plumbing.
+pub fn GraphicFrame::of_chart_ref(
+  id : Int,
+  name : String,
+  x : @units.Emu,
+  y : @units.Emu,
+  cx : @units.Emu,
+  cy : @units.Emu,
+  embed_rid : String,
+) -> GraphicFrame {
+  {
+    id,
+    name,
+    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    content: ChartContent(embed_rid),
+    extension: [],
+  }
+}
+
+///|
+/// Same as `of_chart_ref` but for the Microsoft 2016 extended
+/// chart family (`chartEx`).
+pub fn GraphicFrame::of_chart_ex_ref(
+  id : Int,
+  name : String,
+  x : @units.Emu,
+  y : @units.Emu,
+  cx : @units.Emu,
+  cy : @units.Emu,
+  embed_rid : String,
+) -> GraphicFrame {
+  {
+    id,
+    name,
+    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    content: ChartExContent(embed_rid),
+    extension: [],
+  }
+}

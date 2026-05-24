@@ -25,6 +25,10 @@ pub fn rels_path_for(String) -> String
 
 pub fn resolve_target(String, String, TargetMode) -> String
 
+pub let rt_chart : String
+
+pub let rt_chart_ex : String
+
 pub let rt_comment_authors : String
 
 pub let rt_comments : String
