@@ -1,16 +1,12 @@
-// Chart XML reader — Phase 7a1 + 7a2 + 7a3a.
+// Chart XML reader.
 //
-// Phase 7a1 introduced the streaming entry point and captured the
-// entire `<c:chartSpace>` body wholesale. Phase 7a2 walks that body
-// instead, peels off the chartSpace-level scalar fields (`date1904`,
-// `lang`, `roundedCorners`, `style`), descends into `<c:chart>` and
-// lifts the scalar / enum-valued header leaves there
-// (`autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs`,
-// `showDLblsOverMax`). Phase 7a3a lifts the `<c:plotArea>` body —
-// the structural skeleton (layout / plots / axes / dTable / spPr /
-// extension) is typed; individual plot-family bodies and axis bodies
-// still ride as captured XmlElement payloads inside their respective
-// `Plot` / `Axis` variants until later 7a slices type them.
+// Walks `<c:chartSpace>` → `<c:chart>` → `<c:plotArea>` → plot family
+// bodies / axes. Each level peels off the scalar / enum leaves it
+// knows about and either captures the substantial subtrees as
+// `XmlElement` (lossless preservation per ADR-004) or descends into
+// a typed body parser when the family has been lifted. The list of
+// typed chart-family bodies grows over time; untyped families keep
+// round-tripping through the captured-element fallback.
 
 ///|
 /// Parse a chart part from raw XML bytes. Root element must be
@@ -168,7 +164,7 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
   }
 }
 
-// --- plotArea (7a3a) ---
+// --- plotArea ---
 
 ///|
 /// Walk a `<c:plotArea>` body. Caller has consumed the
@@ -212,9 +208,8 @@ fn parse_plot_area(r : @xml.XmlReader) -> PlotArea raise ChartError {
 
 ///|
 /// Dispatch a chart-namespace element local-name to a `Plot` variant.
-/// Typed variants (currently `barChart` — Phase 7a3b) walk their
-/// captured `<XmlElement>` to produce a typed body; the remaining
-/// variants stay as wholesale captures until later 7a slices.
+/// Typed variants walk their captured `<XmlElement>` to produce a
+/// typed body; untyped variants stay as wholesale captures.
 ///
 /// Returns `None` for non-plot elements (the caller continues to
 /// `axis_from_local_name`).
@@ -223,18 +218,18 @@ fn plot_from_local_name(
   el : @xml.XmlElement,
 ) -> Plot? raise ChartError {
   match name {
-    "areaChart" => Some(AreaChart(el))
-    "area3DChart" => Some(Area3DChart(el))
+    "areaChart" => Some(AreaChart(parse_area_chart(el)))
+    "area3DChart" => Some(Area3DChart(parse_area_3d_chart(el)))
     "lineChart" => Some(LineChart(parse_line_chart(el)))
-    "line3DChart" => Some(Line3DChart(el))
+    "line3DChart" => Some(Line3DChart(parse_line_3d_chart(el)))
     "stockChart" => Some(StockChart(el))
-    "radarChart" => Some(RadarChart(el))
+    "radarChart" => Some(RadarChart(parse_radar_chart(el)))
     "scatterChart" => Some(ScatterChart(el))
     "pieChart" => Some(PieChart(parse_pie_chart(el)))
-    "pie3DChart" => Some(Pie3DChart(el))
-    "doughnutChart" => Some(DoughnutChart(el))
+    "pie3DChart" => Some(Pie3DChart(parse_pie_3d_chart(el)))
+    "doughnutChart" => Some(DoughnutChart(parse_doughnut_chart(el)))
     "barChart" => Some(BarChart(parse_bar_chart(el)))
-    "bar3DChart" => Some(Bar3DChart(el))
+    "bar3DChart" => Some(Bar3DChart(parse_bar_3d_chart(el)))
     "ofPieChart" => Some(OfPieChart(el))
     "surfaceChart" => Some(SurfaceChart(el))
     "surface3DChart" => Some(Surface3DChart(el))
@@ -245,10 +240,10 @@ fn plot_from_local_name(
 
 ///|
 /// Walk a captured `<c:barChart>` element into a typed
-/// `BarChartBody`. Element order in the source XML is the schema
-/// order (`barDir` → `grouping` → `varyColors` → `ser*` → `dLbls`
-/// → `gapWidth` → `overlap` → `axId{2,3}` → `extLst`), but the
-/// parser tolerates any order — we just dispatch on local-name.
+/// `BarChartBody`. The schema specifies a fixed child order
+/// (`barDir` → `grouping` → `varyColors` → `ser*` → `dLbls` →
+/// `gapWidth` → `overlap` → `axId{2,3}` → `extLst`), but the parser
+/// tolerates any order — we just dispatch on local-name.
 fn parse_bar_chart(el : @xml.XmlElement) -> BarChartBody raise ChartError {
   let mut bar_dir : BarDir? = None
   let mut grouping : BarGrouping? = None
@@ -322,7 +317,7 @@ fn axis_from_local_name(name : String, el : @xml.XmlElement) -> Axis? {
 
 ///|
 /// Walk a captured `<c:lineChart>` element into a typed
-/// `LineChartBody`. Phase 7a3c.
+/// `LineChartBody`.
 fn parse_line_chart(el : @xml.XmlElement) -> LineChartBody raise ChartError {
   let mut grouping : Grouping? = None
   let mut vary_colors : Bool? = None
@@ -386,9 +381,9 @@ fn parse_line_chart(el : @xml.XmlElement) -> LineChartBody raise ChartError {
 
 ///|
 /// Walk a captured `<c:pieChart>` element into a typed
-/// `PieChartBody`. Phase 7a3d. Pie charts have no axIds — the
-/// schema doesn't require any required scalar fields, so the
-/// parser never raises Malformed for a missing-child reason here.
+/// `PieChartBody`. Pie charts have no axIds and the schema
+/// doesn't mark any leaf as required, so the parser never raises
+/// Malformed for a missing-child reason here.
 fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody {
   let mut vary_colors : Bool? = None
   let series : Array[@xml.XmlElement] = []
@@ -414,6 +409,310 @@ fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody {
     }
   }
   { vary_colors, series, d_lbls, first_slice_ang, extension }
+}
+
+// --- area / 3-D variants / doughnut / radar parsers ---
+
+///|
+fn parse_area_chart(el : @xml.XmlElement) -> AreaChartBody {
+  let mut grouping : Grouping? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut drop_lines : @xml.XmlElement? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "grouping" =>
+              grouping = parse_val_string_attr(c.attributes).bind(
+                Grouping::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "dropLines" => drop_lines = Some(c)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { grouping, vary_colors, series, d_lbls, drop_lines, ax_ids, extension }
+}
+
+///|
+fn parse_area_3d_chart(el : @xml.XmlElement) -> Area3DChartBody {
+  let mut grouping : Grouping? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut drop_lines : @xml.XmlElement? = None
+  let mut gap_depth : Int? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "grouping" =>
+              grouping = parse_val_string_attr(c.attributes).bind(
+                Grouping::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "dropLines" => drop_lines = Some(c)
+            "gapDepth" => gap_depth = parse_val_int_attr(c.attributes)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  {
+    grouping,
+    vary_colors,
+    series,
+    d_lbls,
+    drop_lines,
+    gap_depth,
+    ax_ids,
+    extension,
+  }
+}
+
+///|
+fn parse_bar_3d_chart(el : @xml.XmlElement) -> Bar3DChartBody raise ChartError {
+  let mut bar_dir : BarDir? = None
+  let mut grouping : BarGrouping? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut gap_width : Int? = None
+  let mut gap_depth : Int? = None
+  let mut shape : BarShape? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "barDir" =>
+              bar_dir = parse_val_string_attr(c.attributes).bind(
+                BarDir::from_xml,
+              )
+            "grouping" =>
+              grouping = parse_val_string_attr(c.attributes).bind(
+                BarGrouping::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "gapWidth" => gap_width = parse_val_int_attr(c.attributes)
+            "gapDepth" => gap_depth = parse_val_int_attr(c.attributes)
+            "shape" =>
+              shape = parse_val_string_attr(c.attributes).bind(
+                BarShape::from_xml,
+              )
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let bd = match bar_dir {
+    Some(d) => d
+    None => raise Malformed("<c:bar3DChart> is missing required <c:barDir>")
+  }
+  {
+    bar_dir: bd,
+    grouping,
+    vary_colors,
+    series,
+    d_lbls,
+    gap_width,
+    gap_depth,
+    shape,
+    ax_ids,
+    extension,
+  }
+}
+
+///|
+fn parse_line_3d_chart(
+  el : @xml.XmlElement,
+) -> Line3DChartBody raise ChartError {
+  let mut grouping : Grouping? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut drop_lines : @xml.XmlElement? = None
+  let mut gap_depth : Int? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "grouping" =>
+              grouping = parse_val_string_attr(c.attributes).bind(
+                Grouping::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "dropLines" => drop_lines = Some(c)
+            "gapDepth" => gap_depth = parse_val_int_attr(c.attributes)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let g = match grouping {
+    Some(g) => g
+    None => raise Malformed("<c:line3DChart> is missing required <c:grouping>")
+  }
+  {
+    grouping: g,
+    vary_colors,
+    series,
+    d_lbls,
+    drop_lines,
+    gap_depth,
+    ax_ids,
+    extension,
+  }
+}
+
+///|
+fn parse_pie_3d_chart(el : @xml.XmlElement) -> Pie3DChartBody {
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { vary_colors, series, d_lbls, extension }
+}
+
+///|
+fn parse_doughnut_chart(el : @xml.XmlElement) -> DoughnutChartBody {
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut first_slice_ang : Int? = None
+  let mut hole_size : Int? = None
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "firstSliceAng" =>
+              first_slice_ang = parse_val_int_attr(c.attributes)
+            "holeSize" => hole_size = parse_val_int_attr(c.attributes)
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { vary_colors, series, d_lbls, first_slice_ang, hole_size, extension }
+}
+
+///|
+fn parse_radar_chart(el : @xml.XmlElement) -> RadarChartBody raise ChartError {
+  let mut radar_style : RadarStyle? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "radarStyle" =>
+              radar_style = parse_val_string_attr(c.attributes).bind(
+                RadarStyle::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let rs = match radar_style {
+    Some(s) => s
+    None => raise Malformed("<c:radarChart> is missing required <c:radarStyle>")
+  }
+  { radar_style: rs, vary_colors, series, d_lbls, ax_ids, extension }
 }
 
 // --- attribute helpers ---

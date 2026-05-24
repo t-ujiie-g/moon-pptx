@@ -1,4 +1,4 @@
-// Line-chart family — Phase 7a3c slice.
+// Line-chart family.
 //
 // `<c:lineChart>` (ECMA-376 §21.2.2.97, `CT_LineChart`). Schema:
 //
@@ -14,8 +14,8 @@
 //   <c:axId>{2}     (REQUIRED — exactly two)
 //   <c:extLst>      (optional)
 //
-// Phase 7a3c types the scalar / enum leaves; the substantial
-// subtrees ride as `XmlElement?` payloads until later 7a slices.
+// The substantial subtrees (`<c:ser>`, `<c:dLbls>`, the three
+// line-decoration elements) stay as captured `XmlElement?` payloads.
 
 ///|
 /// Typed `<c:lineChart>` body.

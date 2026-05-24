@@ -1,4 +1,4 @@
-// Pie-chart parser / writer tests (Phase 7a3d).
+// Pie-chart parser / writer tests.
 
 ///|
 fn fixture_pie_chart_xml(body : String) -> FixedArray[Byte] {

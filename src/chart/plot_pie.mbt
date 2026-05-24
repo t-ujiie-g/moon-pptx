@@ -1,4 +1,4 @@
-// Pie-chart family — Phase 7a3d slice.
+// Pie-chart family.
 //
 // `<c:pieChart>` (ECMA-376 §21.2.2.141, `CT_PieChart`). Schema:
 //
@@ -10,7 +10,7 @@
 //
 // Pie charts have no axes (unlike bar / line / scatter), so the
 // body is the simplest of the typed families. Series and data
-// labels stay captured as `XmlElement` until later 7a slices.
+// labels stay captured as `XmlElement` until their own typing.
 
 ///|
 /// Typed `<c:pieChart>` body.

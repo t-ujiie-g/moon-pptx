@@ -1,4 +1,4 @@
-// Bar-chart parser / writer tests (Phase 7a3b).
+// Bar-chart parser / writer tests.
 
 ///|
 fn fixture_bar_chart_xml(body : String) -> FixedArray[Byte] {
@@ -80,8 +80,8 @@ test "BarChart: missing <c:barDir> raises Malformed" {
 
 ///|
 test "BarChart: <c:ser> children captured verbatim until typed" {
-  // A single series with a few inner children. The 7a3b slice doesn't
-  // type CT_BarSer; only verifies the captured payload survives.
+  // A single series with a few inner children. CT_BarSer is not yet
+  // typed; this test verifies the captured payload survives.
   let body = "<c:barChart>" +
     "<c:barDir val=\"col\"/>" +
     "<c:ser>" +

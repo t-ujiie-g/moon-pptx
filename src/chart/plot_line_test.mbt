@@ -1,4 +1,4 @@
-// Line-chart parser / writer tests (Phase 7a3c).
+// Line-chart parser / writer tests.
 
 ///|
 fn fixture_line_chart_xml(body : String) -> FixedArray[Byte] {

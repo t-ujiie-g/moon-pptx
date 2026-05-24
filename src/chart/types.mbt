@@ -1,4 +1,4 @@
-// Chart model — Phase 7a1 + 7a2 slices.
+// Chart model — top-level Chart / ChartBody types.
 //
 // A chart part (`/ppt/charts/chartN.xml`) is rooted at
 // `<c:chartSpace>` (DrawingML chart namespace,
@@ -21,14 +21,11 @@
 //   <c:userShapes>     (rId reference — optional)
 //   <c:extLst>         (extension list — optional)
 //
-// Phase 7a1 captured the entire body wholesale. Phase 7a2 lifts the
-// chartSpace-level scalar fields (`date1904` / `lang` /
-// `roundedCorners` / `style`) and the `<c:chart>` body's scalar
-// + enum header fields. The remaining children (`title` / `plotArea`
-// / `legend` / 3-D wrappers / clrMapOvr / pivotSource / protection /
-// spPr / txPr / externalData / printSettings / userShapes / extLst /
-// foreign-namespace) all ride on the appropriate `extension` array
-// per ADR-004 until later 7a slices type them.
+// Untyped subtrees (title, legend, plotArea-side untyped axes, the
+// 3-D wrappers, clrMapOvr, pivotSource, protection, spPr, txPr,
+// externalData, printSettings, userShapes, extLst, plus foreign-
+// namespace children) ride on their enclosing element's `extension`
+// array per ADR-004.
 
 ///|
 /// A parsed chart part (`/ppt/charts/chartN.xml`).
@@ -68,11 +65,11 @@ fn[T] ignore(_x : T) -> Unit {
 
 ///|
 /// `<c:chart>` body (ECMA-376 §21.2.2.6, `CT_Chart`). Most of the
-/// children are themselves substantial subtrees (title, plot area,
-/// legend, 3-D wrappers) and are kept as captured `XmlElement?` here
-/// until 7a3 (plot area) and later slices type them. The scalar /
-/// enum-valued leaves (`autoTitleDeleted`, `plotVisOnly`,
-/// `dispBlanksAs`, `showDLblsOverMax`) are lifted in Phase 7a2.
+/// children are themselves substantial subtrees (title, legend,
+/// 3-D wrappers) and are kept as captured `XmlElement?` here until
+/// later slices type them. The scalar / enum-valued leaves
+/// (`autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs`,
+/// `showDLblsOverMax`) are typed.
 pub(all) struct ChartBody {
   /// `<c:title>` (CT_Title). Optional. Captured verbatim until typed.
   title : @xml.XmlElement?
@@ -89,9 +86,9 @@ pub(all) struct ChartBody {
   side_wall : @xml.XmlElement?
   /// `<c:backWall>` (CT_Surface). Optional. Captured verbatim (3-D).
   back_wall : @xml.XmlElement?
-  /// `<c:plotArea>` (CT_PlotArea). REQUIRED. Typed at Phase 7a3a;
-  /// plot bodies and axis bodies stay as captured `XmlElement` payloads
-  /// inside their respective enums until later 7a slices type them.
+  /// `<c:plotArea>` (CT_PlotArea). REQUIRED. The structural skeleton
+  /// is typed; axis bodies and currently-untyped plot kinds stay as
+  /// captured `XmlElement` payloads inside their respective enums.
   plot_area : PlotArea
   /// `<c:legend>` (CT_Legend). Optional. Captured verbatim until typed.
   legend : @xml.XmlElement?
@@ -138,9 +135,9 @@ pub impl Show for DisplayBlanksAs with fn output(self, logger) {
 ///|
 /// Parse `<c:dispBlanksAs val>` token into the enum. Returns `None`
 /// for an unknown token so the caller can decide whether to ignore
-/// or raise. (Phase 7a2: ignored — schema requires the value but
-/// we'd rather round-trip the rest of the chart than reject on a
-/// schema violation in one leaf.)
+/// or raise. Currently callers ignore — schema requires the value
+/// but we'd rather round-trip the rest of the chart than reject on
+/// a schema violation in one leaf.
 pub fn DisplayBlanksAs::from_xml(s : String) -> DisplayBlanksAs? {
   match s {
     "span" => Some(Span)
@@ -160,7 +157,7 @@ pub fn DisplayBlanksAs::to_xml(self : DisplayBlanksAs) -> String {
   }
 }
 
-// --- PlotArea (Phase 7a3a) ---
+// --- PlotArea ---
 
 ///|
 /// `<c:plotArea>` body (ECMA-376 §21.2.2.14, `CT_PlotArea`).
@@ -175,12 +172,11 @@ pub fn DisplayBlanksAs::to_xml(self : DisplayBlanksAs) -> String {
 ///   <c:spPr>          (optional)
 ///   <c:extLst>        (optional)
 ///
-/// Phase 7a3a types the discrimination — `plots : Array[Plot]` and
-/// `axes : Array[Axis]` carry one variant per modelled element kind.
-/// Each variant currently wraps the captured `<XmlElement>` so the
-/// content round-trips losslessly even though no plot-family body
-/// or axis body is itself typed yet. Later 7a slices replace the
-/// inner `XmlElement` payloads with typed sub-models.
+/// `plots : Array[Plot]` and `axes : Array[Axis]` carry one variant
+/// per modelled element kind. Each variant either wraps a typed body
+/// (where the chart family has been lifted) or the captured
+/// `<XmlElement>` so the content round-trips losslessly. Untyped
+/// variants are migrated to typed bodies incrementally.
 pub(all) struct PlotArea {
   /// `<c:layout>` (CT_Layout). Captured verbatim — typed later.
   layout : @xml.XmlElement?
@@ -210,42 +206,42 @@ pub impl Show for PlotArea with fn output(self, logger) {
 
 ///|
 /// Discriminated chart-plot kinds — the choice element inside
-/// `<c:plotArea>`. Phase 7a3a names every spec'd kind and carries
-/// the captured `<XmlElement>` so the body round-trips losslessly.
-/// Phase 7a3b+ types each variant's body individually (`bar` first,
-/// then the other 15).
+/// `<c:plotArea>`. Names every spec'd kind. Variants whose body has
+/// been typed carry a `<Family>ChartBody` value; the remaining
+/// variants wrap the captured `<XmlElement>` so the body round-trips
+/// losslessly until typed.
 pub(all) enum Plot {
-  /// `<c:areaChart>`
-  AreaChart(@xml.XmlElement)
-  /// `<c:area3DChart>`
-  Area3DChart(@xml.XmlElement)
-  /// `<c:lineChart>` — typed at Phase 7a3c.
+  /// `<c:areaChart>` — typed body.
+  AreaChart(AreaChartBody)
+  /// `<c:area3DChart>` — typed body.
+  Area3DChart(Area3DChartBody)
+  /// `<c:lineChart>` — typed body.
   LineChart(LineChartBody)
-  /// `<c:line3DChart>`
-  Line3DChart(@xml.XmlElement)
-  /// `<c:stockChart>`
+  /// `<c:line3DChart>` — typed body.
+  Line3DChart(Line3DChartBody)
+  /// `<c:stockChart>` — body still captured as XmlElement.
   StockChart(@xml.XmlElement)
-  /// `<c:radarChart>`
-  RadarChart(@xml.XmlElement)
-  /// `<c:scatterChart>`
+  /// `<c:radarChart>` — typed body.
+  RadarChart(RadarChartBody)
+  /// `<c:scatterChart>` — body still captured as XmlElement.
   ScatterChart(@xml.XmlElement)
-  /// `<c:pieChart>` — typed at Phase 7a3d.
+  /// `<c:pieChart>` — typed body.
   PieChart(PieChartBody)
-  /// `<c:pie3DChart>`
-  Pie3DChart(@xml.XmlElement)
-  /// `<c:doughnutChart>`
-  DoughnutChart(@xml.XmlElement)
-  /// `<c:barChart>` — typed at Phase 7a3b.
+  /// `<c:pie3DChart>` — typed body.
+  Pie3DChart(Pie3DChartBody)
+  /// `<c:doughnutChart>` — typed body.
+  DoughnutChart(DoughnutChartBody)
+  /// `<c:barChart>` — typed body.
   BarChart(BarChartBody)
-  /// `<c:bar3DChart>`
-  Bar3DChart(@xml.XmlElement)
-  /// `<c:ofPieChart>`
+  /// `<c:bar3DChart>` — typed body.
+  Bar3DChart(Bar3DChartBody)
+  /// `<c:ofPieChart>` — body still captured as XmlElement.
   OfPieChart(@xml.XmlElement)
-  /// `<c:surfaceChart>`
+  /// `<c:surfaceChart>` — body still captured as XmlElement.
   SurfaceChart(@xml.XmlElement)
-  /// `<c:surface3DChart>`
+  /// `<c:surface3DChart>` — body still captured as XmlElement.
   Surface3DChart(@xml.XmlElement)
-  /// `<c:bubbleChart>`
+  /// `<c:bubbleChart>` — body still captured as XmlElement.
   BubbleChart(@xml.XmlElement)
 } derive(Eq, Debug)
 
@@ -282,26 +278,28 @@ pub fn Plot::local_name(self : Plot) -> String {
 
 ///|
 /// The captured XmlElement payload that backs untyped `Plot`
-/// variants. Returns `None` once a variant has been typed (Phase
-/// 7a3b began with `BarChart` → `BarChartBody`). Callers that need
-/// the raw element for an untyped kind can use this; typed variants
-/// expose their own typed accessor.
+/// variants. Returns `None` for typed variants (`BarChart`,
+/// `LineChart`, `PieChart`, …). Callers that need the raw element
+/// for an untyped kind can use this; typed variants expose their
+/// own typed accessor via pattern matching.
 pub fn Plot::element(self : Plot) -> @xml.XmlElement? {
   match self {
-    AreaChart(e)
-    | Area3DChart(e)
-    | Line3DChart(e)
-    | StockChart(e)
-    | RadarChart(e)
+    StockChart(e)
     | ScatterChart(e)
-    | Pie3DChart(e)
-    | DoughnutChart(e)
-    | Bar3DChart(e)
     | OfPieChart(e)
     | SurfaceChart(e)
     | Surface3DChart(e)
     | BubbleChart(e) => Some(e)
-    BarChart(_) | LineChart(_) | PieChart(_) => None
+    BarChart(_)
+    | LineChart(_)
+    | PieChart(_)
+    | AreaChart(_)
+    | Area3DChart(_)
+    | Line3DChart(_)
+    | RadarChart(_)
+    | Pie3DChart(_)
+    | DoughnutChart(_)
+    | Bar3DChart(_) => None
   }
 }
 

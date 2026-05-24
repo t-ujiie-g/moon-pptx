@@ -1,4 +1,4 @@
-// Chart end-to-end integration test (Phase 7a1).
+// Chart end-to-end integration test.
 //
 // Builds a synthetic deck that carries a `<p:graphicFrame>` referencing
 // a chart part (`/ppt/charts/chart1.xml`), validates that:
@@ -118,19 +118,19 @@ fn chart_deck() -> FixedArray[Byte] {
 // --- tests ---
 
 ///|
-test "Phase 7a1: chart deck opens and Presentation::charts() finds the part" {
+test "chart deck opens and Presentation::charts() finds the part" {
   let prs = @presentation.Presentation::open(chart_deck())
   let charts = prs.charts()
   assert_eq(charts.length(), 1)
   let chart = charts[0]
-  // Phase 7a3a: plotArea body is typed; the fixture's chart is a bar
-  // chart, so check for the expected plot kind.
+  // The fixture's chart is a bar chart; check for the expected
+  // typed plot kind.
   assert_eq(chart.chart.plot_area.plots.length(), 1)
   assert_eq(chart.chart.plot_area.plots[0].local_name(), "barChart")
 }
 
 ///|
-test "Phase 7a1: slide-side chart graphicFrame lifts to ChartContent(rid)" {
+test "slide-side chart graphicFrame lifts to ChartContent(rid)" {
   // Read the slide directly by content type — this fixture's
   // presentation.xml has no <p:sldIdLst>, so Presentation::slides()
   // can't resolve them by relationship. The shape-tree behaviour is
@@ -151,7 +151,7 @@ test "Phase 7a1: slide-side chart graphicFrame lifts to ChartContent(rid)" {
 }
 
 ///|
-test "Phase 7a1: chart deck round-trips through Package::to_bytes" {
+test "chart deck round-trips through Package::to_bytes" {
   let prs_in = @presentation.Presentation::open(chart_deck())
   let bytes = prs_in.save()
   let prs_out = @presentation.Presentation::open(bytes)
@@ -162,10 +162,11 @@ test "Phase 7a1: chart deck round-trips through Package::to_bytes" {
 }
 
 ///|
-test "Phase 7a1: slide-side ChartContent survives re_serialize_all" {
-  // The slide-side `<c:chart r:id=…/>` reference also needs to round-trip,
-  // since Phase 7a1 swapped `OtherGraphic(uri, captured)` for the
-  // typed `ChartContent(rid)` variant.
+test "slide-side ChartContent survives re_serialize_all" {
+  // The slide-side `<c:chart r:id=…/>` reference also needs to
+  // round-trip — chart URIs lift to the typed `ChartContent(rid)`
+  // variant of `GraphicFrameContent` instead of the generic
+  // `OtherGraphic(uri, captured)` fallback.
   let pkg_re = re_serialize_all(@opc.Package::open(chart_deck()))
   let pkg_out = @opc.Package::open(pkg_re.to_bytes())
   let slide_parts = parts_of(pkg_out, ct_slide)
@@ -181,7 +182,7 @@ test "Phase 7a1: slide-side ChartContent survives re_serialize_all" {
 }
 
 ///|
-test "Phase 7a1: chart_deck re_serialize_all preserves Chart" {
+test "chart_deck re_serialize_all preserves Chart" {
   // The strongest Phase-4-style invariant for the chart layer:
   // parse → serialize → reopen → re-parse must produce an equal Chart.
   let pkg_in = @opc.Package::open(chart_deck())

@@ -1,4 +1,5 @@
-// Chart parser tests (Phase 7a1).
+// Chart parser tests — top-level <c:chartSpace> / <c:chart> /
+// <c:plotArea> structure.
 
 ///|
 let chart_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/chart"
@@ -65,9 +66,9 @@ fn typical_chart_xml() -> String {
 }
 
 ///|
-test "Chart::parse: root recognised + plotArea typed (7a3a)" {
+test "Chart::parse: root recognised + plotArea typed" {
   let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
-  // <c:plotArea> is required; Phase 7a3a types its body.
+  // <c:plotArea> is required and typed.
   // Layout is the first optional child; our fixture has one.
   assert_true(chart.chart.plot_area.layout is Some(_))
   // One plot child: <c:barChart>.
@@ -76,7 +77,7 @@ test "Chart::parse: root recognised + plotArea typed (7a3a)" {
 }
 
 ///|
-test "Chart::parse: PlotArea axes are discriminated (7a3a)" {
+test "Chart::parse: PlotArea axes are discriminated" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<c:chartSpace xmlns:c=\"" +
     chart_ns +
@@ -97,7 +98,7 @@ test "Chart::parse: PlotArea axes are discriminated (7a3a)" {
 }
 
 ///|
-test "Chart::parse: combination chart with multiple plots (7a3a)" {
+test "Chart::parse: combination chart with multiple plots" {
   // A real-world combination chart: a barChart and a lineChart in the
   // same plot area.
   let xml = "<?xml version=\"1.0\"?>" +
@@ -120,7 +121,7 @@ test "Chart::parse: combination chart with multiple plots (7a3a)" {
 }
 
 ///|
-test "Chart::parse: typed chart-body scalar fields (7a2)" {
+test "Chart::parse: typed chart-body scalar fields" {
   let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
   // Our fixture has no `<c:autoTitleDeleted>` so this should be `None`.
   // Other 7a2 fields likewise.
@@ -130,7 +131,7 @@ test "Chart::parse: typed chart-body scalar fields (7a2)" {
 }
 
 ///|
-test "Chart::parse: typed chart-body fields from rich fixture (7a2)" {
+test "Chart::parse: typed chart-body fields from rich fixture" {
   // Build a chart that exercises every typed leaf the 7a2 slice lifts.
   let xml = "<?xml version=\"1.0\"?>" +
     "<c:chartSpace xmlns:c=\"" +
@@ -192,9 +193,10 @@ test "Chart::serialize: re-parse equals original (round-trip floor)" {
 
 ///|
 test "Chart::serialize: minimal chartSpace round-trips" {
-  // Phase 7a2 raises on missing <c:chart> or missing <c:plotArea> per
-  // the schema. This test confirms the absolute minimum valid chart
-  // (just the required elements) survives parse → serialize → parse.
+  // The parser raises on missing <c:chart> or missing <c:plotArea>
+  // per the schema. This test confirms the absolute minimum valid
+  // chart (just the required elements) survives parse → serialize
+  // → parse.
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     chart_ns +
     "\">" +

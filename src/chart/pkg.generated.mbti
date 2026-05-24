@@ -17,6 +17,29 @@ pub(all) suberror ChartError {
 pub impl Show for ChartError
 
 // Types and methods
+pub(all) struct Area3DChartBody {
+  grouping : Grouping?
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  drop_lines : @xml.XmlElement?
+  gap_depth : Int?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Area3DChartBody
+
+pub(all) struct AreaChartBody {
+  grouping : Grouping?
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  drop_lines : @xml.XmlElement?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for AreaChartBody
+
 pub(all) enum Axis {
   ValAx(@xml.XmlElement)
   CatAx(@xml.XmlElement)
@@ -26,6 +49,20 @@ pub(all) enum Axis {
 pub fn Axis::element(Self) -> @xml.XmlElement
 pub fn Axis::local_name(Self) -> String
 pub impl Show for Axis
+
+pub(all) struct Bar3DChartBody {
+  bar_dir : BarDir
+  grouping : BarGrouping?
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  gap_width : Int?
+  gap_depth : Int?
+  shape : BarShape?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Bar3DChartBody
 
 pub(all) struct BarChartBody {
   bar_dir : BarDir
@@ -57,6 +94,18 @@ pub(all) enum BarGrouping {
 pub fn BarGrouping::from_xml(String) -> Self?
 pub fn BarGrouping::to_xml(Self) -> String
 pub impl Show for BarGrouping
+
+pub(all) enum BarShape {
+  Box
+  Cone
+  ConeToMax
+  Cylinder
+  Pyramid
+  PyramidToMax
+} derive(Eq, @debug.Debug)
+pub fn BarShape::from_xml(String) -> Self?
+pub fn BarShape::to_xml(Self) -> String
+pub impl Show for BarShape
 
 pub(all) struct Chart {
   date1904 : Bool?
@@ -96,6 +145,16 @@ pub fn DisplayBlanksAs::from_xml(String) -> Self?
 pub fn DisplayBlanksAs::to_xml(Self) -> String
 pub impl Show for DisplayBlanksAs
 
+pub(all) struct DoughnutChartBody {
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  first_slice_ang : Int?
+  hole_size : Int?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for DoughnutChartBody
+
 pub(all) enum Grouping {
   Standard
   Stacked
@@ -104,6 +163,18 @@ pub(all) enum Grouping {
 pub fn Grouping::from_xml(String) -> Self?
 pub fn Grouping::to_xml(Self) -> String
 pub impl Show for Grouping
+
+pub(all) struct Line3DChartBody {
+  grouping : Grouping
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  drop_lines : @xml.XmlElement?
+  gap_depth : Int?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Line3DChartBody
 
 pub(all) struct LineChartBody {
   grouping : Grouping
@@ -120,6 +191,14 @@ pub(all) struct LineChartBody {
 } derive(Eq, @debug.Debug)
 pub impl Show for LineChartBody
 
+pub(all) struct Pie3DChartBody {
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Pie3DChartBody
+
 pub(all) struct PieChartBody {
   vary_colors : Bool?
   series : Array[@xml.XmlElement]
@@ -130,18 +209,18 @@ pub(all) struct PieChartBody {
 pub impl Show for PieChartBody
 
 pub(all) enum Plot {
-  AreaChart(@xml.XmlElement)
-  Area3DChart(@xml.XmlElement)
+  AreaChart(AreaChartBody)
+  Area3DChart(Area3DChartBody)
   LineChart(LineChartBody)
-  Line3DChart(@xml.XmlElement)
+  Line3DChart(Line3DChartBody)
   StockChart(@xml.XmlElement)
-  RadarChart(@xml.XmlElement)
+  RadarChart(RadarChartBody)
   ScatterChart(@xml.XmlElement)
   PieChart(PieChartBody)
-  Pie3DChart(@xml.XmlElement)
-  DoughnutChart(@xml.XmlElement)
+  Pie3DChart(Pie3DChartBody)
+  DoughnutChart(DoughnutChartBody)
   BarChart(BarChartBody)
-  Bar3DChart(@xml.XmlElement)
+  Bar3DChart(Bar3DChartBody)
   OfPieChart(@xml.XmlElement)
   SurfaceChart(@xml.XmlElement)
   Surface3DChart(@xml.XmlElement)
@@ -160,6 +239,25 @@ pub(all) struct PlotArea {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for PlotArea
+
+pub(all) struct RadarChartBody {
+  radar_style : RadarStyle
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for RadarChartBody
+
+pub(all) enum RadarStyle {
+  Standard
+  Marker
+  Filled
+} derive(Eq, @debug.Debug)
+pub fn RadarStyle::from_xml(String) -> Self?
+pub fn RadarStyle::to_xml(Self) -> String
+pub impl Show for RadarStyle
 
 // Type aliases
 

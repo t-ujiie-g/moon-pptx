@@ -1,8 +1,7 @@
-// Bar-chart family — Phase 7a3b slice.
+// Bar-chart family.
 //
-// `<c:barChart>` (ECMA-376 §21.2.2.16, `CT_BarChart`) is the most
-// common chart family — vertical or horizontal bar/column charts,
-// optionally stacked. Schema:
+// `<c:barChart>` (ECMA-376 §21.2.2.16, `CT_BarChart`) — vertical or
+// horizontal bar/column charts, optionally stacked. Schema:
 //
 //   <c:barDir>     (REQUIRED, enum bar|col)
 //   <c:grouping>   (optional, enum percentStacked|clustered|standard|stacked)
@@ -14,10 +13,9 @@
 //   <c:axId>{2,3}  (REQUIRED — two for 2-D charts, three for 3-D)
 //   <c:extLst>     (optional)
 //
-// Phase 7a3b types the scalar / enum fields, the required axIds, and
-// keeps the substantial subtrees (`<c:ser>`, `<c:dLbls>`) as captured
-// `XmlElement` payloads in `series : Array[XmlElement]` and
-// `d_lbls : XmlElement?` until later 7a slices type them.
+// `<c:ser>` (CT_BarSer) and `<c:dLbls>` are still captured as
+// `XmlElement` payloads — they have substantial typed bodies that
+// will lift in their own slices.
 
 ///|
 /// Typed `<c:barChart>` body.
