@@ -54,6 +54,12 @@ pub let ct_comments : String = "application/vnd.openxmlformats-officedocument.pr
 /// `ppt/charts/chartN.xml` — drawing-ml chart part.
 pub let ct_chart : String = "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
 
+///|
+/// `ppt/charts/chartExN.xml` — Microsoft-extended chart part for
+/// the 2016-era families (waterfall / treemap / sunburst / histogram
+/// / boxwhisker / funnel / paretoLine / regionMap / clusteredColumn).
+pub let ct_chart_ex : String = "application/vnd.ms-office.chartex+xml"
+
 // --- <a:graphicData uri="…"> values ---
 //
 // `<p:graphicFrame>` hosts foreign-namespace content through
@@ -69,6 +75,12 @@ pub let graphic_data_table_uri : String = "http://schemas.openxmlformats.org/dra
 ///|
 /// `<a:graphicData uri="…">` value for embedded charts.
 pub let graphic_data_chart_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/chart"
+
+///|
+/// `<a:graphicData uri="…">` value for embedded extended charts
+/// (Microsoft 2014 chartex). Numerically identical to `chart_ex_ns`
+/// but kept as a separate constant for parser dispatch clarity.
+pub let graphic_data_chart_ex_uri : String = "http://schemas.microsoft.com/office/drawing/2014/chartex"
 
 ///|
 /// `<a:graphicData uri="…">` value for embedded SmartArt diagrams.

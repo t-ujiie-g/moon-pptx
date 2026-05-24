@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon_pptx/chart_ex"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon_pptx/xml",
+}
+
+// Values
+pub fn wrap_xml(@xml.XmlError) -> ChartExError
+
+// Errors
+pub(all) suberror ChartExError {
+  XmlFailure(String, String)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartExError
+
+// Types and methods
+pub(all) struct ChartEx {
+  chart_data : @xml.XmlElement?
+  chart : ChartExBody
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn ChartEx::parse(FixedArray[Byte]) -> Self raise ChartExError
+pub fn ChartEx::serialize(Self) -> FixedArray[Byte] raise ChartExError
+pub impl Show for ChartEx
+
+pub(all) struct ChartExBody {
+  title : @xml.XmlElement?
+  plot_area : ChartExPlotArea
+  legend : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartExBody
+
+pub(all) enum ChartExKind {
+  BoxWhisker
+  ClusteredColumn
+  Funnel
+  ParetoLine
+  RegionMap
+  Sunburst
+  Treemap
+  Waterfall
+  Histogram
+  Other(String)
+} derive(Eq, @debug.Debug)
+pub fn ChartExKind::from_xml(String) -> Self
+pub fn ChartExKind::to_xml(Self) -> String
+pub impl Show for ChartExKind
+
+pub(all) struct ChartExPlotArea {
+  plot_area_region : ChartExPlotAreaRegion
+  axes : Array[@xml.XmlElement]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartExPlotArea
+
+pub(all) struct ChartExPlotAreaRegion {
+  plot_surface : @xml.XmlElement?
+  series : Array[ChartExSeries]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartExPlotAreaRegion
+
+pub(all) struct ChartExSeries {
+  layout_id : ChartExKind
+  format_idx : Int?
+  hidden : Bool?
+  owner_idx : Int?
+  body : @xml.XmlElement
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartExSeries
+
+// Type aliases
+
+// Traits
+

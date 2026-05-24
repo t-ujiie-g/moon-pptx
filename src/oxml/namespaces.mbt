@@ -28,3 +28,12 @@ pub let office_relationships_ns : String = "http://schemas.openxmlformats.org/of
 /// chart part `/ppt/charts/chartN.xml`. Distinct from `drawing_ns`
 /// because chart XML is a separate schema.
 pub let chart_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/chart"
+
+///|
+/// Microsoft-extended chart namespace — `cx:` prefix. Home of the
+/// extended chart families introduced with Office 2016 (waterfall,
+/// treemap, sunburst, histogram, boxWhisker, funnel, paretoLine,
+/// regionMap, clusteredColumn) which live in *separate* chart parts
+/// (`/ppt/charts/chartExN.xml`) and use a completely different
+/// schema from the original `c:` charts. Distinct from `chart_ns`.
+pub let chart_ex_ns : String = "http://schemas.microsoft.com/office/drawing/2014/chartex"

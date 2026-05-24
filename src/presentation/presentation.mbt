@@ -332,3 +332,25 @@ pub fn Presentation::charts(
   }
   out
 }
+
+///|
+/// Parsed extended-chart parts (`/ppt/charts/chartExN.xml`) in
+/// package order — the Microsoft 2016 chart families (waterfall,
+/// treemap, sunburst, histogram, boxWhisker, funnel, paretoLine,
+/// regionMap, clusteredColumn). Distinct from `charts()` because
+/// extended charts use a separate schema, content type, and
+/// graphic-data URI.
+pub fn Presentation::charts_ex(
+  self : Presentation,
+) -> Array[@chart_ex.ChartEx] raise PptxError {
+  let out : Array[@chart_ex.ChartEx] = []
+  for p in self.pkg.parts() {
+    if p.content_type == @oxml.ct_chart_ex {
+      let c = @chart_ex.ChartEx::parse(p.bytes) catch {
+        e => raise ChartExFailure(p.name + ": " + e.to_string())
+      }
+      out.push(c)
+    }
+  }
+  out
+}

@@ -197,6 +197,7 @@ pub fn GraphicFrame::of_table(Int, String, @units.Emu, @units.Emu, @units.Emu, @
 pub(all) enum GraphicFrameContent {
   TableContent(Table)
   ChartContent(String)
+  ChartExContent(String)
   OtherGraphic(String, @xml.XmlElement)
 } derive(Eq, @debug.Debug)
 

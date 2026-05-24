@@ -4,6 +4,7 @@ package "t-ujiie-g/moon_pptx/presentation"
 import {
   "moonbitlang/core/debug",
   "t-ujiie-g/moon_pptx/chart",
+  "t-ujiie-g/moon_pptx/chart_ex",
   "t-ujiie-g/moon_pptx/comments",
   "t-ujiie-g/moon_pptx/notes",
   "t-ujiie-g/moon_pptx/opc",
@@ -25,6 +26,7 @@ pub(all) suberror PptxError {
   NotesFailure(String)
   CommentsFailure(String)
   ChartFailure(String)
+  ChartExFailure(String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
 pub impl Show for PptxError
@@ -40,6 +42,7 @@ pub(all) struct Presentation {
 }
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
+pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
 pub fn Presentation::clone(Self) -> Self
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError

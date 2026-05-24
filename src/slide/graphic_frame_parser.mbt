@@ -144,6 +144,33 @@ fn parse_graphic_body(
           "<a:graphicData uri=chart> is missing required <c:chart r:id=…/>",
         )
     }
+  } else if uri == @oxml.graphic_data_chart_ex_uri {
+    // <cx:chart r:id="…"/> — extended chart (Office 2016 chartex
+    // schema). Same rel-id-only pattern as standard charts; the
+    // actual chartEx part lives separately.
+    let mut chart_rid : String? = None
+    for node in data.children {
+      match node {
+        Element(c) =>
+          if c.name.uri == @oxml.chart_ex_ns && c.name.local_name == "chart" {
+            for kv in c.attributes {
+              if kv.0.uri == @oxml.office_relationships_ns &&
+                kv.0.local_name == "id" {
+                chart_rid = Some(kv.1)
+                break
+              }
+            }
+          }
+        _ => ()
+      }
+    }
+    match chart_rid {
+      Some(rid) => ChartExContent(rid)
+      None =>
+        raise Malformed(
+          "<a:graphicData uri=chartex> is missing required <cx:chart r:id=…/>",
+        )
+    }
   } else {
     OtherGraphic(uri, data)
   }

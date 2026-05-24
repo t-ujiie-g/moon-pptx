@@ -62,6 +62,12 @@ pub(all) enum GraphicFrameContent {
   /// actual chart data is fetched separately (see
   /// `@presentation.Presentation::charts()`).
   ChartContent(String)
+  /// `uri = "…/2014/chartex"`. The body is `<cx:chart r:id="…"/>`,
+  /// a relationship reference to an extended chart part
+  /// (`/ppt/charts/chartExN.xml`) — Microsoft's 2016 chart families.
+  /// The actual data is fetched via
+  /// `@presentation.Presentation::charts_ex()`.
+  ChartExContent(String)
   /// Anything else: SmartArt, OLE, or a third-party uri we don't
   /// recognise. The string is the raw `uri` attribute; the element
   /// is the full `<a:graphicData>` child(ren) captured as one

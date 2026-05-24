@@ -14,11 +14,15 @@ pub fn bool_attr_opt(Array[(@xml.QName, String)], String) -> Bool?
 
 pub fn bytes_to_string(FixedArray[Byte]) -> String raise Utf8Error
 
+pub let chart_ex_ns : String
+
 pub let chart_ns : String
 
 pub fn collect_subtree(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> @xml.XmlElement raise XmlReadError
 
 pub let ct_chart : String
+
+pub let ct_chart_ex : String
 
 pub let ct_comment_authors : String
 
@@ -43,6 +47,8 @@ pub let drawing_ns : String
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
 
 pub fn[T] enum_attr_opt(Array[(@xml.QName, String)], String, (String) -> T?) -> T?
+
+pub let graphic_data_chart_ex_uri : String
 
 pub let graphic_data_chart_uri : String
 

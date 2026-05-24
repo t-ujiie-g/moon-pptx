@@ -23,6 +23,9 @@ pub(all) suberror PptxError {
   CommentsFailure(String)
   /// A chart part (`/ppt/charts/chartN.xml`) failed to parse.
   ChartFailure(String)
+  /// An extended-chart part (`/ppt/charts/chartExN.xml`) failed to
+  /// parse.
+  ChartExFailure(String)
   /// Façade-level invariant violated — e.g. the package has no
   /// `presentation.xml` part, or the required main-document
   /// relationship is missing.
@@ -64,6 +67,11 @@ pub impl Show for PptxError with fn output(self, logger) {
     }
     ChartFailure(s) => {
       logger.write_string("ChartFailure(")
+      logger.write_object(s)
+      logger.write_string(")")
+    }
+    ChartExFailure(s) => {
+      logger.write_string("ChartExFailure(")
       logger.write_object(s)
       logger.write_string(")")
     }

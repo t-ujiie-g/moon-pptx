@@ -90,6 +90,20 @@ fn write_graphic_body(
       w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), rid)
       w.end_element()
     }
+    ChartExContent(rid) => {
+      w.attribute(
+        @xml.QName::unqualified("uri"),
+        @oxml.graphic_data_chart_ex_uri,
+      )
+      // <cx:chart xmlns:cx="…/chartex" r:id="rIdN"/>. Same shape as
+      // ChartContent but with the extended-chart namespace.
+      w.bind_namespace("cx", @oxml.chart_ex_ns)
+      ctx.known_prefixes[@oxml.chart_ex_ns] = "cx"
+      w.start_element(@xml.QName::new(@oxml.chart_ex_ns, "chart"))
+      w.namespace_attr("cx", @oxml.chart_ex_ns)
+      w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), rid)
+      w.end_element()
+    }
     OtherGraphic(uri, captured) => {
       w.attribute(@xml.QName::unqualified("uri"), uri)
       // The captured element is the original <a:graphicData> — emit
