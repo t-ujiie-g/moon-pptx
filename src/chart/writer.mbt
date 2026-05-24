@@ -167,10 +167,10 @@ fn write_plot_area(
     None => ()
   }
   for p in pa.plots {
-    @oxml.write_xml_element(w, ctx, p.element())
+    write_plot(w, ctx, p)
   }
   for a in pa.axes {
-    @oxml.write_xml_element(w, ctx, a.element())
+    @oxml.write_xml_element(w, ctx, axis_element(a))
   }
   match pa.data_table {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -181,6 +181,79 @@ fn write_plot_area(
     None => ()
   }
   for ext in pa.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+/// Dispatch a `Plot` variant to its writer. Typed variants
+/// (currently `BarChart` — Phase 7a3b) get a dedicated body
+/// emitter; the rest fall back to re-emitting the captured
+/// `<XmlElement>` from their payload.
+fn write_plot(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  p : Plot,
+) -> Unit raise @xml.XmlError {
+  match p {
+    BarChart(body) => write_bar_chart(w, ctx, body)
+    _ =>
+      match p.element() {
+        Some(e) => @oxml.write_xml_element(w, ctx, e)
+        None => () // unreachable: only typed variants return None
+      }
+  }
+}
+
+///|
+/// The `XmlElement` payload that backs every `Axis` variant (axes
+/// stay as captured-XmlElement through Phase 7a3a). When axes get
+/// typed by a later 7a slice, swap this for a per-variant
+/// `write_axis` dispatch matching `write_plot`.
+fn axis_element(a : Axis) -> @xml.XmlElement {
+  match a {
+    ValAx(e) | CatAx(e) | DateAx(e) | SerAx(e) => e
+  }
+}
+
+///|
+/// Emit `<c:barChart>` body. Element order follows ECMA-376
+/// §21.2.2.16 (`CT_BarChart`).
+fn write_bar_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : BarChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "barChart"))
+  emit_val_string(w, "barDir", b.bar_dir.to_xml())
+  match b.grouping {
+    Some(g) => emit_val_string(w, "grouping", g.to_xml())
+    None => ()
+  }
+  match b.vary_colors {
+    Some(v) => emit_val_bool(w, "varyColors", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.gap_width {
+    Some(n) => emit_val_int(w, "gapWidth", n)
+    None => ()
+  }
+  match b.overlap {
+    Some(n) => emit_val_int(w, "overlap", n)
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
     @oxml.write_xml_element(w, ctx, ext)
   }
   w.end_element()

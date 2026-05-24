@@ -235,8 +235,8 @@ pub(all) enum Plot {
   Pie3DChart(@xml.XmlElement)
   /// `<c:doughnutChart>`
   DoughnutChart(@xml.XmlElement)
-  /// `<c:barChart>`
-  BarChart(@xml.XmlElement)
+  /// `<c:barChart>` — typed at Phase 7a3b.
+  BarChart(BarChartBody)
   /// `<c:bar3DChart>`
   Bar3DChart(@xml.XmlElement)
   /// `<c:ofPieChart>`
@@ -281,8 +281,12 @@ pub fn Plot::local_name(self : Plot) -> String {
 }
 
 ///|
-/// The captured XmlElement payload that backs every Plot variant.
-pub fn Plot::element(self : Plot) -> @xml.XmlElement {
+/// The captured XmlElement payload that backs untyped `Plot`
+/// variants. Returns `None` once a variant has been typed (Phase
+/// 7a3b began with `BarChart` → `BarChartBody`). Callers that need
+/// the raw element for an untyped kind can use this; typed variants
+/// expose their own typed accessor.
+pub fn Plot::element(self : Plot) -> @xml.XmlElement? {
   match self {
     AreaChart(e)
     | Area3DChart(e)
@@ -294,12 +298,12 @@ pub fn Plot::element(self : Plot) -> @xml.XmlElement {
     | PieChart(e)
     | Pie3DChart(e)
     | DoughnutChart(e)
-    | BarChart(e)
     | Bar3DChart(e)
     | OfPieChart(e)
     | SurfaceChart(e)
     | Surface3DChart(e)
-    | BubbleChart(e) => e
+    | BubbleChart(e) => Some(e)
+    BarChart(_) => None
   }
 }
 

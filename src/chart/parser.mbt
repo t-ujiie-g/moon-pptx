@@ -211,10 +211,17 @@ fn parse_plot_area(r : @xml.XmlReader) -> PlotArea raise ChartError {
 }
 
 ///|
-/// Dispatch a chart-namespace element local-name to a `Plot` variant
-/// carrying the captured `XmlElement`. Returns `None` for non-plot
-/// elements.
-fn plot_from_local_name(name : String, el : @xml.XmlElement) -> Plot? {
+/// Dispatch a chart-namespace element local-name to a `Plot` variant.
+/// Typed variants (currently `barChart` — Phase 7a3b) walk their
+/// captured `<XmlElement>` to produce a typed body; the remaining
+/// variants stay as wholesale captures until later 7a slices.
+///
+/// Returns `None` for non-plot elements (the caller continues to
+/// `axis_from_local_name`).
+fn plot_from_local_name(
+  name : String,
+  el : @xml.XmlElement,
+) -> Plot? raise ChartError {
   match name {
     "areaChart" => Some(AreaChart(el))
     "area3DChart" => Some(Area3DChart(el))
@@ -226,13 +233,77 @@ fn plot_from_local_name(name : String, el : @xml.XmlElement) -> Plot? {
     "pieChart" => Some(PieChart(el))
     "pie3DChart" => Some(Pie3DChart(el))
     "doughnutChart" => Some(DoughnutChart(el))
-    "barChart" => Some(BarChart(el))
+    "barChart" => Some(BarChart(parse_bar_chart(el)))
     "bar3DChart" => Some(Bar3DChart(el))
     "ofPieChart" => Some(OfPieChart(el))
     "surfaceChart" => Some(SurfaceChart(el))
     "surface3DChart" => Some(Surface3DChart(el))
     "bubbleChart" => Some(BubbleChart(el))
     _ => None
+  }
+}
+
+///|
+/// Walk a captured `<c:barChart>` element into a typed
+/// `BarChartBody`. Element order in the source XML is the schema
+/// order (`barDir` → `grouping` → `varyColors` → `ser*` → `dLbls`
+/// → `gapWidth` → `overlap` → `axId{2,3}` → `extLst`), but the
+/// parser tolerates any order — we just dispatch on local-name.
+fn parse_bar_chart(el : @xml.XmlElement) -> BarChartBody raise ChartError {
+  let mut bar_dir : BarDir? = None
+  let mut grouping : BarGrouping? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut gap_width : Int? = None
+  let mut overlap : Int? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "barDir" =>
+              bar_dir = parse_val_string_attr(c.attributes).bind(
+                BarDir::from_xml,
+              )
+            "grouping" =>
+              grouping = parse_val_string_attr(c.attributes).bind(
+                BarGrouping::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "gapWidth" => gap_width = parse_val_int_attr(c.attributes)
+            "overlap" => overlap = parse_val_int_attr(c.attributes)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let bd = match bar_dir {
+    Some(d) => d
+    None => raise Malformed("<c:barChart> is missing required <c:barDir>")
+  }
+  {
+    bar_dir: bd,
+    grouping,
+    vary_colors,
+    series,
+    d_lbls,
+    gap_width,
+    overlap,
+    ax_ids,
+    extension,
   }
 }
 

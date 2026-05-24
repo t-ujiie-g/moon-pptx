@@ -27,6 +27,37 @@ pub fn Axis::element(Self) -> @xml.XmlElement
 pub fn Axis::local_name(Self) -> String
 pub impl Show for Axis
 
+pub(all) struct BarChartBody {
+  bar_dir : BarDir
+  grouping : BarGrouping?
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  gap_width : Int?
+  overlap : Int?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for BarChartBody
+
+pub(all) enum BarDir {
+  Bar
+  Col
+} derive(Eq, @debug.Debug)
+pub fn BarDir::from_xml(String) -> Self?
+pub fn BarDir::to_xml(Self) -> String
+pub impl Show for BarDir
+
+pub(all) enum BarGrouping {
+  PercentStacked
+  Clustered
+  Standard
+  Stacked
+} derive(Eq, @debug.Debug)
+pub fn BarGrouping::from_xml(String) -> Self?
+pub fn BarGrouping::to_xml(Self) -> String
+pub impl Show for BarGrouping
+
 pub(all) struct Chart {
   date1904 : Bool?
   lang : String?
@@ -76,14 +107,14 @@ pub(all) enum Plot {
   PieChart(@xml.XmlElement)
   Pie3DChart(@xml.XmlElement)
   DoughnutChart(@xml.XmlElement)
-  BarChart(@xml.XmlElement)
+  BarChart(BarChartBody)
   Bar3DChart(@xml.XmlElement)
   OfPieChart(@xml.XmlElement)
   SurfaceChart(@xml.XmlElement)
   Surface3DChart(@xml.XmlElement)
   BubbleChart(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
-pub fn Plot::element(Self) -> @xml.XmlElement
+pub fn Plot::element(Self) -> @xml.XmlElement?
 pub fn Plot::local_name(Self) -> String
 pub impl Show for Plot
 
