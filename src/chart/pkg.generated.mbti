@@ -128,6 +128,9 @@ pub(all) struct Chart {
   chart : ChartBody
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Chart::of_bar(ChartData, bar_dir? : BarDir, grouping? : BarGrouping) -> Self
+pub fn Chart::of_line(ChartData, grouping? : Grouping) -> Self
+pub fn Chart::of_pie(ChartData) -> Self
 pub fn Chart::parse(FixedArray[Byte]) -> Self raise ChartError
 pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
 pub impl Show for Chart
@@ -148,6 +151,21 @@ pub(all) struct ChartBody {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for ChartBody
+
+pub(all) struct ChartData {
+  categories : Array[String]
+  series : Array[ChartSeries]
+} derive(Eq, @debug.Debug)
+pub fn ChartData::new() -> Self
+pub fn ChartData::with_category(Self, String) -> Self
+pub fn ChartData::with_series(Self, String, Array[Double]) -> Self
+pub impl Show for ChartData
+
+pub(all) struct ChartSeries {
+  label : String
+  values : Array[Double]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartSeries
 
 pub(all) enum DisplayBlanksAs {
   Span

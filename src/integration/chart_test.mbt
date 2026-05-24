@@ -182,6 +182,90 @@ test "slide-side ChartContent survives re_serialize_all" {
 }
 
 ///|
+test "chart-builder produces valid chart parts" {
+  // Build a chart from scratch with the high-level Chart::of_bar
+  // helper, drop it into a chart_deck-shaped package, and confirm
+  // the full pipeline works: parse → re-parse equality holds, and
+  // the typed body comes back with the same data.
+  let data = @chart.ChartData::new()
+    .with_category("Q1")
+    .with_category("Q2")
+    .with_category("Q3")
+    .with_category("Q4")
+    .with_series("Revenue", [100.0, 200.0, 300.0, 250.0])
+  let chart_built = @chart.Chart::of_bar(data)
+  let chart_bytes = chart_built.serialize()
+  let chart_reparsed = @chart.Chart::parse(chart_bytes)
+  assert_eq(chart_reparsed, chart_built)
+  match chart_reparsed.chart.plot_area.plots[0] {
+    BarChart(b) => {
+      assert_eq(b.bar_dir, Col)
+      assert_eq(b.series.length(), 1)
+    }
+    _ => fail("expected BarChart")
+  }
+}
+
+///|
+test "chart-builder bar / line / pie all round-trip through a package" {
+  // Same flow as the explicit chart_deck test, but with chart bytes
+  // produced by each high-level builder. Confirms a builder-built
+  // chart drops cleanly into a Package + Presentation::charts()
+  // round-trip.
+  let data = @chart.ChartData::new()
+    .with_category("A")
+    .with_category("B")
+    .with_series("S1", [1.0, 2.0])
+  for
+    chart in [
+      @chart.Chart::of_bar(data),
+      @chart.Chart::of_line(data),
+      @chart.Chart::of_pie(data),
+    ] {
+    let ct_rels = "application/vnd.openxmlformats-package.relationships+xml"
+    let parts : Array[(String, String, String)] = [
+      ("/ppt/presentation.xml", ct_presentation, fixture_presentation_xml()),
+      ("/ppt/theme/theme1.xml", ct_theme, fixture_theme_xml()),
+      (
+        "/ppt/slideMasters/slideMaster1.xml",
+        ct_slide_master,
+        fixture_master_xml(),
+      ),
+      (
+        "/ppt/slideLayouts/slideLayout1.xml",
+        ct_slide_layout,
+        fixture_layout_xml(),
+      ),
+      ("/ppt/slides/slide1.xml", ct_slide, fixture_slide_with_chart_xml()),
+      (
+        "/ppt/slides/_rels/slide1.xml.rels",
+        ct_rels,
+        fixture_chart_slide_rels_xml(),
+      ),
+      // Builder-produced bytes go in here.
+      (
+        "/ppt/charts/chart1.xml",
+        @oxml.ct_chart,
+        bytes_to_str(chart.serialize()),
+      ),
+    ]
+    let pkg_bytes = build_pptx("/ppt/presentation.xml", parts)
+    let prs = @presentation.Presentation::open(pkg_bytes)
+    let charts = prs.charts()
+    assert_eq(charts.length(), 1)
+    assert_eq(charts[0], chart)
+  }
+}
+
+///|
+/// Turn `FixedArray[Byte]` back into a `String` for `build_pptx`'s
+/// (`name`, `ct`, `xml_string`) tuple format. Delegates to the
+/// package-internal UTF-8 decoder.
+fn bytes_to_str(bytes : FixedArray[Byte]) -> String raise {
+  @oxml.bytes_to_string(bytes)
+}
+
+///|
 test "chart_deck re_serialize_all preserves Chart" {
   // The strongest Phase-4-style invariant for the chart layer:
   // parse → serialize → reopen → re-parse must produce an equal Chart.
