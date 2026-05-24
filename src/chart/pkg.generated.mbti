@@ -145,11 +145,19 @@ pub(all) struct Chart {
 } derive(Eq, @debug.Debug)
 pub fn Chart::of_area(ChartData, grouping? : Grouping) -> Self
 pub fn Chart::of_bar(ChartData, bar_dir? : BarDir, grouping? : BarGrouping) -> Self
+pub fn Chart::of_bar_3d(ChartData, bar_dir? : BarDir, grouping? : BarGrouping, shape? : BarShape) -> Self
 pub fn Chart::of_bubble(BubbleData) -> Self
+pub fn Chart::of_doughnut(ChartData, hole_size? : Int) -> Self
 pub fn Chart::of_line(ChartData, grouping? : Grouping) -> Self
+pub fn Chart::of_line_3d(ChartData, grouping? : Grouping) -> Self
+pub fn Chart::of_of_pie(ChartData, of_pie_type? : OfPieType, split_type? : SplitType) -> Self
 pub fn Chart::of_pie(ChartData) -> Self
+pub fn Chart::of_pie_3d(ChartData) -> Self
 pub fn Chart::of_radar(ChartData, radar_style? : RadarStyle) -> Self
 pub fn Chart::of_scatter(ScatterData, scatter_style? : ScatterStyle) -> Self
+pub fn Chart::of_stock(ChartData, kind? : StockKind) -> Self
+pub fn Chart::of_surface(ChartData, wireframe? : Bool) -> Self
+pub fn Chart::of_surface_3d(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::parse(FixedArray[Byte]) -> Self raise ChartError
 pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
 pub impl Show for Chart
@@ -397,6 +405,12 @@ pub(all) struct StockChartBody {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for StockChartBody
+
+pub(all) enum StockKind {
+  HLC
+  OHLC
+} derive(Eq, @debug.Debug)
+pub impl Show for StockKind
 
 pub(all) struct Surface3DChartBody {
   wireframe : Bool?

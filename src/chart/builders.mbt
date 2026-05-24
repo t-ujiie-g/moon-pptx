@@ -416,6 +416,281 @@ pub fn Chart::of_bubble(data : BubbleData) -> Chart {
 }
 
 ///|
+/// Construct a complete doughnut chart from a `ChartData` value.
+/// Like pie but with an interior hole; `hole_size` is the percentage
+/// (10..90 typical) of the outer diameter occupied by the gap.
+pub fn Chart::of_doughnut(data : ChartData, hole_size? : Int = 50) -> Chart {
+  let series_xml = synthesize_series(data)
+  let doughnut : DoughnutChartBody = {
+    vary_colors: Some(true),
+    series: series_xml,
+    d_lbls: None,
+    first_slice_ang: None,
+    hole_size: Some(hole_size),
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [DoughnutChart(doughnut)],
+    axes: [],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Construct a complete pie-of-pie or bar-of-pie chart.
+/// `of_pie_type` defaults to `Pie` (pie-of-pie); pass `Bar` for
+/// bar-of-pie. The split rule defaults to `Auto`.
+pub fn Chart::of_of_pie(
+  data : ChartData,
+  of_pie_type? : OfPieType = Pie,
+  split_type? : SplitType = Auto,
+) -> Chart {
+  let series_xml = synthesize_series(data)
+  let body : OfPieChartBody = {
+    of_pie_type,
+    vary_colors: Some(true),
+    series: series_xml,
+    d_lbls: None,
+    gap_width: None,
+    split_type: Some(split_type),
+    split_pos: None,
+    cust_split: None,
+    second_pie_size: None,
+    ser_lines: [],
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [OfPieChart(body)],
+    axes: [],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// 3-D bar chart from a `ChartData` value. Three axes (catAx /
+/// valAx / serAx); `bar_dir` defaults to `Col`, `grouping` to
+/// `Clustered`, `shape` to `Box`.
+pub fn Chart::of_bar_3d(
+  data : ChartData,
+  bar_dir? : BarDir = Col,
+  grouping? : BarGrouping = Clustered,
+  shape? : BarShape = Box,
+) -> Chart {
+  let series_xml = synthesize_series(data)
+  let body : Bar3DChartBody = {
+    bar_dir,
+    grouping: Some(grouping),
+    vary_colors: None,
+    series: series_xml,
+    d_lbls: None,
+    gap_width: None,
+    gap_depth: None,
+    shape: Some(shape),
+    ax_ids: [1, 2, 3],
+    extension: [],
+  }
+  wrap_chart(three_axis_plot_area(Bar3DChart(body)))
+}
+
+///|
+/// 3-D line chart from a `ChartData` value. `grouping` defaults to
+/// `Standard`.
+pub fn Chart::of_line_3d(
+  data : ChartData,
+  grouping? : Grouping = Standard,
+) -> Chart {
+  let series_xml = synthesize_series(data)
+  let body : Line3DChartBody = {
+    grouping,
+    vary_colors: None,
+    series: series_xml,
+    d_lbls: None,
+    drop_lines: None,
+    gap_depth: None,
+    ax_ids: [1, 2, 3],
+    extension: [],
+  }
+  wrap_chart(three_axis_plot_area(Line3DChart(body)))
+}
+
+///|
+/// 3-D pie chart from a `ChartData` value. No axes — same as 2-D
+/// pie, just emitted under `<c:pie3DChart>`.
+pub fn Chart::of_pie_3d(data : ChartData) -> Chart {
+  let series_xml = synthesize_series(data)
+  let body : Pie3DChartBody = {
+    vary_colors: Some(true),
+    series: series_xml,
+    d_lbls: None,
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [Pie3DChart(body)],
+    axes: [],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// 2-D surface chart from a `ChartData` value. `wireframe` toggles
+/// between filled and wireframe rendering. Two-axis layout.
+pub fn Chart::of_surface(data : ChartData, wireframe? : Bool = false) -> Chart {
+  let series_xml = synthesize_series(data)
+  let body : SurfaceChartBody = {
+    wireframe: Some(wireframe),
+    series: series_xml,
+    band_fmts: None,
+    ax_ids: [1, 2],
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [SurfaceChart(body)],
+    axes: [
+      CatAx(simple_axis_element("catAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// 3-D surface chart from a `ChartData` value. Three-axis layout.
+pub fn Chart::of_surface_3d(
+  data : ChartData,
+  wireframe? : Bool = false,
+) -> Chart {
+  let series_xml = synthesize_series(data)
+  let body : Surface3DChartBody = {
+    wireframe: Some(wireframe),
+    series: series_xml,
+    band_fmts: None,
+    ax_ids: [1, 2, 3],
+    extension: [],
+  }
+  wrap_chart(three_axis_plot_area(Surface3DChart(body)))
+}
+
+///|
+/// Construct a stock chart. Pass `kind = HLC` for 3-series
+/// high-low-close or `kind = OHLC` for 4-series open-high-low-close.
+/// Each series in `data` is one of the H / L / C (or O / H / L / C)
+/// arrays, in that schema-required order.
+pub fn Chart::of_stock(data : ChartData, kind? : StockKind = HLC) -> Chart {
+  let required = match kind {
+    HLC => 3
+    OHLC => 4
+  }
+  // Truncate or zero-pad the series list to `required`; padding
+  // is done by adding empty-series entries.
+  let cooked : ChartData = match kind {
+    _ => normalize_stock_series(data, required)
+  }
+  let series_xml = synthesize_series(cooked)
+  let body : StockChartBody = {
+    series: series_xml,
+    d_lbls: None,
+    drop_lines: None,
+    hi_low_lines: Some(c_elem("hiLowLines", [], [])),
+    up_down_bars: None,
+    ax_ids: [1, 2],
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [StockChart(body)],
+    axes: [
+      CatAx(simple_axis_element("catAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Stock-chart schema variant. The OOXML `<c:stockChart>` element
+/// admits exactly three (high-low-close) or four
+/// (open-high-low-close) series.
+pub(all) enum StockKind {
+  /// High, Low, Close — three series in that order.
+  HLC
+  /// Open, High, Low, Close — four series in that order.
+  OHLC
+} derive(Eq, Debug)
+
+///|
+pub impl Show for StockKind with fn output(self, logger) {
+  match self {
+    HLC => logger.write_string("HLC")
+    OHLC => logger.write_string("OHLC")
+  }
+}
+
+///|
+/// Force a `ChartData` to have exactly `required` series, by
+/// truncating excess or padding with empty series.
+fn normalize_stock_series(data : ChartData, required : Int) -> ChartData {
+  let s : Array[ChartSeries] = []
+  let cur = data.series.length()
+  if cur >= required {
+    for i in 0..<required {
+      s.push(data.series[i])
+    }
+  } else {
+    for x in data.series {
+      s.push(x)
+    }
+    for _ in cur..<required {
+      // Use the category count for the empty value array length so
+      // every padded series still has matching ptCount in the wire
+      // format.
+      let zeros : Array[Double] = []
+      for _ in 0..<data.categories.length() {
+        zeros.push(0.0)
+      }
+      s.push({ label: "", values: zeros })
+    }
+  }
+  { categories: data.categories, series: s }
+}
+
+///|
+/// Build a three-axis PlotArea (catAx + valAx + serAx) wrapping the
+/// supplied 3-D `Plot` variant.
+fn three_axis_plot_area(plot : Plot) -> PlotArea {
+  {
+    layout: None,
+    plots: [plot],
+    axes: [
+      CatAx(simple_axis_element("catAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+      SerAx(simple_axis_element("serAx", 3, 2)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+}
+
+///|
 /// Construct a complete pie chart from a `ChartData` value. Pie
 /// charts have no axes; the first series in `data` is used and the
 /// remaining series are ignored (PowerPoint pie charts are

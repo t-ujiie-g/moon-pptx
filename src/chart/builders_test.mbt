@@ -267,6 +267,207 @@ test "Chart::of_bubble: round-trips" {
   assert_eq(re_parsed, original)
 }
 
+// --- Chart::of_doughnut ---
+
+///|
+test "Chart::of_doughnut: holeSize lifts" {
+  let chart = @chart.Chart::of_doughnut(quarterly_revenue(), hole_size=60)
+  match chart.chart.plot_area.plots[0] {
+    DoughnutChart(b) => {
+      assert_eq(b.hole_size.unwrap(), 60)
+      assert_eq(b.vary_colors.unwrap(), true)
+    }
+    _ => fail("expected DoughnutChart")
+  }
+}
+
+///|
+test "Chart::of_doughnut: round-trips" {
+  let original = @chart.Chart::of_doughnut(quarterly_revenue())
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_of_pie ---
+
+///|
+test "Chart::of_of_pie: defaults to Pie + Auto split" {
+  let chart = @chart.Chart::of_of_pie(quarterly_revenue())
+  match chart.chart.plot_area.plots[0] {
+    OfPieChart(b) => {
+      assert_eq(b.of_pie_type, Pie)
+      assert_true(b.split_type is Some(Auto))
+    }
+    _ => fail("expected OfPieChart")
+  }
+}
+
+///|
+test "Chart::of_of_pie: bar variant + Percent split round-trips" {
+  let original = @chart.Chart::of_of_pie(
+    quarterly_revenue(),
+    of_pie_type=Bar,
+    split_type=Percent,
+  )
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_bar_3d ---
+
+///|
+test "Chart::of_bar_3d: three axIds + shape default Box" {
+  let chart = @chart.Chart::of_bar_3d(quarterly_revenue())
+  match chart.chart.plot_area.plots[0] {
+    Bar3DChart(b) => {
+      assert_eq(b.bar_dir, Col)
+      assert_true(b.shape is Some(Box))
+      assert_eq(b.ax_ids.length(), 3)
+    }
+    _ => fail("expected Bar3DChart")
+  }
+  assert_eq(chart.chart.plot_area.axes.length(), 3)
+  assert_eq(chart.chart.plot_area.axes[2].local_name(), "serAx")
+}
+
+///|
+test "Chart::of_bar_3d: cylinder shape + round-trip" {
+  let original = @chart.Chart::of_bar_3d(quarterly_revenue(), shape=Cylinder)
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_line_3d ---
+
+///|
+test "Chart::of_line_3d: three axIds" {
+  let chart = @chart.Chart::of_line_3d(quarterly_revenue())
+  match chart.chart.plot_area.plots[0] {
+    Line3DChart(b) => assert_eq(b.ax_ids.length(), 3)
+    _ => fail("expected Line3DChart")
+  }
+}
+
+///|
+test "Chart::of_line_3d: round-trips" {
+  let original = @chart.Chart::of_line_3d(quarterly_revenue())
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_pie_3d ---
+
+///|
+test "Chart::of_pie_3d: no axes" {
+  let chart = @chart.Chart::of_pie_3d(quarterly_revenue())
+  assert_eq(chart.chart.plot_area.axes.length(), 0)
+  match chart.chart.plot_area.plots[0] {
+    Pie3DChart(b) => assert_eq(b.vary_colors.unwrap(), true)
+    _ => fail("expected Pie3DChart")
+  }
+}
+
+// --- Chart::of_surface ---
+
+///|
+test "Chart::of_surface: wireframe defaults false" {
+  let chart = @chart.Chart::of_surface(quarterly_revenue())
+  match chart.chart.plot_area.plots[0] {
+    SurfaceChart(b) => assert_eq(b.wireframe.unwrap(), false)
+    _ => fail("expected SurfaceChart")
+  }
+}
+
+///|
+test "Chart::of_surface_3d: three axIds; wireframe lifts" {
+  let chart = @chart.Chart::of_surface_3d(quarterly_revenue(), wireframe=true)
+  match chart.chart.plot_area.plots[0] {
+    Surface3DChart(b) => {
+      assert_eq(b.wireframe.unwrap(), true)
+      assert_eq(b.ax_ids.length(), 3)
+    }
+    _ => fail("expected Surface3DChart")
+  }
+  assert_eq(chart.chart.plot_area.axes.length(), 3)
+}
+
+///|
+test "Chart::of_surface_3d: round-trips" {
+  let original = @chart.Chart::of_surface_3d(
+    quarterly_revenue(),
+    wireframe=true,
+  )
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_stock ---
+
+///|
+test "Chart::of_stock: HLC variant gets 3 series" {
+  let data = @chart.ChartData::new()
+    .with_category("Jan")
+    .with_category("Feb")
+    .with_series("High", [100.0, 110.0])
+    .with_series("Low", [80.0, 85.0])
+    .with_series("Close", [90.0, 105.0])
+  let chart = @chart.Chart::of_stock(data)
+  match chart.chart.plot_area.plots[0] {
+    StockChart(b) => {
+      assert_eq(b.series.length(), 3)
+      assert_true(b.hi_low_lines is Some(_))
+    }
+    _ => fail("expected StockChart")
+  }
+}
+
+///|
+test "Chart::of_stock: OHLC variant gets 4 series; extras truncated" {
+  let data = @chart.ChartData::new()
+    .with_category("Jan")
+    .with_series("a", [1.0])
+    .with_series("b", [2.0])
+    .with_series("c", [3.0])
+    .with_series("d", [4.0])
+    .with_series("e", [5.0]) // excess — should be truncated to 4
+  let chart = @chart.Chart::of_stock(data, kind=OHLC)
+  match chart.chart.plot_area.plots[0] {
+    StockChart(b) => assert_eq(b.series.length(), 4)
+    _ => fail("expected StockChart")
+  }
+}
+
+///|
+test "Chart::of_stock: insufficient series get zero-padded" {
+  let data = @chart.ChartData::new()
+    .with_category("Jan")
+    .with_category("Feb")
+    .with_series("only-one", [1.0, 2.0])
+  let chart = @chart.Chart::of_stock(data)
+  match chart.chart.plot_area.plots[0] {
+    StockChart(b) => assert_eq(b.series.length(), 3) // HLC default
+    _ => fail("expected StockChart")
+  }
+}
+
+///|
+test "Chart::of_stock: HLC round-trips" {
+  let data = @chart.ChartData::new()
+    .with_category("Jan")
+    .with_series("H", [100.0])
+    .with_series("L", [80.0])
+    .with_series("C", [90.0])
+  let original = @chart.Chart::of_stock(data)
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
 // --- series synthesis ---
 
 ///|
