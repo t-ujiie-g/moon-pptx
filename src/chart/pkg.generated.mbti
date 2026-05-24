@@ -18,11 +18,42 @@ pub impl Show for ChartError
 
 // Types and methods
 pub(all) struct Chart {
-  space_body : @xml.XmlElement
+  date1904 : Bool?
+  lang : String?
+  rounded_corners : Bool?
+  style : Int?
+  chart : ChartBody
+  extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Chart::parse(FixedArray[Byte]) -> Self raise ChartError
 pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
 pub impl Show for Chart
+
+pub(all) struct ChartBody {
+  title : @xml.XmlElement?
+  auto_title_deleted : Bool?
+  pivot_fmts : @xml.XmlElement?
+  view3d : @xml.XmlElement?
+  floor : @xml.XmlElement?
+  side_wall : @xml.XmlElement?
+  back_wall : @xml.XmlElement?
+  plot_area : @xml.XmlElement
+  legend : @xml.XmlElement?
+  plot_vis_only : Bool?
+  disp_blanks_as : DisplayBlanksAs?
+  show_d_lbls_over_max : Bool?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartBody
+
+pub(all) enum DisplayBlanksAs {
+  Span
+  Gap
+  Zero
+} derive(Eq, @debug.Debug)
+pub fn DisplayBlanksAs::from_xml(String) -> Self?
+pub fn DisplayBlanksAs::to_xml(Self) -> String
+pub impl Show for DisplayBlanksAs
 
 // Type aliases
 

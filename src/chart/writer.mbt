@@ -1,13 +1,15 @@
-// Chart XML writer — Phase 7a1.
+// Chart XML writer — Phase 7a1 + 7a2.
 //
-// Inverse of `parser.mbt`: re-emit the captured `<c:chartSpace>` body
-// verbatim. As long as Phase 7a1 keeps the body opaque, the writer
-// just walks the captured DOM via `@oxml.write_xml_element` — same
-// round-trip pattern that `OtherGraphic` uses inside graphic-frame.
-//
-// Subsequent 7a slices replace the wholesale capture with typed
-// emission of the lifted fields, while remaining captured siblings
-// continue to ride through `write_xml_element`.
+// Phase 7a1 emitted the captured `<c:chartSpace>` body wholesale.
+// Phase 7a2 inverts the new typed parser: re-emit the chartSpace
+// scalar-leaf children (`<c:date1904>` / `<c:lang>` /
+// `<c:roundedCorners>` / `<c:style>`) and the `<c:chart>` typed
+// header leaves, then re-emit the captured subtree fields
+// (`title`, `plotArea`, `legend`, the 3-D wrappers) verbatim.
+// Element ordering follows the ECMA-376 schema — see §21.2.2.29 for
+// chartSpace and §21.2.2.6 for chart — so a writer-only round-trip
+// produces valid PPTX even when typed fields and captured siblings
+// mix.
 
 ///|
 /// Serialise a `Chart` back to `chartN.xml`-shaped bytes.
@@ -19,58 +21,141 @@ pub fn Chart::serialize(self : Chart) -> FixedArray[Byte] raise ChartError {
 ///|
 fn serialize_chart_xml(chart : Chart) -> String raise @xml.XmlError {
   let w = @xml.XmlWriter::new()
-  // Bind the chart, drawing, and r-side namespaces on the writer up
-  // front so children of the chart element can use them without
-  // emitting a fresh `xmlns:extN`. The chart namespace is the primary
-  // namespace of this part; `a:` is used by `<c:spPr>` shape bodies;
-  // `r:` is used by `<c:externalData r:id="…"/>`.
   w.bind_namespace("c", @oxml.chart_ns)
   w.bind_namespace("a", @oxml.drawing_ns)
   w.bind_namespace("r", @oxml.office_relationships_ns)
-  // The captured `space_body` element already names itself
-  // `c:chartSpace` and carries whatever attributes the original had.
-  // The chart-specific WriteCtx knows the chart prefix on top of the
-  // well-known ones so foreign-namespace children inside the body
-  // pick up fresh `extN` prefixes only when truly unknown.
   let ctx = make_chart_ctx()
   w.xml_declaration()
-  write_chart_space(w, ctx, chart.space_body)
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "chartSpace"))
+  w.namespace_attr("c", @oxml.chart_ns)
+  w.namespace_attr("a", @oxml.drawing_ns)
+  w.namespace_attr("r", @oxml.office_relationships_ns)
+  // chartSpace-level scalar leaves come first, in schema order:
+  // date1904, lang, roundedCorners, style.
+  match chart.date1904 {
+    Some(b) => emit_val_bool(w, "date1904", b)
+    None => ()
+  }
+  match chart.lang {
+    Some(s) => emit_val_string(w, "lang", s)
+    None => ()
+  }
+  match chart.rounded_corners {
+    Some(b) => emit_val_bool(w, "roundedCorners", b)
+    None => ()
+  }
+  match chart.style {
+    Some(n) => emit_val_int(w, "style", n)
+    None => ()
+  }
+  // <c:chart> — REQUIRED.
+  write_chart_body(w, ctx, chart.chart)
+  // Captured chartSpace-level tail (clrMapOvr / spPr / txPr /
+  // externalData / printSettings / userShapes / extLst / foreign-ns).
+  for ext in chart.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
   w.to_string()
 }
 
 ///|
-/// Walk the captured `<c:chartSpace>` element to the writer, emitting
-/// `xmlns:c` / `xmlns:a` / `xmlns:r` declarations directly on the
-/// root start tag (so the resulting document is self-contained and
-/// matches PowerPoint's emit shape).
-fn write_chart_space(
+/// Emit `<c:chart>` body. Element order follows ECMA-376 §21.2.2.6.
+fn write_chart_body(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
-  el : @xml.XmlElement,
+  cb : ChartBody,
 ) -> Unit raise @xml.XmlError {
-  w.start_element(el.name)
-  w.namespace_attr("c", @oxml.chart_ns)
-  w.namespace_attr("a", @oxml.drawing_ns)
-  w.namespace_attr("r", @oxml.office_relationships_ns)
-  for kv in el.attributes {
-    w.attribute(kv.0, kv.1)
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "chart"))
+  match cb.title {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
   }
-  for node in el.children {
-    match node {
-      Element(c) => @oxml.write_xml_element(w, ctx, c)
-      Text(s) => w.text(s)
-      CData(s) => w.cdata(s)
-    }
+  match cb.auto_title_deleted {
+    Some(b) => emit_val_bool(w, "autoTitleDeleted", b)
+    None => ()
+  }
+  match cb.pivot_fmts {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match cb.view3d {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match cb.floor {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match cb.side_wall {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match cb.back_wall {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  @oxml.write_xml_element(w, ctx, cb.plot_area)
+  match cb.legend {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match cb.plot_vis_only {
+    Some(b) => emit_val_bool(w, "plotVisOnly", b)
+    None => ()
+  }
+  match cb.disp_blanks_as {
+    Some(v) => emit_val_string(w, "dispBlanksAs", v.to_xml())
+    None => ()
+  }
+  match cb.show_d_lbls_over_max {
+    Some(b) => emit_val_bool(w, "showDLblsOverMax", b)
+    None => ()
+  }
+  for ext in cb.extension {
+    @oxml.write_xml_element(w, ctx, ext)
   }
   w.end_element()
 }
 
+// --- val-attribute helpers ---
+
 ///|
-/// Build a write context seeded with the well-known OOXML prefixes
-/// plus the chart prefix. The chart namespace isn't included in
-/// `WriteCtx::with_well_known_prefixes()` because the rest of the
-/// codebase (slide / theme / etc.) doesn't bind it on its writers; we
-/// add it here at the chart-writer boundary.
+fn emit_val_bool(
+  w : @xml.XmlWriter,
+  local_name : String,
+  v : Bool,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
+  w.attribute(@xml.QName::unqualified("val"), if v { "1" } else { "0" })
+  w.end_element()
+}
+
+///|
+fn emit_val_int(
+  w : @xml.XmlWriter,
+  local_name : String,
+  v : Int,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
+  w.attribute(@xml.QName::unqualified("val"), v.to_string())
+  w.end_element()
+}
+
+///|
+fn emit_val_string(
+  w : @xml.XmlWriter,
+  local_name : String,
+  v : String,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
+  w.attribute(@xml.QName::unqualified("val"), v)
+  w.end_element()
+}
+
+///|
+/// Build a write context that knows the chart prefix on top of the
+/// well-known OOXML prefixes.
 fn make_chart_ctx() -> @oxml.WriteCtx {
   let ctx = @oxml.WriteCtx::with_well_known_prefixes()
   ctx.known_prefixes[@oxml.chart_ns] = "c"

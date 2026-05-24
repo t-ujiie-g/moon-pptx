@@ -123,7 +123,7 @@ test "Phase 7a1: chart deck opens and Presentation::charts() finds the part" {
   let charts = prs.charts()
   assert_eq(charts.length(), 1)
   let chart = charts[0]
-  assert_eq(chart.space_body.name.local_name, "chartSpace")
+  assert_eq(chart.chart.plot_area.name.local_name, "plotArea")
 }
 
 ///|

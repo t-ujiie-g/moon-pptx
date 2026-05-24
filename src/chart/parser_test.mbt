@@ -65,19 +65,51 @@ fn typical_chart_xml() -> String {
 }
 
 ///|
-test "Chart::parse: root recognised, body captured" {
+test "Chart::parse: root recognised + plotArea captured" {
   let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
-  assert_eq(chart.space_body.name.uri, chart_ns)
-  assert_eq(chart.space_body.name.local_name, "chartSpace")
-  // Exactly one child: <c:chart>.
-  let mut element_count = 0
-  for node in chart.space_body.children {
-    match node {
-      Element(_) => element_count = element_count + 1
-      _ => ()
-    }
-  }
-  assert_eq(element_count, 1)
+  // <c:plotArea> is required and lifted directly to ChartBody.
+  assert_eq(chart.chart.plot_area.name.uri, chart_ns)
+  assert_eq(chart.chart.plot_area.name.local_name, "plotArea")
+}
+
+///|
+test "Chart::parse: typed chart-body scalar fields (7a2)" {
+  let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
+  // Our fixture has no `<c:autoTitleDeleted>` so this should be `None`.
+  // Other 7a2 fields likewise.
+  assert_true(chart.chart.auto_title_deleted is None)
+  assert_true(chart.chart.plot_vis_only is None)
+  assert_true(chart.chart.disp_blanks_as is None)
+}
+
+///|
+test "Chart::parse: typed chart-body fields from rich fixture (7a2)" {
+  // Build a chart that exercises every typed leaf the 7a2 slice lifts.
+  let xml = "<?xml version=\"1.0\"?>" +
+    "<c:chartSpace xmlns:c=\"" +
+    chart_ns +
+    "\">" +
+    "<c:date1904 val=\"0\"/>" +
+    "<c:lang val=\"en-US\"/>" +
+    "<c:roundedCorners val=\"1\"/>" +
+    "<c:style val=\"2\"/>" +
+    "<c:chart>" +
+    "<c:autoTitleDeleted val=\"1\"/>" +
+    "<c:plotArea><c:layout/></c:plotArea>" +
+    "<c:plotVisOnly val=\"1\"/>" +
+    "<c:dispBlanksAs val=\"gap\"/>" +
+    "<c:showDLblsOverMax val=\"0\"/>" +
+    "</c:chart>" +
+    "</c:chartSpace>"
+  let chart = @chart.Chart::parse(fixture_bytes(xml))
+  assert_eq(chart.date1904.unwrap(), false)
+  assert_eq(chart.lang.unwrap(), "en-US")
+  assert_eq(chart.rounded_corners.unwrap(), true)
+  assert_eq(chart.style.unwrap(), 2)
+  assert_eq(chart.chart.auto_title_deleted.unwrap(), true)
+  assert_eq(chart.chart.plot_vis_only.unwrap(), true)
+  assert_true(chart.chart.disp_blanks_as is Some(Gap))
+  assert_eq(chart.chart.show_d_lbls_over_max.unwrap(), false)
 }
 
 ///|
@@ -112,10 +144,15 @@ test "Chart::serialize: re-parse equals original (round-trip floor)" {
 }
 
 ///|
-test "Chart::serialize: empty chartSpace round-trips" {
+test "Chart::serialize: minimal chartSpace round-trips" {
+  // Phase 7a2 raises on missing <c:chart> or missing <c:plotArea> per
+  // the schema. This test confirms the absolute minimum valid chart
+  // (just the required elements) survives parse → serialize → parse.
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     chart_ns +
-    "\"/>"
+    "\">" +
+    "<c:chart><c:plotArea/></c:chart>" +
+    "</c:chartSpace>"
   let original = @chart.Chart::parse(fixture_bytes(xml))
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
@@ -131,6 +168,7 @@ test "Chart::serialize: foreign-namespace extLst children survive" {
     "\">" +
     "<c:chart>" +
     "<c:autoTitleDeleted val=\"1\"/>" +
+    "<c:plotArea><c:layout/></c:plotArea>" +
     "<c:extLst><c:ext uri=\"{ABC}\" xmlns:foo=\"http://example.com/foo\"><foo:bar/></c:ext></c:extLst>" +
     "</c:chart>" +
     "</c:chartSpace>"
@@ -138,4 +176,28 @@ test "Chart::serialize: foreign-namespace extLst children survive" {
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
   assert_eq(re_parsed, original)
+}
+
+///|
+test "Chart::parse: missing <c:chart> raises Malformed" {
+  let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
+    chart_ns +
+    "\"/>"
+  let raised = try? @chart.Chart::parse(fixture_bytes(xml))
+  match raised {
+    Err(_) => ()
+    Ok(_) => fail("expected Malformed for chartSpace without chart")
+  }
+}
+
+///|
+test "Chart::parse: missing <c:plotArea> raises Malformed" {
+  let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
+    chart_ns +
+    "\"><c:chart/></c:chartSpace>"
+  let raised = try? @chart.Chart::parse(fixture_bytes(xml))
+  match raised {
+    Err(_) => ()
+    Ok(_) => fail("expected Malformed for chart without plotArea")
+  }
 }
