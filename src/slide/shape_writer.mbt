@@ -107,6 +107,7 @@ fn write_auto_shape(
     ctx,
     s.transform,
     s.geometry,
+    s.fill,
     s.stroke,
     s.effects,
     s.extension,
@@ -220,13 +221,16 @@ fn write_placeholder(
 }
 
 ///|
-/// `<p:spPr>` body: optional `<a:xfrm>` + geometry + line fill +
-/// effects + captured drawing-ml children (scene3d / sp3d / extLst).
+/// `<p:spPr>` body: optional `<a:xfrm>` + geometry + fill choice +
+/// `<a:ln>` + effects + captured drawing-ml children (scene3d /
+/// sp3d / extLst). Child order matches the ECMA-376 CT_ShapeProperties
+/// schema.
 fn write_sp_pr(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   transform : Transform?,
   geometry : Geometry?,
+  fill : @oxml.Fill?,
   stroke : @oxml.Stroke?,
   effects : @oxml.EffectList?,
   extension : Array[@xml.XmlElement],
@@ -239,6 +243,10 @@ fn write_sp_pr(
   }
   match geometry {
     Some(g) => write_geometry(w, ctx, g)
+    None => ()
+  }
+  match fill {
+    Some(f) => @oxml.write_fill(w, ctx, f)
     None => ()
   }
   match stroke {
@@ -329,6 +337,7 @@ fn write_picture(
     ctx,
     p.transform,
     p.geometry,
+    None, // pictures' fill lives in <p:blipFill>, not <p:spPr>
     p.stroke,
     p.effects,
     p.extension,
@@ -501,6 +510,7 @@ fn write_connector(
     ctx,
     c.transform,
     c.geometry,
+    None, // connectors are line-only — no shape-level fill
     c.stroke,
     c.effects,
     c.extension,

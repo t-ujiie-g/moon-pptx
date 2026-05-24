@@ -94,6 +94,7 @@ pub(all) struct AutoShape {
   placeholder : Placeholder?
   transform : Transform?
   geometry : Geometry?
+  fill : @oxml.Fill?
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   text_body : TextBody?

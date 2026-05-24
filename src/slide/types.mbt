@@ -80,6 +80,12 @@ pub(all) struct AutoShape {
   placeholder : Placeholder?
   transform : Transform?
   geometry : Geometry?
+  /// `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`
+  /// / `<a:noFill>` parsed off `<p:spPr>`. `None` means "inherit from
+  /// the placeholder / theme defaults" — which, for non-placeholder
+  /// shapes, renders as a fully transparent shape in PowerPoint /
+  /// LibreOffice. Builders therefore default to `Some(SolidFill(…))`.
+  fill : @oxml.Fill?
   /// `<a:ln>` outline parsed off `<p:spPr>`. `None` means "inherit
   /// from the placeholder / theme defaults".
   stroke : @oxml.Stroke?

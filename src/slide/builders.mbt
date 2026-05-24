@@ -43,9 +43,12 @@ pub fn TextBody::of_text(text : String) -> TextBody {
 
 ///|
 /// Construct an `AutoShape` with the given preset geometry,
-/// transform, and no fill / stroke / effects / text.  Used by the
-/// per-preset helpers below; users typically reach for `rect` /
-/// `ellipse` / `textbox` rather than this.
+/// transform, and no fill / stroke / effects / text. Users typically
+/// reach for the per-preset helpers (`rect` / `ellipse` /
+/// `round_rect` / `textbox`) rather than this — those apply visible
+/// defaults so PowerPoint actually renders the shape. `of_preset`
+/// remains the lowest-level builder for callers that want to start
+/// from zero and layer their own styling.
 pub fn AutoShape::of_preset(
   id : Int,
   name : String,
@@ -61,6 +64,7 @@ pub fn AutoShape::of_preset(
     placeholder: None,
     transform: Some({ offset: { x, y }, extent: { cx, cy } }),
     geometry: Some(Preset(preset, [])),
+    fill: None,
     stroke: None,
     effects: None,
     text_body: None,
@@ -69,9 +73,36 @@ pub fn AutoShape::of_preset(
 }
 
 ///|
-/// Rectangle shape with the canonical `prst="rect"` preset and the
-/// given placement. Empty `<a:avLst/>` is implied by the writer for
-/// a preset without adjustment values.
+/// Default fill used by `rect` / `ellipse` / `round_rect` so the
+/// shape is actually visible in PowerPoint / LibreOffice. A
+/// non-placeholder shape with no `<a:solidFill>` (or any fill
+/// choice) renders fully transparent.
+fn default_shape_fill() -> @oxml.Fill {
+  @oxml.SolidFill(@oxml.Color::srgb(@units.RgbColor::new(0xDD, 0xE3, 0xEE)))
+}
+
+///|
+/// Default 1-point dark line so shapes have a visible outline.
+fn default_shape_stroke() -> @oxml.Stroke {
+  {
+    width: Some(@units.Emu(12_700L)), // 1 pt
+    cap: None,
+    compound: None,
+    alignment: None,
+    fill: Some(
+      @oxml.SolidFill(@oxml.Color::srgb(@units.RgbColor::new(0x44, 0x55, 0x66))),
+    ),
+    dash: None,
+    join: None,
+    head_end: None,
+    tail_end: None,
+    extension: [],
+  }
+}
+
+///|
+/// Rectangle shape with the canonical `prst="rect"` preset, the
+/// given placement, and visible default fill + 1pt outline.
 pub fn AutoShape::rect(
   id : Int,
   name : String,
@@ -80,11 +111,16 @@ pub fn AutoShape::rect(
   cx : @units.Emu,
   cy : @units.Emu,
 ) -> AutoShape {
-  AutoShape::of_preset(id, name, PresetShape::Rect, x, y, cx, cy)
+  let s = AutoShape::of_preset(id, name, PresetShape::Rect, x, y, cx, cy)
+  {
+    ..s,
+    fill: Some(default_shape_fill()),
+    stroke: Some(default_shape_stroke()),
+  }
 }
 
 ///|
-/// Ellipse shape (`prst="ellipse"`).
+/// Ellipse shape (`prst="ellipse"`) with visible default fill + outline.
 pub fn AutoShape::ellipse(
   id : Int,
   name : String,
@@ -93,11 +129,17 @@ pub fn AutoShape::ellipse(
   cx : @units.Emu,
   cy : @units.Emu,
 ) -> AutoShape {
-  AutoShape::of_preset(id, name, PresetShape::Ellipse, x, y, cx, cy)
+  let s = AutoShape::of_preset(id, name, PresetShape::Ellipse, x, y, cx, cy)
+  {
+    ..s,
+    fill: Some(default_shape_fill()),
+    stroke: Some(default_shape_stroke()),
+  }
 }
 
 ///|
-/// Rounded-rectangle (`prst="roundRect"`).
+/// Rounded-rectangle (`prst="roundRect"`) with visible default
+/// fill + outline.
 pub fn AutoShape::round_rect(
   id : Int,
   name : String,
@@ -106,14 +148,19 @@ pub fn AutoShape::round_rect(
   cx : @units.Emu,
   cy : @units.Emu,
 ) -> AutoShape {
-  AutoShape::of_preset(id, name, PresetShape::RoundRect, x, y, cx, cy)
+  let s = AutoShape::of_preset(id, name, PresetShape::RoundRect, x, y, cx, cy)
+  {
+    ..s,
+    fill: Some(default_shape_fill()),
+    stroke: Some(default_shape_stroke()),
+  }
 }
 
 ///|
-/// Text box — a rectangle with text content. The same shape would be
-/// produced by parsing PowerPoint's TextBox tool output: a
-/// `prst="rect"` AutoShape with a `<p:txBody>` carrying the supplied
-/// text.
+/// Text box — a rectangle with text content. Unlike the geometric
+/// builders this leaves `fill` and `stroke` as `None` so the box
+/// renders as plain text without a background or border (matching
+/// the typical "TextBox" tool in PowerPoint).
 pub fn AutoShape::textbox(
   id : Int,
   name : String,

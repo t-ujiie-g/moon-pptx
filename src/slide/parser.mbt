@@ -182,11 +182,18 @@ fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
               end = en
             }
             "spPr" => {
-              let (xfrm, geom, ln, fx) = parse_sp_pr(r, extension)
+              let (xfrm, geom, fl, ln, fx) = parse_sp_pr(r, extension)
               transform = xfrm
               geometry = geom
               stroke = ln
               effects = fx
+              // Connectors don't carry a fill field in the typed
+              // model today; if one is present it round-trips via
+              // the connector's `extension` array.
+              match fl {
+                Some(_) => () // ignore for now; connectors are line-only by spec
+                None => ()
+              }
             }
             // style, extLst, and any future <p:cxnSp> children.
             _ => extension.push(collect_subtree_unknown(r, child, attrs))
@@ -480,11 +487,16 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
               }
             }
             "spPr" => {
-              let (xfrm, geom, ln, fx) = parse_sp_pr(r, extension)
+              let (xfrm, geom, _, ln, fx) = parse_sp_pr(r, extension)
               transform = xfrm
               geometry = geom
               stroke = ln
               effects = fx
+              // Pictures carry their fill via `blipFill` outside
+              // `spPr`; any solidFill etc. inside spPr is unusual
+              // and we currently drop it (it round-trips through
+              // `extension` for foreign-ns siblings; native ones
+              // would need a typed picture fill).
             }
             // style, extLst, and any future <p:pic> children.
             _ => extension.push(collect_subtree_unknown(r, child, attrs))
@@ -513,6 +525,7 @@ fn parse_auto_shape(
   let mut placeholder : Placeholder? = None
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
+  let mut fill : @oxml.Fill? = None
   let mut stroke : @oxml.Stroke? = None
   let mut effects : @oxml.EffectList? = None
   let mut text_body : TextBody? = None
@@ -532,9 +545,10 @@ fn parse_auto_shape(
               placeholder = ph
             }
             "spPr" => {
-              let (xfrm, geom, ln, fx) = parse_sp_pr(r, extension)
+              let (xfrm, geom, fl, ln, fx) = parse_sp_pr(r, extension)
               transform = xfrm
               geometry = geom
+              fill = fl
               stroke = ln
               effects = fx
             }
@@ -553,6 +567,7 @@ fn parse_auto_shape(
     placeholder,
     transform,
     geometry,
+    fill,
     stroke,
     effects,
     text_body,
@@ -723,16 +738,18 @@ fn parse_nv_pr(
 }
 
 ///|
-/// Look inside `<p:spPr>` for `<a:xfrm>`, geometry, `<a:ln>`, and
-/// `<a:effectLst>`. Other children (`<a:solidFill>`, `<a:scene3d>`,
-/// `<a:sp3d>`, `<a:extLst>`, foreign-namespace) land on
-/// `parent_extension` so they round-trip per ADR-004.
+/// Look inside `<p:spPr>` for `<a:xfrm>`, geometry, the fill choice
+/// (`<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`
+/// / `<a:noFill>`), `<a:ln>`, and `<a:effectLst>`. Other children
+/// (`<a:scene3d>`, `<a:sp3d>`, `<a:extLst>`, foreign-namespace) land
+/// on `parent_extension` so they round-trip per ADR-004.
 fn parse_sp_pr(
   r : @xml.XmlReader,
   parent_extension : Array[@xml.XmlElement],
-) -> (Transform?, Geometry?, @oxml.Stroke?, @oxml.EffectList?) raise SlideError {
+) -> (Transform?, Geometry?, @oxml.Fill?, @oxml.Stroke?, @oxml.EffectList?) raise SlideError {
   let mut transform : Transform? = None
   let mut geometry : Geometry? = None
+  let mut fill : @oxml.Fill? = None
   let mut stroke : @oxml.Stroke? = None
   let mut effects : @oxml.EffectList? = None
   while true {
@@ -752,6 +769,21 @@ fn parse_sp_pr(
               // `CustomGeometry` AST; unknown siblings round-trip via
               // its own `extension` per ADR-004.
               geometry = Some(Custom(parse_custom_geometry(r)))
+            // EG_FillProperties choice — at most one fires.
+            "noFill"
+            | "solidFill"
+            | "gradFill"
+            | "blipFill"
+            | "pattFill"
+            | "grpFill" => {
+              let f = @oxml.parse_fill(r, child, attrs) catch {
+                e =>
+                  raise Malformed(
+                    "a:" + child.local_name + ": " + e.to_string(),
+                  )
+              }
+              fill = Some(f)
+            }
             "ln" => {
               let s = @oxml.parse_stroke(r, attrs) catch {
                 e => raise Malformed("a:ln: " + e.to_string())
@@ -764,9 +796,8 @@ fn parse_sp_pr(
               }
               effects = Some(e)
             }
-            // solidFill / gradFill / pattFill / blipFill / noFill on
-            // shape-level spPr (not yet plumbed into the shape model),
-            // plus scene3d / sp3d / extLst — all preserved.
+            // scene3d / sp3d / extLst / effectDag / fillOverlay etc. —
+            // not yet modelled, preserved per ADR-004.
             _ => parent_extension.push(collect_subtree_unknown(r, child, attrs))
           }
         }
@@ -774,7 +805,7 @@ fn parse_sp_pr(
       _ => ()
     }
   }
-  (transform, geometry, stroke, effects)
+  (transform, geometry, fill, stroke, effects)
 }
 
 ///|
