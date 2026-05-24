@@ -83,6 +83,103 @@ test "TextBody::of_text: single paragraph with one run" {
 }
 
 ///|
+test "RunProperties: fluent setters chain" {
+  let rp = @slide.RunProperties::default()
+    .with_font_size(@units.Pt(24.0))
+    .with_bold()
+    .with_italic()
+    .with_font("Helvetica")
+    .with_color(@units.RgbColor::new(0x10, 0x20, 0x30))
+  assert_eq(rp.font_size.unwrap(), @units.Pt(24.0))
+  assert_eq(rp.bold.unwrap(), true)
+  assert_eq(rp.italic.unwrap(), true)
+  assert_eq(rp.latin.unwrap(), "Helvetica")
+  assert_true(rp.fill is Some(_))
+}
+
+///|
+test "RunProperties: fluent setters do not mutate the original" {
+  let base = @slide.RunProperties::default()
+  let bigger = base.with_font_size(@units.Pt(36.0))
+  assert_true(base.font_size is None)
+  assert_eq(bigger.font_size.unwrap(), @units.Pt(36.0))
+}
+
+///|
+test "Paragraph::with_alignment: lifts to alignment field" {
+  let p = @slide.Paragraph::of_text("Centred").with_alignment(AlignCenter)
+  assert_true(p.properties.alignment is Some(AlignCenter))
+}
+
+///|
+test "TextBody::of_styled_text: run carries the styling" {
+  let rp = @slide.RunProperties::default()
+    .with_font_size(@units.Pt(18.0))
+    .with_bold()
+  let body = @slide.TextBody::of_styled_text("Bold 18", rp)
+  assert_eq(body.paragraphs.length(), 1)
+  match body.paragraphs[0].content[0] {
+    RunContent(r) => {
+      assert_eq(r.text, "Bold 18")
+      assert_eq(r.properties.font_size.unwrap(), @units.Pt(18.0))
+      assert_eq(r.properties.bold.unwrap(), true)
+    }
+    _ => fail("expected RunContent")
+  }
+}
+
+///|
+test "TextBody::of_paragraphs: passes through" {
+  let p0 = @slide.Paragraph::of_text("one")
+  let p1 = @slide.Paragraph::of_text("two")
+  let body = @slide.TextBody::of_paragraphs([p0, p1])
+  assert_eq(body.paragraphs.length(), 2)
+  assert_eq(body.plain_text(), "one\ntwo")
+}
+
+///|
+test "AutoShape::with_fill / with_stroke / with_no_fill chain" {
+  let s = @slide.AutoShape::rect(
+    1,
+    "R",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  // rect ships with default fill + stroke; with_no_fill explicitly opts out.
+  let bare = s.with_no_fill().with_no_stroke()
+  assert_true(bare.fill is Some(_)) // NoFill, not None — explicit
+  assert_true(bare.stroke is None)
+  // with_fill overrides the default.
+  let yellow = @units.RgbColor::new(0xFF, 0xCC, 0x00)
+  let painted = s.with_fill(@oxml.SolidFill(@oxml.Color::srgb(yellow)))
+  match painted.fill.unwrap() {
+    SolidFill(_) => ()
+    _ => fail("expected SolidFill")
+  }
+}
+
+///|
+test "AutoShape::with_text_body: attaches styled body" {
+  let s = @slide.AutoShape::rect(
+    1,
+    "Card",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(2_000_000L),
+    @units.Emu(500_000L),
+  )
+  let body = @slide.TextBody::of_styled_text(
+    "Header",
+    @slide.RunProperties::default().with_font_size(@units.Pt(28.0)).with_bold(),
+  )
+  let styled = s.with_text_body(body)
+  assert_true(styled.text_body is Some(_))
+  assert_eq(styled.text_body.unwrap().plain_text(), "Header")
+}
+
+///|
 test "Slide::with_shape: appends shape; original unchanged" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +

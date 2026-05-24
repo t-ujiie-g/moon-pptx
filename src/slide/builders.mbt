@@ -26,6 +26,43 @@ pub fn Paragraph::of_text(text : String) -> Paragraph {
 }
 
 ///|
+/// One paragraph carrying a single run of styled text. The run picks
+/// up the supplied properties; the paragraph itself uses default
+/// alignment / indentation.
+pub fn Paragraph::of_styled_text(
+  text : String,
+  run_properties : RunProperties,
+) -> Paragraph {
+  let run : Run = { properties: run_properties, text, extension: [] }
+  {
+    properties: ParagraphProperties::default(),
+    content: [RunContent(run)],
+    extension: [],
+  }
+}
+
+///|
+/// Replace the paragraph-level properties (alignment, indentation,
+/// spacing, bullet) on a paragraph. Returns a new value; the
+/// original paragraph is unchanged.
+pub fn Paragraph::with_properties(
+  self : Paragraph,
+  properties : ParagraphProperties,
+) -> Paragraph {
+  { ..self, properties, }
+}
+
+///|
+/// Replace the alignment of a paragraph. Convenience over
+/// `with_properties` for the common case.
+pub fn Paragraph::with_alignment(
+  self : Paragraph,
+  align : TextAlignment,
+) -> Paragraph {
+  { ..self, properties: { ..self.properties, alignment: Some(align) } }
+}
+
+///|
 /// `TextBody` containing one paragraph of plain text plus default
 /// body properties and an empty list style. The default body
 /// properties don't carry any rotation / anchor / insets — those
@@ -37,6 +74,75 @@ pub fn TextBody::of_text(text : String) -> TextBody {
     paragraphs: [Paragraph::of_text(text)],
     extension: [],
   }
+}
+
+///|
+/// `TextBody` containing one paragraph of styled text. Same defaults
+/// as `of_text` for the body / list-style wrappers; the styling sits
+/// on the run.
+pub fn TextBody::of_styled_text(
+  text : String,
+  run_properties : RunProperties,
+) -> TextBody {
+  {
+    body_properties: Some(BodyProperties::default()),
+    list_style: Some(ListStyle::empty()),
+    paragraphs: [Paragraph::of_styled_text(text, run_properties)],
+    extension: [],
+  }
+}
+
+///|
+/// `TextBody` of multiple paragraphs. Each entry becomes one
+/// paragraph; styling is uniform across paragraphs.
+pub fn TextBody::of_paragraphs(paragraphs : Array[Paragraph]) -> TextBody {
+  {
+    body_properties: Some(BodyProperties::default()),
+    list_style: Some(ListStyle::empty()),
+    paragraphs,
+    extension: [],
+  }
+}
+
+// --- RunProperties fluent builders -----------------------------------------
+
+///|
+/// Set the font size (in points).
+pub fn RunProperties::with_font_size(
+  self : RunProperties,
+  pt : @units.Pt,
+) -> RunProperties {
+  { ..self, font_size: Some(pt) }
+}
+
+///|
+/// Mark the run as bold.
+pub fn RunProperties::with_bold(self : RunProperties) -> RunProperties {
+  { ..self, bold: Some(true) }
+}
+
+///|
+/// Mark the run as italic.
+pub fn RunProperties::with_italic(self : RunProperties) -> RunProperties {
+  { ..self, italic: Some(true) }
+}
+
+///|
+/// Set the run's solid colour from an RGB triple.
+pub fn RunProperties::with_color(
+  self : RunProperties,
+  rgb : @units.RgbColor,
+) -> RunProperties {
+  { ..self, fill: Some(@oxml.Color::srgb(rgb)) }
+}
+
+///|
+/// Set the Latin-script typeface (e.g. `"Calibri"`, `"Arial"`).
+pub fn RunProperties::with_font(
+  self : RunProperties,
+  font_name : String,
+) -> RunProperties {
+  { ..self, latin: Some(font_name) }
 }
 
 // --- AutoShape constructors ---
@@ -172,6 +278,61 @@ pub fn AutoShape::textbox(
 ) -> AutoShape {
   let s = AutoShape::of_preset(id, name, PresetShape::Rect, x, y, cx, cy)
   { ..s, text_body: Some(TextBody::of_text(text)) }
+}
+
+// --- AutoShape fluent setters ----------------------------------------------
+
+///|
+/// Replace the fill of an existing `AutoShape`. Returns a new
+/// value; the original is unchanged.
+pub fn AutoShape::with_fill(self : AutoShape, fill : @oxml.Fill) -> AutoShape {
+  { ..self, fill: Some(fill) }
+}
+
+///|
+/// Mark the shape as transparent — explicitly emits `<a:noFill/>`
+/// instead of relying on placeholder / theme inheritance. Useful on
+/// top of the geometric builders to opt out of their default fill.
+pub fn AutoShape::with_no_fill(self : AutoShape) -> AutoShape {
+  { ..self, fill: Some(@oxml.NoFill) }
+}
+
+///|
+/// Replace the outline (`<a:ln>`) of an existing `AutoShape`.
+pub fn AutoShape::with_stroke(
+  self : AutoShape,
+  stroke : @oxml.Stroke,
+) -> AutoShape {
+  { ..self, stroke: Some(stroke) }
+}
+
+///|
+/// Drop the outline — emits no `<a:ln>` so the shape inherits its
+/// border from the layout / theme (typically: none).
+pub fn AutoShape::with_no_stroke(self : AutoShape) -> AutoShape {
+  { ..self, stroke: None }
+}
+
+///|
+/// Replace the text body of an existing `AutoShape`. Pairs with
+/// `TextBody::of_styled_text` for terse styled-text construction:
+///
+///   AutoShape::rect(1, "Card", x, y, w, h)
+///     .with_fill(@oxml.SolidFill(@oxml.Color::srgb(navy)))
+///     .with_text_body(
+///       TextBody::of_styled_text(
+///         "Header",
+///         RunProperties::default()
+///           .with_font_size(@units.Pt(28.0))
+///           .with_bold()
+///           .with_color(white),
+///       ),
+///     )
+pub fn AutoShape::with_text_body(
+  self : AutoShape,
+  body : TextBody,
+) -> AutoShape {
+  { ..self, text_body: Some(body) }
 }
 
 // --- Slide::with_shape ---

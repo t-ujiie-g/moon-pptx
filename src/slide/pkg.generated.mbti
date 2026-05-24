@@ -105,6 +105,11 @@ pub fn AutoShape::of_preset(Int, String, PresetShape, @units.Emu, @units.Emu, @u
 pub fn AutoShape::rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn AutoShape::round_rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn AutoShape::textbox(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
+pub fn AutoShape::with_fill(Self, @oxml.Fill) -> Self
+pub fn AutoShape::with_no_fill(Self) -> Self
+pub fn AutoShape::with_no_stroke(Self) -> Self
+pub fn AutoShape::with_stroke(Self, @oxml.Stroke) -> Self
+pub fn AutoShape::with_text_body(Self, TextBody) -> Self
 
 pub(all) struct BodyProperties {
   rotation : @units.Angle?
@@ -224,8 +229,11 @@ pub(all) struct Paragraph {
   content : Array[ParagraphContent]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Paragraph::of_styled_text(String, RunProperties) -> Self
 pub fn Paragraph::of_text(String) -> Self
 pub fn Paragraph::plain_text(Self) -> String
+pub fn Paragraph::with_alignment(Self, TextAlignment) -> Self
+pub fn Paragraph::with_properties(Self, ParagraphProperties) -> Self
 
 pub(all) enum ParagraphContent {
   RunContent(Run)
@@ -516,6 +524,11 @@ pub(all) struct RunProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn RunProperties::default() -> Self
+pub fn RunProperties::with_bold(Self) -> Self
+pub fn RunProperties::with_color(Self, @units.RgbColor) -> Self
+pub fn RunProperties::with_font(Self, String) -> Self
+pub fn RunProperties::with_font_size(Self, @units.Pt) -> Self
+pub fn RunProperties::with_italic(Self) -> Self
 
 pub(all) enum Shape {
   AutoShape(AutoShape)
@@ -645,6 +658,8 @@ pub(all) struct TextBody {
   paragraphs : Array[Paragraph]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn TextBody::of_paragraphs(Array[Paragraph]) -> Self
+pub fn TextBody::of_styled_text(String, RunProperties) -> Self
 pub fn TextBody::of_text(String) -> Self
 pub fn TextBody::plain_text(Self) -> String
 
