@@ -219,8 +219,8 @@ pub(all) enum Plot {
   AreaChart(@xml.XmlElement)
   /// `<c:area3DChart>`
   Area3DChart(@xml.XmlElement)
-  /// `<c:lineChart>`
-  LineChart(@xml.XmlElement)
+  /// `<c:lineChart>` — typed at Phase 7a3c.
+  LineChart(LineChartBody)
   /// `<c:line3DChart>`
   Line3DChart(@xml.XmlElement)
   /// `<c:stockChart>`
@@ -229,8 +229,8 @@ pub(all) enum Plot {
   RadarChart(@xml.XmlElement)
   /// `<c:scatterChart>`
   ScatterChart(@xml.XmlElement)
-  /// `<c:pieChart>`
-  PieChart(@xml.XmlElement)
+  /// `<c:pieChart>` — typed at Phase 7a3d.
+  PieChart(PieChartBody)
   /// `<c:pie3DChart>`
   Pie3DChart(@xml.XmlElement)
   /// `<c:doughnutChart>`
@@ -290,12 +290,10 @@ pub fn Plot::element(self : Plot) -> @xml.XmlElement? {
   match self {
     AreaChart(e)
     | Area3DChart(e)
-    | LineChart(e)
     | Line3DChart(e)
     | StockChart(e)
     | RadarChart(e)
     | ScatterChart(e)
-    | PieChart(e)
     | Pie3DChart(e)
     | DoughnutChart(e)
     | Bar3DChart(e)
@@ -303,7 +301,7 @@ pub fn Plot::element(self : Plot) -> @xml.XmlElement? {
     | SurfaceChart(e)
     | Surface3DChart(e)
     | BubbleChart(e) => Some(e)
-    BarChart(_) => None
+    BarChart(_) | LineChart(_) | PieChart(_) => None
   }
 }
 

@@ -96,15 +96,48 @@ pub fn DisplayBlanksAs::from_xml(String) -> Self?
 pub fn DisplayBlanksAs::to_xml(Self) -> String
 pub impl Show for DisplayBlanksAs
 
+pub(all) enum Grouping {
+  Standard
+  Stacked
+  PercentStacked
+} derive(Eq, @debug.Debug)
+pub fn Grouping::from_xml(String) -> Self?
+pub fn Grouping::to_xml(Self) -> String
+pub impl Show for Grouping
+
+pub(all) struct LineChartBody {
+  grouping : Grouping
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  drop_lines : @xml.XmlElement?
+  hi_low_lines : @xml.XmlElement?
+  up_down_bars : @xml.XmlElement?
+  marker : Bool?
+  smooth : Bool?
+  ax_ids : Array[Int]
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for LineChartBody
+
+pub(all) struct PieChartBody {
+  vary_colors : Bool?
+  series : Array[@xml.XmlElement]
+  d_lbls : @xml.XmlElement?
+  first_slice_ang : Int?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for PieChartBody
+
 pub(all) enum Plot {
   AreaChart(@xml.XmlElement)
   Area3DChart(@xml.XmlElement)
-  LineChart(@xml.XmlElement)
+  LineChart(LineChartBody)
   Line3DChart(@xml.XmlElement)
   StockChart(@xml.XmlElement)
   RadarChart(@xml.XmlElement)
   ScatterChart(@xml.XmlElement)
-  PieChart(@xml.XmlElement)
+  PieChart(PieChartBody)
   Pie3DChart(@xml.XmlElement)
   DoughnutChart(@xml.XmlElement)
   BarChart(BarChartBody)

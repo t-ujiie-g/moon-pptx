@@ -225,12 +225,12 @@ fn plot_from_local_name(
   match name {
     "areaChart" => Some(AreaChart(el))
     "area3DChart" => Some(Area3DChart(el))
-    "lineChart" => Some(LineChart(el))
+    "lineChart" => Some(LineChart(parse_line_chart(el)))
     "line3DChart" => Some(Line3DChart(el))
     "stockChart" => Some(StockChart(el))
     "radarChart" => Some(RadarChart(el))
     "scatterChart" => Some(ScatterChart(el))
-    "pieChart" => Some(PieChart(el))
+    "pieChart" => Some(PieChart(parse_pie_chart(el)))
     "pie3DChart" => Some(Pie3DChart(el))
     "doughnutChart" => Some(DoughnutChart(el))
     "barChart" => Some(BarChart(parse_bar_chart(el)))
@@ -318,6 +318,102 @@ fn axis_from_local_name(name : String, el : @xml.XmlElement) -> Axis? {
     "serAx" => Some(SerAx(el))
     _ => None
   }
+}
+
+///|
+/// Walk a captured `<c:lineChart>` element into a typed
+/// `LineChartBody`. Phase 7a3c.
+fn parse_line_chart(el : @xml.XmlElement) -> LineChartBody raise ChartError {
+  let mut grouping : Grouping? = None
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut drop_lines : @xml.XmlElement? = None
+  let mut hi_low_lines : @xml.XmlElement? = None
+  let mut up_down_bars : @xml.XmlElement? = None
+  let mut marker : Bool? = None
+  let mut smooth : Bool? = None
+  let ax_ids : Array[Int] = []
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "grouping" =>
+              grouping = parse_val_string_attr(c.attributes).bind(
+                Grouping::from_xml,
+              )
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "dropLines" => drop_lines = Some(c)
+            "hiLowLines" => hi_low_lines = Some(c)
+            "upDownBars" => up_down_bars = Some(c)
+            "marker" => marker = parse_val_bool_attr(c.attributes)
+            "smooth" => smooth = parse_val_bool_attr(c.attributes)
+            "axId" =>
+              match parse_val_int_attr(c.attributes) {
+                Some(n) => ax_ids.push(n)
+                None => ()
+              }
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  let g = match grouping {
+    Some(g) => g
+    None => raise Malformed("<c:lineChart> is missing required <c:grouping>")
+  }
+  {
+    grouping: g,
+    vary_colors,
+    series,
+    d_lbls,
+    drop_lines,
+    hi_low_lines,
+    up_down_bars,
+    marker,
+    smooth,
+    ax_ids,
+    extension,
+  }
+}
+
+///|
+/// Walk a captured `<c:pieChart>` element into a typed
+/// `PieChartBody`. Phase 7a3d. Pie charts have no axIds — the
+/// schema doesn't require any required scalar fields, so the
+/// parser never raises Malformed for a missing-child reason here.
+fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody {
+  let mut vary_colors : Bool? = None
+  let series : Array[@xml.XmlElement] = []
+  let mut d_lbls : @xml.XmlElement? = None
+  let mut first_slice_ang : Int? = None
+  let extension : Array[@xml.XmlElement] = []
+  for node in el.children {
+    match node {
+      Element(c) =>
+        if c.name.uri != @oxml.chart_ns {
+          extension.push(c)
+        } else {
+          match c.name.local_name {
+            "varyColors" => vary_colors = parse_val_bool_attr(c.attributes)
+            "ser" => series.push(c)
+            "dLbls" => d_lbls = Some(c)
+            "firstSliceAng" =>
+              first_slice_ang = parse_val_int_attr(c.attributes)
+            _ => extension.push(c)
+          }
+        }
+      _ => ()
+    }
+  }
+  { vary_colors, series, d_lbls, first_slice_ang, extension }
 }
 
 // --- attribute helpers ---

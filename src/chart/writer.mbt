@@ -198,6 +198,8 @@ fn write_plot(
 ) -> Unit raise @xml.XmlError {
   match p {
     BarChart(body) => write_bar_chart(w, ctx, body)
+    LineChart(body) => write_line_chart(w, ctx, body)
+    PieChart(body) => write_pie_chart(w, ctx, body)
     _ =>
       match p.element() {
         Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -252,6 +254,84 @@ fn write_bar_chart(
   }
   for id in b.ax_ids {
     emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+/// Emit `<c:lineChart>` body in ECMA-376 §21.2.2.97 schema order.
+fn write_line_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : LineChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "lineChart"))
+  emit_val_string(w, "grouping", b.grouping.to_xml())
+  match b.vary_colors {
+    Some(v) => emit_val_bool(w, "varyColors", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.drop_lines {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.hi_low_lines {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.up_down_bars {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.marker {
+    Some(v) => emit_val_bool(w, "marker", v)
+    None => ()
+  }
+  match b.smooth {
+    Some(v) => emit_val_bool(w, "smooth", v)
+    None => ()
+  }
+  for id in b.ax_ids {
+    emit_val_int(w, "axId", id)
+  }
+  for ext in b.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element()
+}
+
+///|
+/// Emit `<c:pieChart>` body in ECMA-376 §21.2.2.141 schema order.
+fn write_pie_chart(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  b : PieChartBody,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "pieChart"))
+  match b.vary_colors {
+    Some(v) => emit_val_bool(w, "varyColors", v)
+    None => ()
+  }
+  for s in b.series {
+    @oxml.write_xml_element(w, ctx, s)
+  }
+  match b.d_lbls {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match b.first_slice_ang {
+    Some(n) => emit_val_int(w, "firstSliceAng", n)
+    None => ()
   }
   for ext in b.extension {
     @oxml.write_xml_element(w, ctx, ext)
