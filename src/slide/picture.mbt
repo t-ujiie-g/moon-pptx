@@ -18,7 +18,7 @@
 // `<p:blipFill>` shares its body shape with the DrawingML `<a:blipFill>`
 // — same `<a:blip>` + optional `<a:srcRect>` + `<a:stretch>` / `<a:tile>`
 // fill-mode child. We delegate to `@oxml.parse_fill` so blip handling
-// is shared between picture shapes and shape-level fills (Phase 3e3).
+// is shared between picture shapes and shape-level fills.
 
 ///|
 /// `<p:pic>` — picture shape. The picture-specific bits (blip embed /

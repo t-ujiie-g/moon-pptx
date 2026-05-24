@@ -1,4 +1,4 @@
-// RunProperties parser tests (Phase 3d2).
+// RunProperties parser tests.
 
 ///|
 /// Build a slide with one auto-shape whose `<p:txBody>` contains a single
@@ -188,8 +188,9 @@ test "rPr: gradFill and effectLst are skipped without raising" {
       "</a:rPr>",
     ),
   )
-  // No fill should be picked up from gradFill — that's an intentional Phase 3e
-  // expansion point.
+  // No fill should be picked up from gradFill — run-level fills only
+  // pick up solidFill; gradient + pattern + blip run-fills are an
+  // intentional expansion point.
   assert_true(rpr_of(slide).fill is None)
 }
 

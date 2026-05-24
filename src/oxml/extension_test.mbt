@@ -1,7 +1,7 @@
-// Lossless preservation tests (ADR-004) for the @oxml ADTs —
-// Phase 3f3d. Color, Fill (Gradient / Pattern / BlipFill), Stroke, and
-// EffectList all gained an `extension : Array[@xml.XmlElement]` field;
-// these tests assert that the unmodelled long-tail children round-trip.
+// Lossless preservation tests (ADR-004) for the @oxml ADTs. Color,
+// Fill (Gradient / Pattern / BlipFill), Stroke, and EffectList all
+// carry an `extension : Array[@xml.XmlElement]` field; these tests
+// assert that the unmodelled long-tail children round-trip.
 
 // `parse_inner_fill` is defined in fill_test.mbt and shared via the
 // blackbox test package; we reuse it here.

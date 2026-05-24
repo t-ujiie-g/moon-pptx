@@ -5,9 +5,9 @@
 //   * `themeElements` containing `clrScheme`, `fontScheme`, `fmtScheme`
 //   * optional `objectDefaults`, `extraClrSchemeLst`, `custClrLst`, `extLst`
 //
-// Phase 3a models `clrScheme` and `fontScheme`; everything else is parsed
-// as opaque XML and preserved for round-trip (ADR-004 implementation will
-// firm up the preservation API in a later phase).
+// Modelled: `clrScheme` and `fontScheme`. Everything else (`fmtScheme`,
+// `objectDefaults`, `extraClrSchemeLst`, `custClrLst`, `extLst`)
+// round-trips via `Theme.extension` per ADR-004.
 
 ///|
 /// Parsed `<a:theme>` document. The `name` attribute mirrors the OOXML
@@ -21,6 +21,6 @@ pub(all) struct Theme {
   /// foreign-namespace extensions) **and** any unmodelled child of the
   /// nested `<a:themeElements>` (`<a:fmtScheme>`, `<a:objectDefaults>`).
   /// The original parent is recoverable from the element's `name.uri` /
-  /// `name.local_name` when Phase 4 writers re-emit.
+  /// `name.local_name` when writers re-emit.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

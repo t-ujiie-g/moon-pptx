@@ -1,4 +1,4 @@
-// Custom-geometry XML reader — Phase 3h slice.
+// Custom-geometry XML reader.
 //
 // Called from `parse_sp_pr` when it sees a `<a:custGeom>` child. The
 // StartElement has already been consumed by the caller; we read events

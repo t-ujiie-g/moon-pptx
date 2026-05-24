@@ -1,4 +1,4 @@
-// Fill writer — Phase 4c slice.
+// Fill writer.
 //
 // Inverse of `parse_fill`. Each `Fill` variant emits its canonical
 // wrapper element (`<a:noFill/>` / `<a:solidFill>` / `<a:gradFill>` /

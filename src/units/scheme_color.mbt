@@ -3,8 +3,8 @@
 // OOXML's `CT_SchemeColor` references one of 17 named theme color slots and
 // applies an ordered list of color transforms (tint, shade, modulation, etc).
 // The full transform set in ECMA-376 is large; we model the ones used in
-// nearly every real-world PPTX and leave the rare ones as a known extension
-// point (see TODO.md Phase 1.2 follow-ups).
+// nearly every real-world PPTX. The long tail (hueMod / redMod / comp /
+// inv / gamma / gray / …) rides on `@oxml.Color.extension` per ADR-004.
 
 ///|
 /// One of the named OOXML theme color slots (ST_SchemeColorVal).

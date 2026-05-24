@@ -1,4 +1,4 @@
-// Table builder tests — Phase 6c.
+// Table builder tests.
 
 ///|
 test "TableCell::of_text: carries text + default span / merge" {

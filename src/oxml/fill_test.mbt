@@ -1,4 +1,4 @@
-// @oxml.Fill parser tests (Phase 3e2).
+// @oxml.Fill parser tests.
 
 ///|
 fn parse_inner_fill(inner : String) -> @oxml.Fill raise @oxml.FillError {

@@ -1,4 +1,4 @@
-// @oxml.EffectList parser tests (Phase 3e4).
+// @oxml.EffectList parser tests.
 
 ///|
 fn parse_effect_list_inner(

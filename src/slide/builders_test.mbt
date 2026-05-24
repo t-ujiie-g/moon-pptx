@@ -1,4 +1,4 @@
-// Shape / slide builder tests (Phase 5d).
+// Shape / slide builder tests.
 
 ///|
 test "AutoShape::rect: produces expected preset + transform" {

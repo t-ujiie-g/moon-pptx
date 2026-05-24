@@ -1,4 +1,4 @@
-// Graphic frame + table parser/writer tests — Phase 6a / 6b.
+// Graphic frame + table parser/writer tests.
 
 ///|
 let table_uri : String = "http://schemas.openxmlformats.org/drawingml/2006/table"
@@ -167,7 +167,7 @@ test "parse: gridSpan + rowSpan + hMerge + vMerge attributes preserved" {
   }
 }
 
-// --- writer (Phase 6b) ---
+// --- writer ---
 
 ///|
 test "Slide::serialize: graphicFrame + table round-trips" {
@@ -180,7 +180,7 @@ test "Slide::serialize: graphicFrame + table round-trips" {
 ///|
 test "Slide::serialize: chart graphicFrame round-trips via ChartContent" {
   // Confirms the chart rid survives parse → serialize → parse through
-  // the typed `ChartContent(rid)` path introduced in Phase 7a1.
+  // the typed `ChartContent(rid)` path.
   let chart_uri = "http://schemas.openxmlformats.org/drawingml/2006/chart"
   let body = "<p:graphicFrame>" +
     "<p:nvGraphicFramePr>" +

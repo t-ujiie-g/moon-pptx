@@ -1,9 +1,9 @@
 // Comments XML writers — `commentAuthors.xml` and `commentsN.xml`.
 //
-// Phase 4a slice. Mirrors the parsers in `parser.mbt`: each
+// Mirrors the parsers in `parser.mbt`: each
 // `CommentAuthorList::serialize` / `CommentList::serialize` produces a
 // byte stream that, when parsed back through `::parse`, yields a value
-// equal to the original (round-trip equality is the Phase 4 floor).
+// equal to the original (round-trip equality is the writer floor).
 //
 // Lossless preservation per ADR-004: every node's `extension`
 // `Array[XmlElement]` is replayed verbatim via

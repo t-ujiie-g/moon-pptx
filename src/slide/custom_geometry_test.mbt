@@ -1,4 +1,4 @@
-// Custom-geometry parser tests (Phase 3h).
+// Custom-geometry parser tests.
 //
 // `slide_with_sp_pr` from `geometry_test.mbt` builds the surrounding
 // `<p:sp><p:spPr>…</p:spPr></p:sp>` wrapper; each test below just

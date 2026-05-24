@@ -6,11 +6,10 @@
 // Each child is optional. Real PPTX almost always uses just one or two
 // (typically `outerShdw` + `glow` for emphasis effects).
 //
-// Phase 3e4 introduces the typed model + `parse_effect_list`, and wires
-// `effects : EffectList?` into auto-shape / picture / connector via
-// `<p:spPr>`. Run-level effects on `<a:rPr>` are deferred — they exist
-// in the spec but are rare in practice; surface them when a real fixture
-// demands it.
+// The typed model + `parse_effect_list` wires `effects : EffectList?`
+// into auto-shape / picture / connector via `<p:spPr>`. Run-level
+// effects on `<a:rPr>` are deferred — they exist in the spec but are
+// rare in practice; surface them when a real fixture demands it.
 //
 // The richer `<a:effectDag>` element (effect graph with custom node
 // composition) is rare in real-world PPTX; we don't model it yet — its

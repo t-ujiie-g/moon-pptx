@@ -54,13 +54,8 @@ pub impl Show for Chart with fn output(self, logger) {
   // payload. Keep this stub minimal to avoid invoking Show on
   // container fields (Option / Array) — current `core` deprecates
   // that path in favour of Debug.
+  let _ = self
   logger.write_string("Chart { … }")
-  ignore(self)
-}
-
-///|
-fn[T] ignore(_x : T) -> Unit {
-
 }
 
 ///|
@@ -108,7 +103,7 @@ pub(all) struct ChartBody {
 ///|
 pub impl Show for ChartBody with fn output(self, logger) {
   logger.write_string("ChartBody { … }")
-  ignore(self)
+  let _ = self
 }
 
 ///|
@@ -201,7 +196,7 @@ pub(all) struct PlotArea {
 ///|
 pub impl Show for PlotArea with fn output(self, logger) {
   logger.write_string("PlotArea { … }")
-  ignore(self)
+  let _ = self
 }
 
 ///|
@@ -274,15 +269,6 @@ pub fn Plot::local_name(self : Plot) -> String {
     Surface3DChart(_) => "surface3DChart"
     BubbleChart(_) => "bubbleChart"
   }
-}
-
-///|
-/// Returns the captured `XmlElement` for `Plot` variants that haven't
-/// been lifted to a typed body. Every variant is now typed, so this
-/// always returns `None`; kept on the public surface for callers that
-/// were probing for "is this variant still capture-only?".
-pub fn Plot::element(_self : Plot) -> @xml.XmlElement? {
-  None
 }
 
 ///|

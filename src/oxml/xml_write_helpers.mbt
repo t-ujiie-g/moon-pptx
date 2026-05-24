@@ -1,7 +1,7 @@
 // Shared XML write helpers for OOXML serialisers.
 //
-// All Phase 3 parsers capture unmodelled XML into `extension :
-// Array[@xml.XmlElement]` per ADR-004; the Phase 4 writers need a
+// Every typed model node carries an `extension : Array[@xml.XmlElement]`
+// for unmodelled children per ADR-004; the serialisers in turn need a
 // counterpart that emits those captured subtrees back to the wire
 // without loss. `write_xml_element` walks the captured DOM recursively
 // and feeds events into a `@xml.XmlWriter`.
@@ -115,8 +115,8 @@ fn ensure_uri_bound(
 
 ///|
 /// UTF-8 encode a `String` into a `FixedArray[Byte]`. Mirrors
-/// `bytes_to_string` (the reader-side decoder) — every Phase 4
-/// serialiser ends with this conversion when producing part bytes.
+/// `bytes_to_string` (the reader-side decoder) — every serialiser
+/// ends with this conversion when producing part bytes.
 pub fn string_to_bytes(s : String) -> FixedArray[Byte] {
   let buf : Array[Int] = []
   for c in s {

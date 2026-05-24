@@ -1,4 +1,4 @@
-// Slide replacement API — Phase 5d slice.
+// Slide replacement API.
 //
 // `update_slide_mut(slide_index, new_slide)` writes the serialized
 // bytes of a modified Slide back into the package at the same part

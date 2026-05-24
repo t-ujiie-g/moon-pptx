@@ -1,4 +1,4 @@
-// Comments parser tests (Phase 3g2 / 3g3).
+// Comments parser tests.
 
 ///|
 let pml_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"

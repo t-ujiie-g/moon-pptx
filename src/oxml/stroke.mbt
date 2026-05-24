@@ -7,9 +7,9 @@
 // optional child elements: a fill, a dash style, a line-join style, and
 // up to two arrowheads.
 //
-// Phase 3e3 introduces the typed model and `parse_stroke`. Later phases
-// wire `stroke : Option<Stroke>` into auto-shape / connector / picture
-// records so consumers can pattern-match on outline shape.
+// The typed `Stroke` model + `parse_stroke` entry-point wire into
+// auto-shape / connector / picture records via `stroke : Option<Stroke>`
+// so consumers can pattern-match on outline shape.
 
 ///|
 /// Line end cap (`ST_LineCap`, §20.1.10.30).

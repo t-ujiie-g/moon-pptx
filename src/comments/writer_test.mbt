@@ -1,6 +1,6 @@
-// Comments writer round-trip tests (Phase 4a).
+// Comments writer round-trip tests.
 //
-// The Phase 4 floor is: parse → serialize → parse → Eq. Every test
+// The writer floor is: parse → serialize → parse → Eq. Every test
 // here builds a value (often via `::parse` of a hand-written fixture),
 // serialises it, re-parses, and asserts the second parse equals the
 // first. Combined with the parser-side tests in `comments_test.mbt`,

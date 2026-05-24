@@ -1,4 +1,4 @@
-// Speaker-notes parser tests (Phase 3g1).
+// Speaker-notes parser tests.
 
 ///|
 let pml_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"

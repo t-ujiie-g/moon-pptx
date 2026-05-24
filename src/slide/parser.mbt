@@ -747,8 +747,8 @@ fn parse_sp_pr(
             "prstGeom" =>
               geometry = Some(parse_prst_geom(r, attrs, parent_extension))
             "custGeom" =>
-              // Phase 3h: typed `<a:custGeom>` parser. Path commands,
-              // guides, connection sites, and rect lift into the
+              // Typed `<a:custGeom>` parser. Path commands, guides,
+              // connection sites, and rect lift into the
               // `CustomGeometry` AST; unknown siblings round-trip via
               // its own `extension` per ADR-004.
               geometry = Some(Custom(parse_custom_geometry(r)))

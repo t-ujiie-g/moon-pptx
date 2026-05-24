@@ -1,4 +1,4 @@
-// Slide writer round-trip tests (Phase 4e).
+// Slide writer round-trip tests.
 
 ///|
 fn roundtrip_slide(bytes : FixedArray[Byte]) -> @slide.Slide raise {

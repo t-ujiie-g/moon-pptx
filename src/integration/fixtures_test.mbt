@@ -1,16 +1,16 @@
 // Shared synthetic-deck fixtures for the end-to-end roundtrip tests.
 //
-// Per TODO Q4 we can't ship real-world `.pptx` files (license unclear),
-// so this file hand-builds three minimal-but-realistic fixtures that
-// exercise every read-path slice from Phase 3:
+// We don't ship real-world `.pptx` files (license unclear), so this
+// file hand-builds three minimal-but-realistic fixtures that exercise
+// every read-path parser:
 //
 //   - `minimal` — 1 theme / 1 master / 1 layout / 1 slide with no shapes.
 //     Validates the core OPC + theme + master/layout/slide round-trip.
 //   - `rich`    — adds a second slide carrying an auto-shape with text,
 //     a picture, a connector, a group, and a `<a:custGeom>` so every
-//     Phase 3c / 3d / 3e / 3h parser sees content.
+//     shape-tree parser sees content.
 //   - `notes_and_comments` — minimal + a notes slide + a commentAuthors
-//     part + a commentsN part. Validates Phase 3g.
+//     part + a commentsN part. Validates speaker notes + comments parsers.
 //
 // The package builder (`build_pptx`) auto-generates `[Content_Types].xml`
 // and `_rels/.rels` from the supplied parts so each fixture only has to
@@ -192,7 +192,8 @@ fn fixture_simple_slide_xml() -> String {
 
 ///|
 /// A richer slide: title placeholder + body with formatted text + picture
-/// + a custom-geometry shape + a connector. Exercises Phase 3c–3e + 3h.
+/// + a custom-geometry shape + a connector. Exercises every shape-tree
+/// + text-style + fill/stroke/effect parser.
 fn fixture_rich_slide_xml() -> String {
   "<?xml version=\"1.0\"?>" +
   "<p:sld xmlns:p=\"" +

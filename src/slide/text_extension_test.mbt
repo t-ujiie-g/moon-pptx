@@ -1,7 +1,6 @@
-// Lossless preservation tests (ADR-004) for the text-side parsers —
-// Phase 3f3c. Targets the `extension` fields added to TextBody,
-// Paragraph, Run, Field, BodyProperties, ParagraphProperties,
-// RunProperties, and ListStyle.
+// Lossless preservation tests (ADR-004) for the text-side parsers.
+// Targets the `extension` fields on TextBody, Paragraph, Run, Field,
+// BodyProperties, ParagraphProperties, RunProperties, and ListStyle.
 
 ///|
 test "ADR-004: TextBody captures foreign-namespace child" {

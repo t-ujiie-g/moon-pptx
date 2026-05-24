@@ -1,8 +1,8 @@
 // Lossless preservation tests (ADR-004) for the slide master / layout
-// parsers — Phase 3f3b. The fixture in slide_master_test.mbt is dense
-// enough to drive most assertions: it has <p:cSld>, <p:txStyles>, and
-// <p:hf> siblings of the elements we model, all of which should now
-// land on `SlideMaster.extension`.
+// parsers. The fixture in slide_master_test.mbt is dense enough to
+// drive most assertions: it has <p:cSld>, <p:txStyles>, and <p:hf>
+// siblings of the elements we model, all of which should land on
+// `SlideMaster.extension`.
 
 ///|
 test "ADR-004: master captures cSld / txStyles / hf" {

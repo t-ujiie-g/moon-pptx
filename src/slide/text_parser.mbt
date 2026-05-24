@@ -77,8 +77,8 @@ fn parse_body_properties(
               auto_fit = Some(SpAutoFit)
               skip_subtree(r)
             }
-            // prstTxWarp, scene3d, sp3d, flatTx, extLst — preserved
-            // verbatim so writers can re-emit them in Phase 4.
+            // prstTxWarp, scene3d, sp3d, flatTx, extLst — captured
+            // verbatim so writers can re-emit them.
             _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
@@ -315,8 +315,9 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
 /// Parse `<a:rPr>` — attributes off the start tag and a handful of
 /// children (`<a:solidFill>`, `<a:latin>`, `<a:ea>`, `<a:cs>`,
 /// `<a:hlinkClick>`). Other children (gradient/pattern fill, effects,
-/// underline fills, east-asian list) are skipped — they land alongside
-/// the shape-level fill ADT in Phase 3e.
+/// underline fills, east-asian list) ride on the run's `extension`
+/// per ADR-004; widening to the full shape-level fill ADT is a
+/// future expansion point.
 fn parse_run_properties(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],

@@ -1,4 +1,4 @@
-// @oxml.write_stroke round-trip tests (Phase 4c — stroke slice).
+// @oxml.write_stroke round-trip tests.
 
 ///|
 fn stroke_to_xml(s : @oxml.Stroke) -> String raise @xml.XmlError {

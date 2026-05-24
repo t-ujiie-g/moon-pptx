@@ -73,7 +73,7 @@ Code's `/plugin` (add marketplace `moonbitlang/skills`, then install
 These overrides apply on top of the generic guidance above:
 
 - Buffer type is always `FixedArray[Byte]` (matches `hustcer/fzip`).
-- Length and angle units use the newtypes in `units/` (Phase 1+); never bare
+- Length and angle units use the newtypes in `units/`; never bare
   `Int`/`Int64` in public APIs.
 - Errors use subdomain suberrors (`OpcError`, `XmlError`, `PptxError`); never
   raw `String` failures.

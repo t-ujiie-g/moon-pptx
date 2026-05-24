@@ -132,7 +132,7 @@ in `AGENTS.md`:
 - **Buffer type**: always `FixedArray[Byte]` (matches `hustcer/fzip` and
   MoonBit core). Do not introduce parallel byte-array types.
 - **Units**: never use bare `Int`/`Int64` for lengths or angles in public
-  APIs. Use the newtypes from `units/` (Phase 1+).
+  APIs. Use the newtypes from `units/`.
 - **Errors**: subdomain suberrors (`OpcError`, `XmlError`, `PptxError`),
   never raw `String` failures. Match `hustcer/fzip`'s `FzipError` pattern.
 - **Builders**: immutable. `slide.with_shape(s)` returns a new `Slide`. Use

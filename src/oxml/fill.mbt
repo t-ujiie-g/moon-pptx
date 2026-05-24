@@ -1,8 +1,8 @@
 // Unified DrawingML fill model.
 //
 // `EG_FillProperties` (ECMA-376 §20.1.10.31) is the choice group that
-// appears wherever OOXML accepts a "fill": shape `<p:spPr>` body, run-
-// level `<a:rPr>` (currently consumed only as solid colour — see 3d2),
+// appears wherever OOXML accepts a "fill": shape `<p:spPr>` body,
+// run-level `<a:rPr>` (currently consumed only as solid colour),
 // gradient-stop colours (which themselves can be filled), table cell
 // backgrounds, theme `fmtScheme/fillStyleLst`, and chart series colours.
 //
@@ -15,9 +15,8 @@
 //   * `<a:blipFill>` with `<a:blip>`, optional `<a:srcRect>`, and a
 //     `<a:stretch>` / `<a:tile>` fill-mode child
 //
-// Phase 3e2 introduces the typed model and the entry-point parser
-// `parse_fill`. Phase 3e3 / 3e4 reuse this for line fills and effect
-// fills.
+// `parse_fill` is the entry-point; line fills and effect fills reuse
+// this same module.
 
 ///|
 /// One destination rectangle for a stretched blip fill or a fill-list

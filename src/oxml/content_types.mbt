@@ -3,9 +3,9 @@
 // These appear in `[Content_Types].xml` `<Override>` entries that route
 // each part to its OOXML parser; the same strings also drive the
 // content-type dispatch in `@integration.parse_everything`. Defining
-// them once here means parser/writer round-trip tests, Phase 4g
-// fixtures, and Phase 5's `Presentation::new()` can all reference the
-// same constants — no risk of a typo in one place silently breaking
+// them once here means parser/writer round-trip tests, integration
+// fixtures, and `Presentation::new()` can all reference the same
+// constants — no risk of a typo in one place silently breaking
 // dispatch elsewhere.
 //
 // Names follow the ECMA-376 "MIME-style" identifiers from

@@ -1,4 +1,4 @@
-// Slide master / slide layout writer round-trip tests (Phase 4d).
+// Slide master / slide layout writer round-trip tests.
 
 ///|
 let a_ns : String = @oxml.drawing_ns

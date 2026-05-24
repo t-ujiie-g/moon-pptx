@@ -1,4 +1,4 @@
-// Slide XML writer — Phase 4e slice (top-level + spTree dispatch).
+// Slide XML writer (top-level + spTree dispatch).
 //
 // Mirrors `parser.mbt`. Each `write_*` helper opens its element, emits
 // child content, and closes the matching EndElement. The slide-level

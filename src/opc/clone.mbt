@@ -1,6 +1,6 @@
-// Deep-clone helpers for `@opc` data types — Phase 5f1.
+// Deep-clone helpers for `@opc` data types.
 //
-// Phase 5f's immutable builder variants on `@presentation.Presentation`
+// Immutable builder variants on `@presentation.Presentation`
 // (`with_added_slide`, `with_slide_updated`, …) all share the same
 // shape: clone the package, mutate the clone, return the new value.
 // To make that fast and safe we need every layer to be cloneable:
@@ -65,8 +65,8 @@ pub fn ContentTypes::clone(self : ContentTypes) -> ContentTypes {
 ///|
 /// Deep-copy an entire `Package`. The cloned package can be mutated
 /// (parts added / removed, content types updated, bytes replaced)
-/// without affecting the original. Used by the Phase 5f immutable
-/// builder variants on `Presentation`.
+/// without affecting the original. Used by the immutable builder
+/// variants on `Presentation` (`with_added_slide`, `with_slide_updated`).
 pub fn Package::clone(self : Package) -> Package {
   let new_parts : Array[Part] = []
   for p in self.parts {

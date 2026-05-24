@@ -1,4 +1,4 @@
-// Slide replacement tests — Phase 5d.
+// Slide replacement tests.
 
 ///|
 test "update_slide_mut: adding a shape survives save → reopen" {

@@ -1,4 +1,4 @@
-// BodyProperties + ListStyle parser tests (Phase 3d4).
+// BodyProperties + ListStyle parser tests.
 
 ///|
 /// Build a slide with one auto-shape whose `<p:txBody>` body is

@@ -1,4 +1,4 @@
-// Custom-geometry model — Phase 3h slice.
+// Custom-geometry model.
 //
 // Per ECMA-376 §20.1.9.8 (`CT_CustomGeometry2D`), a custom shape draws
 // itself from an explicit list of path commands instead of selecting a

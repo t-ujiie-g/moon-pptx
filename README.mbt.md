@@ -3,18 +3,24 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phases 1–6 closed except for open-verification).**
+> **Status: pre-alpha (Phases 1–7 closed except for open-verification).**
 > Read + write parsers and writers cover theme / slide master / slide
-> layout / slide / notes slide / comments / tables (graphicFrame with
-> typed cell properties — margins / anchor / fill / borders), with
+> layout / slide / notes slide / comments / tables / **charts** (both
+> the standard 16 chart families and the Microsoft 2016 extended
+> chartEx families — waterfall, treemap, sunburst, histogram,
+> boxWhisker, funnel, paretoLine, regionMap, clusteredColumn), with
 > `parse → serialize → parse → Eq` round-trip verified across
 > synthetic decks. The high-level `Presentation` API supports `open`
 > / `save` / `new` plus both mutating (`add_slide_mut`,
 > `update_slide_mut`) and immutable (`with_added_slide`,
-> `with_slide_updated`) builders. Outstanding: PowerPoint /
-> LibreOffice open-verification on the produced bytes, plus Phase 7
-> (Charts) and beyond. See [TODO.md](TODO.md) for the phase-by-phase
-> roadmap.
+> `with_slide_updated`) builders. Chart-from-scratch builders cover
+> all 16 standard families (`Chart::of_bar / of_line / of_pie /
+> of_area / of_radar / of_scatter / of_bubble / of_doughnut /
+> of_of_pie / of_bar_3d / of_line_3d / of_pie_3d / of_surface /
+> of_surface_3d / of_stock`). Outstanding: PowerPoint / LibreOffice
+> open-verification on the produced bytes, plus Phase 8 (SmartArt /
+> animation differentiators) and beyond. See [TODO.md](TODO.md) for
+> the phase-by-phase roadmap.
 
 A pure-MoonBit library for reading, building, and writing PowerPoint
 presentations (`.pptx` / OOXML), with a type-safe builder API.
@@ -50,8 +56,8 @@ full feature comparison.
 | 4 | Write path | ✅ Done |
 | 5 | Builder API (create from scratch) | 🚧 5a–5f done; open-verification pending |
 | 6 | Tables | ✅ Done |
-| 7 | Charts | 🔜 Next |
-| 8 | Differentiators (SmartArt, animation, …) | ⏳ |
+| 7 | Charts (standard + chartEx, read/write/build) | ✅ Done |
+| 8 | Differentiators (SmartArt, animation, …) | 🔜 Next |
 | 9 | 1.0 release | ⏳ |
 
 Detailed checklists per phase live in [TODO.md](TODO.md).
@@ -132,6 +138,48 @@ let gf = @slide.GraphicFrame::of_table(
   t,
 )
 prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
+```
+
+### Charts
+
+Build a chart from a data table and drop it into a chart part:
+
+```moonbit nocheck
+let data = @chart.ChartData::new()
+  .with_category("Q1")
+  .with_category("Q2")
+  .with_category("Q3")
+  .with_category("Q4")
+  .with_series("Revenue", [100.0, 200.0, 300.0, 250.0])
+  .with_series("Cost", [60.0, 110.0, 180.0, 140.0])
+
+// Pick a family — bar / line / pie / area / radar / doughnut / etc.
+let chart = @chart.Chart::of_bar(data)
+// or:  @chart.Chart::of_line(data, grouping=Stacked)
+// or:  @chart.Chart::of_pie(data)
+// or:  @chart.Chart::of_doughnut(data, hole_size=60)
+
+// Serialize to chartN.xml bytes (you supply the OPC plumbing that
+// wires the part into the package).
+let chart_bytes : FixedArray[Byte] = chart.serialize()
+```
+
+Scatter and bubble charts use dedicated XY / XYS data types:
+
+```moonbit nocheck
+let scatter = @chart.Chart::of_scatter(
+  @chart.ScatterData::new()
+    .with_series("trend", [1.0, 2.0, 3.0], [10.0, 25.0, 32.0]),
+)
+
+let bubble = @chart.Chart::of_bubble(
+  @chart.BubbleData::new().with_series(
+    "growth",
+    [1.0, 2.0, 3.0],
+    [100.0, 200.0, 150.0],
+    [10.0, 20.0, 30.0],
+  ),
+)
 ```
 
 For a richer end-to-end example see

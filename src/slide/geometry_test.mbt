@@ -1,4 +1,4 @@
-// Geometry parser tests (Phase 3c2).
+// Geometry parser tests.
 
 ///|
 /// Build a minimal slide containing one auto-shape whose `<p:spPr>` body
@@ -109,7 +109,7 @@ test "parse: prstGeom roundRect carries adjustment values in source order" {
 }
 
 ///|
-test "parse: custGeom lifts into typed CustomGeometry (Phase 3h)" {
+test "parse: custGeom lifts into typed CustomGeometry" {
   let body = "<a:custGeom>" +
     "<a:pathLst><a:path w=\"100\" h=\"100\"><a:moveTo><a:pt x=\"0\" y=\"0\"/></a:moveTo></a:path></a:pathLst>" +
     "</a:custGeom>"

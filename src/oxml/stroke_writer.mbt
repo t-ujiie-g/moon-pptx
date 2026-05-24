@@ -1,4 +1,4 @@
-// Stroke writer — Phase 4c slice.
+// Stroke writer.
 //
 // Inverse of `parse_stroke`. Emits an `<a:ln>` start element with the
 // modeled width/cap/cmpd/algn attributes, then its children in

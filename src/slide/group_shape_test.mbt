@@ -1,4 +1,4 @@
-// Group shape parser tests (Phase 3c4) — recursive nesting.
+// Group shape parser tests — recursive nesting.
 
 ///|
 fn slide_with_grp(inner : String) -> FixedArray[Byte] {

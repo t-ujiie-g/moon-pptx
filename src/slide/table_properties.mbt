@@ -1,10 +1,8 @@
-// Typed `<a:tblPr>` + `<a:tcPr>` properties — Phase 6d slice.
+// Typed `<a:tblPr>` + `<a:tcPr>` properties.
 //
-// The Phase 6a/6b table parser/writer parked these elements as
-// captured `@xml.XmlElement` values, which preserved them on
-// round-trip but didn't let callers introspect or build them
-// without dropping down to XmlElement construction. Phase 6d
-// promotes the common-case fields to typed records:
+// `TableProperties` and `TableCellProperties` give callers
+// introspection and from-scratch construction without dropping down
+// to XmlElement. The two records promote the common-case fields:
 //
 //   - `<a:tblPr>` becomes `TableProperties` — the spec's seven
 //     boolean style-hint attributes (`firstRow` / `firstCol` /

@@ -1,4 +1,4 @@
-// @oxml.write_fill round-trip tests (Phase 4c — fill slice).
+// @oxml.write_fill round-trip tests.
 //
 // `parse_inner_fill` from `fill_test.mbt` is shared at the test-
 // package level so we re-use it directly rather than redefining.

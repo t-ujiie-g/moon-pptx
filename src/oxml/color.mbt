@@ -8,18 +8,11 @@
 // `<a:lumMod>`, `<a:alpha>`, …). The same group appears verbatim in
 // every solid-fill / gradient-stop / line-fill / theme-slot context.
 //
-// Before this slice we modelled colours three different ways:
-//   * `@theme.ColorChoice` — Srgb + Sys (theme color scheme slots).
-//   * `@slide.RunFill` — SolidRgb + SolidTheme (run-level solid fill).
-//   * `@units.SchemeColor` — typed scheme reference with modifiers
-//     (high-level builder API; not exercised by parsers yet).
-//
-// Phase 3e1 consolidates the parser-side representation into one
-// `Color { base, transforms }` so shape fill, run fill, theme slots,
-// gradient stops, and line fills all share one parser path. The high-
-// level `@units.SchemeColor` builder API stays as-is for now — it's a
-// user-facing convenience, distinct from the OOXML wire-format model
-// owned by this file.
+// `Color { base, transforms }` is the single parser-side
+// representation — shape fill, run fill, theme slots, gradient stops,
+// and line fills all share one parser path. The high-level
+// `@units.SchemeColor` builder API stays distinct — it's a user-facing
+// convenience, separate from the OOXML wire-format model owned here.
 
 ///|
 /// `<a:sysClr val="windowText" lastClr="000000"/>` — a host system

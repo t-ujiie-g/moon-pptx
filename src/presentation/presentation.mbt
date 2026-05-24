@@ -1,4 +1,4 @@
-// High-level Presentation façade — Phase 5a.
+// High-level Presentation façade.
 //
 // Wraps an `@opc.Package` and surfaces typed views of its OOXML parts
 // without forcing callers to know about content types, part naming
@@ -6,24 +6,24 @@
 // accessor parses on demand from the current package bytes, so the
 // `Presentation` value itself stays cheap to construct and copy.
 //
-// Phase 5a is read-only — `open(bytes)` → `save()` round-trips the
-// package verbatim, and the typed accessors (`slides()` /
-// `slide_masters()` / …) let callers inspect the parsed model. The
-// builder-side API (`with_slide`, `with_shape`, …) lands in later
-// Phase 5 slices.
+// Read side: `open(bytes)` → `save()` round-trips the package
+// verbatim; typed accessors (`slides()` / `slide_masters()` / …) let
+// callers inspect the parsed model. Build side: `Presentation::new`
+// produces an empty deck; `add_slide_mut` / `update_slide_mut` /
+// `with_added_slide` / `with_slide_updated` provide mutating and
+// immutable variants of the basic edit operations.
 
 ///|
 /// A parsed PPTX presentation. The wrapped `@opc.Package` is the
 /// source of truth for byte-level state; typed accessors re-parse on
-/// demand. Treat the value as immutable — `save()` serialises a
-/// snapshot, and any mutation API (Phase 5b+) will return a new
+/// demand. Treat the value as conceptually immutable — `save()`
+/// serialises a snapshot, and immutable mutation APIs return a new
 /// `Presentation` rather than modify in place.
 pub(all) struct Presentation {
   /// The OPC package backing this presentation. Public so consumers
-  /// who need raw part access during Phase 5 can drop down without
-  /// waiting for a typed wrapper. Will likely become private in
-  /// Phase 9 once the high-level API is stable. Named `pkg` because
-  /// `package` is a reserved keyword in MoonBit.
+  /// who need raw part access can drop down without waiting for a
+  /// typed wrapper. Named `pkg` because `package` is a reserved
+  /// keyword in MoonBit.
   pkg : @opc.Package
 }
 
@@ -50,7 +50,7 @@ pub fn Presentation::open(
 ///
 /// Use this as the starting point for builder-style construction:
 ///   let prs = Presentation::new()
-///   // (Phase 5c+) prs.add_slide(layout).with_shape(textbox)
+///   //   prs.add_slide_mut(layout_index=0) → rId of the new slide
 ///   prs.save()
 pub fn Presentation::new() -> Presentation raise PptxError {
   let parts : Array[(String, String, String)] = [
@@ -83,8 +83,8 @@ pub fn Presentation::new() -> Presentation raise PptxError {
 /// Serialise the presentation back to PPTX bytes. The current
 /// implementation is a pass-through of `Package::to_bytes`, so any
 /// part mutations callers made via the lower-level `@opc` API are
-/// included; typed model edits via Phase 5b+ builders will re-encode
-/// the affected parts before saving.
+/// included; typed model edits via `update_slide_mut` /
+/// `with_slide_updated` re-encode the affected parts before saving.
 pub fn Presentation::save(self : Presentation) -> FixedArray[Byte] {
   self.pkg.to_bytes()
 }
@@ -187,8 +187,7 @@ fn Presentation::fallback_slide_parts_in_package_order(
 
 ///|
 /// Parsed presentation.xml metadata. Returns `None` for packages
-/// without a main-document part (malformed PPTX); see Phase 5b
-/// roadmap.
+/// without a main-document part (malformed PPTX).
 pub fn Presentation::presentation_part(
   self : Presentation,
 ) -> PresentationPart? raise PptxError {

@@ -27,12 +27,12 @@ pub(all) struct ShapeAdjustValue {
 } derive(Eq, Debug)
 
 ///|
-/// A shape's geometry. `Preset(kind, adj)` covers `<a:prstGeom>` (with its
-/// `<a:avLst>` adjustment list); `Custom(cg)` carries the typed
+/// A shape's geometry. `Preset(kind, adj)` covers `<a:prstGeom>` (with
+/// its `<a:avLst>` adjustment list); `Custom(cg)` carries the typed
 /// `<a:custGeom>` body (`avLst`, `gdLst`, `cxnLst`, `rect`, `pathLst`)
-/// from Phase 3h onwards — see `CustomGeometry` for the field-by-field
-/// breakdown. Adjust handles (`<a:ahLst>`) round-trip via
-/// `CustomGeometry.extension` per ADR-004.
+/// — see `CustomGeometry` for the field-by-field breakdown. Adjust
+/// handles (`<a:ahLst>`) round-trip via `CustomGeometry.extension`
+/// per ADR-004.
 pub(all) enum Geometry {
   Preset(PresetShape, Array[ShapeAdjustValue])
   Custom(CustomGeometry)

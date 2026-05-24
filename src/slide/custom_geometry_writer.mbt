@@ -1,4 +1,4 @@
-// Custom-geometry writer — Phase 4e slice (custGeom part).
+// Custom-geometry writer.
 //
 // Inverse of `custom_geometry_parser.mbt`. Emits `<a:custGeom>` with
 // `<a:avLst>` / `<a:gdLst>` / `<a:ahLst>` (preserved via extension) /

@@ -1,4 +1,4 @@
-// Slide insertion API — Phase 5c slice.
+// Slide insertion API.
 //
 // `add_slide_mut(layout_index)` is the first mutation entry point on
 // `Presentation`. It threads a new slide into every place the OPC
@@ -18,7 +18,7 @@
 ///|
 /// Append a blank slide using the slide layout at the given index in
 /// `slide_layouts()`. Returns the new slide's part name so callers
-/// can chain further edits (Phase 5d shape builders).
+/// can chain further edits via `update_slide_mut` + shape builders.
 ///
 /// Mutates `self.pkg` in place — call `save()` afterwards to
 /// materialise the change as bytes. The slide is appended; finer-
@@ -136,9 +136,9 @@ fn build_slide_rels_xml(layout_target : String) -> String {
 
 ///|
 /// Look up `/ppt/slideLayouts/slideLayoutN.xml` for `slide_layouts()[layout_index]`
-/// by walking the package's parts in storage order. Phase 5c uses
-/// the same package order the accessor exposes; a future builder
-/// API may surface a typed `SlideLayoutRef` instead.
+/// by walking the package's parts in storage order. The same package
+/// order the accessor exposes is reused here; a future builder API
+/// may surface a typed `SlideLayoutRef` instead.
 fn Presentation::layout_part_name_at(
   self : Presentation,
   layout_index : Int,

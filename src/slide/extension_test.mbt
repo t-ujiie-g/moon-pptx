@@ -1,9 +1,6 @@
-// Lossless preservation tests (ADR-004) — Phase 3f2.
-//
-// Verify that unmodelled children at the slide / shape level are captured
-// verbatim into the new `extension : Array[@xml.XmlElement]` fields rather
-// than silently dropped. The fixtures here intentionally pack in elements
-// our typed parsers do *not* model (transition / timing / style / extLst /
+// Lossless preservation tests (ADR-004) for slide-level + shape-level
+// `extension` arrays. The fixtures intentionally pack in elements the
+// typed parsers do *not* model (transition / timing / style / extLst /
 // graphicFrame / foreign-namespace nodes) and assert that every one
 // survives the parse.
 
@@ -110,9 +107,9 @@ test "ADR-004: foreign-namespace <p:sld> child is preserved" {
 // --- Shape::GraphicFrame chart content lifts to ChartContent(rid). ---
 
 ///|
-test "Phase 7a1: chart graphicFrame lifts to GraphicFrame(ChartContent)" {
-  // Chart embedded in a graphicFrame. Phase 7a1 types the chart-uri
-  // case alongside the table-uri case: the slide-side body is just
+test "chart graphicFrame lifts to GraphicFrame(ChartContent)" {
+  // Chart embedded in a graphicFrame. The chart-uri case lifts
+  // alongside the table-uri case: the slide-side body is just
   // `<c:chart r:id="…"/>`, so we lift the rel id to `ChartContent(rid)`
   // and leave the actual chart data (in a separate `chartN.xml` part)
   // to `@presentation.Presentation::charts()`.
@@ -175,7 +172,7 @@ test "ADR-004: AutoShape preserves <p:style> in extension" {
   let slide = @slide.Slide::parse(fixture_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
-      // Find <p:style> in the extension. Phase 3f3e also captures
+      // Find <p:style> in the extension. The parser also captures
       // <p:cNvPr>, <p:cNvSpPr> etc. from inside <p:nvSpPr>, so there
       // are several entries — assert on the one we care about by name.
       let style = find_local(s.extension, "style").unwrap()

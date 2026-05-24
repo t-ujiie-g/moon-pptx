@@ -1,4 +1,4 @@
-// @oxml.Stroke parser tests (Phase 3e3).
+// @oxml.Stroke parser tests.
 
 ///|
 fn parse_stroke_inner(inner : String) -> @oxml.Stroke raise @oxml.StrokeError {

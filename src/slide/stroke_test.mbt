@@ -1,4 +1,4 @@
-// Integration tests for `<a:ln>` parsing on shape bodies (Phase 3e3).
+// Integration tests for `<a:ln>` parsing on shape bodies.
 
 ///|
 fn slide_with_sp_body(inner_sp_pr_body : String) -> FixedArray[Byte] {

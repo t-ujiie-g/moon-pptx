@@ -1,4 +1,4 @@
-// Text body parser tests (Phase 3d1).
+// Text body parser tests.
 
 ///|
 /// Build a slide containing a single auto-shape whose `<p:txBody>` body

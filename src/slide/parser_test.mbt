@@ -1,4 +1,4 @@
-// Slide parser tests (Phase 3c1 skeleton).
+// Slide parser tests.
 
 ///|
 fn typical_title_slide() -> FixedArray[Byte] {

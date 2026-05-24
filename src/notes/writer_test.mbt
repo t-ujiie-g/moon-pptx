@@ -1,4 +1,4 @@
-// NotesSlide writer round-trip tests (Phase 4f).
+// NotesSlide writer round-trip tests.
 
 ///|
 fn roundtrip_notes(bytes : FixedArray[Byte]) -> @notes.NotesSlide raise {

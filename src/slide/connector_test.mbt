@@ -1,4 +1,4 @@
-// Connector parser tests (Phase 3c4).
+// Connector parser tests.
 
 ///|
 fn slide_with_cxn(inner : String) -> FixedArray[Byte] {

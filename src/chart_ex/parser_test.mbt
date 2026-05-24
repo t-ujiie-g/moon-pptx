@@ -36,8 +36,8 @@ fn fixture_bytes(s : String) -> FixedArray[Byte] {
 ///|
 /// A minimal but spec-shaped `<cx:chartSpace>` for a waterfall
 /// chart. The chart kind is determined by the `layoutId="…"`
-/// attribute on `<cx:plotAreaRegion><cx:series>`. We don't lift
-/// any of this yet — Phase 7e1 keeps the body opaque.
+/// attribute on `<cx:plotAreaRegion><cx:series>`, which lifts to
+/// the typed `ChartExKind` enum.
 fn typical_waterfall_xml() -> String {
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
   "<cx:chartSpace xmlns:cx=\"" +

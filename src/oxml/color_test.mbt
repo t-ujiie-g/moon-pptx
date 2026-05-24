@@ -1,4 +1,4 @@
-// @oxml.Color parser tests (Phase 3e1).
+// @oxml.Color parser tests.
 
 ///|
 /// Drive `parse_color_element` against the body of a `<wrapper>` element

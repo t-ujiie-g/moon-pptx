@@ -1,12 +1,12 @@
-// Table builders — Phase 6c slice.
+// Table builders.
 //
 // Hand-friendly constructors for table cells / rows / tables and
 // the surrounding `GraphicFrame` wrapper. Same pattern as the
 // `AutoShape::rect / ellipse / textbox` builders in `builders.mbt`:
 // produce values whose serialisation re-parses to an equal value
 // from the second cycle onward (the first cycle adds the
-// captured-wrapper trinkets `<p:cNvPr>` etc., per the Phase 4e
-// design note in `slide/writer_test.mbt`).
+// captured-wrapper trinkets `<p:cNvPr>` etc. — see the design note
+// in `slide/writer_test.mbt`).
 //
 // Cell-merge guide for hand-built tables:
 //
@@ -151,8 +151,7 @@ pub fn Table::of_rows(
 ///|
 /// One-call convenience: produce a table of identical text cells.
 /// Useful for "give me an empty 3×4 grid" boilerplate before the
-/// caller fills individual cells with `with_cell` (Phase 6d) or by
-/// mutating the result.
+/// caller mutates individual cells via field replacement.
 pub fn Table::of_grid(
   rows~ : Int,
   cols~ : Int,

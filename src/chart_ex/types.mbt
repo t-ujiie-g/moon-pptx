@@ -42,12 +42,7 @@ pub(all) struct ChartEx {
 ///|
 pub impl Show for ChartEx with fn output(self, logger) {
   logger.write_string("ChartEx { … }")
-  ignore(self)
-}
-
-///|
-fn[T] ignore(_x : T) -> Unit {
-
+  let _ = self
 }
 
 ///|
@@ -66,7 +61,7 @@ pub(all) struct ChartExBody {
 ///|
 pub impl Show for ChartExBody with fn output(self, logger) {
   logger.write_string("ChartExBody { … }")
-  ignore(self)
+  let _ = self
 }
 
 ///|
@@ -85,7 +80,7 @@ pub(all) struct ChartExPlotArea {
 ///|
 pub impl Show for ChartExPlotArea with fn output(self, logger) {
   logger.write_string("ChartExPlotArea { … }")
-  ignore(self)
+  let _ = self
 }
 
 ///|
@@ -105,7 +100,7 @@ pub(all) struct ChartExPlotAreaRegion {
 ///|
 pub impl Show for ChartExPlotAreaRegion with fn output(self, logger) {
   logger.write_string("ChartExPlotAreaRegion { … }")
-  ignore(self)
+  let _ = self
 }
 
 ///|
@@ -125,9 +120,8 @@ pub(all) struct ChartExSeries {
   owner_idx : Int?
   /// The captured `<cx:series>` body, including children like
   /// `<cx:tx>`, `<cx:dataLabels>`, `<cx:dataPt>`, `<cx:dataId>`,
-  /// `<cx:layoutPr>`, etc. The full subtree is preserved
-  /// verbatim — Phase 7e2 only lifts the discriminator and the
-  /// few wrapper attributes.
+  /// `<cx:layoutPr>`, etc. The full subtree is preserved verbatim;
+  /// only the discriminator and the wrapper attributes lift.
   body : @xml.XmlElement
 } derive(Eq, Debug)
 

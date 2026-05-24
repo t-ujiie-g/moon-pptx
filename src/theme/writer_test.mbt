@@ -1,4 +1,4 @@
-// Theme writer round-trip tests (Phase 4b).
+// Theme writer round-trip tests.
 
 ///|
 /// Parse → serialize → parse, return the second-parse Theme so tests
@@ -65,7 +65,7 @@ test "Theme::serialize: theme-level extensions preserved" {
   // `serialize` → `parse` keeps them.
   let t1 = roundtrip_theme(office_like_theme())
   // The fixture has all three plus the fmtScheme captured inside
-  // themeElements (which goes into theme.extension per Phase 3f3 a).
+  // themeElements (which goes into theme.extension per ADR-004).
   // Order isn't guaranteed across the read/write boundary; check
   // presence by local-name membership.
   let names = t1.extension.map(fn(e) { e.name.local_name })

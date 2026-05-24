@@ -9,9 +9,9 @@
 // `XmlElement` / `XmlNode` are that capture format. They mirror the event
 // stream exactly: an element has a qualified name, attributes in source
 // order, and children that are either nested elements, text, or CDATA. No
-// schema interpretation; no defaults; no normalisation. The intent is that
-// `XmlElement -> XmlWriter` later in Phase 4 produces semantically
-// equivalent XML, even when the original element kind has no typed parser.
+// schema interpretation; no defaults; no normalisation. The intent is
+// that the corresponding writer produces semantically equivalent XML,
+// even when the original element kind has no typed parser.
 
 ///|
 /// A single XML element captured into an ad-hoc DOM. Attributes are in

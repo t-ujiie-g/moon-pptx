@@ -1,4 +1,4 @@
-// `presentation.xml` typed model — Phase 5b1.
+// `presentation.xml` typed model.
 //
 // `<p:presentation>` (`CT_Presentation`, ECMA-376 §19.2.1.26) is the
 // main document part for every PPTX. We model what's needed to drive

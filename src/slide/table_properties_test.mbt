@@ -1,4 +1,4 @@
-// TableProperties / TableCellProperties tests — Phase 6d.
+// TableProperties / TableCellProperties tests.
 
 ///|
 fn slide_with_table_xml(table_body : String) -> FixedArray[Byte] {

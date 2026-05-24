@@ -1,12 +1,12 @@
-// Slide model — Phase 3c1 slice.
+// Slide model.
 //
-// This commit lands the structural skeleton: a `Slide` carries metadata,
-// the layout's color-map override choice (reused from `@slide_master`), and
-// a flat list of shapes. The shape enum is a closed ADT today with only
-// the `AutoShape` variant filled in; later 3c slices add `Picture`,
-// `GroupShape`, `Connector`, `GraphicFrame`. For now everything except
-// auto-shapes parses to the `Unknown(local_name)` placeholder so the
-// shape tree stays representable end-to-end.
+// A `Slide` carries metadata, the layout's color-map override choice
+// (reused from `@slide_master`), and a flat list of shapes. The
+// `Shape` enum covers every spec'd shape kind: AutoShape, Picture,
+// Connector, Group, GraphicFrame (table / chart / chartEx / OLE).
+// `Unknown(XmlElement)` catches any unmodelled shape kind (mostly
+// `<p:contentPart>`) so the shape tree survives a read → write
+// round-trip verbatim per ADR-004.
 
 ///|
 /// A 2D point in EMU coordinates. Both axes use `@units.Emu` so slide-
@@ -24,9 +24,9 @@ pub(all) struct Size {
 } derive(Eq, Debug)
 
 ///|
-/// Position + size, mirroring `<a:xfrm>`. `rotation` and `flip*` will be
-/// added when Phase 3c starts honouring them; for the skeleton we keep the
-/// shape simple.
+/// Position + size, mirroring `<a:xfrm>`. `rotation` and `flip*` are
+/// not modelled yet; they round-trip through the enclosing shape's
+/// `extension` per ADR-004.
 pub(all) struct Transform {
   offset : Point
   extent : Size
@@ -37,42 +37,38 @@ pub(all) struct Transform {
 /// Not every shape is a placeholder — `None` covers the common case of a
 /// regular drawn shape.
 ///
-/// `ph_type` is the OOXML `ST_PlaceholderType` value as a raw string for
-/// now; once Phase 3 needs typed placeholder semantics we'll lift it to an
-/// enum the same way `SlideLayoutType` was lifted.
+/// `ph_type` is the OOXML `ST_PlaceholderType` value as a raw string;
+/// typed-enum lift is deferred until a consumer needs typed
+/// placeholder semantics, the same way `SlideLayoutType` was lifted.
 pub(all) struct Placeholder {
   ph_type : String
   idx : Int
 } derive(Eq, Debug)
 
 ///|
-/// One shape in a `p:spTree`. Variants are filled in across Phase 3c
-/// commits; `Unknown` remains as the catch-all for shape kinds that are
-/// not yet modelled (`p:graphicFrame` for tables / charts / SmartArt and
-/// `p:contentPart` for extensions). Per ADR-004 the variant carries the
-/// full captured element so unknown shapes survive a read → write
-/// round-trip verbatim.
+/// One shape in a `p:spTree`. Every spec'd shape kind has a typed
+/// variant; `Unknown` catches anything unmodelled (mostly
+/// `<p:contentPart>` extension shapes). Per ADR-004 the variant
+/// carries the full captured element so unknown shapes survive a
+/// read → write round-trip verbatim.
 pub(all) enum Shape {
   AutoShape(AutoShape)
   Picture(Picture)
   Connector(Connector)
   Group(GroupShape)
-  /// `<p:graphicFrame>` hosting a table / chart / SmartArt / OLE
-  /// payload. Phase 6 types the table case end-to-end; other
-  /// content kinds keep round-tripping via `GraphicFrameContent::
-  /// OtherGraphic` until their own phases land.
+  /// `<p:graphicFrame>` hosting a table / chart / chartEx / OLE
+  /// payload. The `content` field discriminates among them; see
+  /// `GraphicFrameContent`.
   GraphicFrame(GraphicFrame)
-  /// The full XML subtree of an unmodelled shape kind. After Phase
-  /// 6 this only catches `<p:contentPart>` (extension shapes); any
-  /// future shape kind starts here and graduates to a typed variant.
+  /// The full XML subtree of an unmodelled shape kind. Typically
+  /// `<p:contentPart>` extension shapes; new shape kinds start here
+  /// and graduate to a typed variant when added.
   Unknown(@xml.XmlElement)
 } derive(Eq, Debug)
 
 ///|
-/// `<p:sp>` — auto-shape. Phase 3c1 covers id, name, placeholder
-/// metadata, and transform; Phase 3c2 adds `geometry`; Phase 3d1 adds
-/// `text_body`. Fill, stroke, and run/paragraph formatting land in later
-/// 3d / 3e slices.
+/// `<p:sp>` — auto-shape. Covers id, name, placeholder metadata,
+/// transform, geometry, line stroke, effects, and the text body.
 ///
 /// `geometry` is `Option` because some real-world PPTX places omit
 /// `<a:prstGeom>` (e.g. when the shape inherits geometry from a layout
@@ -115,7 +111,7 @@ pub(all) struct Slide {
   /// unmodelled `<p:cSld>` children (`<p:bg>`, …), and unmodelled
   /// `<p:spTree>` siblings (root group metadata, foreign-namespace
   /// extensions). Source order is preserved within the array; cross-
-  /// section ordering is *not* — Phase 4 writers re-emit each captured
+  /// section ordering is *not* — writers re-emit each captured
   /// element under its original parent based on the element's name.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

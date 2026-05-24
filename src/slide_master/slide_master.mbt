@@ -6,9 +6,10 @@
 //   * `p:sldLayoutIdLst` (references to slide layouts)
 //   * optional `p:txStyles`, `p:hf`, `p:timing`, `p:transition`, `p:extLst`
 //
-// Phase 3b1 covers the structural skeleton: `clrMap` and `sldLayoutIdLst`.
-// Shape tree, text styles, header/footer toggles are skipped via
-// `skip_subtree` until later phases need them.
+// Modelled: `clrMap` and `sldLayoutIdLst`. The shape tree, text
+// styles, header/footer toggles, transitions, and extension lists
+// round-trip via `extension` per ADR-004 until a consumer typed
+// model needs them.
 
 ///|
 /// One slide-layout reference inside `<p:sldLayoutIdLst>`.

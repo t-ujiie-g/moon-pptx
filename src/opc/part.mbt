@@ -10,7 +10,7 @@
 ///
 /// `name` is the OPC-style part name (always starts with `/`).
 /// `content_type` is the MIME-like content type from `[Content_Types].xml`;
-/// it is empty until the ContentTypes layer (Phase 2b) populates it.
+/// `Package::open` populates it via the ContentTypes resolver.
 /// `bytes` is the raw payload (XML or binary).
 pub(all) struct Part {
   name : String

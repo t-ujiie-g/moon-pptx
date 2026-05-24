@@ -1,4 +1,4 @@
-// @opc clone tests — Phase 5f1.
+// @opc clone tests.
 
 ///|
 test "Package::clone: clones share no mutable state" {

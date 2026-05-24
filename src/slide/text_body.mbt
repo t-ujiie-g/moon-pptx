@@ -1,4 +1,4 @@
-// Text body (`p:txBody`) skeleton — Phase 3d1 slice.
+// Text body (`p:txBody`) typed model.
 //
 // Shape sketch (ECMA-376 §21.1.2.2.10):
 //
@@ -95,9 +95,9 @@ pub(all) struct RunProperties {
   /// `<a:cs typeface="…"/>` font for complex script.
   complex_script : String?
   /// `<a:solidFill>` resolved to a colour. Other fill kinds
-  /// (`<a:gradFill>`, `<a:pattFill>`, `<a:blipFill>`) are silently
-  /// dropped at run level for now — Phase 3e2 will widen this to the
-  /// full shape-level `@oxml.Fill` ADT.
+  /// (`<a:gradFill>`, `<a:pattFill>`, `<a:blipFill>`) ride on the
+  /// run's `extension` per ADR-004; widening to the full shape-level
+  /// `@oxml.Fill` ADT is a future expansion point.
   fill : @oxml.Color?
   /// `<a:hlinkClick r:id="…">` — relationship id of the click target.
   hyperlink_click : String?
@@ -321,8 +321,8 @@ pub(all) enum Bullet {
 } derive(Eq, Debug)
 
 ///|
-/// Paragraph property record. Phase 3d3 widens the body to cover every
-/// `<a:pPr>` attribute and bullet child PowerPoint emits in practice.
+/// Paragraph property record. Covers every `<a:pPr>` attribute and
+/// bullet child PowerPoint emits in practice.
 ///
 /// All fields except `level` are `Option`. `level` defaults to `0`
 /// (matches OOXML's missing-attribute default for `lvl`).

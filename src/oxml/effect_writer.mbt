@@ -1,4 +1,4 @@
-// Effect-list writer — Phase 4c slice.
+// Effect-list writer.
 //
 // Inverse of `parse_effect_list`. Emits `<a:effectLst>` with the
 // modeled effect children in schema-canonical order: blur → fillOverlay

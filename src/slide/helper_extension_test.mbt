@@ -1,9 +1,9 @@
 // Lossless preservation tests (ADR-004) for the helper-level skip
-// points inside @slide.parser.mbt — Phase 3f3e. Each test wires a
-// helper-internal extension element (scene3d / sp3d / extLst / spLocks /
-// hlinkClick / custDataLst / audioFile / overrideClrMapping siblings)
-// into a minimal slide fixture and asserts the element survives onto
-// the surrounding shape's `extension` array.
+// points inside @slide.parser.mbt. Each test wires a helper-internal
+// extension element (scene3d / sp3d / extLst / spLocks / hlinkClick /
+// custDataLst / audioFile / overrideClrMapping siblings) into a
+// minimal slide fixture and asserts the element survives onto the
+// surrounding shape's `extension` array.
 
 ///|
 /// Build a slide with a single auto-shape whose `<p:spPr>` body is the

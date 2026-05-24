@@ -1,4 +1,4 @@
-// ParagraphProperties parser tests (Phase 3d3).
+// ParagraphProperties parser tests.
 
 ///|
 /// Build a slide with one paragraph whose `<a:pPr>` body is `ppr_body`,

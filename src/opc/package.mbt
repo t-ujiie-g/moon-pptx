@@ -1,8 +1,8 @@
 // OPC Package — the top-level container, a ZIP file holding parts and
 // relationships per ISO/IEC 29500-2.
 //
-// This module covers Phase 2a: the bare structural layer. ContentTypes
-// (Phase 2b) and Relationships (Phase 2c) build on top.
+// This module owns the bare structural layer. `ContentTypes` and
+// `Relationships` build on top.
 
 ///|
 /// An OPC package — a collection of named parts that round-trips through ZIP.

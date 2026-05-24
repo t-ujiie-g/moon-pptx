@@ -1,4 +1,4 @@
-// Speaker-notes model — Phase 3g1.
+// Speaker-notes model.
 //
 // `<p:notes>` (notesSlideN.xml) shares the same `<p:cSld>` + `<p:clrMapOvr>`
 // content model as `<p:sld>` per ECMA-376 §19.3.1.26 (`CT_NotesSlide`) vs

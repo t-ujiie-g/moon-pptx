@@ -1,9 +1,8 @@
-// Cookbook example — Phase 5e.
+// Cookbook example.
 //
 // Build a 5-slide pitch deck end-to-end using only the public
 // `@presentation` + `@slide` API. The body of `build_pitch_deck`
-// doubles as a worked example you can lift into a docstring once
-// Phase 9 finalises the public surface.
+// doubles as a worked example for docstrings / README quickstart.
 //
 // One inch = 914_400 EMU, one centimetre = 360_000 EMU. The default
 // 4:3 slide is 9_144_000 × 6_858_000 EMU (10" × 7.5").

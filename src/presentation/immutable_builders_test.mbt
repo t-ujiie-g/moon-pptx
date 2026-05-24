@@ -1,4 +1,4 @@
-// Immutable builder tests — Phase 5f.
+// Immutable builder tests.
 
 ///|
 test "with_added_slide: original presentation untouched" {

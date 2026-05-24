@@ -1,4 +1,4 @@
-// Integration tests for `<a:effectLst>` parsing on shape bodies (Phase 3e4).
+// Integration tests for `<a:effectLst>` parsing on shape bodies.
 
 ///|
 fn slide_with_sp_pr_for_effects(inner_sp_pr_body : String) -> FixedArray[Byte] {

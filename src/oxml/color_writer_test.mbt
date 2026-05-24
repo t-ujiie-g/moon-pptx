@@ -1,4 +1,4 @@
-// @oxml.write_color round-trip tests (Phase 4c — colour slice).
+// @oxml.write_color round-trip tests.
 
 ///|
 /// Serialise `c` as a standalone `<a:…Clr>` element (no wrapper) and

@@ -1,4 +1,4 @@
-// Graphic frame + table writer — Phase 6b slice.
+// Graphic frame + table writer.
 //
 // Inverse of `graphic_frame_parser.mbt`. Emits `<p:graphicFrame>`
 // with `<p:nvGraphicFramePr>` (reusing the captured wrappers from

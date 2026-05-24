@@ -1,4 +1,4 @@
-// Text-body writer — Phase 4e slice.
+// Text-body writer.
 //
 // Inverse of `text_parser.mbt`. Each `write_*` helper opens its element
 // and writes children in source order. The `extension` arrays on every

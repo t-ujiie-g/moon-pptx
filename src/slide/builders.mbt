@@ -1,10 +1,10 @@
-// Shape and slide builders — Phase 5d slice.
+// Shape and slide builders.
 //
 // Hand-friendly constructors that produce well-formed model values
 // from minimal inputs. The result is the same shape (no pun intended)
 // the parser would produce for a hand-written XML fixture, so every
-// builder output flows through the existing Phase 4 writers without
-// any special-case logic.
+// builder output flows through the existing writers without any
+// special-case logic.
 //
 // Immutable `Slide::with_shape` returns a new `Slide` with one more
 // shape appended; the underlying `shapes` array is copied so callers

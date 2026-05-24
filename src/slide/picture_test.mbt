@@ -1,4 +1,4 @@
-// Picture parser tests (Phase 3c3).
+// Picture parser tests.
 
 ///|
 /// Build a slide containing a single `<p:pic>` whose body is provided

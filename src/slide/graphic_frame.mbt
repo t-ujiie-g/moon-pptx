@@ -1,4 +1,4 @@
-// Graphic frame + table model — Phase 6a slice.
+// Graphic frame + table model.
 //
 // `<p:graphicFrame>` (ECMA-376 §19.3.1.21, `CT_GraphicalObjectFrame`)
 // is the shape wrapper used to embed any of four "foreign" content
@@ -9,9 +9,10 @@
 //   - SmartArt     (uri `…/drawingml/2006/diagram`)
 //   - OLE / other  (any other uri)
 //
-// Phase 6 types the table case end-to-end. Charts / SmartArt / OLE
-// keep round-tripping via raw `@xml.XmlElement` capture per ADR-004
-// until their own phases land.
+// Tables and charts (standard `<c:chart>` + extended `<cx:chart>`)
+// lift to typed `GraphicFrameContent` variants. SmartArt and any
+// other unmodelled URI round-trip via the `OtherGraphic(uri, captured)`
+// variant per ADR-004.
 //
 // Shape of the frame:
 //

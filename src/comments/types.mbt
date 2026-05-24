@@ -1,4 +1,4 @@
-// Comments model — Phase 3g2 / 3g3.
+// Comments model.
 //
 // PowerPoint stores threaded review comments in two complementary parts:
 //

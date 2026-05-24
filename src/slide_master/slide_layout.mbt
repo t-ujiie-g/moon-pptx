@@ -237,9 +237,9 @@ fn parse_slide_layout_xml(xml : String) -> SlideLayout raise SlideMasterError {
 }
 
 ///|
-/// Read the `name` attribute off `<p:cSld>` and capture its body into an
-/// XmlElement so Phase 4 writers can re-emit the shape tree verbatim until
-/// Phase 3 wires a typed layout shape-tree parser.
+/// Read the `name` attribute off `<p:cSld>` and capture its body into
+/// an XmlElement so the writer re-emits the shape tree verbatim. A
+/// typed layout shape-tree parser would replace this if needed.
 fn parse_cSld_for_name(
   r : @xml.XmlReader,
   name : @xml.QName,

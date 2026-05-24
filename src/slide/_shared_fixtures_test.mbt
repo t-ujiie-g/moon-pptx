@@ -2,8 +2,8 @@
 //
 // Every `*_test.mbt` in this package compiles into one blackbox-test
 // package, so anything defined here is visible to every test file.
-// Keeping the namespace literals and the UTF-8 encoder in one place
-// removes the per-file duplication that crept in across Phase 3c/3d.
+// Centralising namespace literals and the UTF-8 encoder removes the
+// per-file duplication.
 
 ///|
 /// Test-side aliases for the shared OOXML namespace URIs. Tests

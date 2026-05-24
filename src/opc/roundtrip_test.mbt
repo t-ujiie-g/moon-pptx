@@ -1,4 +1,4 @@
-// End-to-end Phase 2 round trip: build a minimal but realistic OPC package
+// End-to-end OPC round trip: build a minimal but realistic package
 // shaped like a real `.pptx`, exercise the full open → mutate → save →
 // reopen path, and assert that parts and relationships survive.
 //

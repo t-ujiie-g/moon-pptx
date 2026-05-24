@@ -1,4 +1,4 @@
-// Presentation façade tests (Phase 5a).
+// Presentation façade tests.
 //
 // Builds a minimal-but-valid PPTX inline (smaller scope than the
 // `@integration` fixtures since we only need to verify the façade
@@ -25,9 +25,8 @@ let ns_r : String = "http://schemas.openxmlformats.org/officeDocument/2006/relat
 ///|
 /// Build a PPTX byte stream containing one theme + one master + one
 /// layout + one slide. The presentation.xml carries a real
-/// `<p:sldIdLst>` so the Phase 5b1 ordered-slide path resolves the
-/// slide via its relationship instead of falling back to package
-/// order.
+/// `<p:sldIdLst>` so the ordered-slide path resolves the slide via
+/// its relationship instead of falling back to package order.
 fn minimal_pptx() -> FixedArray[Byte] {
   let entries : Array[(String, FixedArray[Byte])] = [
     ("[Content_Types].xml", @fzip.str_to_u8(content_types_xml())),
@@ -84,8 +83,8 @@ fn pkg_rels_xml() -> String {
 ///|
 fn presentation_xml() -> String {
   // Realistic presentation.xml: one master + one slide + the canonical
-  // slide / notes coordinate spaces. Drives the Phase 5b1 ordered-
-  // slides path through its happy case.
+  // slide / notes coordinate spaces. Drives the ordered-slides path
+  // through its happy case.
   "<?xml version=\"1.0\"?>" +
   "<p:presentation xmlns:p=\"" +
   ns_p +
@@ -269,7 +268,7 @@ test "Presentation: notes + comments accessors handle decks that omit them" {
   assert_true(prs.comment_authors() is None)
 }
 
-// --- Phase 5b1: presentation.xml + ordered slides ---
+// --- presentation.xml + ordered slides ---
 
 ///|
 test "PresentationPart::parse: extracts sldMasterId / sldId / sizes" {
@@ -403,7 +402,7 @@ fn two_slide_pptx_reversed_storage() -> FixedArray[Byte] {
   @fzip.zip_sync(entries)
 }
 
-// --- Phase 5b2: Presentation::new ---
+// --- Presentation::new ---
 
 ///|
 test "Presentation::new: produces a deck with one master + one layout + zero slides" {

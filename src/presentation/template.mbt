@@ -1,4 +1,4 @@
-// Blank-deck XML templates — Phase 5b2.
+// Blank-deck XML templates.
 //
 // `Presentation::new()` builds a minimal PPTX from these constants
 // rather than constructing typed model values from scratch. The

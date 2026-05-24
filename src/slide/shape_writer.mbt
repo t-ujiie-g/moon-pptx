@@ -1,4 +1,4 @@
-// Shape writer — Phase 4e slice.
+// Shape writer.
 //
 // One dispatch (`write_shape`) plus per-variant emit helpers for
 // AutoShape (`<p:sp>`), Picture (`<p:pic>`), Connector (`<p:cxnSp>`),

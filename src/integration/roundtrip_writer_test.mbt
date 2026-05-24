@@ -1,10 +1,10 @@
-// End-to-end serialize → re-parse golden tests (Phase 4g).
+// End-to-end serialize → re-parse golden tests.
 //
-// Each test opens one of the three synthetic decks, parses every
-// OOXML part, re-serialises it via the package-level writer, replaces
-// the part bytes in the Package, saves the Package, and asserts that
+// Each test opens one of the synthetic decks, parses every OOXML
+// part, re-serialises it via the package-level writer, replaces the
+// part bytes in the Package, saves the Package, and asserts that
 // re-opening + re-parsing yields equal model values. This is the
-// strongest Phase 4 invariant — any silent data loss across the
+// strongest writer invariant — any silent data loss across the
 // parse/serialise boundary surfaces here.
 
 // --- helpers ---

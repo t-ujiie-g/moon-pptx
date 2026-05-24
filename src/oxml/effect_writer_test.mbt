@@ -1,4 +1,4 @@
-// @oxml.write_effect_list round-trip tests (Phase 4c — effect slice).
+// @oxml.write_effect_list round-trip tests.
 
 ///|
 fn effect_to_xml(el : @oxml.EffectList) -> String raise @xml.XmlError {

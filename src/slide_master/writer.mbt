@@ -1,4 +1,4 @@
-// Slide master / slide layout writers — Phase 4d slice.
+// Slide master / slide layout writers.
 //
 // Both root elements share a schema shape: `<p:cSld>` (full body
 // captured into `extension` since the layout/master shape-tree parser

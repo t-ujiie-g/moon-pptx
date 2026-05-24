@@ -1,4 +1,4 @@
-// Slide insertion tests — Phase 5c.
+// Slide insertion tests.
 
 ///|
 test "add_slide_mut: appends a slide to an empty deck" {

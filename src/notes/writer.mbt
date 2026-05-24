@@ -1,4 +1,4 @@
-// Speaker-notes XML writer — Phase 4f slice.
+// Speaker-notes XML writer.
 //
 // Mirror of `parser.mbt`: `NotesSlide::serialize` delegates to the
 // shared `@slide.Slide::serialize_with_root(bytes, "notes")` so the

@@ -1,4 +1,4 @@
-// End-to-end read-path roundtrip tests (Phase 3 closing slice).
+// End-to-end read-path roundtrip tests.
 //
 // Each test opens one of the three synthetic decks defined in
 // `fixtures_test.mbt`, walks parts by content type, dispatches each
@@ -303,7 +303,7 @@ test "all three decks: no part panics any parser" {
   // A blanket guarantee: every fixture, when opened, can have every
   // OOXML part dispatched through its parser without raising. The
   // per-deck tests check structural counts; this one is the
-  // "no-panic" floor that closes Phase 3.
+  // "no-panic" floor for the read path.
   for bytes in [minimal_deck(), rich_deck(), notes_and_comments_deck()] {
     let pkg = @opc.Package::open(bytes)
     let _ = parse_everything(pkg)

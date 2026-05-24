@@ -1,4 +1,4 @@
-// Graphic frame + table parser — Phase 6a.
+// Graphic frame + table parser.
 //
 // Entered from `parse_sp_tree` in `parser.mbt` when it sees
 // `<p:graphicFrame>`. Returns a `GraphicFrame` value (which slots
@@ -464,8 +464,8 @@ fn parse_bool_string(raw : String) -> Bool {
 /// `xmlns:*` declarations on the root) and re-parse via an event
 /// stream. Round-tripping is overkill for production use but lets us
 /// reuse the well-tested text parser without duplicating its
-/// thousand lines of logic. Phase 6d can replace this with an
-/// XmlElement-driven text-body parser if profiling demands.
+/// thousand lines of logic. An XmlElement-driven text-body parser
+/// would replace this if profiling demands.
 fn parse_text_body_from_element(
   el : @xml.XmlElement,
 ) -> TextBody raise SlideError {

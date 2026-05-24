@@ -267,7 +267,7 @@ fn bytes_to_str(bytes : FixedArray[Byte]) -> String raise {
 
 ///|
 test "chart_deck re_serialize_all preserves Chart" {
-  // The strongest Phase-4-style invariant for the chart layer:
+  // The strongest writer invariant for the chart layer:
   // parse → serialize → reopen → re-parse must produce an equal Chart.
   let pkg_in = @opc.Package::open(chart_deck())
   let pkg_re = re_serialize_all(@opc.Package::open(chart_deck()))

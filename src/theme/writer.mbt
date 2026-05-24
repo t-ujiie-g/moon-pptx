@@ -1,4 +1,4 @@
-// Theme XML writer — Phase 4b slice.
+// Theme XML writer.
 //
 // Mirrors `parser.mbt`. Each `serialize_*` helper writes onto an
 // `@xml.XmlWriter` positioned just after the parent's StartElement and
