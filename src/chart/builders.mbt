@@ -102,6 +102,110 @@ pub fn ChartData::with_series(
   { categories: self.categories, series: s }
 }
 
+// --- ScatterData / BubbleData ---
+
+///|
+/// Source-of-truth scatter-chart data. Each series carries parallel
+/// arrays of X and Y coordinates (instead of category labels +
+/// values — scatter has two value axes, not a category axis).
+pub(all) struct ScatterData {
+  series : Array[ScatterSeries]
+} derive(Eq, Debug)
+
+///|
+pub impl Show for ScatterData with fn output(self, logger) {
+  logger.write_string("ScatterData(")
+  logger.write_string(self.series.length().to_string())
+  logger.write_string(" series)")
+}
+
+///|
+pub(all) struct ScatterSeries {
+  label : String
+  x : Array[Double]
+  y : Array[Double]
+} derive(Eq, Debug)
+
+///|
+pub impl Show for ScatterSeries with fn output(self, logger) {
+  logger.write_string("ScatterSeries(")
+  logger.write_string(self.label)
+  logger.write_string(")")
+}
+
+///|
+pub fn ScatterData::new() -> ScatterData {
+  { series: [] }
+}
+
+///|
+/// Append a series of XY pairs. `x.length()` and `y.length()`
+/// should match; shorter arrays are zero-padded at emit time.
+pub fn ScatterData::with_series(
+  self : ScatterData,
+  label : String,
+  x : Array[Double],
+  y : Array[Double],
+) -> ScatterData {
+  let s : Array[ScatterSeries] = []
+  for v in self.series {
+    s.push(v)
+  }
+  s.push({ label, x, y })
+  { series: s }
+}
+
+///|
+/// Source-of-truth bubble-chart data. Each series carries parallel
+/// arrays of X coordinates, Y coordinates, and bubble sizes.
+pub(all) struct BubbleData {
+  series : Array[BubbleSeries]
+} derive(Eq, Debug)
+
+///|
+pub impl Show for BubbleData with fn output(self, logger) {
+  logger.write_string("BubbleData(")
+  logger.write_string(self.series.length().to_string())
+  logger.write_string(" series)")
+}
+
+///|
+pub(all) struct BubbleSeries {
+  label : String
+  x : Array[Double]
+  y : Array[Double]
+  size : Array[Double]
+} derive(Eq, Debug)
+
+///|
+pub impl Show for BubbleSeries with fn output(self, logger) {
+  logger.write_string("BubbleSeries(")
+  logger.write_string(self.label)
+  logger.write_string(")")
+}
+
+///|
+pub fn BubbleData::new() -> BubbleData {
+  { series: [] }
+}
+
+///|
+/// Append a series of XYS triples (X / Y / Size).
+pub fn BubbleData::with_series(
+  self : BubbleData,
+  label : String,
+  x : Array[Double],
+  y : Array[Double],
+  size : Array[Double],
+) -> BubbleData {
+  let s : Array[BubbleSeries] = []
+  for v in self.series {
+    s.push(v)
+  }
+  s.push({ label, x, y, size })
+  { series: s }
+}
+
 // --- Chart-level constructor helpers ---
 
 ///|
@@ -167,6 +271,141 @@ pub fn Chart::of_line(
     plots: [LineChart(line)],
     axes: [
       CatAx(simple_axis_element("catAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Construct a complete area chart from a `ChartData` value.
+/// Uses the same axis pair / synthesis as `of_bar` / `of_line`.
+/// `grouping` defaults to `Standard`.
+pub fn Chart::of_area(
+  data : ChartData,
+  grouping? : Grouping = Standard,
+) -> Chart {
+  let series_xml = synthesize_series(data)
+  let area : AreaChartBody = {
+    grouping: Some(grouping),
+    vary_colors: None,
+    series: series_xml,
+    d_lbls: None,
+    drop_lines: None,
+    ax_ids: [1, 2],
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [AreaChart(area)],
+    axes: [
+      CatAx(simple_axis_element("catAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Construct a complete radar chart from a `ChartData` value. Radar
+/// charts use a category axis (spoke labels) plus a value axis
+/// (radial scale); the axis pair matches `of_bar`'s defaults.
+/// `radar_style` defaults to `Marker`.
+pub fn Chart::of_radar(
+  data : ChartData,
+  radar_style? : RadarStyle = Marker,
+) -> Chart {
+  let series_xml = synthesize_series(data)
+  let radar : RadarChartBody = {
+    radar_style,
+    vary_colors: None,
+    series: series_xml,
+    d_lbls: None,
+    ax_ids: [1, 2],
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [RadarChart(radar)],
+    axes: [
+      CatAx(simple_axis_element("catAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Construct a complete scatter chart from `ScatterData`. Both
+/// axes are value axes (`valAx`); the spec calls these `axId`s
+/// 1 and 2 with positions `b` and `l`. `scatter_style` defaults
+/// to `LineMarker` (the closest match to PowerPoint's default
+/// "scatter with straight lines and markers").
+pub fn Chart::of_scatter(
+  data : ScatterData,
+  scatter_style? : ScatterStyle = LineMarker,
+) -> Chart {
+  let series_xml : Array[@xml.XmlElement] = []
+  for i, s in data.series {
+    series_xml.push(synthesize_scatter_series(i, s))
+  }
+  let scatter : ScatterChartBody = {
+    scatter_style,
+    vary_colors: None,
+    series: series_xml,
+    d_lbls: None,
+    ax_ids: [1, 2],
+    extension: [],
+  }
+  // Both axes are value axes for scatter.
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [ScatterChart(scatter)],
+    axes: [
+      ValAx(simple_axis_element("valAx", 1, 2)),
+      ValAx(simple_axis_element("valAx", 2, 1)),
+    ],
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Construct a complete bubble chart from `BubbleData`. Like
+/// scatter, both axes are value axes. Each series contributes
+/// X, Y, and bubble-size values.
+pub fn Chart::of_bubble(data : BubbleData) -> Chart {
+  let series_xml : Array[@xml.XmlElement] = []
+  for i, s in data.series {
+    series_xml.push(synthesize_bubble_series(i, s))
+  }
+  let bubble : BubbleChartBody = {
+    vary_colors: None,
+    series: series_xml,
+    d_lbls: None,
+    bubble_3d: None,
+    bubble_scale: None,
+    show_neg_bubbles: None,
+    size_represents: None,
+    ax_ids: [1, 2],
+    extension: [],
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots: [BubbleChart(bubble)],
+    axes: [
+      ValAx(simple_axis_element("valAx", 1, 2)),
       ValAx(simple_axis_element("valAx", 2, 1)),
     ],
     data_table: None,
@@ -261,6 +500,53 @@ fn synthesize_one_series(
   children.push(Element(category_axis_data_lit(categories)))
   children.push(Element(numeric_data_lit("val", s.values, categories.length())))
   c_elem("ser", [], children)
+}
+
+///|
+/// Build a `<c:ser>` element for `ScatterChart` series. Body:
+/// idx / order / tx / xVal / yVal.
+fn synthesize_scatter_series(index : Int, s : ScatterSeries) -> @xml.XmlElement {
+  let children : Array[@xml.XmlNode] = []
+  children.push(Element(val_leaf("idx", index.to_string())))
+  children.push(Element(val_leaf("order", index.to_string())))
+  children.push(
+    Element(c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])),
+  )
+  let count = if s.x.length() > s.y.length() {
+    s.x.length()
+  } else {
+    s.y.length()
+  }
+  children.push(Element(numeric_data_lit("xVal", s.x, count)))
+  children.push(Element(numeric_data_lit("yVal", s.y, count)))
+  c_elem("ser", [], children)
+}
+
+///|
+/// Build a `<c:ser>` element for `BubbleChart` series. Body:
+/// idx / order / tx / xVal / yVal / bubbleSize.
+fn synthesize_bubble_series(index : Int, s : BubbleSeries) -> @xml.XmlElement {
+  let children : Array[@xml.XmlNode] = []
+  children.push(Element(val_leaf("idx", index.to_string())))
+  children.push(Element(val_leaf("order", index.to_string())))
+  children.push(
+    Element(c_elem("tx", [], [Element(c_elem("v", [], [Text(s.label)]))])),
+  )
+  let count = max3(s.x.length(), s.y.length(), s.size.length())
+  children.push(Element(numeric_data_lit("xVal", s.x, count)))
+  children.push(Element(numeric_data_lit("yVal", s.y, count)))
+  children.push(Element(numeric_data_lit("bubbleSize", s.size, count)))
+  c_elem("ser", [], children)
+}
+
+///|
+fn max3(a : Int, b : Int, c : Int) -> Int {
+  let ab = if a > b { a } else { b }
+  if ab > c {
+    ab
+  } else {
+    c
+  }
 }
 
 ///|

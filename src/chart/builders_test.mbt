@@ -127,6 +127,146 @@ test "Chart::of_pie: round-trips through serialize → parse" {
   assert_eq(re_parsed, original)
 }
 
+// --- Chart::of_area ---
+
+///|
+test "Chart::of_area: standard grouping by default" {
+  let chart = @chart.Chart::of_area(quarterly_revenue())
+  match chart.chart.plot_area.plots[0] {
+    AreaChart(b) => {
+      assert_true(b.grouping is Some(Standard))
+      assert_eq(b.series.length(), 2)
+      assert_eq(b.ax_ids.length(), 2)
+    }
+    _ => fail("expected AreaChart plot")
+  }
+}
+
+///|
+test "Chart::of_area: round-trips" {
+  let original = @chart.Chart::of_area(
+    quarterly_revenue(),
+    grouping=PercentStacked,
+  )
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_radar ---
+
+///|
+test "Chart::of_radar: marker style by default" {
+  let chart = @chart.Chart::of_radar(quarterly_revenue())
+  match chart.chart.plot_area.plots[0] {
+    RadarChart(b) => {
+      assert_eq(b.radar_style, Marker)
+      assert_eq(b.series.length(), 2)
+    }
+    _ => fail("expected RadarChart plot")
+  }
+}
+
+///|
+test "Chart::of_radar: filled variant round-trips" {
+  let original = @chart.Chart::of_radar(quarterly_revenue(), radar_style=Filled)
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+// --- Chart::of_scatter ---
+
+///|
+test "Chart::of_scatter: two value axes" {
+  let data = @chart.ScatterData::new()
+    .with_series("s1", [1.0, 2.0, 3.0], [10.0, 20.0, 30.0])
+    .with_series("s2", [1.5, 2.5, 3.5], [12.0, 24.0, 36.0])
+  let chart = @chart.Chart::of_scatter(data)
+  match chart.chart.plot_area.plots[0] {
+    ScatterChart(b) => {
+      assert_eq(b.scatter_style, LineMarker)
+      assert_eq(b.series.length(), 2)
+    }
+    _ => fail("expected ScatterChart")
+  }
+  assert_eq(chart.chart.plot_area.axes.length(), 2)
+  // Both axes for scatter are valAx (not catAx).
+  assert_eq(chart.chart.plot_area.axes[0].local_name(), "valAx")
+  assert_eq(chart.chart.plot_area.axes[1].local_name(), "valAx")
+}
+
+///|
+test "Chart::of_scatter: explicit style + round-trip" {
+  let data = @chart.ScatterData::new().with_series("s1", [0.0], [0.0])
+  let original = @chart.Chart::of_scatter(data, scatter_style=Smooth)
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
+///|
+test "Chart::of_scatter: series carry xVal + yVal (not cat+val)" {
+  let data = @chart.ScatterData::new().with_series("s", [1.0, 2.0], [10.0, 20.0])
+  let chart = @chart.Chart::of_scatter(data)
+  match chart.chart.plot_area.plots[0] {
+    ScatterChart(b) => {
+      let s = b.series[0]
+      assert_true(has_child(s, "xVal"))
+      assert_true(has_child(s, "yVal"))
+      assert_false(has_child(s, "cat"))
+      assert_false(has_child(s, "val"))
+    }
+    _ => fail("expected ScatterChart")
+  }
+}
+
+// --- Chart::of_bubble ---
+
+///|
+test "Chart::of_bubble: triples lift correctly" {
+  let data = @chart.BubbleData::new().with_series(
+    "growth",
+    [1.0, 2.0, 3.0],
+    [100.0, 200.0, 150.0],
+    [10.0, 20.0, 30.0],
+  )
+  let chart = @chart.Chart::of_bubble(data)
+  match chart.chart.plot_area.plots[0] {
+    BubbleChart(b) => assert_eq(b.series.length(), 1)
+    _ => fail("expected BubbleChart")
+  }
+}
+
+///|
+test "Chart::of_bubble: series carry xVal + yVal + bubbleSize" {
+  let data = @chart.BubbleData::new().with_series("s", [1.0], [2.0], [3.0])
+  let chart = @chart.Chart::of_bubble(data)
+  match chart.chart.plot_area.plots[0] {
+    BubbleChart(b) => {
+      let s = b.series[0]
+      assert_true(has_child(s, "xVal"))
+      assert_true(has_child(s, "yVal"))
+      assert_true(has_child(s, "bubbleSize"))
+    }
+    _ => fail("expected BubbleChart")
+  }
+}
+
+///|
+test "Chart::of_bubble: round-trips" {
+  let data = @chart.BubbleData::new().with_series(
+    "s",
+    [1.0, 2.0],
+    [10.0, 20.0],
+    [5.0, 8.0],
+  )
+  let original = @chart.Chart::of_bubble(data)
+  let bytes = original.serialize()
+  let re_parsed = @chart.Chart::parse(bytes)
+  assert_eq(re_parsed, original)
+}
+
 // --- series synthesis ---
 
 ///|
