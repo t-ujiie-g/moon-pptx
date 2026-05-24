@@ -56,10 +56,16 @@ pub(all) struct GraphicFrame {
 pub(all) enum GraphicFrameContent {
   /// `uri = "…/drawingml/2006/table"`. Body parsed into a `Table`.
   TableContent(Table)
-  /// Anything else: chart, SmartArt, OLE, or a third-party uri we
-  /// don't recognise. The string is the raw `uri` attribute; the
-  /// element is the full `<a:graphicData>` child(ren) captured as
-  /// one `XmlElement` so the writer can re-emit it verbatim.
+  /// `uri = "…/drawingml/2006/chart"`. The body is `<c:chart r:id="…"/>`,
+  /// a relationship reference to a separate chart part
+  /// (`/ppt/charts/chartN.xml`). The string is the `r:id` value; the
+  /// actual chart data is fetched separately (see
+  /// `@presentation.Presentation::charts()`).
+  ChartContent(String)
+  /// Anything else: SmartArt, OLE, or a third-party uri we don't
+  /// recognise. The string is the raw `uri` attribute; the element
+  /// is the full `<a:graphicData>` child(ren) captured as one
+  /// `XmlElement` so the writer can re-emit it verbatim.
   OtherGraphic(String, @xml.XmlElement)
 } derive(Eq, Debug)
 

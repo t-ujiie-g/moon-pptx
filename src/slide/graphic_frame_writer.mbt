@@ -78,6 +78,18 @@ fn write_graphic_body(
       w.attribute(@xml.QName::unqualified("uri"), @oxml.graphic_data_table_uri)
       write_table(w, ctx, tbl)
     }
+    ChartContent(rid) => {
+      w.attribute(@xml.QName::unqualified("uri"), @oxml.graphic_data_chart_uri)
+      // <c:chart xmlns:c="…/chart" r:id="rIdN"/>. The slide writer
+      // doesn't bind the chart namespace itself (only `p` / `a` /
+      // `r`), so we declare `xmlns:c` directly on this element.
+      w.bind_namespace("c", @oxml.chart_ns)
+      ctx.known_prefixes[@oxml.chart_ns] = "c"
+      w.start_element(@xml.QName::new(@oxml.chart_ns, "chart"))
+      w.namespace_attr("c", @oxml.chart_ns)
+      w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), rid)
+      w.end_element()
+    }
     OtherGraphic(uri, captured) => {
       w.attribute(@xml.QName::unqualified("uri"), uri)
       // The captured element is the original <a:graphicData> — emit

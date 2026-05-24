@@ -1,4 +1,5 @@
 import {
+  "t-ujiie-g/moon_pptx/chart",
   "t-ujiie-g/moon_pptx/comments",
   "t-ujiie-g/moon_pptx/notes",
   "t-ujiie-g/moon_pptx/opc",

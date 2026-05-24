@@ -178,9 +178,9 @@ test "Slide::serialize: graphicFrame + table round-trips" {
 }
 
 ///|
-test "Slide::serialize: chart graphicFrame round-trips via OtherGraphic" {
-  // Confirms that non-table content survives parse → serialize → parse
-  // through the `OtherGraphic` capture path.
+test "Slide::serialize: chart graphicFrame round-trips via ChartContent" {
+  // Confirms the chart rid survives parse → serialize → parse through
+  // the typed `ChartContent(rid)` path introduced in Phase 7a1.
   let chart_uri = "http://schemas.openxmlformats.org/drawingml/2006/chart"
   let body = "<p:graphicFrame>" +
     "<p:nvGraphicFramePr>" +

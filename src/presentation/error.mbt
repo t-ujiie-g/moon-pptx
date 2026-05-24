@@ -21,6 +21,8 @@ pub(all) suberror PptxError {
   NotesFailure(String)
   /// A comments / commentAuthors part failed to parse.
   CommentsFailure(String)
+  /// A chart part (`/ppt/charts/chartN.xml`) failed to parse.
+  ChartFailure(String)
   /// Façade-level invariant violated — e.g. the package has no
   /// `presentation.xml` part, or the required main-document
   /// relationship is missing.
@@ -57,6 +59,11 @@ pub impl Show for PptxError with fn output(self, logger) {
     }
     CommentsFailure(s) => {
       logger.write_string("CommentsFailure(")
+      logger.write_object(s)
+      logger.write_string(")")
+    }
+    ChartFailure(s) => {
+      logger.write_string("ChartFailure(")
       logger.write_object(s)
       logger.write_string(")")
     }

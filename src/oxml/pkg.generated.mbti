@@ -14,7 +14,11 @@ pub fn bool_attr_opt(Array[(@xml.QName, String)], String) -> Bool?
 
 pub fn bytes_to_string(FixedArray[Byte]) -> String raise Utf8Error
 
+pub let chart_ns : String
+
 pub fn collect_subtree(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> @xml.XmlElement raise XmlReadError
+
+pub let ct_chart : String
 
 pub let ct_comment_authors : String
 

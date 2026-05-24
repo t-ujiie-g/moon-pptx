@@ -107,14 +107,15 @@ test "ADR-004: foreign-namespace <p:sld> child is preserved" {
   assert_eq(c.attributes[0].1, "42")
 }
 
-// --- Shape::GraphicFrame carries non-table content via OtherGraphic. ---
+// --- Shape::GraphicFrame chart content lifts to ChartContent(rid). ---
 
 ///|
-test "ADR-004: non-table graphicFrame lifts to GraphicFrame(OtherGraphic)" {
-  // Chart embedded in a graphicFrame. Phase 6a types the graphicFrame
-  // wrapper but only the `table` uri gets a typed content lift; the
-  // chart uri keeps round-tripping via `OtherGraphic(uri, captured)`
-  // until Phase 7 (charts) lands.
+test "Phase 7a1: chart graphicFrame lifts to GraphicFrame(ChartContent)" {
+  // Chart embedded in a graphicFrame. Phase 7a1 types the chart-uri
+  // case alongside the table-uri case: the slide-side body is just
+  // `<c:chart r:id="…"/>`, so we lift the rel id to `ChartContent(rid)`
+  // and leave the actual chart data (in a separate `chartN.xml` part)
+  // to `@presentation.Presentation::charts()`.
   let chart_uri = "http://schemas.openxmlformats.org/drawingml/2006/chart"
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
@@ -143,16 +144,9 @@ test "ADR-004: non-table graphicFrame lifts to GraphicFrame(OtherGraphic)" {
     GraphicFrame(gf) => {
       assert_eq(gf.id, 5)
       assert_eq(gf.name, "Chart 1")
-      // Non-table uri lands on OtherGraphic with the captured
-      // <a:graphicData> body.
       match gf.content {
-        OtherGraphic(uri, captured) => {
-          assert_eq(uri, chart_uri)
-          // The captured element is <a:graphicData> with one child.
-          assert_eq(captured.name.local_name, "graphicData")
-          assert_eq(captured.children.length(), 1)
-        }
-        _ => fail("expected OtherGraphic for chart uri")
+        ChartContent(rid) => assert_eq(rid, "rId7")
+        _ => fail("expected ChartContent for chart uri")
       }
     }
     _ => fail("expected GraphicFrame shape")

@@ -21,3 +21,10 @@ pub let presentation_ns : String = "http://schemas.openxmlformats.org/presentati
 /// relationships namespace (`@opc.relationships_ns`); that one is for
 /// `.rels` files only.
 pub let office_relationships_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+///|
+/// DrawingML chart namespace — `c:` prefix. Home of `c:chartSpace`,
+/// `c:chart`, `c:plotArea`, `c:barChart`, `c:lineChart`, … — i.e. the
+/// chart part `/ppt/charts/chartN.xml`. Distinct from `drawing_ns`
+/// because chart XML is a separate schema.
+pub let chart_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/chart"

@@ -42,6 +42,10 @@ fn re_serialize_all(pkg : @opc.Package) -> @opc.Package raise {
     let parsed = @comments.CommentList::parse(p.bytes)
     replace_part_bytes(pkg, p.name, parsed.serialize())
   }
+  for p in parts_of(pkg, @oxml.ct_chart) {
+    let parsed = @chart.Chart::parse(p.bytes)
+    replace_part_bytes(pkg, p.name, parsed.serialize())
+  }
   pkg
 }
 

@@ -310,3 +310,25 @@ pub fn Presentation::comment_lists(
   }
   out
 }
+
+///|
+/// Parsed chart parts (`/ppt/charts/chartN.xml`) in package order.
+/// Returns an empty array for decks without charts. Cross-reference
+/// each `Shape::GraphicFrame(GraphicFrameContent::ChartContent(rid))`
+/// against the slide's relationships to map a slide-side chart shape
+/// back to its chart part — `rid` resolves through
+/// `@opc.Package::relationships_for("ppt/slides/slideN.xml")`.
+pub fn Presentation::charts(
+  self : Presentation,
+) -> Array[@chart.Chart] raise PptxError {
+  let out : Array[@chart.Chart] = []
+  for p in self.pkg.parts() {
+    if p.content_type == @oxml.ct_chart {
+      let c = @chart.Chart::parse(p.bytes) catch {
+        e => raise ChartFailure(p.name + ": " + e.to_string())
+      }
+      out.push(c)
+    }
+  }
+  out
+}

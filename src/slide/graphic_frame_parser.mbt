@@ -117,6 +117,33 @@ fn parse_graphic_body(
         )
     }
     TableContent(parse_table(tbl_el))
+  } else if uri == @oxml.graphic_data_chart_uri {
+    // Find <c:chart r:id="…"/> inside. The actual chart bytes live
+    // in a separate part; the slide XML carries only the rel id.
+    let mut chart_rid : String? = None
+    for node in data.children {
+      match node {
+        Element(c) =>
+          if c.name.uri == @oxml.chart_ns && c.name.local_name == "chart" {
+            // Look up r:id attribute in the office relationships ns.
+            for kv in c.attributes {
+              if kv.0.uri == @oxml.office_relationships_ns &&
+                kv.0.local_name == "id" {
+                chart_rid = Some(kv.1)
+                break
+              }
+            }
+          }
+        _ => ()
+      }
+    }
+    match chart_rid {
+      Some(rid) => ChartContent(rid)
+      None =>
+        raise Malformed(
+          "<a:graphicData uri=chart> is missing required <c:chart r:id=…/>",
+        )
+    }
   } else {
     OtherGraphic(uri, data)
   }

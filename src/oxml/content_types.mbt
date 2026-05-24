@@ -50,6 +50,10 @@ pub let ct_comment_authors : String = "application/vnd.openxmlformats-officedocu
 /// `ppt/comments/commentN.xml` — per-slide review comment list.
 pub let ct_comments : String = "application/vnd.openxmlformats-officedocument.presentationml.comments+xml"
 
+///|
+/// `ppt/charts/chartN.xml` — drawing-ml chart part.
+pub let ct_chart : String = "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
+
 // --- <a:graphicData uri="…"> values ---
 //
 // `<p:graphicFrame>` hosts foreign-namespace content through
