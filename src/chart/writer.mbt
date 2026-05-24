@@ -95,7 +95,7 @@ fn write_chart_body(
     Some(e) => @oxml.write_xml_element(w, ctx, e)
     None => ()
   }
-  @oxml.write_xml_element(w, ctx, cb.plot_area)
+  write_plot_area(w, ctx, cb.plot_area)
   match cb.legend {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
     None => ()
@@ -150,6 +150,39 @@ fn emit_val_string(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
   w.attribute(@xml.QName::unqualified("val"), v)
+  w.end_element()
+}
+
+///|
+/// Emit `<c:plotArea>` with body in ECMA-376 §21.2.2.14 schema order:
+///   <c:layout> → plots → axes → <c:dTable> → <c:spPr> → extension.
+fn write_plot_area(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  pa : PlotArea,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.chart_ns, "plotArea"))
+  match pa.layout {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  for p in pa.plots {
+    @oxml.write_xml_element(w, ctx, p.element())
+  }
+  for a in pa.axes {
+    @oxml.write_xml_element(w, ctx, a.element())
+  }
+  match pa.data_table {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  match pa.sp_pr {
+    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    None => ()
+  }
+  for ext in pa.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
   w.end_element()
 }
 

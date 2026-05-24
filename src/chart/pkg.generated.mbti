@@ -17,6 +17,16 @@ pub(all) suberror ChartError {
 pub impl Show for ChartError
 
 // Types and methods
+pub(all) enum Axis {
+  ValAx(@xml.XmlElement)
+  CatAx(@xml.XmlElement)
+  DateAx(@xml.XmlElement)
+  SerAx(@xml.XmlElement)
+} derive(Eq, @debug.Debug)
+pub fn Axis::element(Self) -> @xml.XmlElement
+pub fn Axis::local_name(Self) -> String
+pub impl Show for Axis
+
 pub(all) struct Chart {
   date1904 : Bool?
   lang : String?
@@ -37,7 +47,7 @@ pub(all) struct ChartBody {
   floor : @xml.XmlElement?
   side_wall : @xml.XmlElement?
   back_wall : @xml.XmlElement?
-  plot_area : @xml.XmlElement
+  plot_area : PlotArea
   legend : @xml.XmlElement?
   plot_vis_only : Bool?
   disp_blanks_as : DisplayBlanksAs?
@@ -54,6 +64,38 @@ pub(all) enum DisplayBlanksAs {
 pub fn DisplayBlanksAs::from_xml(String) -> Self?
 pub fn DisplayBlanksAs::to_xml(Self) -> String
 pub impl Show for DisplayBlanksAs
+
+pub(all) enum Plot {
+  AreaChart(@xml.XmlElement)
+  Area3DChart(@xml.XmlElement)
+  LineChart(@xml.XmlElement)
+  Line3DChart(@xml.XmlElement)
+  StockChart(@xml.XmlElement)
+  RadarChart(@xml.XmlElement)
+  ScatterChart(@xml.XmlElement)
+  PieChart(@xml.XmlElement)
+  Pie3DChart(@xml.XmlElement)
+  DoughnutChart(@xml.XmlElement)
+  BarChart(@xml.XmlElement)
+  Bar3DChart(@xml.XmlElement)
+  OfPieChart(@xml.XmlElement)
+  SurfaceChart(@xml.XmlElement)
+  Surface3DChart(@xml.XmlElement)
+  BubbleChart(@xml.XmlElement)
+} derive(Eq, @debug.Debug)
+pub fn Plot::element(Self) -> @xml.XmlElement
+pub fn Plot::local_name(Self) -> String
+pub impl Show for Plot
+
+pub(all) struct PlotArea {
+  layout : @xml.XmlElement?
+  plots : Array[Plot]
+  axes : Array[Axis]
+  data_table : @xml.XmlElement?
+  sp_pr : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for PlotArea
 
 // Type aliases
 

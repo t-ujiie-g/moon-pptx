@@ -65,11 +65,58 @@ fn typical_chart_xml() -> String {
 }
 
 ///|
-test "Chart::parse: root recognised + plotArea captured" {
+test "Chart::parse: root recognised + plotArea typed (7a3a)" {
   let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
-  // <c:plotArea> is required and lifted directly to ChartBody.
-  assert_eq(chart.chart.plot_area.name.uri, chart_ns)
-  assert_eq(chart.chart.plot_area.name.local_name, "plotArea")
+  // <c:plotArea> is required; Phase 7a3a types its body.
+  // Layout is the first optional child; our fixture has one.
+  assert_true(chart.chart.plot_area.layout is Some(_))
+  // One plot child: <c:barChart>.
+  assert_eq(chart.chart.plot_area.plots.length(), 1)
+  assert_eq(chart.chart.plot_area.plots[0].local_name(), "barChart")
+}
+
+///|
+test "Chart::parse: PlotArea axes are discriminated (7a3a)" {
+  let xml = "<?xml version=\"1.0\"?>" +
+    "<c:chartSpace xmlns:c=\"" +
+    chart_ns +
+    "\">" +
+    "<c:chart>" +
+    "<c:plotArea>" +
+    "<c:layout/>" +
+    "<c:barChart><c:barDir val=\"col\"/></c:barChart>" +
+    "<c:catAx><c:axId val=\"1\"/></c:catAx>" +
+    "<c:valAx><c:axId val=\"2\"/></c:valAx>" +
+    "</c:plotArea>" +
+    "</c:chart>" +
+    "</c:chartSpace>"
+  let chart = @chart.Chart::parse(fixture_bytes(xml))
+  assert_eq(chart.chart.plot_area.axes.length(), 2)
+  assert_eq(chart.chart.plot_area.axes[0].local_name(), "catAx")
+  assert_eq(chart.chart.plot_area.axes[1].local_name(), "valAx")
+}
+
+///|
+test "Chart::parse: combination chart with multiple plots (7a3a)" {
+  // A real-world combination chart: a barChart and a lineChart in the
+  // same plot area.
+  let xml = "<?xml version=\"1.0\"?>" +
+    "<c:chartSpace xmlns:c=\"" +
+    chart_ns +
+    "\">" +
+    "<c:chart>" +
+    "<c:plotArea>" +
+    "<c:barChart><c:barDir val=\"col\"/></c:barChart>" +
+    "<c:lineChart><c:grouping val=\"standard\"/></c:lineChart>" +
+    "<c:catAx><c:axId val=\"1\"/></c:catAx>" +
+    "<c:valAx><c:axId val=\"2\"/></c:valAx>" +
+    "</c:plotArea>" +
+    "</c:chart>" +
+    "</c:chartSpace>"
+  let chart = @chart.Chart::parse(fixture_bytes(xml))
+  assert_eq(chart.chart.plot_area.plots.length(), 2)
+  assert_eq(chart.chart.plot_area.plots[0].local_name(), "barChart")
+  assert_eq(chart.chart.plot_area.plots[1].local_name(), "lineChart")
 }
 
 ///|

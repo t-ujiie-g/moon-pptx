@@ -123,7 +123,10 @@ test "Phase 7a1: chart deck opens and Presentation::charts() finds the part" {
   let charts = prs.charts()
   assert_eq(charts.length(), 1)
   let chart = charts[0]
-  assert_eq(chart.chart.plot_area.name.local_name, "plotArea")
+  // Phase 7a3a: plotArea body is typed; the fixture's chart is a bar
+  // chart, so check for the expected plot kind.
+  assert_eq(chart.chart.plot_area.plots.length(), 1)
+  assert_eq(chart.chart.plot_area.plots[0].local_name(), "barChart")
 }
 
 ///|

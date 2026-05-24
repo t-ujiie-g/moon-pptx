@@ -1,4 +1,4 @@
-// Chart XML reader — Phase 7a1 + 7a2.
+// Chart XML reader — Phase 7a1 + 7a2 + 7a3a.
 //
 // Phase 7a1 introduced the streaming entry point and captured the
 // entire `<c:chartSpace>` body wholesale. Phase 7a2 walks that body
@@ -6,10 +6,11 @@
 // `lang`, `roundedCorners`, `style`), descends into `<c:chart>` and
 // lifts the scalar / enum-valued header leaves there
 // (`autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs`,
-// `showDLblsOverMax`). The remaining substantial subtrees — `<c:title>`,
-// `<c:plotArea>`, `<c:legend>`, the 3-D wrappers, plus every
-// non-modelled sibling — ride on `Chart.extension` /
-// `ChartBody.extension` / typed `XmlElement?` slots until 7a3+.
+// `showDLblsOverMax`). Phase 7a3a lifts the `<c:plotArea>` body —
+// the structural skeleton (layout / plots / axes / dTable / spPr /
+// extension) is typed; individual plot-family bodies and axis bodies
+// still ride as captured XmlElement payloads inside their respective
+// `Plot` / `Axis` variants until later 7a slices type them.
 
 ///|
 /// Parse a chart part from raw XML bytes. Root element must be
@@ -94,7 +95,7 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
   let mut floor : @xml.XmlElement? = None
   let mut side_wall : @xml.XmlElement? = None
   let mut back_wall : @xml.XmlElement? = None
-  let mut plot_area : @xml.XmlElement? = None
+  let mut plot_area : PlotArea? = None
   let mut legend : @xml.XmlElement? = None
   let mut plot_vis_only : Bool? = None
   let mut disp_blanks_as : DisplayBlanksAs? = None
@@ -121,8 +122,7 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
               side_wall = Some(collect_subtree_unknown(r, child, attrs))
             "backWall" =>
               back_wall = Some(collect_subtree_unknown(r, child, attrs))
-            "plotArea" =>
-              plot_area = Some(collect_subtree_unknown(r, child, attrs))
+            "plotArea" => plot_area = Some(parse_plot_area(r))
             "legend" => legend = Some(collect_subtree_unknown(r, child, attrs))
             "plotVisOnly" => {
               plot_vis_only = parse_val_bool_attr(attrs)
@@ -165,6 +165,87 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
     disp_blanks_as,
     show_d_lbls_over_max,
     extension,
+  }
+}
+
+// --- plotArea (7a3a) ---
+
+///|
+/// Walk a `<c:plotArea>` body. Caller has consumed the
+/// `<c:plotArea>` StartElement.
+fn parse_plot_area(r : @xml.XmlReader) -> PlotArea raise ChartError {
+  let mut layout : @xml.XmlElement? = None
+  let plots : Array[Plot] = []
+  let axes : Array[Axis] = []
+  let mut data_table : @xml.XmlElement? = None
+  let mut sp_pr : @xml.XmlElement? = None
+  let extension : Array[@xml.XmlElement] = []
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, attrs) =>
+        if child.uri != @oxml.chart_ns {
+          extension.push(collect_subtree_unknown(r, child, attrs))
+        } else {
+          let el = collect_subtree_unknown(r, child, attrs)
+          match plot_from_local_name(child.local_name, el) {
+            Some(p) => plots.push(p)
+            None =>
+              match axis_from_local_name(child.local_name, el) {
+                Some(a) => axes.push(a)
+                None =>
+                  match child.local_name {
+                    "layout" => layout = Some(el)
+                    "dTable" => data_table = Some(el)
+                    "spPr" => sp_pr = Some(el)
+                    _ => extension.push(el)
+                  }
+              }
+          }
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { layout, plots, axes, data_table, sp_pr, extension }
+}
+
+///|
+/// Dispatch a chart-namespace element local-name to a `Plot` variant
+/// carrying the captured `XmlElement`. Returns `None` for non-plot
+/// elements.
+fn plot_from_local_name(name : String, el : @xml.XmlElement) -> Plot? {
+  match name {
+    "areaChart" => Some(AreaChart(el))
+    "area3DChart" => Some(Area3DChart(el))
+    "lineChart" => Some(LineChart(el))
+    "line3DChart" => Some(Line3DChart(el))
+    "stockChart" => Some(StockChart(el))
+    "radarChart" => Some(RadarChart(el))
+    "scatterChart" => Some(ScatterChart(el))
+    "pieChart" => Some(PieChart(el))
+    "pie3DChart" => Some(Pie3DChart(el))
+    "doughnutChart" => Some(DoughnutChart(el))
+    "barChart" => Some(BarChart(el))
+    "bar3DChart" => Some(Bar3DChart(el))
+    "ofPieChart" => Some(OfPieChart(el))
+    "surfaceChart" => Some(SurfaceChart(el))
+    "surface3DChart" => Some(Surface3DChart(el))
+    "bubbleChart" => Some(BubbleChart(el))
+    _ => None
+  }
+}
+
+///|
+/// Dispatch a chart-namespace element local-name to an `Axis`
+/// variant. Returns `None` for non-axis elements.
+fn axis_from_local_name(name : String, el : @xml.XmlElement) -> Axis? {
+  match name {
+    "valAx" => Some(ValAx(el))
+    "catAx" => Some(CatAx(el))
+    "dateAx" => Some(DateAx(el))
+    "serAx" => Some(SerAx(el))
+    _ => None
   }
 }
 

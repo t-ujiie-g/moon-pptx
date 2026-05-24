@@ -89,9 +89,10 @@ pub(all) struct ChartBody {
   side_wall : @xml.XmlElement?
   /// `<c:backWall>` (CT_Surface). Optional. Captured verbatim (3-D).
   back_wall : @xml.XmlElement?
-  /// `<c:plotArea>` (CT_PlotArea). REQUIRED. Captured verbatim until
-  /// Phase 7a3 lifts it.
-  plot_area : @xml.XmlElement
+  /// `<c:plotArea>` (CT_PlotArea). REQUIRED. Typed at Phase 7a3a;
+  /// plot bodies and axis bodies stay as captured `XmlElement` payloads
+  /// inside their respective enums until later 7a slices type them.
+  plot_area : PlotArea
   /// `<c:legend>` (CT_Legend). Optional. Captured verbatim until typed.
   legend : @xml.XmlElement?
   /// `<c:plotVisOnly val="…"/>` — show only data on visible cells.
@@ -156,5 +157,186 @@ pub fn DisplayBlanksAs::to_xml(self : DisplayBlanksAs) -> String {
     Span => "span"
     Gap => "gap"
     Zero => "zero"
+  }
+}
+
+// --- PlotArea (Phase 7a3a) ---
+
+///|
+/// `<c:plotArea>` body (ECMA-376 §21.2.2.14, `CT_PlotArea`).
+///
+/// The plot area is where the actual chart content lives. Element
+/// order (per the schema):
+///
+///   <c:layout>        (optional)
+///   one or more plot-type children — see `Plot` enum
+///   one or more axes — see `Axis` enum
+///   <c:dTable>        (optional)
+///   <c:spPr>          (optional)
+///   <c:extLst>        (optional)
+///
+/// Phase 7a3a types the discrimination — `plots : Array[Plot]` and
+/// `axes : Array[Axis]` carry one variant per modelled element kind.
+/// Each variant currently wraps the captured `<XmlElement>` so the
+/// content round-trips losslessly even though no plot-family body
+/// or axis body is itself typed yet. Later 7a slices replace the
+/// inner `XmlElement` payloads with typed sub-models.
+pub(all) struct PlotArea {
+  /// `<c:layout>` (CT_Layout). Captured verbatim — typed later.
+  layout : @xml.XmlElement?
+  /// Plot-type children in source order. PowerPoint combination
+  /// charts can carry multiple — e.g. a `barChart` overlaid on a
+  /// `lineChart` — so this is an array, not an `Option`.
+  plots : Array[Plot]
+  /// Axes in source order. Charts typically carry two (catAx +
+  /// valAx, or two valAx for scatter / bubble), but a deck can
+  /// encode any combination.
+  axes : Array[Axis]
+  /// `<c:dTable>` (CT_DTable). Captured verbatim — typed later.
+  data_table : @xml.XmlElement?
+  /// `<c:spPr>` shape-properties for the plot-area background.
+  /// Captured verbatim — typed later when the plot-area styling
+  /// builder lands.
+  sp_pr : @xml.XmlElement?
+  /// Unmodelled children (`<c:extLst>`, foreign-namespace). ADR-004.
+  extension : Array[@xml.XmlElement]
+} derive(Eq, Debug)
+
+///|
+pub impl Show for PlotArea with fn output(self, logger) {
+  logger.write_string("PlotArea { … }")
+  ignore(self)
+}
+
+///|
+/// Discriminated chart-plot kinds — the choice element inside
+/// `<c:plotArea>`. Phase 7a3a names every spec'd kind and carries
+/// the captured `<XmlElement>` so the body round-trips losslessly.
+/// Phase 7a3b+ types each variant's body individually (`bar` first,
+/// then the other 15).
+pub(all) enum Plot {
+  /// `<c:areaChart>`
+  AreaChart(@xml.XmlElement)
+  /// `<c:area3DChart>`
+  Area3DChart(@xml.XmlElement)
+  /// `<c:lineChart>`
+  LineChart(@xml.XmlElement)
+  /// `<c:line3DChart>`
+  Line3DChart(@xml.XmlElement)
+  /// `<c:stockChart>`
+  StockChart(@xml.XmlElement)
+  /// `<c:radarChart>`
+  RadarChart(@xml.XmlElement)
+  /// `<c:scatterChart>`
+  ScatterChart(@xml.XmlElement)
+  /// `<c:pieChart>`
+  PieChart(@xml.XmlElement)
+  /// `<c:pie3DChart>`
+  Pie3DChart(@xml.XmlElement)
+  /// `<c:doughnutChart>`
+  DoughnutChart(@xml.XmlElement)
+  /// `<c:barChart>`
+  BarChart(@xml.XmlElement)
+  /// `<c:bar3DChart>`
+  Bar3DChart(@xml.XmlElement)
+  /// `<c:ofPieChart>`
+  OfPieChart(@xml.XmlElement)
+  /// `<c:surfaceChart>`
+  SurfaceChart(@xml.XmlElement)
+  /// `<c:surface3DChart>`
+  Surface3DChart(@xml.XmlElement)
+  /// `<c:bubbleChart>`
+  BubbleChart(@xml.XmlElement)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for Plot with fn output(self, logger) {
+  logger.write_string("Plot(")
+  logger.write_string(self.local_name())
+  logger.write_string(")")
+}
+
+///|
+/// Local-name as it appears in the chart XML. Useful for diagnostic
+/// output and writer dispatch.
+pub fn Plot::local_name(self : Plot) -> String {
+  match self {
+    AreaChart(_) => "areaChart"
+    Area3DChart(_) => "area3DChart"
+    LineChart(_) => "lineChart"
+    Line3DChart(_) => "line3DChart"
+    StockChart(_) => "stockChart"
+    RadarChart(_) => "radarChart"
+    ScatterChart(_) => "scatterChart"
+    PieChart(_) => "pieChart"
+    Pie3DChart(_) => "pie3DChart"
+    DoughnutChart(_) => "doughnutChart"
+    BarChart(_) => "barChart"
+    Bar3DChart(_) => "bar3DChart"
+    OfPieChart(_) => "ofPieChart"
+    SurfaceChart(_) => "surfaceChart"
+    Surface3DChart(_) => "surface3DChart"
+    BubbleChart(_) => "bubbleChart"
+  }
+}
+
+///|
+/// The captured XmlElement payload that backs every Plot variant.
+pub fn Plot::element(self : Plot) -> @xml.XmlElement {
+  match self {
+    AreaChart(e)
+    | Area3DChart(e)
+    | LineChart(e)
+    | Line3DChart(e)
+    | StockChart(e)
+    | RadarChart(e)
+    | ScatterChart(e)
+    | PieChart(e)
+    | Pie3DChart(e)
+    | DoughnutChart(e)
+    | BarChart(e)
+    | Bar3DChart(e)
+    | OfPieChart(e)
+    | SurfaceChart(e)
+    | Surface3DChart(e)
+    | BubbleChart(e) => e
+  }
+}
+
+///|
+/// Discriminated axis kinds inside `<c:plotArea>`. Same wholesale-
+/// capture-with-named-variant pattern as `Plot`.
+pub(all) enum Axis {
+  /// `<c:valAx>` (CT_ValAx) — value axis.
+  ValAx(@xml.XmlElement)
+  /// `<c:catAx>` (CT_CatAx) — category axis.
+  CatAx(@xml.XmlElement)
+  /// `<c:dateAx>` (CT_DateAx) — date axis.
+  DateAx(@xml.XmlElement)
+  /// `<c:serAx>` (CT_SerAx) — series axis.
+  SerAx(@xml.XmlElement)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for Axis with fn output(self, logger) {
+  logger.write_string("Axis(")
+  logger.write_string(self.local_name())
+  logger.write_string(")")
+}
+
+///|
+pub fn Axis::local_name(self : Axis) -> String {
+  match self {
+    ValAx(_) => "valAx"
+    CatAx(_) => "catAx"
+    DateAx(_) => "dateAx"
+    SerAx(_) => "serAx"
+  }
+}
+
+///|
+pub fn Axis::element(self : Axis) -> @xml.XmlElement {
+  match self {
+    ValAx(e) | CatAx(e) | DateAx(e) | SerAx(e) => e
   }
 }
