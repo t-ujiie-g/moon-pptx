@@ -40,6 +40,7 @@ pub(all) struct NotesSize {
 pub(all) struct Presentation {
   pkg : @opc.Package
 }
+pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
 pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError

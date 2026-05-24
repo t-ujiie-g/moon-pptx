@@ -299,6 +299,7 @@ pub(all) struct Picture {
   blip_fill : @oxml.BlipFill
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Picture::of_image(Int, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 
 pub(all) struct Placeholder {
   ph_type : String

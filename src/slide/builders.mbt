@@ -335,6 +335,49 @@ pub fn AutoShape::with_text_body(
   { ..self, text_body: Some(body) }
 }
 
+// --- Picture builder -------------------------------------------------------
+
+///|
+/// Construct a `Picture` shape that embeds the image part referenced
+/// by `embed_id`. The actual image bytes have to be added to the OPC
+/// package separately — `@presentation.Presentation::add_picture_mut`
+/// handles the full pipeline (bytes → media part → relationship →
+/// `Picture` shape → slide append).
+///
+/// `name` is the user-visible shape name (`p:cNvPr` `name` attribute).
+/// `embed_id` is the `r:embed` relationship id pointing at the
+/// image media part.
+///
+/// The picture renders as a stretched fit (`<a:stretch><a:fillRect/></a:stretch>`)
+/// inside a plain `prst="rect"` boundary — the standard "insert
+/// picture" result PowerPoint produces.
+pub fn Picture::of_image(
+  id : Int,
+  name : String,
+  embed_id : String,
+  x : @units.Emu,
+  y : @units.Emu,
+  cx : @units.Emu,
+  cy : @units.Emu,
+) -> Picture {
+  {
+    id,
+    name,
+    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    geometry: Some(Preset(PresetShape::Rect, [])),
+    stroke: None,
+    effects: None,
+    blip_fill: {
+      embed_id,
+      link_id: "",
+      src_rect: None,
+      fill_mode: Stretch(None),
+      extension: [],
+    },
+    extension: [],
+  }
+}
+
 // --- Slide::with_shape ---
 
 ///|
