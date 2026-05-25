@@ -31,7 +31,7 @@ pub(all) struct BarChartBody {
   /// verbatim; typed (CT_BarSer body) by a later 7a slice.
   series : Array[ChartSeriesCore]
   /// `<c:dLbls>` — optional data labels. Captured verbatim.
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   /// `<c:gapWidth val="…"/>` — percentage; integer in the source.
   /// 0..500 per schema.
   gap_width : Int?

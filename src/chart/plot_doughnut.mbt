@@ -10,7 +10,7 @@
 pub(all) struct DoughnutChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   /// `<c:firstSliceAng val="…"/>` — integer degrees 0..360.
   first_slice_ang : Int?
   /// `<c:holeSize val="…"/>` — integer percentage 10..90 in

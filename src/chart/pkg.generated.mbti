@@ -18,6 +18,8 @@ pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartEr
 
 pub fn parse_chart_title(@xml.XmlElement) -> ChartTitle
 
+pub fn parse_d_lbls(@xml.XmlElement) -> DLbls
+
 pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
 
 pub fn wrap_xml(@xml.XmlError) -> ChartError
@@ -31,6 +33,8 @@ pub fn write_chart_legend(@xml.XmlWriter, @oxml.WriteCtx, ChartLegend) -> Unit r
 pub fn write_chart_series_core(@xml.XmlWriter, @oxml.WriteCtx, ChartSeriesCore) -> Unit raise @xml.XmlError
 
 pub fn write_chart_title(@xml.XmlWriter, @oxml.WriteCtx, ChartTitle) -> Unit raise @xml.XmlError
+
+pub fn write_d_lbls(@xml.XmlWriter, @oxml.WriteCtx, DLbls) -> Unit raise @xml.XmlError
 
 pub fn write_scatter_series_core(@xml.XmlWriter, @oxml.WriteCtx, ScatterSeriesCore) -> Unit raise @xml.XmlError
 
@@ -46,7 +50,7 @@ pub(all) struct Area3DChartBody {
   grouping : Grouping?
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
   gap_depth : Int?
   ax_ids : Array[Int]
@@ -58,7 +62,7 @@ pub(all) struct AreaChartBody {
   grouping : Grouping?
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
@@ -111,7 +115,7 @@ pub(all) struct Bar3DChartBody {
   grouping : BarGrouping?
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   gap_width : Int?
   gap_depth : Int?
   shape : BarShape?
@@ -125,7 +129,7 @@ pub(all) struct BarChartBody {
   grouping : BarGrouping?
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   gap_width : Int?
   overlap : Int?
   ax_ids : Array[Int]
@@ -166,7 +170,7 @@ pub impl Show for BarShape
 pub(all) struct BubbleChartBody {
   vary_colors : Bool?
   series : Array[BubbleSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   bubble_3d : Bool?
   bubble_scale : Int?
   show_neg_bubbles : Bool?
@@ -303,6 +307,38 @@ pub fn Crosses::from_xml(String) -> Self?
 pub fn Crosses::to_xml(Self) -> String
 pub impl Show for Crosses
 
+pub(all) enum DLblPos {
+  DLblBestFit
+  DLblBottom
+  DLblCenter
+  DLblInBase
+  DLblInEnd
+  DLblLeft
+  DLblOutEnd
+  DLblRight
+  DLblTop
+} derive(Eq, @debug.Debug)
+pub fn DLblPos::from_xml(String) -> Self?
+pub fn DLblPos::to_xml(Self) -> String
+pub impl Show for DLblPos
+
+pub(all) struct DLbls {
+  d_lbl : Array[@xml.XmlElement]
+  num_fmt : NumFmt?
+  sp_pr : @xml.XmlElement?
+  tx_pr : @xml.XmlElement?
+  d_lbl_pos : DLblPos?
+  show_legend_key : Bool?
+  show_val : Bool?
+  show_cat_name : Bool?
+  show_ser_name : Bool?
+  show_percent : Bool?
+  show_bubble_size : Bool?
+  separator : String?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for DLbls
+
 pub(all) enum DisplayBlanksAs {
   Span
   Gap
@@ -315,7 +351,7 @@ pub impl Show for DisplayBlanksAs
 pub(all) struct DoughnutChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   first_slice_ang : Int?
   hole_size : Int?
   extension : Array[@xml.XmlElement]
@@ -354,7 +390,7 @@ pub(all) struct Line3DChartBody {
   grouping : Grouping
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
   gap_depth : Int?
   ax_ids : Array[Int]
@@ -366,7 +402,7 @@ pub(all) struct LineChartBody {
   grouping : Grouping
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
   hi_low_lines : @xml.XmlElement?
   up_down_bars : @xml.XmlElement?
@@ -387,7 +423,7 @@ pub(all) struct OfPieChartBody {
   of_pie_type : OfPieType
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   gap_width : Int?
   split_type : SplitType?
   split_pos : String?
@@ -417,7 +453,7 @@ pub impl Show for Orientation
 pub(all) struct Pie3DChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for Pie3DChartBody
@@ -425,7 +461,7 @@ pub impl Show for Pie3DChartBody
 pub(all) struct PieChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   first_slice_ang : Int?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
@@ -466,7 +502,7 @@ pub(all) struct RadarChartBody {
   radar_style : RadarStyle
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
@@ -494,7 +530,7 @@ pub(all) struct ScatterChartBody {
   scatter_style : ScatterStyle
   vary_colors : Bool?
   series : Array[ScatterSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
@@ -558,7 +594,7 @@ pub impl Show for SplitType
 
 pub(all) struct StockChartBody {
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
   hi_low_lines : @xml.XmlElement?
   up_down_bars : @xml.XmlElement?

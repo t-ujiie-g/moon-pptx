@@ -24,7 +24,7 @@ pub(all) struct OfPieChartBody {
   of_pie_type : OfPieType
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   gap_width : Int?
   split_type : SplitType?
   /// `<c:splitPos val="…"/>` — schema-typed as Double; kept as the

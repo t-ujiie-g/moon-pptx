@@ -18,7 +18,7 @@ pub(all) struct Bar3DChartBody {
   grouping : BarGrouping?
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   gap_width : Int?
   gap_depth : Int?
   /// `<c:shape val="…"/>` — bar shape. Optional per schema.
@@ -40,7 +40,7 @@ pub(all) struct Line3DChartBody {
   grouping : Grouping
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
   gap_depth : Int?
   ax_ids : Array[Int]
@@ -58,7 +58,7 @@ pub impl Show for Line3DChartBody with fn output(self, logger) {
 pub(all) struct Pie3DChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

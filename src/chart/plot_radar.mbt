@@ -9,7 +9,7 @@ pub(all) struct RadarChartBody {
   radar_style : RadarStyle
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

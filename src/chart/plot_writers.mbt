@@ -28,7 +28,7 @@ fn write_bar_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.gap_width {
@@ -65,7 +65,7 @@ fn write_line_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.drop_lines {
@@ -113,7 +113,7 @@ fn write_pie_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.first_slice_ang {
@@ -147,7 +147,7 @@ fn write_area_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.drop_lines {
@@ -182,7 +182,7 @@ fn write_area_3d_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.drop_lines {
@@ -222,7 +222,7 @@ fn write_bar_3d_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.gap_width {
@@ -262,7 +262,7 @@ fn write_line_3d_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.drop_lines {
@@ -297,7 +297,7 @@ fn write_pie_3d_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   for ext in b.extension {
@@ -321,7 +321,7 @@ fn write_doughnut_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.first_slice_ang {
@@ -354,7 +354,7 @@ fn write_radar_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   for id in b.ax_ids {
@@ -384,7 +384,7 @@ fn write_scatter_chart(
     write_scatter_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   for id in b.ax_ids {
@@ -411,7 +411,7 @@ fn write_bubble_chart(
     write_bubble_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.bubble_3d {
@@ -450,7 +450,7 @@ fn write_stock_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.drop_lines {
@@ -544,7 +544,7 @@ fn write_of_pie_chart(
     write_chart_series_core(w, ctx, s)
   }
   match b.d_lbls {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(dl) => write_d_lbls(w, ctx, dl)
     None => ()
   }
   match b.gap_width {

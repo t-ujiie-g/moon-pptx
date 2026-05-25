@@ -28,7 +28,7 @@ pub(all) struct LineChartBody {
   /// `<c:ser>` series in source order — captured `<XmlElement>`.
   series : Array[ChartSeriesCore]
   /// `<c:dLbls>` — optional. Captured verbatim.
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   /// `<c:dropLines>` (CT_ChartLines) — optional. Vertical drop
   /// indicators on the chart. Captured verbatim.
   drop_lines : @xml.XmlElement?

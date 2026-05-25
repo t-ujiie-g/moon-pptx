@@ -21,7 +21,7 @@ pub(all) struct PieChartBody {
   /// `<c:ser>` series — usually one for pie charts. Captured `<XmlElement>`.
   series : Array[ChartSeriesCore]
   /// `<c:dLbls>` — optional data labels. Captured verbatim.
-  d_lbls : @xml.XmlElement?
+  d_lbls : DLbls?
   /// `<c:firstSliceAng val="…"/>` — integer degrees 0..360 for the
   /// starting position of the first slice. `0` (top) is the default.
   first_slice_ang : Int?
