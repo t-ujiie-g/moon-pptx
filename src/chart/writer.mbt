@@ -70,7 +70,7 @@ fn write_chart_body(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "chart"))
   match cb.title {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(t) => write_chart_title(w, ctx, t)
     None => ()
   }
   match cb.auto_title_deleted {

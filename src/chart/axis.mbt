@@ -57,8 +57,8 @@ pub(all) struct AxisCore {
   major_gridlines : @xml.XmlElement?
   /// `<c:minorGridlines>` (CT_ChartLines). Optional; captured.
   minor_gridlines : @xml.XmlElement?
-  /// `<c:title>` (CT_Title). Optional; captured.
-  title : @xml.XmlElement?
+  /// `<c:title>` (CT_Title) — typed body.
+  title : ChartTitle?
   /// `<c:numFmt formatCode="…" sourceLinked="…"/>`. Optional.
   num_fmt : NumFmt?
   /// `<c:majorTickMark val="…"/>`. Defaults to `Out` if absent on
@@ -366,7 +366,7 @@ pub fn parse_axis_core(el : @xml.XmlElement) -> AxisCore raise ChartError {
   let mut ax_pos : AxPos? = None
   let mut major_gridlines : @xml.XmlElement? = None
   let mut minor_gridlines : @xml.XmlElement? = None
-  let mut title : @xml.XmlElement? = None
+  let mut title : ChartTitle? = None
   let mut num_fmt : NumFmt? = None
   let mut major_tick_mark : TickMark? = None
   let mut minor_tick_mark : TickMark? = None
@@ -390,7 +390,7 @@ pub fn parse_axis_core(el : @xml.XmlElement) -> AxisCore raise ChartError {
             "axPos" => ax_pos = axis_val_string(c).bind(AxPos::from_xml)
             "majorGridlines" => major_gridlines = Some(c)
             "minorGridlines" => minor_gridlines = Some(c)
-            "title" => title = Some(c)
+            "title" => title = Some(parse_chart_title(c))
             "numFmt" => num_fmt = Some(parse_num_fmt(c))
             "majorTickMark" =>
               major_tick_mark = axis_val_string(c).bind(TickMark::from_xml)
@@ -560,7 +560,7 @@ pub fn write_axis(
     None => ()
   }
   match core.title {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(t) => write_chart_title(w, ctx, t)
     None => ()
   }
   match core.num_fmt {

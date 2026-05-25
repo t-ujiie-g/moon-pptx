@@ -86,7 +86,7 @@ fn parse_chart_space(r : @xml.XmlReader) -> Chart raise ChartError {
 /// Walk `<c:chart>` body. Caller has consumed the `<c:chart>`
 /// StartElement.
 fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
-  let mut title : @xml.XmlElement? = None
+  let mut title : ChartTitle? = None
   let mut auto_title_deleted : Bool? = None
   let mut pivot_fmts : @xml.XmlElement? = None
   let mut view3d : @xml.XmlElement? = None
@@ -107,7 +107,10 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
           extension.push(collect_subtree_unknown(r, child, attrs))
         } else {
           match child.local_name {
-            "title" => title = Some(collect_subtree_unknown(r, child, attrs))
+            "title" =>
+              title = Some(
+                parse_chart_title(collect_subtree_unknown(r, child, attrs)),
+              )
             "autoTitleDeleted" => {
               auto_title_deleted = parse_val_bool_attr(attrs)
               skip_subtree(r)

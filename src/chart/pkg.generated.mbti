@@ -14,6 +14,8 @@ pub fn parse_bubble_series_core(@xml.XmlElement) -> BubbleSeriesCore raise Chart
 
 pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartError
 
+pub fn parse_chart_title(@xml.XmlElement) -> ChartTitle
+
 pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
 
 pub fn wrap_xml(@xml.XmlError) -> ChartError
@@ -23,6 +25,8 @@ pub fn write_axis(@xml.XmlWriter, @oxml.WriteCtx, Axis) -> Unit raise @xml.XmlEr
 pub fn write_bubble_series_core(@xml.XmlWriter, @oxml.WriteCtx, BubbleSeriesCore) -> Unit raise @xml.XmlError
 
 pub fn write_chart_series_core(@xml.XmlWriter, @oxml.WriteCtx, ChartSeriesCore) -> Unit raise @xml.XmlError
+
+pub fn write_chart_title(@xml.XmlWriter, @oxml.WriteCtx, ChartTitle) -> Unit raise @xml.XmlError
 
 pub fn write_scatter_series_core(@xml.XmlWriter, @oxml.WriteCtx, ScatterSeriesCore) -> Unit raise @xml.XmlError
 
@@ -84,7 +88,7 @@ pub(all) struct AxisCore {
   ax_pos : AxPos?
   major_gridlines : @xml.XmlElement?
   minor_gridlines : @xml.XmlElement?
-  title : @xml.XmlElement?
+  title : ChartTitle?
   num_fmt : NumFmt?
   major_tick_mark : TickMark?
   minor_tick_mark : TickMark?
@@ -223,7 +227,7 @@ pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
 pub impl Show for Chart
 
 pub(all) struct ChartBody {
-  title : @xml.XmlElement?
+  title : ChartTitle?
   auto_title_deleted : Bool?
   pivot_fmts : @xml.XmlElement?
   view3d : @xml.XmlElement?
@@ -264,6 +268,16 @@ pub(all) struct ChartSeriesCore {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for ChartSeriesCore
+
+pub(all) struct ChartTitle {
+  tx : @xml.XmlElement?
+  layout : @xml.XmlElement?
+  overlay : Bool?
+  sp_pr : @xml.XmlElement?
+  tx_pr : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartTitle
 
 pub(all) enum Crosses {
   AutoZero

@@ -66,8 +66,8 @@ pub impl Show for Chart with fn output(self, logger) {
 /// (`autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs`,
 /// `showDLblsOverMax`) are typed.
 pub(all) struct ChartBody {
-  /// `<c:title>` (CT_Title). Optional. Captured verbatim until typed.
-  title : @xml.XmlElement?
+  /// `<c:title>` (CT_Title) — typed body. Optional.
+  title : ChartTitle?
   /// `<c:autoTitleDeleted val="…"/>`. Optional Bool.
   auto_title_deleted : Bool?
   /// `<c:pivotFmts>` (CT_PivotFmts). Optional. Captured verbatim.
