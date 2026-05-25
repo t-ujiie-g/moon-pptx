@@ -49,6 +49,10 @@ pub(all) struct ChartSeriesCore {
   /// effect). Captured XmlElement until the existing
   /// `<p:spPr>`-style parser is rewired here.
   sp_pr : @xml.XmlElement?
+  /// `<c:trendline>` fitted-curve overlays in source order.
+  /// Pie-/doughnut-/radar-family parsers never push into this array
+  /// since trendlines don't apply to those chart kinds.
+  trendlines : Array[Trendline]
   /// `<c:cat>` — category axis data source. Captured XmlElement;
   /// typed `AxDataSource` is a future slice.
   cat : @xml.XmlElement?
@@ -56,11 +60,9 @@ pub(all) struct ChartSeriesCore {
   /// `NumDataSource` is a future slice.
   val : @xml.XmlElement?
   /// Family-specific unmodelled children (`<c:dLbls>`, `<c:dPt>`,
-  /// `<c:trendline>`, `<c:errBars>`, `<c:marker>`, `<c:smooth>`,
-  /// `<c:explosion>`, `<c:invertIfNegative>`, `<c:pictureOptions>`,
-  /// `<c:shape>`, `<c:extLst>`, foreign-namespace siblings) plus
-  /// the `<c:tx>` / `<c:cat>` / `<c:val>` children when they appear
-  /// in a position the lifter doesn't expect.
+  /// `<c:errBars>`, `<c:marker>`, `<c:smooth>`, `<c:explosion>`,
+  /// `<c:invertIfNegative>`, `<c:pictureOptions>`, `<c:shape>`,
+  /// `<c:extLst>`, foreign-namespace siblings).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -79,6 +81,8 @@ pub(all) struct ScatterSeriesCore {
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
+  /// `<c:trendline>` fitted-curve overlays in source order.
+  trendlines : Array[Trendline]
   /// `<c:xVal>` — X-axis numeric data source.
   x_val : @xml.XmlElement?
   /// `<c:yVal>` — Y-axis numeric data source.
@@ -102,6 +106,8 @@ pub(all) struct BubbleSeriesCore {
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
+  /// `<c:trendline>` fitted-curve overlays in source order.
+  trendlines : Array[Trendline]
   x_val : @xml.XmlElement?
   y_val : @xml.XmlElement?
   /// `<c:bubbleSize>` — third numeric data source mapping bubble
@@ -132,6 +138,7 @@ pub fn parse_chart_series_core(
   let mut order : Int? = None
   let mut tx : @xml.XmlElement? = None
   let mut sp_pr : @xml.XmlElement? = None
+  let trendlines : Array[Trendline] = []
   let mut cat : @xml.XmlElement? = None
   let mut val : @xml.XmlElement? = None
   let extension : Array[@xml.XmlElement] = []
@@ -146,6 +153,7 @@ pub fn parse_chart_series_core(
             "order" => order = val_int(c)
             "tx" => tx = Some(c)
             "spPr" => sp_pr = Some(c)
+            "trendline" => trendlines.push(parse_trendline(c))
             "cat" => cat = Some(c)
             "val" => val = Some(c)
             _ => extension.push(c)
@@ -163,7 +171,7 @@ pub fn parse_chart_series_core(
   // matching PowerPoint / LibreOffice behaviour. On write we always
   // emit both leaves.
   let o = order.unwrap_or(i)
-  { idx: i, order: o, tx, sp_pr, cat, val, extension }
+  { idx: i, order: o, tx, sp_pr, trendlines, cat, val, extension }
 }
 
 ///|
@@ -175,6 +183,7 @@ pub fn parse_scatter_series_core(
   let mut order : Int? = None
   let mut tx : @xml.XmlElement? = None
   let mut sp_pr : @xml.XmlElement? = None
+  let trendlines : Array[Trendline] = []
   let mut x_val : @xml.XmlElement? = None
   let mut y_val : @xml.XmlElement? = None
   let extension : Array[@xml.XmlElement] = []
@@ -189,6 +198,7 @@ pub fn parse_scatter_series_core(
             "order" => order = val_int(c)
             "tx" => tx = Some(c)
             "spPr" => sp_pr = Some(c)
+            "trendline" => trendlines.push(parse_trendline(c))
             "xVal" => x_val = Some(c)
             "yVal" => y_val = Some(c)
             _ => extension.push(c)
@@ -206,7 +216,7 @@ pub fn parse_scatter_series_core(
   // matching PowerPoint / LibreOffice behaviour. On write we always
   // emit both leaves.
   let o = order.unwrap_or(i)
-  { idx: i, order: o, tx, sp_pr, x_val, y_val, extension }
+  { idx: i, order: o, tx, sp_pr, trendlines, x_val, y_val, extension }
 }
 
 ///|
@@ -218,6 +228,7 @@ pub fn parse_bubble_series_core(
   let mut order : Int? = None
   let mut tx : @xml.XmlElement? = None
   let mut sp_pr : @xml.XmlElement? = None
+  let trendlines : Array[Trendline] = []
   let mut x_val : @xml.XmlElement? = None
   let mut y_val : @xml.XmlElement? = None
   let mut bubble_size : @xml.XmlElement? = None
@@ -233,6 +244,7 @@ pub fn parse_bubble_series_core(
             "order" => order = val_int(c)
             "tx" => tx = Some(c)
             "spPr" => sp_pr = Some(c)
+            "trendline" => trendlines.push(parse_trendline(c))
             "xVal" => x_val = Some(c)
             "yVal" => y_val = Some(c)
             "bubbleSize" => bubble_size = Some(c)
@@ -251,15 +263,25 @@ pub fn parse_bubble_series_core(
   // matching PowerPoint / LibreOffice behaviour. On write we always
   // emit both leaves.
   let o = order.unwrap_or(i)
-  { idx: i, order: o, tx, sp_pr, x_val, y_val, bubble_size, extension }
+  {
+    idx: i,
+    order: o,
+    tx,
+    sp_pr,
+    trendlines,
+    x_val,
+    y_val,
+    bubble_size,
+    extension,
+  }
 }
 
 // --- writing -----------------------------------------------------------------
 
 ///|
 /// Emit a `<c:ser>` element from a `ChartSeriesCore`. Child order
-/// follows the ECMA-376 schema: idx → order → tx → spPr → cat →
-/// val → extension tail.
+/// follows the ECMA-376 schema: idx → order → tx → spPr →
+/// trendline* → cat → val → extension tail.
 pub fn write_chart_series_core(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
@@ -274,6 +296,9 @@ pub fn write_chart_series_core(
   match s.sp_pr {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
     None => ()
+  }
+  for t in s.trendlines {
+    write_trendline(w, ctx, t)
   }
   match s.cat {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -290,7 +315,9 @@ pub fn write_chart_series_core(
 }
 
 ///|
-/// Emit a `<c:ser>` element from a `ScatterSeriesCore`.
+/// Emit a `<c:ser>` element from a `ScatterSeriesCore`. Schema
+/// order: idx → order → tx → spPr → trendline* → xVal → yVal →
+/// extension tail.
 pub fn write_scatter_series_core(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
@@ -305,6 +332,9 @@ pub fn write_scatter_series_core(
   match s.sp_pr {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
     None => ()
+  }
+  for t in s.trendlines {
+    write_trendline(w, ctx, t)
   }
   match s.x_val {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
@@ -321,7 +351,9 @@ pub fn write_scatter_series_core(
 }
 
 ///|
-/// Emit a `<c:ser>` element from a `BubbleSeriesCore`.
+/// Emit a `<c:ser>` element from a `BubbleSeriesCore`. Schema
+/// order: idx → order → tx → spPr → trendline* → xVal → yVal →
+/// bubbleSize → extension tail.
 pub fn write_bubble_series_core(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
@@ -336,6 +368,9 @@ pub fn write_bubble_series_core(
   match s.sp_pr {
     Some(e) => @oxml.write_xml_element(w, ctx, e)
     None => ()
+  }
+  for t in s.trendlines {
+    write_trendline(w, ctx, t)
   }
   match s.x_val {
     Some(e) => @oxml.write_xml_element(w, ctx, e)

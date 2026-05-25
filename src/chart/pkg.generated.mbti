@@ -26,6 +26,8 @@ pub fn parse_layout(@xml.XmlElement) -> Layout
 
 pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
 
+pub fn parse_trendline(@xml.XmlElement) -> Trendline raise ChartError
+
 pub fn wrap_xml(@xml.XmlError) -> ChartError
 
 pub fn write_axis(@xml.XmlWriter, @oxml.WriteCtx, Axis) -> Unit raise @xml.XmlError
@@ -45,6 +47,8 @@ pub fn write_d_lbls(@xml.XmlWriter, @oxml.WriteCtx, DLbls) -> Unit raise @xml.Xm
 pub fn write_layout(@xml.XmlWriter, @oxml.WriteCtx, Layout) -> Unit raise @xml.XmlError
 
 pub fn write_scatter_series_core(@xml.XmlWriter, @oxml.WriteCtx, ScatterSeriesCore) -> Unit raise @xml.XmlError
+
+pub fn write_trendline(@xml.XmlWriter, @oxml.WriteCtx, Trendline) -> Unit raise @xml.XmlError
 
 // Errors
 pub(all) suberror ChartError {
@@ -208,6 +212,7 @@ pub(all) struct BubbleSeriesCore {
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
+  trendlines : Array[Trendline]
   x_val : @xml.XmlElement?
   y_val : @xml.XmlElement?
   bubble_size : @xml.XmlElement?
@@ -290,6 +295,7 @@ pub(all) struct ChartSeriesCore {
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
+  trendlines : Array[Trendline]
   cat : @xml.XmlElement?
   val : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
@@ -619,6 +625,7 @@ pub(all) struct ScatterSeriesCore {
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
+  trendlines : Array[Trendline]
   x_val : @xml.XmlElement?
   y_val : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
@@ -710,6 +717,34 @@ pub(all) enum TickMark {
 pub fn TickMark::from_xml(String) -> Self?
 pub fn TickMark::to_xml(Self) -> String
 pub impl Show for TickMark
+
+pub(all) struct Trendline {
+  name : String?
+  sp_pr : @xml.XmlElement?
+  trendline_type : TrendlineType
+  order : Int?
+  period : Int?
+  forward : String?
+  backward : String?
+  intercept : String?
+  disp_r_sqr : Bool?
+  disp_eq : Bool?
+  trendline_lbl : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Trendline
+
+pub(all) enum TrendlineType {
+  TrendlineExp
+  TrendlineLinear
+  TrendlineLog
+  TrendlineMovingAvg
+  TrendlinePoly
+  TrendlinePower
+} derive(Eq, @debug.Debug)
+pub fn TrendlineType::from_xml(String) -> Self?
+pub fn TrendlineType::to_xml(Self) -> String
+pub impl Show for TrendlineType
 
 // Type aliases
 
