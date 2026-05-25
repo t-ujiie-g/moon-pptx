@@ -178,7 +178,7 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
 /// Walk a `<c:plotArea>` body. Caller has consumed the
 /// `<c:plotArea>` StartElement.
 fn parse_plot_area(r : @xml.XmlReader) -> PlotArea raise ChartError {
-  let mut layout : @xml.XmlElement? = None
+  let mut layout : Layout? = None
   let plots : Array[Plot] = []
   let axes : Array[Axis] = []
   let mut data_table : @xml.XmlElement? = None
@@ -199,7 +199,7 @@ fn parse_plot_area(r : @xml.XmlReader) -> PlotArea raise ChartError {
                 Some(a) => axes.push(a)
                 None =>
                   match child.local_name {
-                    "layout" => layout = Some(el)
+                    "layout" => layout = Some(parse_layout(el))
                     "dTable" => data_table = Some(el)
                     "spPr" => sp_pr = Some(el)
                     _ => extension.push(el)

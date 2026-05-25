@@ -22,6 +22,8 @@ pub fn parse_d_lbl(@xml.XmlElement) -> DLbl raise ChartError
 
 pub fn parse_d_lbls(@xml.XmlElement) -> DLbls raise ChartError
 
+pub fn parse_layout(@xml.XmlElement) -> Layout
+
 pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
 
 pub fn wrap_xml(@xml.XmlError) -> ChartError
@@ -39,6 +41,8 @@ pub fn write_chart_title(@xml.XmlWriter, @oxml.WriteCtx, ChartTitle) -> Unit rai
 pub fn write_d_lbl(@xml.XmlWriter, @oxml.WriteCtx, DLbl) -> Unit raise @xml.XmlError
 
 pub fn write_d_lbls(@xml.XmlWriter, @oxml.WriteCtx, DLbls) -> Unit raise @xml.XmlError
+
+pub fn write_layout(@xml.XmlWriter, @oxml.WriteCtx, Layout) -> Unit raise @xml.XmlError
 
 pub fn write_scatter_series_core(@xml.XmlWriter, @oxml.WriteCtx, ScatterSeriesCore) -> Unit raise @xml.XmlError
 
@@ -267,7 +271,7 @@ pub impl Show for ChartData
 pub(all) struct ChartLegend {
   legend_pos : LegendPos?
   legend_entries : Array[LegendEntry]
-  layout : @xml.XmlElement?
+  layout : Layout?
   overlay : Bool?
   sp_pr : @xml.XmlElement?
   tx_pr : @xml.XmlElement?
@@ -294,7 +298,7 @@ pub impl Show for ChartSeriesCore
 
 pub(all) struct ChartTitle {
   tx : @xml.XmlElement?
-  layout : @xml.XmlElement?
+  layout : Layout?
   overlay : Bool?
   sp_pr : @xml.XmlElement?
   tx_pr : @xml.XmlElement?
@@ -314,7 +318,7 @@ pub impl Show for Crosses
 pub(all) struct DLbl {
   idx : Int
   delete : Bool?
-  layout : @xml.XmlElement?
+  layout : Layout?
   tx : @xml.XmlElement?
   num_fmt : NumFmt?
   sp_pr : @xml.XmlElement?
@@ -391,6 +395,28 @@ pub fn Grouping::from_xml(String) -> Self?
 pub fn Grouping::to_xml(Self) -> String
 pub impl Show for Grouping
 
+pub(all) struct Layout {
+  manual_layout : ManualLayout?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Layout
+
+pub(all) enum LayoutMode {
+  LayoutEdge
+  LayoutFactor
+} derive(Eq, @debug.Debug)
+pub fn LayoutMode::from_xml(String) -> Self?
+pub fn LayoutMode::to_xml(Self) -> String
+pub impl Show for LayoutMode
+
+pub(all) enum LayoutTarget {
+  LayoutInner
+  LayoutOuter
+} derive(Eq, @debug.Debug)
+pub fn LayoutTarget::from_xml(String) -> Self?
+pub fn LayoutTarget::to_xml(Self) -> String
+pub impl Show for LayoutTarget
+
 pub(all) struct LegendEntry {
   idx : Int
   delete : Bool?
@@ -436,6 +462,20 @@ pub(all) struct LineChartBody {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for LineChartBody
+
+pub(all) struct ManualLayout {
+  layout_target : LayoutTarget?
+  x_mode : LayoutMode?
+  y_mode : LayoutMode?
+  w_mode : LayoutMode?
+  h_mode : LayoutMode?
+  x : String?
+  y : String?
+  w : String?
+  h : String?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ManualLayout
 
 pub(all) struct NumFmt {
   format_code : String
@@ -513,7 +553,7 @@ pub fn Plot::local_name(Self) -> String
 pub impl Show for Plot
 
 pub(all) struct PlotArea {
-  layout : @xml.XmlElement?
+  layout : Layout?
   plots : Array[Plot]
   axes : Array[Axis]
   data_table : @xml.XmlElement?

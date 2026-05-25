@@ -34,7 +34,7 @@ pub(all) struct DLbl {
   /// `<c:delete val="…"/>` — EG_DLblChoice branch 1.
   delete : Bool?
   /// `<c:layout>` (CT_Layout). Captured.
-  layout : @xml.XmlElement?
+  layout : Layout?
   /// `<c:tx>` (CT_Tx) — per-point label text override. Captured.
   tx : @xml.XmlElement?
   /// `<c:numFmt>` (CT_NumFmt) — number-format override.
@@ -71,7 +71,7 @@ pub impl Show for DLbl with fn output(self, logger) {
 pub fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
   let mut idx : Int? = None
   let mut delete : Bool? = None
-  let mut layout : @xml.XmlElement? = None
+  let mut layout : Layout? = None
   let mut tx : @xml.XmlElement? = None
   let mut num_fmt : NumFmt? = None
   let mut sp_pr : @xml.XmlElement? = None
@@ -94,7 +94,7 @@ pub fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
           match c.name.local_name {
             "idx" => idx = val_int(c)
             "delete" => delete = val_bool(c)
-            "layout" => layout = Some(c)
+            "layout" => layout = Some(parse_layout(c))
             "tx" => tx = Some(c)
             "numFmt" => num_fmt = Some(parse_num_fmt(c))
             "spPr" => sp_pr = Some(c)
@@ -162,7 +162,7 @@ pub fn write_d_lbl(
     None => ()
   }
   match d.layout {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(l) => write_layout(w, ctx, l)
     None => ()
   }
   match d.tx {

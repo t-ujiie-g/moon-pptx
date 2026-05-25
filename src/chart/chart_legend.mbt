@@ -33,7 +33,7 @@ pub(all) struct ChartLegend {
   /// `<c:legendEntry>` — per-entry visibility / formatting overrides.
   legend_entries : Array[LegendEntry]
   /// `<c:layout>` (CT_Layout). Captured.
-  layout : @xml.XmlElement?
+  layout : Layout?
   /// `<c:overlay val="…"/>` — when `true`, the legend overlays the
   /// plot area instead of reserving space outside it.
   overlay : Bool?
@@ -140,7 +140,7 @@ pub impl Show for LegendEntry with fn output(self, logger) {
 pub fn parse_chart_legend(el : @xml.XmlElement) -> ChartLegend raise ChartError {
   let mut legend_pos : LegendPos? = None
   let legend_entries : Array[LegendEntry] = []
-  let mut layout : @xml.XmlElement? = None
+  let mut layout : Layout? = None
   let mut overlay : Bool? = None
   let mut sp_pr : @xml.XmlElement? = None
   let mut tx_pr : @xml.XmlElement? = None
@@ -154,7 +154,7 @@ pub fn parse_chart_legend(el : @xml.XmlElement) -> ChartLegend raise ChartError 
           match c.name.local_name {
             "legendPos" => legend_pos = val_string(c).bind(LegendPos::from_xml)
             "legendEntry" => legend_entries.push(parse_legend_entry(c))
-            "layout" => layout = Some(c)
+            "layout" => layout = Some(parse_layout(c))
             "overlay" => overlay = val_bool(c)
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
@@ -216,7 +216,7 @@ pub fn write_chart_legend(
     write_legend_entry(w, ctx, entry)
   }
   match lg.layout {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(l) => write_layout(w, ctx, l)
     None => ()
   }
   match lg.overlay {

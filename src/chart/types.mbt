@@ -173,8 +173,8 @@ pub fn DisplayBlanksAs::to_xml(self : DisplayBlanksAs) -> String {
 /// `<XmlElement>` so the content round-trips losslessly. Untyped
 /// variants are migrated to typed bodies incrementally.
 pub(all) struct PlotArea {
-  /// `<c:layout>` (CT_Layout). Captured verbatim — typed later.
-  layout : @xml.XmlElement?
+  /// `<c:layout>` (CT_Layout) — typed body.
+  layout : Layout?
   /// Plot-type children in source order. PowerPoint combination
   /// charts can carry multiple — e.g. a `barChart` overlaid on a
   /// `lineChart` — so this is an array, not an `Option`.

@@ -31,7 +31,7 @@ pub(all) struct ChartTitle {
   /// until typed.
   tx : @xml.XmlElement?
   /// `<c:layout>` (CT_Layout) — positioning. Captured.
-  layout : @xml.XmlElement?
+  layout : Layout?
   /// `<c:overlay val="…"/>` — when `true`, the title overlays the
   /// plot area instead of reserving space outside it.
   overlay : Bool?
@@ -59,7 +59,7 @@ pub impl Show for ChartTitle with fn output(self, logger) {
 /// parser.mbt) and the axis-level title parser (`parse_axis_core`).
 pub fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
   let mut tx : @xml.XmlElement? = None
-  let mut layout : @xml.XmlElement? = None
+  let mut layout : Layout? = None
   let mut overlay : Bool? = None
   let mut sp_pr : @xml.XmlElement? = None
   let mut tx_pr : @xml.XmlElement? = None
@@ -72,7 +72,7 @@ pub fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
         } else {
           match c.name.local_name {
             "tx" => tx = Some(c)
-            "layout" => layout = Some(c)
+            "layout" => layout = Some(parse_layout(c))
             "overlay" => overlay = val_bool(c)
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
@@ -101,7 +101,7 @@ pub fn write_chart_title(
     None => ()
   }
   match t.layout {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(l) => write_layout(w, ctx, l)
     None => ()
   }
   match t.overlay {

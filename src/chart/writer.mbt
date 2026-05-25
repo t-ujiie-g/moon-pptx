@@ -130,7 +130,7 @@ fn write_plot_area(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "plotArea"))
   match pa.layout {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(l) => write_layout(w, ctx, l)
     None => ()
   }
   for p in pa.plots {
