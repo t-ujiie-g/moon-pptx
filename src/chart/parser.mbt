@@ -242,12 +242,15 @@ fn plot_from_local_name(
 ///|
 /// Dispatch a chart-namespace element local-name to an `Axis`
 /// variant. Returns `None` for non-axis elements.
-fn axis_from_local_name(name : String, el : @xml.XmlElement) -> Axis? {
+fn axis_from_local_name(
+  name : String,
+  el : @xml.XmlElement,
+) -> Axis? raise ChartError {
   match name {
-    "valAx" => Some(ValAx(el))
-    "catAx" => Some(CatAx(el))
-    "dateAx" => Some(DateAx(el))
-    "serAx" => Some(SerAx(el))
+    "valAx" => Some(ValAx(parse_axis_core(el)))
+    "catAx" => Some(CatAx(parse_axis_core(el)))
+    "dateAx" => Some(DateAx(parse_axis_core(el)))
+    "serAx" => Some(SerAx(parse_axis_core(el)))
     _ => None
   }
 }

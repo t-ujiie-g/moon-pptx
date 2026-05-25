@@ -235,8 +235,8 @@ pub fn Chart::of_bar(
     layout: None,
     plots: [BarChart(bar)],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -270,8 +270,8 @@ pub fn Chart::of_line(
     layout: None,
     plots: [LineChart(line)],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -302,8 +302,8 @@ pub fn Chart::of_area(
     layout: None,
     plots: [AreaChart(area)],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -334,8 +334,8 @@ pub fn Chart::of_radar(
     layout: None,
     plots: [RadarChart(radar)],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -371,8 +371,8 @@ pub fn Chart::of_scatter(
     layout: None,
     plots: [ScatterChart(scatter)],
     axes: [
-      ValAx(simple_axis_element("valAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      ValAx(simple_axis_core("valAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -405,8 +405,8 @@ pub fn Chart::of_bubble(data : BubbleData) -> Chart {
     layout: None,
     plots: [BubbleChart(bubble)],
     axes: [
-      ValAx(simple_axis_element("valAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      ValAx(simple_axis_core("valAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -559,8 +559,8 @@ pub fn Chart::of_surface(data : ChartData, wireframe? : Bool = false) -> Chart {
     layout: None,
     plots: [SurfaceChart(body)],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -615,8 +615,8 @@ pub fn Chart::of_stock(data : ChartData, kind? : StockKind = HLC) -> Chart {
     layout: None,
     plots: [StockChart(body)],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
     ],
     data_table: None,
     sp_pr: None,
@@ -680,9 +680,9 @@ fn three_axis_plot_area(plot : Plot) -> PlotArea {
     layout: None,
     plots: [plot],
     axes: [
-      CatAx(simple_axis_element("catAx", 1, 2)),
-      ValAx(simple_axis_element("valAx", 2, 1)),
-      SerAx(simple_axis_element("serAx", 3, 2)),
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
+      SerAx(simple_axis_core("serAx", 3, 2)),
     ],
     data_table: None,
     sp_pr: None,
@@ -887,21 +887,40 @@ fn val_leaf(local_name : String, val : String) -> @xml.XmlElement {
 }
 
 ///|
-/// `<c:catAx>` / `<c:valAx>` skeleton with the minimum children
-/// PowerPoint expects: an axId, plus a crossAx reference to the
-/// paired axis. Other styling fields stay at defaults.
-fn simple_axis_element(
+/// `<c:catAx>` / `<c:valAx>` / `<c:serAx>` skeleton with the minimum
+/// fields PowerPoint expects: an axId, scaling (orientation minMax),
+/// delete=false, axPos, and a crossAx reference to the paired axis.
+/// Other styling fields stay at defaults.
+fn simple_axis_core(
   local_name : String,
   self_id : Int,
   cross_id : Int,
-) -> @xml.XmlElement {
-  c_elem(local_name, [], [
-    Element(val_leaf("axId", self_id.to_string())),
-    Element(c_elem("scaling", [], [Element(val_leaf("orientation", "minMax"))])),
-    Element(val_leaf("delete", "0")),
-    Element(val_leaf("axPos", default_ax_pos(local_name))),
-    Element(val_leaf("crossAx", cross_id.to_string())),
-  ])
+) -> AxisCore {
+  {
+    ax_id: self_id,
+    scaling: Some({
+      log_base: None,
+      orientation: Some(MinMax),
+      max: None,
+      min: None,
+      extension: [],
+    }),
+    delete: Some(false),
+    ax_pos: Some(default_ax_pos(local_name)),
+    major_gridlines: None,
+    minor_gridlines: None,
+    title: None,
+    num_fmt: None,
+    major_tick_mark: None,
+    minor_tick_mark: None,
+    tick_lbl_pos: None,
+    sp_pr: None,
+    tx_pr: None,
+    cross_ax: Some(cross_id),
+    crosses: None,
+    crosses_at: None,
+    extension: [],
+  }
 }
 
 ///|
@@ -909,11 +928,11 @@ fn simple_axis_element(
 /// at the bottom; value axes on the left, when the chart is a
 /// vertical column. (Horizontal bar charts swap; users that need
 /// that can re-emit the axis themselves.)
-fn default_ax_pos(local_name : String) -> String {
+fn default_ax_pos(local_name : String) -> AxPos {
   match local_name {
-    "catAx" => "b" // bottom
-    "valAx" => "l" // left
-    _ => "b"
+    "catAx" => Bottom
+    "valAx" => Left
+    _ => Bottom
   }
 }
 

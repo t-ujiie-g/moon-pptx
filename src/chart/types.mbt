@@ -272,17 +272,19 @@ pub fn Plot::local_name(self : Plot) -> String {
 }
 
 ///|
-/// Discriminated axis kinds inside `<c:plotArea>`. Same wholesale-
-/// capture-with-named-variant pattern as `Plot`.
+/// Discriminated axis kinds inside `<c:plotArea>`. Each variant wraps
+/// a typed `AxisCore` (the shared CT_AxBase body). Per-axis-kind
+/// extras (CatAx's `lblOffset`, ValAx's `crossBetween`, etc.) ride
+/// on `AxisCore.extension` until later slices type them.
 pub(all) enum Axis {
   /// `<c:valAx>` (CT_ValAx) — value axis.
-  ValAx(@xml.XmlElement)
+  ValAx(AxisCore)
   /// `<c:catAx>` (CT_CatAx) — category axis.
-  CatAx(@xml.XmlElement)
+  CatAx(AxisCore)
   /// `<c:dateAx>` (CT_DateAx) — date axis.
-  DateAx(@xml.XmlElement)
+  DateAx(AxisCore)
   /// `<c:serAx>` (CT_SerAx) — series axis.
-  SerAx(@xml.XmlElement)
+  SerAx(AxisCore)
 } derive(Eq, Debug)
 
 ///|
@@ -303,8 +305,9 @@ pub fn Axis::local_name(self : Axis) -> String {
 }
 
 ///|
-pub fn Axis::element(self : Axis) -> @xml.XmlElement {
+/// Access the underlying `AxisCore` regardless of which variant.
+pub fn Axis::core(self : Axis) -> AxisCore {
   match self {
-    ValAx(e) | CatAx(e) | DateAx(e) | SerAx(e) => e
+    ValAx(c) | CatAx(c) | DateAx(c) | SerAx(c) => c
   }
 }

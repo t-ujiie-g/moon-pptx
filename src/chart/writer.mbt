@@ -137,7 +137,7 @@ fn write_plot_area(
     write_plot(w, ctx, p)
   }
   for a in pa.axes {
-    @oxml.write_xml_element(w, ctx, a.element())
+    write_axis(w, ctx, a)
   }
   match pa.data_table {
     Some(e) => @oxml.write_xml_element(w, ctx, e)

@@ -8,6 +8,8 @@ import {
 }
 
 // Values
+pub fn parse_axis_core(@xml.XmlElement) -> AxisCore raise ChartError
+
 pub fn parse_bubble_series_core(@xml.XmlElement) -> BubbleSeriesCore raise ChartError
 
 pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartError
@@ -15,6 +17,8 @@ pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartEr
 pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
 
 pub fn wrap_xml(@xml.XmlError) -> ChartError
+
+pub fn write_axis(@xml.XmlWriter, @oxml.WriteCtx, Axis) -> Unit raise @xml.XmlError
 
 pub fn write_bubble_series_core(@xml.XmlWriter, @oxml.WriteCtx, BubbleSeriesCore) -> Unit raise @xml.XmlError
 
@@ -53,15 +57,46 @@ pub(all) struct AreaChartBody {
 } derive(Eq, @debug.Debug)
 pub impl Show for AreaChartBody
 
-pub(all) enum Axis {
-  ValAx(@xml.XmlElement)
-  CatAx(@xml.XmlElement)
-  DateAx(@xml.XmlElement)
-  SerAx(@xml.XmlElement)
+pub(all) enum AxPos {
+  Bottom
+  Left
+  Right
+  Top
 } derive(Eq, @debug.Debug)
-pub fn Axis::element(Self) -> @xml.XmlElement
+pub fn AxPos::from_xml(String) -> Self?
+pub fn AxPos::to_xml(Self) -> String
+pub impl Show for AxPos
+
+pub(all) enum Axis {
+  ValAx(AxisCore)
+  CatAx(AxisCore)
+  DateAx(AxisCore)
+  SerAx(AxisCore)
+} derive(Eq, @debug.Debug)
+pub fn Axis::core(Self) -> AxisCore
 pub fn Axis::local_name(Self) -> String
 pub impl Show for Axis
+
+pub(all) struct AxisCore {
+  ax_id : Int
+  scaling : Scaling?
+  delete : Bool?
+  ax_pos : AxPos?
+  major_gridlines : @xml.XmlElement?
+  minor_gridlines : @xml.XmlElement?
+  title : @xml.XmlElement?
+  num_fmt : NumFmt?
+  major_tick_mark : TickMark?
+  minor_tick_mark : TickMark?
+  tick_lbl_pos : TickLblPos?
+  sp_pr : @xml.XmlElement?
+  tx_pr : @xml.XmlElement?
+  cross_ax : Int?
+  crosses : Crosses?
+  crosses_at : String?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for AxisCore
 
 pub(all) struct Bar3DChartBody {
   bar_dir : BarDir
@@ -230,6 +265,15 @@ pub(all) struct ChartSeriesCore {
 } derive(Eq, @debug.Debug)
 pub impl Show for ChartSeriesCore
 
+pub(all) enum Crosses {
+  AutoZero
+  Min
+  Max
+} derive(Eq, @debug.Debug)
+pub fn Crosses::from_xml(String) -> Self?
+pub fn Crosses::to_xml(Self) -> String
+pub impl Show for Crosses
+
 pub(all) enum DisplayBlanksAs {
   Span
   Gap
@@ -285,6 +329,12 @@ pub(all) struct LineChartBody {
 } derive(Eq, @debug.Debug)
 pub impl Show for LineChartBody
 
+pub(all) struct NumFmt {
+  format_code : String
+  source_linked : Bool?
+} derive(Eq, @debug.Debug)
+pub impl Show for NumFmt
+
 pub(all) struct OfPieChartBody {
   of_pie_type : OfPieType
   vary_colors : Bool?
@@ -307,6 +357,14 @@ pub(all) enum OfPieType {
 pub fn OfPieType::from_xml(String) -> Self?
 pub fn OfPieType::to_xml(Self) -> String
 pub impl Show for OfPieType
+
+pub(all) enum Orientation {
+  MinMax
+  MaxMin
+} derive(Eq, @debug.Debug)
+pub fn Orientation::from_xml(String) -> Self?
+pub fn Orientation::to_xml(Self) -> String
+pub impl Show for Orientation
 
 pub(all) struct Pie3DChartBody {
   vary_colors : Bool?
@@ -374,6 +432,15 @@ pub(all) enum RadarStyle {
 pub fn RadarStyle::from_xml(String) -> Self?
 pub fn RadarStyle::to_xml(Self) -> String
 pub impl Show for RadarStyle
+
+pub(all) struct Scaling {
+  log_base : String?
+  orientation : Orientation?
+  max : String?
+  min : String?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for Scaling
 
 pub(all) struct ScatterChartBody {
   scatter_style : ScatterStyle
@@ -475,6 +542,26 @@ pub(all) struct SurfaceChartBody {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for SurfaceChartBody
+
+pub(all) enum TickLblPos {
+  High
+  Low
+  NextTo
+  NoLbl
+} derive(Eq, @debug.Debug)
+pub fn TickLblPos::from_xml(String) -> Self?
+pub fn TickLblPos::to_xml(Self) -> String
+pub impl Show for TickLblPos
+
+pub(all) enum TickMark {
+  Cross
+  In
+  NoTick
+  Out
+} derive(Eq, @debug.Debug)
+pub fn TickMark::from_xml(String) -> Self?
+pub fn TickMark::to_xml(Self) -> String
+pub impl Show for TickMark
 
 // Type aliases
 
