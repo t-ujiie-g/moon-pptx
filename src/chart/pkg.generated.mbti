@@ -18,7 +18,9 @@ pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartEr
 
 pub fn parse_chart_title(@xml.XmlElement) -> ChartTitle
 
-pub fn parse_d_lbls(@xml.XmlElement) -> DLbls
+pub fn parse_d_lbl(@xml.XmlElement) -> DLbl raise ChartError
+
+pub fn parse_d_lbls(@xml.XmlElement) -> DLbls raise ChartError
 
 pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
 
@@ -33,6 +35,8 @@ pub fn write_chart_legend(@xml.XmlWriter, @oxml.WriteCtx, ChartLegend) -> Unit r
 pub fn write_chart_series_core(@xml.XmlWriter, @oxml.WriteCtx, ChartSeriesCore) -> Unit raise @xml.XmlError
 
 pub fn write_chart_title(@xml.XmlWriter, @oxml.WriteCtx, ChartTitle) -> Unit raise @xml.XmlError
+
+pub fn write_d_lbl(@xml.XmlWriter, @oxml.WriteCtx, DLbl) -> Unit raise @xml.XmlError
 
 pub fn write_d_lbls(@xml.XmlWriter, @oxml.WriteCtx, DLbls) -> Unit raise @xml.XmlError
 
@@ -307,6 +311,26 @@ pub fn Crosses::from_xml(String) -> Self?
 pub fn Crosses::to_xml(Self) -> String
 pub impl Show for Crosses
 
+pub(all) struct DLbl {
+  idx : Int
+  delete : Bool?
+  layout : @xml.XmlElement?
+  tx : @xml.XmlElement?
+  num_fmt : NumFmt?
+  sp_pr : @xml.XmlElement?
+  tx_pr : @xml.XmlElement?
+  d_lbl_pos : DLblPos?
+  show_legend_key : Bool?
+  show_val : Bool?
+  show_cat_name : Bool?
+  show_ser_name : Bool?
+  show_percent : Bool?
+  show_bubble_size : Bool?
+  separator : String?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for DLbl
+
 pub(all) enum DLblPos {
   DLblBestFit
   DLblBottom
@@ -323,7 +347,7 @@ pub fn DLblPos::to_xml(Self) -> String
 pub impl Show for DLblPos
 
 pub(all) struct DLbls {
-  d_lbl : Array[@xml.XmlElement]
+  d_lbl : Array[DLbl]
   num_fmt : NumFmt?
   sp_pr : @xml.XmlElement?
   tx_pr : @xml.XmlElement?

@@ -36,9 +36,9 @@
 
 ///|
 pub(all) struct DLbls {
-  /// `<c:dLbl>` overrides per data point. Captured verbatim until
-  /// CT_DLbl gets its own typed body.
-  d_lbl : Array[@xml.XmlElement]
+  /// `<c:dLbl>` per-data-point overrides. Each entry targets a
+  /// single point by `idx`.
+  d_lbl : Array[DLbl]
   /// `<c:numFmt>` (CT_NumFmt) — number-format string + sourceLinked.
   /// Reuses the axis-side `NumFmt` since the schema is identical.
   num_fmt : NumFmt?
@@ -139,9 +139,11 @@ pub fn DLblPos::to_xml(self : DLblPos) -> String {
 // --- parsing -----------------------------------------------------------------
 
 ///|
-/// Walk a captured `<c:dLbls>` element into a typed `DLbls`.
-pub fn parse_d_lbls(el : @xml.XmlElement) -> DLbls {
-  let d_lbl : Array[@xml.XmlElement] = []
+/// Walk a captured `<c:dLbls>` element into a typed `DLbls`. May
+/// raise `Malformed` via the per-point `parse_d_lbl` helper when a
+/// `<c:dLbl>` child is missing its required `<c:idx>`.
+pub fn parse_d_lbls(el : @xml.XmlElement) -> DLbls raise ChartError {
+  let d_lbl : Array[DLbl] = []
   let mut num_fmt : NumFmt? = None
   let mut sp_pr : @xml.XmlElement? = None
   let mut tx_pr : @xml.XmlElement? = None
@@ -161,7 +163,7 @@ pub fn parse_d_lbls(el : @xml.XmlElement) -> DLbls {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "dLbl" => d_lbl.push(c)
+            "dLbl" => d_lbl.push(parse_d_lbl(c))
             "numFmt" => num_fmt = Some(parse_num_fmt(c))
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
@@ -250,7 +252,7 @@ pub fn write_d_lbls(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "dLbls"))
   for d in dl.d_lbl {
-    @oxml.write_xml_element(w, ctx, d)
+    write_d_lbl(w, ctx, d)
   }
   match dl.num_fmt {
     Some(nf) => write_num_fmt_for_d_lbls(w, nf)
