@@ -62,6 +62,13 @@ pub fn Presentation::new() -> Presentation raise PptxError {
     (
       "/ppt/slideLayouts/slideLayout1.xml", @oxml.ct_slide_layout, blank_slide_layout_xml,
     ),
+    // The next four parts are required by ECMA-376 Part 1 §13.3.6
+    // for PowerPoint to accept the file without a "repair" prompt.
+    ("/ppt/presProps.xml", @oxml.ct_pres_props, blank_pres_props_xml),
+    ("/ppt/viewProps.xml", @oxml.ct_view_props, blank_view_props_xml),
+    ("/ppt/tableStyles.xml", @oxml.ct_table_styles, blank_table_styles_xml),
+    ("/docProps/core.xml", @oxml.ct_core_properties, blank_core_props_xml),
+    ("/docProps/app.xml", @oxml.ct_extended_properties, blank_app_props_xml),
   ]
   let rels : Array[(String, String)] = [
     ("/_rels/.rels", blank_pkg_rels_xml),

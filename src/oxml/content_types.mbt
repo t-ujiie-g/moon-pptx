@@ -60,6 +60,35 @@ pub let ct_chart : String = "application/vnd.openxmlformats-officedocument.drawi
 /// / boxwhisker / funnel / paretoLine / regionMap / clusteredColumn).
 pub let ct_chart_ex : String = "application/vnd.ms-office.chartex+xml"
 
+///|
+/// `ppt/presProps.xml` — presentation-level properties. Required
+/// part per ECMA-376 Part 1 §13.3.6: every PresentationML package
+/// must include this part referenced from the presentation's rels.
+pub let ct_pres_props : String = "application/vnd.openxmlformats-officedocument.presentationml.presProps+xml"
+
+///|
+/// `ppt/viewProps.xml` — common view properties (zoom, scroll, last
+/// view kind). Required part per ECMA-376 Part 1 §13.3.6.
+pub let ct_view_props : String = "application/vnd.openxmlformats-officedocument.presentationml.viewProps+xml"
+
+///|
+/// `ppt/tableStyles.xml` — drawing-ml table style list. Required
+/// when any slide carries a table; minimal valid content is an
+/// empty `<a:tblStyleLst def="…">` with the no-style default UUID.
+pub let ct_table_styles : String = "application/vnd.openxmlformats-officedocument.presentationml.tableStyles+xml"
+
+///|
+/// `docProps/core.xml` — Dublin Core metadata (title / creator /
+/// revision / created / modified). Package-level part, referenced
+/// from `_rels/.rels`.
+pub let ct_core_properties : String = "application/vnd.openxmlformats-package.core-properties+xml"
+
+///|
+/// `docProps/app.xml` — extended (application-specific) properties
+/// (Application name, Slides count, Notes count, etc.). Package-
+/// level part, referenced from `_rels/.rels`.
+pub let ct_extended_properties : String = "application/vnd.openxmlformats-officedocument.extended-properties+xml"
+
 // --- <a:graphicData uri="…"> values ---
 //
 // `<p:graphicFrame>` hosts foreign-namespace content through

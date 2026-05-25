@@ -28,9 +28,15 @@ pub let ct_comment_authors : String
 
 pub let ct_comments : String
 
+pub let ct_core_properties : String
+
+pub let ct_extended_properties : String
+
 pub let ct_notes_master : String
 
 pub let ct_notes_slide : String
+
+pub let ct_pres_props : String
 
 pub let ct_presentation : String
 
@@ -40,7 +46,11 @@ pub let ct_slide_layout : String
 
 pub let ct_slide_master : String
 
+pub let ct_table_styles : String
+
 pub let ct_theme : String
+
+pub let ct_view_props : String
 
 pub let drawing_ns : String
 

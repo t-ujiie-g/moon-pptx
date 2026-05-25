@@ -71,3 +71,29 @@ pub let rt_comments : String = "http://schemas.openxmlformats.org/officeDocument
 /// `…/relationships/commentAuthors` — presentation → comment
 /// authors-list rel.
 pub let rt_comment_authors : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/commentAuthors"
+
+///|
+/// `…/relationships/presProps` — presentation → presentation-
+/// properties part. Required per ECMA-376 Part 1 §13.3.6.
+pub let rt_pres_props : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps"
+
+///|
+/// `…/relationships/viewProps` — presentation → view-properties
+/// part. Required per ECMA-376 Part 1 §13.3.6.
+pub let rt_view_props : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/viewProps"
+
+///|
+/// `…/relationships/tableStyles` — presentation → table-styles list.
+/// Required when any slide carries a table.
+pub let rt_table_styles : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableStyles"
+
+///|
+/// `…/metadata/core-properties` — package → core (Dublin Core)
+/// metadata. Unusually for OOXML rels this type lives under the
+/// `package-2006` namespace rather than `officeDocument-2006`.
+pub let rt_core_properties : String = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"
+
+///|
+/// `…/relationships/extended-properties` — package → extended (app-
+/// specific) metadata (`docProps/app.xml`).
+pub let rt_extended_properties : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"

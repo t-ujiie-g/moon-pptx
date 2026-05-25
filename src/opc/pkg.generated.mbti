@@ -33,6 +33,10 @@ pub let rt_comment_authors : String
 
 pub let rt_comments : String
 
+pub let rt_core_properties : String
+
+pub let rt_extended_properties : String
+
 pub let rt_image : String
 
 pub let rt_notes_master : String
@@ -41,13 +45,19 @@ pub let rt_notes_slide : String
 
 pub let rt_office_document : String
 
+pub let rt_pres_props : String
+
 pub let rt_slide : String
 
 pub let rt_slide_layout : String
 
 pub let rt_slide_master : String
 
+pub let rt_table_styles : String
+
 pub let rt_theme : String
+
+pub let rt_view_props : String
 
 pub fn validate_part_name(String) -> Unit raise OpcError
 

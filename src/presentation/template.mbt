@@ -42,6 +42,49 @@ let blank_theme_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standal
   "<a:cs typeface=\"\"/>" +
   "</a:minorFont>" +
   "</a:fontScheme>" +
+  // `<a:fmtScheme>` (CT_StyleMatrix) — REQUIRED by ECMA-376
+  // §20.1.6.10. CT_BaseStyles mandates all three child elements
+  // (clrScheme, fontScheme, fmtScheme); without fmtScheme PowerPoint
+  // shows a "needs repair" prompt on open. Each style list (fill /
+  // line / effect / bgFill) must carry at least three entries; we
+  // emit the canonical "subtle / moderate / intense" trio that
+  // Microsoft Office's default theme uses — line widths of
+  // 6350 / 12700 / 19050 EMU (≈0.5/1/1.5 pt) and placeholder-coloured
+  // solid fills (`phClr` resolves to whatever the consumer applies).
+  "<a:fmtScheme name=\"Office\">" +
+  "<a:fillStyleLst>" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "</a:fillStyleLst>" +
+  "<a:lnStyleLst>" +
+  "<a:ln w=\"6350\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:prstDash val=\"solid\"/>" +
+  "<a:miter lim=\"800000\"/>" +
+  "</a:ln>" +
+  "<a:ln w=\"12700\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:prstDash val=\"solid\"/>" +
+  "<a:miter lim=\"800000\"/>" +
+  "</a:ln>" +
+  "<a:ln w=\"19050\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\">" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:prstDash val=\"solid\"/>" +
+  "<a:miter lim=\"800000\"/>" +
+  "</a:ln>" +
+  "</a:lnStyleLst>" +
+  "<a:effectStyleLst>" +
+  "<a:effectStyle><a:effectLst/></a:effectStyle>" +
+  "<a:effectStyle><a:effectLst/></a:effectStyle>" +
+  "<a:effectStyle><a:effectLst/></a:effectStyle>" +
+  "</a:effectStyleLst>" +
+  "<a:bgFillStyleLst>" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "<a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill>" +
+  "</a:bgFillStyleLst>" +
+  "</a:fmtScheme>" +
   "</a:themeElements>" +
   "</a:theme>"
 
@@ -85,17 +128,90 @@ let blank_presentation_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" 
   "<p:notesSz cx=\"6858000\" cy=\"9144000\"/>" +
   "</p:presentation>"
 
+///|
+/// `ppt/presProps.xml` — minimal presentation-properties part.
+/// Required per ECMA-376 Part 1 §13.3.6. PowerPoint accepts an empty
+/// `<p:presentationPr>` element; the Microsoft-extension `<p:extLst>`
+/// children Excel emits (discardImageEditData, defaultImageDpi, etc.)
+/// are optional and we don't generate them.
+let blank_pres_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+  "<p:presentationPr xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"" +
+  " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"" +
+  " xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"/>"
+
+///|
+/// `ppt/viewProps.xml` — minimal view-properties part. Required per
+/// ECMA-376 Part 1 §13.3.6. We carry a `<p:gridSpacing>` since that's
+/// what PowerPoint's own minimal output looks like.
+let blank_view_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+  "<p:viewPr xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"" +
+  " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"" +
+  " xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\">" +
+  "<p:gridSpacing cx=\"76200\" cy=\"76200\"/>" +
+  "</p:viewPr>"
+
+///|
+/// `ppt/tableStyles.xml` — empty table-styles list with the "no
+/// style" default UUID. Required when slides carry tables.
+let blank_table_styles_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+  "<a:tblStyleLst xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\"" +
+  " def=\"{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}\"/>"
+
+///|
+/// `docProps/core.xml` — Dublin Core metadata. PowerPoint shows this
+/// in the file's Properties dialog. We emit a fixed-but-blank set.
+let blank_core_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+  "<cp:coreProperties xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\"" +
+  " xmlns:dc=\"http://purl.org/dc/elements/1.1/\"" +
+  " xmlns:dcterms=\"http://purl.org/dc/terms/\"" +
+  " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
+  "<dc:title></dc:title>" +
+  "<dc:creator>moon_pptx</dc:creator>" +
+  "<cp:lastModifiedBy>moon_pptx</cp:lastModifiedBy>" +
+  "<cp:revision>1</cp:revision>" +
+  "</cp:coreProperties>"
+
+///|
+/// `docProps/app.xml` — extended application properties. Identifies
+/// the producing application and provides slide-count metadata used
+/// by file-explorer previews.
+let blank_app_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+  "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\"" +
+  " xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\">" +
+  "<Application>moon_pptx</Application>" +
+  "<PresentationFormat>On-screen Show (4:3)</PresentationFormat>" +
+  "<Slides>0</Slides>" +
+  "<Notes>0</Notes>" +
+  "<HiddenSlides>0</HiddenSlides>" +
+  "<MMClips>0</MMClips>" +
+  "<ScaleCrop>false</ScaleCrop>" +
+  "<LinksUpToDate>false</LinksUpToDate>" +
+  "<SharedDoc>false</SharedDoc>" +
+  "<HyperlinksChanged>false</HyperlinksChanged>" +
+  "<AppVersion>16.0000</AppVersion>" +
+  "</Properties>"
+
 // --- relationships templates ---
 
 ///|
 let blank_pkg_rels_xml : String = relationships_doc([
   ("rId1", @opc.rt_office_document, "ppt/presentation.xml"),
+  ("rId2", @opc.rt_core_properties, "docProps/core.xml"),
+  ("rId3", @opc.rt_extended_properties, "docProps/app.xml"),
 ])
 
 ///|
+/// Theme is referenced by `slideMaster.xml.rels`; `presentation.xml.rels`
+/// only needs the slide-master + the required presProps / viewProps /
+/// tableStyles. Slides added by `add_slide_mut` claim rIds from
+/// `rId5` onward (next-available after the four fixed entries here)
+/// — `add_slide.mbt` walks the existing relationships when picking
+/// a new id so this offset is observed automatically.
 let blank_presentation_rels_xml : String = relationships_doc([
   ("rId1", @opc.rt_slide_master, "slideMasters/slideMaster1.xml"),
-  ("rId2", @opc.rt_theme, "theme/theme1.xml"),
+  ("rId2", @opc.rt_pres_props, "presProps.xml"),
+  ("rId3", @opc.rt_view_props, "viewProps.xml"),
+  ("rId4", @opc.rt_table_styles, "tableStyles.xml"),
 ])
 
 ///|
