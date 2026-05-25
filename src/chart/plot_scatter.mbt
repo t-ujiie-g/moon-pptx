@@ -14,6 +14,9 @@
 // the category-axis + value-axis pair every other 2-D chart uses.
 
 ///|
+/// Body of `<c:scatterChart>` (CT_ScatterChart). Scatter charts
+/// use two value axes (`<c:valAx>` × 2) instead of the category +
+/// value pair every other 2-D chart uses.
 pub(all) struct ScatterChartBody {
   scatter_style : ScatterStyle
   vary_colors : Bool?
@@ -53,6 +56,8 @@ pub impl Show for ScatterStyle with fn output(self, logger) {
 }
 
 ///|
+/// Parse `ScatterStyle` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn ScatterStyle::from_xml(s : String) -> ScatterStyle? {
   match s {
     "line" => Some(Line)
@@ -66,6 +71,7 @@ pub fn ScatterStyle::from_xml(s : String) -> ScatterStyle? {
 }
 
 ///|
+/// Serialise `ScatterStyle` back to the OOXML attribute string.
 pub fn ScatterStyle::to_xml(self : ScatterStyle) -> String {
   match self {
     Line => "line"

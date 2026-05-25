@@ -72,6 +72,8 @@ pub impl Show for BarDir with fn output(self, logger) {
 }
 
 ///|
+/// Parse `BarDir` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn BarDir::from_xml(s : String) -> BarDir? {
   match s {
     "bar" => Some(Bar)
@@ -81,6 +83,7 @@ pub fn BarDir::from_xml(s : String) -> BarDir? {
 }
 
 ///|
+/// Serialise `BarDir` back to the OOXML attribute string.
 pub fn BarDir::to_xml(self : BarDir) -> String {
   match self {
     Bar => "bar"
@@ -107,6 +110,8 @@ pub impl Show for BarGrouping with fn output(self, logger) {
 }
 
 ///|
+/// Parse `BarGrouping` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn BarGrouping::from_xml(s : String) -> BarGrouping? {
   match s {
     "percentStacked" => Some(PercentStacked)
@@ -118,6 +123,7 @@ pub fn BarGrouping::from_xml(s : String) -> BarGrouping? {
 }
 
 ///|
+/// Serialise `BarGrouping` back to the OOXML attribute string.
 pub fn BarGrouping::to_xml(self : BarGrouping) -> String {
   match self {
     PercentStacked => "percentStacked"

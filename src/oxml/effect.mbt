@@ -33,6 +33,8 @@ pub(all) enum RectAlignment {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `RectAlignment` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn RectAlignment::from_xml(s : String) -> RectAlignment? {
   match s {
     "tl" => Some(RectTopLeft)

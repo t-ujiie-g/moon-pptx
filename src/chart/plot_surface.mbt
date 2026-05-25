@@ -14,6 +14,7 @@
 // dispatch stays mechanical.
 
 ///|
+/// Body of `<c:surfaceChart>` (CT_SurfaceChart).
 pub(all) struct SurfaceChartBody {
   wireframe : Bool?
   series : Array[ChartSeriesCore]
@@ -32,6 +33,7 @@ pub impl Show for SurfaceChartBody with fn output(self, logger) {
 }
 
 ///|
+/// Body of `<c:surface3DChart>` (CT_Surface3DChart).
 pub(all) struct Surface3DChartBody {
   wireframe : Bool?
   series : Array[ChartSeriesCore]

@@ -44,21 +44,25 @@ pub(all) struct Cm(Double) derive(Eq, Debug)
 // --- accessors ---
 
 ///|
+/// Unwrap to the raw EMU value as `Int64`.
 pub fn Emu::value(self : Emu) -> Int64 {
   self.0
 }
 
 ///|
+/// Unwrap to the raw point value as `Double`.
 pub fn Pt::value(self : Pt) -> Double {
   self.0
 }
 
 ///|
+/// Unwrap to the raw inch value as `Double`.
 pub fn Inch::value(self : Inch) -> Double {
   self.0
 }
 
 ///|
+/// Unwrap to the raw centimetre value as `Double`.
 pub fn Cm::value(self : Cm) -> Double {
   self.0
 }
@@ -136,16 +140,19 @@ pub impl Show for Cm with fn output(self, logger) {
 // --- Emu arithmetic (the only unit where exact math makes sense) ---
 
 ///|
+/// Add two EMU lengths.
 pub fn Emu::add(self : Emu, other : Emu) -> Emu {
   Emu(self.0 + other.0)
 }
 
 ///|
+/// Subtract `other` from `self` in EMU.
 pub fn Emu::sub(self : Emu, other : Emu) -> Emu {
   Emu(self.0 - other.0)
 }
 
 ///|
+/// Negate an EMU length.
 pub fn Emu::neg(self : Emu) -> Emu {
   Emu(-self.0)
 }

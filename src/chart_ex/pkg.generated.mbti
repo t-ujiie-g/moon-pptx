@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "t-ujiie-g/moon_pptx/chart_ex"
+package "t-ujiie-g/moon-pptx/chart_ex"
 
 import {
   "moonbitlang/core/debug",
-  "t-ujiie-g/moon_pptx/xml",
+  "t-ujiie-g/moon-pptx/xml",
 }
 
 // Values

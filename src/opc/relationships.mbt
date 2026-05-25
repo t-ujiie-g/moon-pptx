@@ -72,6 +72,8 @@ pub(all) struct Relationships {
 } derive(Debug)
 
 ///|
+/// Construct an empty `Relationships` set for `source` (the
+/// part the relationships belong to).
 pub fn Relationships::new(source : String) -> Relationships {
   { source, items: [] }
 }

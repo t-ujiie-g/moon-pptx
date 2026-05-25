@@ -85,7 +85,7 @@ fn sample_title_slide(
     .with_bold()
     .with_color(@units.RgbColor::new(0x1F, 0x4E, 0x79))
   let tb = @slide.TextBody::of_styled_text(
-    "moon_pptx — feature sample deck", rp,
+    "moon-pptx — feature sample deck", rp,
   )
   let title = @slide.AutoShape::textbox(
     2,
@@ -538,7 +538,7 @@ fn sample_closing_slide(
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
-      "moon_pptx generated this deck — 8 slides, every typed feature exercised.",
+      "moon-pptx generated this deck — 8 slides, every typed feature exercised.",
       body_rp,
     ),
   )

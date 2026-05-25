@@ -20,6 +20,9 @@
 // smallest pie slices are exploded into a secondary pie or bar.
 
 ///|
+/// Body of `<c:ofPieChart>` (CT_OfPieChart). Pie-of-pie or
+/// bar-of-pie charts split the smallest slices into a
+/// secondary plot.
 pub(all) struct OfPieChartBody {
   of_pie_type : OfPieType
   vary_colors : Bool?
@@ -67,6 +70,8 @@ pub impl Show for OfPieType with fn output(self, logger) {
 }
 
 ///|
+/// Parse `OfPieType` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn OfPieType::from_xml(s : String) -> OfPieType? {
   match s {
     "pie" => Some(Pie)
@@ -76,6 +81,7 @@ pub fn OfPieType::from_xml(s : String) -> OfPieType? {
 }
 
 ///|
+/// Serialise `OfPieType` back to the OOXML attribute string.
 pub fn OfPieType::to_xml(self : OfPieType) -> String {
   match self {
     Pie => "pie"
@@ -106,6 +112,8 @@ pub impl Show for SplitType with fn output(self, logger) {
 }
 
 ///|
+/// Parse `SplitType` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn SplitType::from_xml(s : String) -> SplitType? {
   match s {
     "auto" => Some(Auto)
@@ -118,6 +126,7 @@ pub fn SplitType::from_xml(s : String) -> SplitType? {
 }
 
 ///|
+/// Serialise `SplitType` back to the OOXML attribute string.
 pub fn SplitType::to_xml(self : SplitType) -> String {
   match self {
     Auto => "auto"

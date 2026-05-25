@@ -4,9 +4,9 @@
 // here, so the deck definition lives in one place.
 
 import {
-  "t-ujiie-g/moon_pptx/chart",
-  "t-ujiie-g/moon_pptx/oxml",
-  "t-ujiie-g/moon_pptx/presentation",
-  "t-ujiie-g/moon_pptx/slide",
-  "t-ujiie-g/moon_pptx/units",
+  "t-ujiie-g/moon-pptx/chart",
+  "t-ujiie-g/moon-pptx/oxml",
+  "t-ujiie-g/moon-pptx/presentation",
+  "t-ujiie-g/moon-pptx/slide",
+  "t-ujiie-g/moon-pptx/units",
 }

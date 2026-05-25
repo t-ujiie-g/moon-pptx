@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "t-ujiie-g/moon_pptx/xml"
+package "t-ujiie-g/moon-pptx/xml"
 
 import {
   "moonbitlang/core/debug",

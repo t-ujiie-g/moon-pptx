@@ -158,12 +158,10 @@ See ADRs in `TODO.md §4` for the rationale behind each convention.
 | `AGENTS.md` | Tool-agnostic contributor + AI agent guide (MoonBit conventions) |
 | `README.md` | User-facing entry point (symlink to `README.mbt.md`) |
 | `README.mbt.md` | Canonical README; runnable as a doc test |
-| `moon.mod.json` | Module manifest (deps, metadata) |
-| `moon.pkg` | Root package config (imports) |
-| `moon_pptx.mbt` | Library entry source |
-| `moon_pptx_test.mbt` | Blackbox tests (use `@moon_pptx`) |
-| `moon_pptx_wbtest.mbt` | Whitebox tests (in-package) |
-| `cmd/main/` | CLI entry point (development scratch) |
+| `moon.mod` | Module manifest (deps, metadata) — TOML format |
+| `src/*/moon.pkg` | Per-sub-package config (imports, test deps) |
+| `src/<name>/` | Sub-packages: `units`, `xml`, `opc`, `oxml`, `theme`, `slide_master`, `slide`, `notes`, `comments`, `chart`, `chart_ex`, `presentation`, `integration` (tests), `sample`, `cmd_sample` (CLI scratch) |
+| `CHANGELOG.md` | Keep-a-Changelog release notes |
 | `.githooks/pre-commit` | `moon fmt && moon check` (enable with `git config core.hooksPath .githooks`) |
 | `.github/workflows/ci.yml` | CI: check / fmt / info drift / test matrix |
 | `.mooncakes/` | Resolved dependency cache (gitignored) |

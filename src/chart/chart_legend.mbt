@@ -27,6 +27,8 @@
 // practice).
 
 ///|
+/// Body of `<c:legend>` (CT_Legend) — chart legend positioning
+/// and per-entry overrides.
 pub(all) struct ChartLegend {
   /// `<c:legendPos val="…"/>` — where the legend sits.
   legend_pos : LegendPos?
@@ -81,6 +83,8 @@ pub impl Show for LegendPos with fn output(self, logger) {
 }
 
 ///|
+/// Parse `LegendPos` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn LegendPos::from_xml(s : String) -> LegendPos? {
   match s {
     "b" => Some(LegendBottom)
@@ -93,6 +97,7 @@ pub fn LegendPos::from_xml(s : String) -> LegendPos? {
 }
 
 ///|
+/// Serialise `LegendPos` back to the OOXML attribute string.
 pub fn LegendPos::to_xml(self : LegendPos) -> String {
   match self {
     LegendBottom => "b"

@@ -50,6 +50,8 @@ pub(all) enum TileFlip {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `TileFlip` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn TileFlip::from_xml(s : String) -> TileFlip? {
   match s {
     "none" => Some(FlipNone)
@@ -76,6 +78,8 @@ pub(all) enum TileAlignment {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `TileAlignment` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn TileAlignment::from_xml(s : String) -> TileAlignment? {
   match s {
     "tl" => Some(AlignTopLeft)

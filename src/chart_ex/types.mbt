@@ -168,6 +168,8 @@ pub impl Show for ChartExKind with fn output(self, logger) {
 }
 
 ///|
+/// Parse `ChartExKind` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn ChartExKind::from_xml(s : String) -> ChartExKind {
   match s {
     "boxWhisker" => BoxWhisker
@@ -184,6 +186,7 @@ pub fn ChartExKind::from_xml(s : String) -> ChartExKind {
 }
 
 ///|
+/// Serialise `ChartExKind` back to the OOXML attribute string.
 pub fn ChartExKind::to_xml(self : ChartExKind) -> String {
   match self {
     BoxWhisker => "boxWhisker"

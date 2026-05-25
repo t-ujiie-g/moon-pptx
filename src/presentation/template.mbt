@@ -166,8 +166,8 @@ let blank_core_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
   " xmlns:dcterms=\"http://purl.org/dc/terms/\"" +
   " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
   "<dc:title></dc:title>" +
-  "<dc:creator>moon_pptx</dc:creator>" +
-  "<cp:lastModifiedBy>moon_pptx</cp:lastModifiedBy>" +
+  "<dc:creator>moon-pptx</dc:creator>" +
+  "<cp:lastModifiedBy>moon-pptx</cp:lastModifiedBy>" +
   "<cp:revision>1</cp:revision>" +
   "</cp:coreProperties>"
 
@@ -178,7 +178,7 @@ let blank_core_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" st
 let blank_app_props_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
   "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\"" +
   " xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\">" +
-  "<Application>moon_pptx</Application>" +
+  "<Application>moon-pptx</Application>" +
   "<PresentationFormat>On-screen Show (4:3)</PresentationFormat>" +
   "<Slides>0</Slides>" +
   "<Notes>0</Notes>" +

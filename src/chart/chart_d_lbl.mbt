@@ -28,6 +28,10 @@
 // vocabulary as `DLbls`).
 
 ///|
+/// Per-data-point label override (`<c:dLbl>`, CT_DLbl). The
+/// schema offers two choices: hide this point's label via
+/// `delete=true`, or override the full styling — both branches
+/// are stored optional so the writer round-trips whatever is set.
 pub(all) struct DLbl {
   /// `<c:idx val="…"/>` — REQUIRED. Identifies which data point.
   idx : Int

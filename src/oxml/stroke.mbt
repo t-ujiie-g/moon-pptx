@@ -20,6 +20,8 @@ pub(all) enum LineCap {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `LineCap` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn LineCap::from_xml(s : String) -> LineCap? {
   match s {
     "flat" => Some(CapFlat)
@@ -40,6 +42,8 @@ pub(all) enum CompoundLine {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `CompoundLine` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn CompoundLine::from_xml(s : String) -> CompoundLine? {
   match s {
     "sng" => Some(CmpdSingle)
@@ -60,6 +64,8 @@ pub(all) enum PenAlignment {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `PenAlignment` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn PenAlignment::from_xml(s : String) -> PenAlignment? {
   match s {
     "ctr" => Some(AlignPenCenter)
@@ -87,6 +93,8 @@ pub(all) enum DashStyle {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `DashStyle` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn DashStyle::from_xml(s : String) -> DashStyle? {
   match s {
     "solid" => Some(DashSolid)
@@ -126,6 +134,8 @@ pub(all) enum ArrowType {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `ArrowType` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn ArrowType::from_xml(s : String) -> ArrowType? {
   match s {
     "none" => Some(ArrowNone)
@@ -148,6 +158,8 @@ pub(all) enum ArrowSize {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `ArrowSize` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn ArrowSize::from_xml(s : String) -> ArrowSize? {
   match s {
     "sm" => Some(SizeSmall)

@@ -35,6 +35,10 @@
 // until a later slice types it.
 
 ///|
+/// Series-level fitted-curve overlay (`<c:trendline>`,
+/// CT_Trendline). Applies to bar / line / area / scatter /
+/// bubble series; pie / doughnut / radar / surface series do
+/// not support trendlines.
 pub(all) struct Trendline {
   /// `<c:name>` text content — display name shown in legend / labels.
   name : String?
@@ -98,6 +102,8 @@ pub impl Show for TrendlineType with fn output(self, logger) {
 }
 
 ///|
+/// Parse `TrendlineType` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn TrendlineType::from_xml(s : String) -> TrendlineType? {
   match s {
     "exp" => Some(TrendlineExp)
@@ -111,6 +117,7 @@ pub fn TrendlineType::from_xml(s : String) -> TrendlineType? {
 }
 
 ///|
+/// Serialise `TrendlineType` back to the OOXML attribute string.
 pub fn TrendlineType::to_xml(self : TrendlineType) -> String {
   match self {
     TrendlineExp => "exp"

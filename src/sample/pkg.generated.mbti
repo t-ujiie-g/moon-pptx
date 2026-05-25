@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "t-ujiie-g/moon_pptx/sample"
+package "t-ujiie-g/moon-pptx/sample"
 
 import {
-  "t-ujiie-g/moon_pptx/presentation",
+  "t-ujiie-g/moon-pptx/presentation",
 }
 
 // Values

@@ -35,6 +35,9 @@
 // String / enum values.
 
 ///|
+/// Data-labels styling (`<c:dLbls>`, CT_DLbls) attached to a
+/// chart family. Carries the default styling plus an array of
+/// per-data-point overrides.
 pub(all) struct DLbls {
   /// `<c:dLbl>` per-data-point overrides. Each entry targets a
   /// single point by `idx`.
@@ -106,6 +109,8 @@ pub impl Show for DLblPos with fn output(self, logger) {
 }
 
 ///|
+/// Parse `DLblPos` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn DLblPos::from_xml(s : String) -> DLblPos? {
   match s {
     "bestFit" => Some(DLblBestFit)
@@ -122,6 +127,7 @@ pub fn DLblPos::from_xml(s : String) -> DLblPos? {
 }
 
 ///|
+/// Serialise `DLblPos` back to the OOXML attribute string.
 pub fn DLblPos::to_xml(self : DLblPos) -> String {
   match self {
     DLblBestFit => "bestFit"

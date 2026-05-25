@@ -20,6 +20,8 @@ pub(all) struct HslColor {
 } derive(Eq, Debug)
 
 ///|
+/// Construct an `HslColor` from hue (degrees, auto-wrapped),
+/// saturation (`[0.0, 1.0]`), and lightness (`[0.0, 1.0]`).
 pub fn HslColor::new(
   hue : Double,
   saturation : Double,

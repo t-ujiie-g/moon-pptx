@@ -1,92 +1,54 @@
-# moon_pptx
+# moon-pptx
 
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Status: pre-alpha (Phases 1–7 closed except for open-verification).**
-> Read + write parsers and writers cover theme / slide master / slide
-> layout / slide / notes slide / comments / tables / **charts** (both
-> the standard 16 chart families and the Microsoft 2016 extended
-> chartEx families — waterfall, treemap, sunburst, histogram,
-> boxWhisker, funnel, paretoLine, regionMap, clusteredColumn), with
-> `parse → serialize → parse → Eq` round-trip verified across
-> synthetic decks. The high-level `Presentation` API supports `open`
-> / `save` / `new` plus both mutating (`add_slide_mut`,
-> `update_slide_mut`) and immutable (`with_added_slide`,
-> `with_slide_updated`) builders. Chart-from-scratch builders cover
-> all 16 standard families (`Chart::of_bar / of_line / of_pie /
-> of_area / of_radar / of_scatter / of_bubble / of_doughnut /
-> of_of_pie / of_bar_3d / of_line_3d / of_pie_3d / of_surface /
-> of_surface_3d / of_stock`). Generated decks open cleanly in
-> PowerPoint Online with no repair prompt; the bundled blank
-> template now emits every part ECMA-376 marks as required
-> (presProps / viewProps / tableStyles / docProps + the theme's
-> mandatory fmtScheme). Outstanding: Phase 8 (SmartArt / animation
-> differentiators) and beyond. See [TODO.md](TODO.md) for the
-> phase-by-phase roadmap.
-
 A pure-MoonBit library for reading, building, and writing PowerPoint
-presentations (`.pptx` / OOXML), with a type-safe builder API.
+presentations (`.pptx` / OOXML). Type-safe units, immutable builders,
+lossless round-trip of unknown XML — and no FFI, so it runs on every
+MoonBit backend.
 
-## Vision
+## Features
 
-Where `python-pptx` succeeded, this project aims to **match its scope and go
-further** while staying entirely within MoonBit:
-
-- **Pure MoonBit** — works on Native and Wasm-GC backends with no FFI to
-  host runtimes (depends only on `hustcer/fzip` for ZIP/DEFLATE).
-- **Type-safe units** — `Emu`, `Pt`, `Inch`, `Cm`, `Color` are distinct types
-  with explicit conversions; impossible to mix up.
-- **Immutable builders** — `slide.with_shape(rect).with_text(tb)` returns a
-  new value; no hidden mutation.
-- **ADT-driven model** — `Fill`, `Stroke`, `Effect` are enums; pattern match
-  instead of attribute soup.
-- **Lossless round-trip** — unknown OOXML extensions are preserved verbatim.
-- **Beyond `python-pptx`** — SmartArt builder, animation builder, all 13
-  chart types as buildable, compile-time placeholder schema (planned).
-
-See [TODO.md §8](TODO.md#8-comparison-vs-python-pptx-target-end-state) for the
-full feature comparison.
-
-## Project status
-
-| Phase | Scope | Status |
-|---|---|---|
-| 0 | Bootstrap, deps, CI | ✅ Done |
-| 1 | Units & XML | ✅ Done |
-| 2 | OPC layer over fzip | ✅ Done |
-| 3 | Read path | ✅ Done |
-| 4 | Write path | ✅ Done |
-| 5 | Builder API (create from scratch) | ✅ Done (PowerPoint Online verified) |
-| 6 | Tables | ✅ Done |
-| 7 | Charts (standard + chartEx, read/write/build) | ✅ Done |
-| 8 | Differentiators (SmartArt, animation, …) | 🔜 Next |
-| 9 | 1.0 release | ⏳ |
-
-Detailed checklists per phase live in [TODO.md](TODO.md).
+- **Read and write** `.pptx` packages end-to-end — themes, masters,
+  layouts, slides, notes, comments — without ever materialising XML by
+  hand.
+- **Builder API** for creating decks from scratch: text boxes, shapes,
+  pictures, tables, and charts via `Presentation::new() →
+  add_slide_mut → with_shape → save`.
+- **All 16 standard chart families** plus the Microsoft 2016 extended
+  chartEx families (waterfall, treemap, sunburst, histogram,
+  boxWhisker, funnel, paretoLine, regionMap, clusteredColumn).
+- **Type-safe units** — `Emu`, `Pt`, `Inch`, `Cm`, `Angle`,
+  `Percentage`, `RgbColor`, `ThemeColor` are distinct types; the
+  compiler stops you from mixing them.
+- **Immutable builders** — `slide.with_shape(s)` returns a new value;
+  `_mut` variants exist where editing existing decks is the natural
+  shape.
+- **Lossless round-trip** — unknown OOXML extensions are preserved
+  verbatim on read → write, so files survive parsers that don't know
+  every Microsoft extension element.
+- **Pure MoonBit** — depends only on
+  [`hustcer/fzip`](https://mooncakes.io/docs/hustcer/fzip) for
+  ZIP/DEFLATE. No FFI, works on Native / Wasm-GC / JS / Wasm.
 
 ## Install
 
-Once published to mooncakes:
-
 ```bash
-moon add t-ujiie-g/moon_pptx
+moon add t-ujiie-g/moon-pptx
 ```
 
 ## Quickstart
 
-Build a one-slide deck from scratch and serialise it to PPTX bytes:
+### Build a one-slide deck from scratch
 
 ```moonbit nocheck
-// (Replace the import aliases with however your project pins them.)
 let prs = @presentation.Presentation::new()
 
-// Append a Blank-layout slide; index 0 is the layout from
-// `Presentation::new()`'s built-in template.
+// Append a slide using the built-in Blank layout at index 0.
 let _ = prs.add_slide_mut(0)
 
-// Add a text box to the new slide. EMU constants: 914_400 per
-// inch, so 914_400 × 457_200 ≈ 1" × ½".
+// Drop a title text box onto the new slide.
 let s = prs.slides()[0]
 let tb = @slide.AutoShape::textbox(
   2, "Title",
@@ -98,25 +60,23 @@ let tb = @slide.AutoShape::textbox(
 )
 prs.update_slide_mut(0, s.with_shape(@slide.AutoShape(tb)))
 
-// Save returns the PPTX bytes.  Write them to disk however your
-// backend supports — `@native.write_file` on Native, `Blob` on JS.
+// `save()` returns PPTX bytes — write them with whatever I/O your
+// backend supports.
 let bytes : FixedArray[Byte] = prs.save()
 ```
 
 ### Tables
 
-Tables sit inside a `<p:graphicFrame>` shape. The builders cover the
+Tables live inside `<p:graphicFrame>` shapes. The builders cover the
 common cases (empty grid, custom cell contents, merged cells, cell
-fills / borders / margins) without any XmlElement surface area:
+fills / borders / margins) without touching XML.
 
 ```moonbit nocheck
-// 2×2 table with merged top row + a coloured first cell.
 let yellow = @units.RgbColor::parse_hex("FFFF00")
 let header_props = @slide.TableCellProperties::default()
   .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(yellow)))
   .with_anchor(@slide.Anchor::AnchorCenter)
 let header = @slide.TableCell::merged_origin("Header", grid_span=2)
-// Replace its default properties with the highlighted variant.
 let header = { ..header, properties: Some(header_props) }
 
 let row0 = @slide.TableRow::of_cells(
@@ -145,7 +105,7 @@ prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
 
 ### Charts
 
-Build a chart from a data table and drop it into a chart part:
+Build a chart from a data table, then drop it onto a slide:
 
 ```moonbit nocheck
 let data = @chart.ChartData::new()
@@ -154,17 +114,19 @@ let data = @chart.ChartData::new()
   .with_category("Q3")
   .with_category("Q4")
   .with_series("Revenue", [100.0, 200.0, 300.0, 250.0])
-  .with_series("Cost", [60.0, 110.0, 180.0, 140.0])
+  .with_series("Cost",    [60.0,  110.0, 180.0, 140.0])
 
-// Pick a family — bar / line / pie / area / radar / doughnut / etc.
+// Pick a family: bar / line / pie / area / radar / doughnut / …
 let chart = @chart.Chart::of_bar(data)
 // or:  @chart.Chart::of_line(data, grouping=Stacked)
 // or:  @chart.Chart::of_pie(data)
 // or:  @chart.Chart::of_doughnut(data, hole_size=60)
 
-// Serialize to chartN.xml bytes (you supply the OPC plumbing that
-// wires the part into the package).
-let chart_bytes : FixedArray[Byte] = chart.serialize()
+prs.add_chart_mut(
+  0, chart,
+  @units.Emu(914_400L), @units.Emu(1_828_800L),
+  @units.Emu(4_572_000L), @units.Emu(3_429_000L),
+)
 ```
 
 Scatter and bubble charts use dedicated XY / XYS data types:
@@ -185,26 +147,36 @@ let bubble = @chart.Chart::of_bubble(
 )
 ```
 
-For a richer end-to-end example see
-[`src/integration/cookbook_test.mbt`](src/integration/cookbook_test.mbt)
-— it builds a five-slide pitch deck via the same APIs and round-trips
-through `save() → open()`.
+## Sub-packages
 
-## Development
+The library is split into focused sub-packages. Import what you need;
+the default last-segment aliases (`@units`, `@chart`, …) usually
+suffice.
 
-| Command | Purpose |
+| Package | What it covers |
 |---|---|
-| `moon check` | Type check (run after every edit) |
-| `moon test` | Run all tests on default backend |
-| `moon test --target all` | Run tests across `native` / `wasm-gc` / `js` |
-| `moon fmt` | Format code |
-| `moon info` | Regenerate `.mbti` (public API surface) |
+| `@presentation` | High-level `Presentation` façade — `open` / `save` / `new`, slide / chart / picture insertion, immutable + mutating builders |
+| `@slide` | Slide model: `AutoShape`, `Picture`, `Connector`, `GroupShape`, `Table`, `GraphicFrame`, text bodies, custom geometry |
+| `@chart` | Standard 16 chart families with from-scratch builders (`Chart::of_bar` / `of_line` / `of_pie` / `of_scatter` / `of_bubble` / …) |
+| `@chart_ex` | Microsoft 2016 extended charts (waterfall, treemap, sunburst, …); read + write, lossless round-trip |
+| `@theme`, `@slide_master`, `@notes`, `@comments` | Theme / master / layout / speaker-notes / comments parsers and writers |
+| `@opc` | Open Packaging Convention layer (parts, content types, relationships) — usable for DOCX/XLSX too |
+| `@oxml` | Shared OOXML AST (`Color`, `Fill`, `Stroke`, `EffectList`, …) |
+| `@xml` | Streaming namespace-aware XML reader + writer |
+| `@units` | `Emu`, `Pt`, `Inch`, `Cm`, `Angle`, `Percentage`, `RgbColor`, `HslColor`, `ThemeColor` |
 
-The full development guide and AI-agent instructions live in
-[CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md).
+## Compatibility
 
-The roadmap and active workstream live in [TODO.md](TODO.md). Read it before
-opening a PR that changes scope, design, or status.
+| Backend | Status |
+|---|---|
+| Native | Tested in CI |
+| Wasm-GC | Tested in CI |
+| JS | Tested in CI |
+| Wasm (legacy) | Tested in CI |
+
+Generated decks are verified to open without a repair prompt in
+PowerPoint Online; the bundled blank template emits every part
+ECMA-376 marks as required.
 
 ## License
 

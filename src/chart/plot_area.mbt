@@ -10,6 +10,7 @@
 // Same `Grouping` enum (CT_Grouping) shared with line.
 
 ///|
+/// Body of `<c:areaChart>` (CT_AreaChart).
 pub(all) struct AreaChartBody {
   grouping : Grouping?
   vary_colors : Bool?
@@ -28,6 +29,8 @@ pub impl Show for AreaChartBody with fn output(self, logger) {
 }
 
 ///|
+/// Body of `<c:area3DChart>` (CT_Area3DChart). 3-D area charts
+/// add a series-axis (third `axId`) plus an optional `gapDepth`.
 pub(all) struct Area3DChartBody {
   grouping : Grouping?
   vary_colors : Bool?

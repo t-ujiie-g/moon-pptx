@@ -14,6 +14,8 @@ pub(all) struct RgbColor {
 } derive(Eq, Debug)
 
 ///|
+/// Construct an `RgbColor` from three 0–255 channel values.
+/// Each channel is clamped to `[0, 255]`.
 pub fn RgbColor::new(r : Int, g : Int, b : Int) -> RgbColor {
   { r, g, b }
 }

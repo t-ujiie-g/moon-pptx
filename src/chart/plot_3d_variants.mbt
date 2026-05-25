@@ -13,6 +13,7 @@
 //   (no `firstSliceAng` — that's 2-D pie only)
 
 ///|
+/// Body of `<c:bar3DChart>` (CT_Bar3DChart).
 pub(all) struct Bar3DChartBody {
   bar_dir : BarDir
   grouping : BarGrouping?
@@ -36,6 +37,7 @@ pub impl Show for Bar3DChartBody with fn output(self, logger) {
 }
 
 ///|
+/// Body of `<c:line3DChart>` (CT_Line3DChart).
 pub(all) struct Line3DChartBody {
   grouping : Grouping
   vary_colors : Bool?
@@ -55,6 +57,8 @@ pub impl Show for Line3DChartBody with fn output(self, logger) {
 }
 
 ///|
+/// Body of `<c:pie3DChart>` (CT_Pie3DChart). Pie 3-D charts have
+/// no axes.
 pub(all) struct Pie3DChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
@@ -93,6 +97,8 @@ pub impl Show for BarShape with fn output(self, logger) {
 }
 
 ///|
+/// Parse `BarShape` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn BarShape::from_xml(s : String) -> BarShape? {
   match s {
     "box" => Some(Box)
@@ -106,6 +112,7 @@ pub fn BarShape::from_xml(s : String) -> BarShape? {
 }
 
 ///|
+/// Serialise `BarShape` back to the OOXML attribute string.
 pub fn BarShape::to_xml(self : BarShape) -> String {
   match self {
     Box => "box"

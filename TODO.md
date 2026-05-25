@@ -1,4 +1,4 @@
-# moon_pptx — Development TODO / Roadmap
+# moon-pptx — Development TODO / Roadmap
 
 > Pure-MoonBit library for reading, building, and writing PPTX (OOXML) presentations
 > with a type-safe builder API. Targeting publication on [mooncakes.io](https://mooncakes.io).
@@ -13,7 +13,7 @@ Living document — every PR that changes scope, design, or status should touch 
 
 | Item | Value |
 |---|---|
-| Module ID | `t-ujiie-g/moon_pptx` |
+| Module ID | `t-ujiie-g/moon-pptx` |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260427` (or newer) |
 | Primary backend | TBD (lean **Native**; verify Wasm-GC also builds for browser users) |
@@ -106,7 +106,7 @@ be met before moving on. Mark items `[x]` as completed and link the merge commit
 DoD: empty project builds, fzip is a verified dependency, baseline test passes,
 TODO.md is the living roadmap.
 
-- [x] `moon new` scaffold (`t-ujiie-g/moon_pptx`)
+- [x] `moon new` scaffold (`t-ujiie-g/moon-pptx`)
 - [x] `moon.mod.json` populated (description, keywords, repo, license)
 - [x] `hustcer/fzip` v0.6.1 added as dep
 - [x] `moon check` / `moon build` / `moon test` clean
@@ -385,7 +385,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 ### ADR-005: Sub-packages under `src/<name>/`
 - **Date**: 2026-05-10
 - **Status**: Accepted
-- **Context**: fzip uses a single flat package; pptx-svg uses sub-packages. Surface area for moon_pptx (units, xml, opc, oxml, theme, parts, shapes, text, fill, stroke, effect, geometry, chart, smartart, animation, presentation) is much larger than a leaf compression library — flat scope would muddle namespaces.
+- **Context**: fzip uses a single flat package; pptx-svg uses sub-packages. Surface area for moon-pptx (units, xml, opc, oxml, theme, parts, shapes, text, fill, stroke, effect, geometry, chart, smartart, animation, presentation) is much larger than a leaf compression library — flat scope would muddle namespaces.
 - **Decision**: Set `"source": "src"` in `moon.mod.json`. Each subdomain lives at `src/<name>/` with its own `moon.pkg`. Users import as `@<name>` (e.g. `@units`, `@xml`).
 - **Consequences**: One `moon.pkg` per sub-package and one `pkg.generated.mbti` per sub-package. Cross-package imports are explicit. Refactoring boundaries between phases is now low-cost: adding/removing a package is a directory move.
 
@@ -481,7 +481,7 @@ Run all four before committing. CI enforces them.
 
 ## 8. Comparison vs python-pptx (target end-state)
 
-| Feature | python-pptx | moon_pptx target |
+| Feature | python-pptx | moon-pptx target |
 |---|---|---|
 | Open / modify / save existing PPTX | ✅ | ✅ (Phase 4) |
 | Create from scratch | ✅ | ✅ (Phase 5) |
@@ -522,7 +522,7 @@ Run all four before committing. CI enforces them.
 - **2026-05-10** — Phase 1.1 done: `src/units/` sub-package with `Emu` / `Pt` / `Inch` / `Cm` / `Percentage` / `Angle`. ADR-005 accepted (sub-packages under `src/`). 18 tests pass on all four backends.
 - **2026-05-10** — Phase 1.2 done: color types added to `src/units/` — `RgbColor` (hex parse/format), `HslColor` (RGB↔HSL conversion), `ThemeColor` enum (17 slots), `ColorTransform` ADT, `SchemeColor` immutable builder, `UnitsError` suberror. 33 tests pass on all four backends.
 - **2026-05-10** — Phase 1.3 done (in three commits): `src/xml/` sub-package complete with `QName`, `XmlError`, namespace-aware streaming `XmlWriter`, and event-based `XmlReader` with full namespace + entity handling. ADR-008 records the event-vs-DOM decision. 75 tests pass on all four backends. **Phase 1 (Foundations) closed.**
-- **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon_pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
+- **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon-pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
 - **2026-05-11** — Phase 2 a/b/c done: `src/opc/` sub-package with `Package`, `Part`, `OpcError`, `ContentTypes` (Default/Override + resolution + auto-populate), `Relationships` (parse/serialize/lookup/builder + relative/`..`/external target resolution + `rels_path_for` helper). Total 110 tests on all four backends. Phase 2d (end-to-end .pptx fixture) remaining.
 - **2026-05-11** — Phase 2d done: in-memory minimal-but-realistic `.pptx` fixture (6 parts, 2 rels files, Default + Override content-types, `..`-walking targets) exercises full open → mutate → save → reopen. **Phase 2 (OPC layer) closed.** 117 tests on all four backends.
 - **2026-05-11** — Phase 3a done: `src/theme/` reads `a:theme` into typed `Theme` / `ColorScheme` / `FontScheme`. `skip_subtree` swallows unmodelled siblings (`fmtScheme` and friends) without losing parser state — lossless preservation of the skipped sections is on the docket once ADR-004 is implemented. 126 tests on all four backends.

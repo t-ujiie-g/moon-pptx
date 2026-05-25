@@ -77,6 +77,8 @@ pub impl Show for Grouping with fn output(self, logger) {
 }
 
 ///|
+/// Parse `Grouping` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn Grouping::from_xml(s : String) -> Grouping? {
   match s {
     "standard" => Some(Standard)
@@ -87,6 +89,7 @@ pub fn Grouping::from_xml(s : String) -> Grouping? {
 }
 
 ///|
+/// Serialise `Grouping` back to the OOXML attribute string.
 pub fn Grouping::to_xml(self : Grouping) -> String {
   match self {
     Standard => "standard"

@@ -17,6 +17,8 @@
 // derived from `series.length()`.
 
 ///|
+/// Body of `<c:stockChart>` (CT_StockChart). Stock charts carry
+/// either three (HLC) or four (OHLC) value series.
 pub(all) struct StockChartBody {
   /// `<c:ser>` — three for HLC charts, four for OHLC. Captured
   /// XmlElement payloads.

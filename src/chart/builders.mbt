@@ -120,6 +120,8 @@ pub impl Show for ScatterData with fn output(self, logger) {
 }
 
 ///|
+/// One XY series for a scatter chart. `x` and `y` must be
+/// the same length.
 pub(all) struct ScatterSeries {
   label : String
   x : Array[Double]
@@ -134,6 +136,8 @@ pub impl Show for ScatterSeries with fn output(self, logger) {
 }
 
 ///|
+/// Construct an empty `ScatterData`. Use `with_series` to add
+/// XY series.
 pub fn ScatterData::new() -> ScatterData {
   { series: [] }
 }
@@ -170,6 +174,8 @@ pub impl Show for BubbleData with fn output(self, logger) {
 }
 
 ///|
+/// One XYS series for a bubble chart. `x`, `y`, and `size`
+/// must all be the same length.
 pub(all) struct BubbleSeries {
   label : String
   x : Array[Double]
@@ -185,6 +191,8 @@ pub impl Show for BubbleSeries with fn output(self, logger) {
 }
 
 ///|
+/// Construct an empty `BubbleData`. Use `with_series` to add
+/// XYS series.
 pub fn BubbleData::new() -> BubbleData {
   { series: [] }
 }

@@ -7,6 +7,8 @@
 // interior gap diameter as a percentage of the outer diameter.
 
 ///|
+/// Body of `<c:doughnutChart>` (CT_DoughnutChart). Like pie, but
+/// with an inner radius (`holeSize`, 1–90 %).
 pub(all) struct DoughnutChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]

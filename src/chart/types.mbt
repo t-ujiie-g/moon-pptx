@@ -295,6 +295,8 @@ pub impl Show for Axis with fn output(self, logger) {
 }
 
 ///|
+/// Local element name for this axis kind (`catAx` / `valAx` /
+/// `dateAx` / `serAx`).
 pub fn Axis::local_name(self : Axis) -> String {
   match self {
     ValAx(_) => "valAx"

@@ -1,6 +1,6 @@
 # Project Agents.md Guide
 
-This is a [MoonBit](https://docs.moonbitlang.com) project: **`t-ujiie-g/moon_pptx`**, a
+This is a [MoonBit](https://docs.moonbitlang.com) project: **`t-ujiie-g/moon-pptx`**, a
 pure-MoonBit library for reading, building, and writing `.pptx` (OOXML) files.
 
 Claude Code users: see also `CLAUDE.md` for the Claude-specific overlay.

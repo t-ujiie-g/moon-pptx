@@ -141,6 +141,8 @@ pub impl Show for Orientation with fn output(self, logger) {
 }
 
 ///|
+/// Parse `Orientation` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn Orientation::from_xml(s : String) -> Orientation? {
   match s {
     "minMax" => Some(MinMax)
@@ -150,6 +152,7 @@ pub fn Orientation::from_xml(s : String) -> Orientation? {
 }
 
 ///|
+/// Serialise `Orientation` back to the OOXML attribute string.
 pub fn Orientation::to_xml(self : Orientation) -> String {
   match self {
     MinMax => "minMax"
@@ -181,6 +184,8 @@ pub impl Show for AxPos with fn output(self, logger) {
 }
 
 ///|
+/// Parse `AxPos` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn AxPos::from_xml(s : String) -> AxPos? {
   match s {
     "b" => Some(Bottom)
@@ -192,6 +197,7 @@ pub fn AxPos::from_xml(s : String) -> AxPos? {
 }
 
 ///|
+/// Serialise `AxPos` back to the OOXML attribute string.
 pub fn AxPos::to_xml(self : AxPos) -> String {
   match self {
     Bottom => "b"
@@ -226,6 +232,8 @@ pub impl Show for TickMark with fn output(self, logger) {
 }
 
 ///|
+/// Parse `TickMark` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn TickMark::from_xml(s : String) -> TickMark? {
   match s {
     "cross" => Some(Cross)
@@ -237,6 +245,7 @@ pub fn TickMark::from_xml(s : String) -> TickMark? {
 }
 
 ///|
+/// Serialise `TickMark` back to the OOXML attribute string.
 pub fn TickMark::to_xml(self : TickMark) -> String {
   match self {
     Cross => "cross"
@@ -270,6 +279,8 @@ pub impl Show for TickLblPos with fn output(self, logger) {
 }
 
 ///|
+/// Parse `TickLblPos` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn TickLblPos::from_xml(s : String) -> TickLblPos? {
   match s {
     "high" => Some(High)
@@ -281,6 +292,7 @@ pub fn TickLblPos::from_xml(s : String) -> TickLblPos? {
 }
 
 ///|
+/// Serialise `TickLblPos` back to the OOXML attribute string.
 pub fn TickLblPos::to_xml(self : TickLblPos) -> String {
   match self {
     High => "high"
@@ -311,6 +323,8 @@ pub impl Show for Crosses with fn output(self, logger) {
 }
 
 ///|
+/// Parse `Crosses` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn Crosses::from_xml(s : String) -> Crosses? {
   match s {
     "autoZero" => Some(AutoZero)
@@ -321,6 +335,7 @@ pub fn Crosses::from_xml(s : String) -> Crosses? {
 }
 
 ///|
+/// Serialise `Crosses` back to the OOXML attribute string.
 pub fn Crosses::to_xml(self : Crosses) -> String {
   match self {
     AutoZero => "autoZero"

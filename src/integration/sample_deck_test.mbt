@@ -39,7 +39,7 @@ test "sample deck: title slide carries styled subtitle" {
     AutoShape(a) => a.text_body.unwrap().plain_text()
     _ => abort("expected AutoShape title")
   }
-  assert_eq(title_text, "moon_pptx — feature sample deck")
+  assert_eq(title_text, "moon-pptx — feature sample deck")
 }
 
 ///|

@@ -158,6 +158,8 @@ pub fn UnderlineKind::from_xml(s : String) -> UnderlineKind? {
 }
 
 ///|
+/// Parse `StrikeKind` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn StrikeKind::from_xml(s : String) -> StrikeKind? {
   match s {
     "noStrike" => Some(StNoStrike)
@@ -168,6 +170,8 @@ pub fn StrikeKind::from_xml(s : String) -> StrikeKind? {
 }
 
 ///|
+/// Parse `CapsKind` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn CapsKind::from_xml(s : String) -> CapsKind? {
   match s {
     "none" => Some(CapsNone)
@@ -190,6 +194,8 @@ pub(all) enum TextAlignment {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `TextAlignment` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn TextAlignment::from_xml(s : String) -> TextAlignment? {
   match s {
     "l" => Some(AlignLeft)
@@ -257,6 +263,8 @@ pub(all) enum AutoNumType {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `AutoNumType` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn AutoNumType::from_xml(s : String) -> AutoNumType? {
   match s {
     "arabicPeriod" => Some(ArabicPeriod)
@@ -352,6 +360,8 @@ pub(all) struct ParagraphProperties {
 } derive(Eq, Debug)
 
 ///|
+/// Empty paragraph properties — every field is `None` except
+/// `level` which is `0`.
 pub fn ParagraphProperties::default() -> ParagraphProperties {
   {
     level: 0,
@@ -444,6 +454,8 @@ pub(all) enum Anchor {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `Anchor` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn Anchor::from_xml(s : String) -> Anchor? {
   match s {
     "t" => Some(AnchorTop)
@@ -463,6 +475,8 @@ pub(all) enum WrapKind {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `WrapKind` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn WrapKind::from_xml(s : String) -> WrapKind? {
   match s {
     "none" => Some(WrapNone)
@@ -484,6 +498,8 @@ pub(all) enum VerticalText {
 } derive(Eq, Debug)
 
 ///|
+/// Parse `VerticalText` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn VerticalText::from_xml(s : String) -> VerticalText? {
   match s {
     "horz" => Some(VertHorz)
@@ -529,6 +545,7 @@ pub(all) struct BodyProperties {
 } derive(Eq, Debug)
 
 ///|
+/// Empty body properties — every optional field is `None`.
 pub fn BodyProperties::default() -> BodyProperties {
   {
     rotation: None,

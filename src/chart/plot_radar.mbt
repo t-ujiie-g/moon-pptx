@@ -5,6 +5,7 @@
 //   axId{2} ; extLst?
 
 ///|
+/// Body of `<c:radarChart>` (CT_RadarChart).
 pub(all) struct RadarChartBody {
   radar_style : RadarStyle
   vary_colors : Bool?
@@ -38,6 +39,8 @@ pub impl Show for RadarStyle with fn output(self, logger) {
 }
 
 ///|
+/// Parse `RadarStyle` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn RadarStyle::from_xml(s : String) -> RadarStyle? {
   match s {
     "standard" => Some(Standard)
@@ -48,6 +51,7 @@ pub fn RadarStyle::from_xml(s : String) -> RadarStyle? {
 }
 
 ///|
+/// Serialise `RadarStyle` back to the OOXML attribute string.
 pub fn RadarStyle::to_xml(self : RadarStyle) -> String {
   match self {
     Standard => "standard"

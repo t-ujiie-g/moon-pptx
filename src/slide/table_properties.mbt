@@ -181,6 +181,7 @@ pub fn TableCellProperties::with_border_all(
 }
 
 ///|
+/// Override the left-edge border (`<a:lnL>`).
 pub fn TableCellProperties::with_border_left(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
@@ -189,6 +190,7 @@ pub fn TableCellProperties::with_border_left(
 }
 
 ///|
+/// Override the right-edge border (`<a:lnR>`).
 pub fn TableCellProperties::with_border_right(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
@@ -197,6 +199,7 @@ pub fn TableCellProperties::with_border_right(
 }
 
 ///|
+/// Override the top-edge border (`<a:lnT>`).
 pub fn TableCellProperties::with_border_top(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
@@ -205,6 +208,7 @@ pub fn TableCellProperties::with_border_top(
 }
 
 ///|
+/// Override the bottom-edge border (`<a:lnB>`).
 pub fn TableCellProperties::with_border_bottom(
   self : TableCellProperties,
   stroke : @oxml.Stroke,

@@ -11,6 +11,7 @@ pub(all) suberror SlideError {
 } derive(Eq, Debug)
 
 ///|
+/// Lift an XML reader/writer error into a `SlideError::XmlFailure`.
 pub fn wrap_xml(e : @xml.XmlError) -> SlideError {
   match e {
     Malformed(msg) => XmlFailure("Malformed", msg)

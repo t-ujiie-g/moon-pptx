@@ -13,6 +13,8 @@
 //   <c:extLst>         (optional)
 
 ///|
+/// Body of `<c:bubbleChart>` (CT_BubbleChart). Bubble charts
+/// pair XY coordinates with a bubble-size dimension.
 pub(all) struct BubbleChartBody {
   vary_colors : Bool?
   series : Array[BubbleSeriesCore]
@@ -53,6 +55,8 @@ pub impl Show for SizeRepresents with fn output(self, logger) {
 }
 
 ///|
+/// Parse `SizeRepresents` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn SizeRepresents::from_xml(s : String) -> SizeRepresents? {
   match s {
     "area" => Some(Area)
@@ -62,6 +66,7 @@ pub fn SizeRepresents::from_xml(s : String) -> SizeRepresents? {
 }
 
 ///|
+/// Serialise `SizeRepresents` back to the OOXML attribute string.
 pub fn SizeRepresents::to_xml(self : SizeRepresents) -> String {
   match self {
     Area => "area"

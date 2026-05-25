@@ -96,6 +96,8 @@ pub impl Show for LayoutTarget with fn output(self, logger) {
 }
 
 ///|
+/// Parse `LayoutTarget` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn LayoutTarget::from_xml(s : String) -> LayoutTarget? {
   match s {
     "inner" => Some(LayoutInner)
@@ -105,6 +107,7 @@ pub fn LayoutTarget::from_xml(s : String) -> LayoutTarget? {
 }
 
 ///|
+/// Serialise `LayoutTarget` back to the OOXML attribute string.
 pub fn LayoutTarget::to_xml(self : LayoutTarget) -> String {
   match self {
     LayoutInner => "inner"
@@ -132,6 +135,8 @@ pub impl Show for LayoutMode with fn output(self, logger) {
 }
 
 ///|
+/// Parse `LayoutMode` from its OOXML attribute string. Unknown
+/// values return `None`.
 pub fn LayoutMode::from_xml(s : String) -> LayoutMode? {
   match s {
     "edge" => Some(LayoutEdge)
@@ -141,6 +146,7 @@ pub fn LayoutMode::from_xml(s : String) -> LayoutMode? {
 }
 
 ///|
+/// Serialise `LayoutMode` back to the OOXML attribute string.
 pub fn LayoutMode::to_xml(self : LayoutMode) -> String {
   match self {
     LayoutEdge => "edge"
