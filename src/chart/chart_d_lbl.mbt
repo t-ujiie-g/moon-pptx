@@ -92,21 +92,20 @@ pub fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "idx" => idx = d_lbls_val_int(c)
-            "delete" => delete = d_lbls_val_bool(c)
+            "idx" => idx = val_int(c)
+            "delete" => delete = val_bool(c)
             "layout" => layout = Some(c)
             "tx" => tx = Some(c)
             "numFmt" => num_fmt = Some(parse_num_fmt(c))
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
-            "dLblPos" =>
-              d_lbl_pos = d_lbls_val_string(c).bind(DLblPos::from_xml)
-            "showLegendKey" => show_legend_key = d_lbls_val_bool(c)
-            "showVal" => show_val = d_lbls_val_bool(c)
-            "showCatName" => show_cat_name = d_lbls_val_bool(c)
-            "showSerName" => show_ser_name = d_lbls_val_bool(c)
-            "showPercent" => show_percent = d_lbls_val_bool(c)
-            "showBubbleSize" => show_bubble_size = d_lbls_val_bool(c)
+            "dLblPos" => d_lbl_pos = val_string(c).bind(DLblPos::from_xml)
+            "showLegendKey" => show_legend_key = val_bool(c)
+            "showVal" => show_val = val_bool(c)
+            "showCatName" => show_cat_name = val_bool(c)
+            "showSerName" => show_ser_name = val_bool(c)
+            "showPercent" => show_percent = val_bool(c)
+            "showBubbleSize" => show_bubble_size = val_bool(c)
             "separator" => separator = Some(extract_text_content(c))
             _ => extension.push(c)
           }
@@ -138,16 +137,6 @@ pub fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
   }
 }
 
-///|
-fn d_lbls_val_int(el : @xml.XmlElement) -> Int? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return @oxml.parse_signed_int(kv.1)
-    }
-  }
-  None
-}
-
 // --- writing -----------------------------------------------------------------
 
 ///|
@@ -169,7 +158,7 @@ pub fn write_d_lbl(
   w.attribute(@xml.QName::unqualified("val"), d.idx.to_string())
   w.end_element()
   match d.delete {
-    Some(b) => emit_d_lbls_val_bool(w, "delete", b)
+    Some(b) => emit_val_bool(w, "delete", b)
     None => ()
   }
   match d.layout {
@@ -181,7 +170,7 @@ pub fn write_d_lbl(
     None => ()
   }
   match d.num_fmt {
-    Some(nf) => write_num_fmt_for_d_lbls(w, nf)
+    Some(nf) => write_num_fmt(w, nf)
     None => ()
   }
   match d.sp_pr {
@@ -193,31 +182,31 @@ pub fn write_d_lbl(
     None => ()
   }
   match d.d_lbl_pos {
-    Some(p) => emit_d_lbls_val_string(w, "dLblPos", p.to_xml())
+    Some(p) => emit_val_string(w, "dLblPos", p.to_xml())
     None => ()
   }
   match d.show_legend_key {
-    Some(b) => emit_d_lbls_val_bool(w, "showLegendKey", b)
+    Some(b) => emit_val_bool(w, "showLegendKey", b)
     None => ()
   }
   match d.show_val {
-    Some(b) => emit_d_lbls_val_bool(w, "showVal", b)
+    Some(b) => emit_val_bool(w, "showVal", b)
     None => ()
   }
   match d.show_cat_name {
-    Some(b) => emit_d_lbls_val_bool(w, "showCatName", b)
+    Some(b) => emit_val_bool(w, "showCatName", b)
     None => ()
   }
   match d.show_ser_name {
-    Some(b) => emit_d_lbls_val_bool(w, "showSerName", b)
+    Some(b) => emit_val_bool(w, "showSerName", b)
     None => ()
   }
   match d.show_percent {
-    Some(b) => emit_d_lbls_val_bool(w, "showPercent", b)
+    Some(b) => emit_val_bool(w, "showPercent", b)
     None => ()
   }
   match d.show_bubble_size {
-    Some(b) => emit_d_lbls_val_bool(w, "showBubbleSize", b)
+    Some(b) => emit_val_bool(w, "showBubbleSize", b)
     None => ()
   }
   match d.separator {

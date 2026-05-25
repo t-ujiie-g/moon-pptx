@@ -152,11 +152,10 @@ pub fn parse_chart_legend(el : @xml.XmlElement) -> ChartLegend raise ChartError 
           extension.push(c)
         } else {
           match c.name.local_name {
-            "legendPos" =>
-              legend_pos = legend_val_string(c).bind(LegendPos::from_xml)
+            "legendPos" => legend_pos = val_string(c).bind(LegendPos::from_xml)
             "legendEntry" => legend_entries.push(parse_legend_entry(c))
             "layout" => layout = Some(c)
-            "overlay" => overlay = legend_val_bool(c)
+            "overlay" => overlay = val_bool(c)
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
             _ => extension.push(c)
@@ -181,8 +180,8 @@ fn parse_legend_entry(el : @xml.XmlElement) -> LegendEntry raise ChartError {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "idx" => idx = legend_val_int(c)
-            "delete" => delete = legend_val_bool(c)
+            "idx" => idx = val_int(c)
+            "delete" => delete = val_bool(c)
             "txPr" => tx_pr = Some(c)
             _ => extension.push(c)
           }
@@ -195,40 +194,6 @@ fn parse_legend_entry(el : @xml.XmlElement) -> LegendEntry raise ChartError {
     None => raise Malformed("<c:legendEntry> is missing required <c:idx>")
   }
   { idx: id, delete, tx_pr, extension }
-}
-
-///|
-fn legend_val_int(el : @xml.XmlElement) -> Int? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return @oxml.parse_signed_int(kv.1)
-    }
-  }
-  None
-}
-
-///|
-fn legend_val_bool(el : @xml.XmlElement) -> Bool? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return match kv.1 {
-        "1" | "true" => Some(true)
-        "0" | "false" => Some(false)
-        _ => None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn legend_val_string(el : @xml.XmlElement) -> String? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return Some(kv.1)
-    }
-  }
-  None
 }
 
 // --- writing -----------------------------------------------------------------
@@ -244,11 +209,7 @@ pub fn write_chart_legend(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "legend"))
   match lg.legend_pos {
-    Some(p) => {
-      w.start_element(@xml.QName::new(@oxml.chart_ns, "legendPos"))
-      w.attribute(@xml.QName::unqualified("val"), p.to_xml())
-      w.end_element()
-    }
+    Some(p) => emit_val_string(w, "legendPos", p.to_xml())
     None => ()
   }
   for entry in lg.legend_entries {
@@ -259,11 +220,7 @@ pub fn write_chart_legend(
     None => ()
   }
   match lg.overlay {
-    Some(b) => {
-      w.start_element(@xml.QName::new(@oxml.chart_ns, "overlay"))
-      w.attribute(@xml.QName::unqualified("val"), if b { "1" } else { "0" })
-      w.end_element()
-    }
+    Some(b) => emit_val_bool(w, "overlay", b)
     None => ()
   }
   match lg.sp_pr {
@@ -287,15 +244,9 @@ fn write_legend_entry(
   entry : LegendEntry,
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "legendEntry"))
-  w.start_element(@xml.QName::new(@oxml.chart_ns, "idx"))
-  w.attribute(@xml.QName::unqualified("val"), entry.idx.to_string())
-  w.end_element()
+  emit_val_int(w, "idx", entry.idx)
   match entry.delete {
-    Some(b) => {
-      w.start_element(@xml.QName::new(@oxml.chart_ns, "delete"))
-      w.attribute(@xml.QName::unqualified("val"), if b { "1" } else { "0" })
-      w.end_element()
-    }
+    Some(b) => emit_val_bool(w, "delete", b)
     None => ()
   }
   match entry.tx_pr {

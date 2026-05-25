@@ -73,7 +73,7 @@ pub fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
           match c.name.local_name {
             "tx" => tx = Some(c)
             "layout" => layout = Some(c)
-            "overlay" => overlay = title_val_bool(c)
+            "overlay" => overlay = val_bool(c)
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
             _ => extension.push(c)
@@ -83,20 +83,6 @@ pub fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
     }
   }
   { tx, layout, overlay, sp_pr, tx_pr, extension }
-}
-
-///|
-fn title_val_bool(el : @xml.XmlElement) -> Bool? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return match kv.1 {
-        "1" | "true" => Some(true)
-        "0" | "false" => Some(false)
-        _ => None
-      }
-    }
-  }
-  None
 }
 
 // --- writing -----------------------------------------------------------------
@@ -119,11 +105,7 @@ pub fn write_chart_title(
     None => ()
   }
   match t.overlay {
-    Some(b) => {
-      w.start_element(@xml.QName::new(@oxml.chart_ns, "overlay"))
-      w.attribute(@xml.QName::unqualified("val"), if b { "1" } else { "0" })
-      w.end_element()
-    }
+    Some(b) => emit_val_bool(w, "overlay", b)
     None => ()
   }
   match t.sp_pr {

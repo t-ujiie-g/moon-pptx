@@ -181,41 +181,6 @@ fn write_plot(
   }
 }
 
-// --- val-attribute helpers ---
-
-///|
-fn emit_val_bool(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : Bool,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), if v { "1" } else { "0" })
-  w.end_element()
-}
-
-///|
-fn emit_val_int(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : Int,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), v.to_string())
-  w.end_element()
-}
-
-///|
-fn emit_val_string(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : String,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), v)
-  w.end_element()
-}
-
 ///|
 /// Build a write context that knows the chart prefix on top of the
 /// well-known OOXML prefixes.

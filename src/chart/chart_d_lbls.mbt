@@ -167,14 +167,13 @@ pub fn parse_d_lbls(el : @xml.XmlElement) -> DLbls raise ChartError {
             "numFmt" => num_fmt = Some(parse_num_fmt(c))
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
-            "dLblPos" =>
-              d_lbl_pos = d_lbls_val_string(c).bind(DLblPos::from_xml)
-            "showLegendKey" => show_legend_key = d_lbls_val_bool(c)
-            "showVal" => show_val = d_lbls_val_bool(c)
-            "showCatName" => show_cat_name = d_lbls_val_bool(c)
-            "showSerName" => show_ser_name = d_lbls_val_bool(c)
-            "showPercent" => show_percent = d_lbls_val_bool(c)
-            "showBubbleSize" => show_bubble_size = d_lbls_val_bool(c)
+            "dLblPos" => d_lbl_pos = val_string(c).bind(DLblPos::from_xml)
+            "showLegendKey" => show_legend_key = val_bool(c)
+            "showVal" => show_val = val_bool(c)
+            "showCatName" => show_cat_name = val_bool(c)
+            "showSerName" => show_ser_name = val_bool(c)
+            "showPercent" => show_percent = val_bool(c)
+            "showBubbleSize" => show_bubble_size = val_bool(c)
             "separator" => separator = Some(extract_text_content(c))
             _ => extension.push(c)
           }
@@ -214,30 +213,6 @@ fn extract_text_content(el : @xml.XmlElement) -> String {
   out
 }
 
-///|
-fn d_lbls_val_bool(el : @xml.XmlElement) -> Bool? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return match kv.1 {
-        "1" | "true" => Some(true)
-        "0" | "false" => Some(false)
-        _ => None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn d_lbls_val_string(el : @xml.XmlElement) -> String? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return Some(kv.1)
-    }
-  }
-  None
-}
-
 // --- writing -----------------------------------------------------------------
 
 ///|
@@ -255,7 +230,7 @@ pub fn write_d_lbls(
     write_d_lbl(w, ctx, d)
   }
   match dl.num_fmt {
-    Some(nf) => write_num_fmt_for_d_lbls(w, nf)
+    Some(nf) => write_num_fmt(w, nf)
     None => ()
   }
   match dl.sp_pr {
@@ -267,31 +242,31 @@ pub fn write_d_lbls(
     None => ()
   }
   match dl.d_lbl_pos {
-    Some(p) => emit_d_lbls_val_string(w, "dLblPos", p.to_xml())
+    Some(p) => emit_val_string(w, "dLblPos", p.to_xml())
     None => ()
   }
   match dl.show_legend_key {
-    Some(b) => emit_d_lbls_val_bool(w, "showLegendKey", b)
+    Some(b) => emit_val_bool(w, "showLegendKey", b)
     None => ()
   }
   match dl.show_val {
-    Some(b) => emit_d_lbls_val_bool(w, "showVal", b)
+    Some(b) => emit_val_bool(w, "showVal", b)
     None => ()
   }
   match dl.show_cat_name {
-    Some(b) => emit_d_lbls_val_bool(w, "showCatName", b)
+    Some(b) => emit_val_bool(w, "showCatName", b)
     None => ()
   }
   match dl.show_ser_name {
-    Some(b) => emit_d_lbls_val_bool(w, "showSerName", b)
+    Some(b) => emit_val_bool(w, "showSerName", b)
     None => ()
   }
   match dl.show_percent {
-    Some(b) => emit_d_lbls_val_bool(w, "showPercent", b)
+    Some(b) => emit_val_bool(w, "showPercent", b)
     None => ()
   }
   match dl.show_bubble_size {
-    Some(b) => emit_d_lbls_val_bool(w, "showBubbleSize", b)
+    Some(b) => emit_val_bool(w, "showBubbleSize", b)
     None => ()
   }
   match dl.separator {
@@ -305,52 +280,5 @@ pub fn write_d_lbls(
   for ext in dl.extension {
     @oxml.write_xml_element(w, ctx, ext)
   }
-  w.end_element()
-}
-
-///|
-/// `<c:numFmt formatCode="…" sourceLinked="…"/>`. Same shape as the
-/// axis-side numFmt writer but defined here too because file-private
-/// helpers don't cross file boundaries in MoonBit.
-fn write_num_fmt_for_d_lbls(
-  w : @xml.XmlWriter,
-  nf : NumFmt,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, "numFmt"))
-  w.attribute(@xml.QName::unqualified("formatCode"), nf.format_code)
-  match nf.source_linked {
-    Some(b) =>
-      w.attribute(
-        @xml.QName::unqualified("sourceLinked"),
-        if b {
-          "1"
-        } else {
-          "0"
-        },
-      )
-    None => ()
-  }
-  w.end_element()
-}
-
-///|
-fn emit_d_lbls_val_bool(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : Bool,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), if v { "1" } else { "0" })
-  w.end_element()
-}
-
-///|
-fn emit_d_lbls_val_string(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : String,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), v)
   w.end_element()
 }

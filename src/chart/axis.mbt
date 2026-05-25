@@ -384,25 +384,25 @@ pub fn parse_axis_core(el : @xml.XmlElement) -> AxisCore raise ChartError {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "axId" => ax_id = axis_val_int(c)
+            "axId" => ax_id = val_int(c)
             "scaling" => scaling = Some(parse_scaling(c))
-            "delete" => delete = axis_val_bool(c)
-            "axPos" => ax_pos = axis_val_string(c).bind(AxPos::from_xml)
+            "delete" => delete = val_bool(c)
+            "axPos" => ax_pos = val_string(c).bind(AxPos::from_xml)
             "majorGridlines" => major_gridlines = Some(c)
             "minorGridlines" => minor_gridlines = Some(c)
             "title" => title = Some(parse_chart_title(c))
             "numFmt" => num_fmt = Some(parse_num_fmt(c))
             "majorTickMark" =>
-              major_tick_mark = axis_val_string(c).bind(TickMark::from_xml)
+              major_tick_mark = val_string(c).bind(TickMark::from_xml)
             "minorTickMark" =>
-              minor_tick_mark = axis_val_string(c).bind(TickMark::from_xml)
+              minor_tick_mark = val_string(c).bind(TickMark::from_xml)
             "tickLblPos" =>
-              tick_lbl_pos = axis_val_string(c).bind(TickLblPos::from_xml)
+              tick_lbl_pos = val_string(c).bind(TickLblPos::from_xml)
             "spPr" => sp_pr = Some(c)
             "txPr" => tx_pr = Some(c)
-            "crossAx" => cross_ax = axis_val_int(c)
-            "crosses" => crosses = axis_val_string(c).bind(Crosses::from_xml)
-            "crossesAt" => crosses_at = axis_val_string(c)
+            "crossAx" => cross_ax = val_int(c)
+            "crosses" => crosses = val_string(c).bind(Crosses::from_xml)
+            "crossesAt" => crosses_at = val_string(c)
             _ => extension.push(c)
           }
         }
@@ -451,11 +451,11 @@ fn parse_scaling(el : @xml.XmlElement) -> Scaling {
           extension.push(c)
         } else {
           match c.name.local_name {
-            "logBase" => log_base = axis_val_string(c)
+            "logBase" => log_base = val_string(c)
             "orientation" =>
-              orientation = axis_val_string(c).bind(Orientation::from_xml)
-            "max" => max = axis_val_string(c)
-            "min" => min = axis_val_string(c)
+              orientation = val_string(c).bind(Orientation::from_xml)
+            "max" => max = val_string(c)
+            "min" => min = val_string(c)
             _ => extension.push(c)
           }
         }
@@ -483,43 +483,6 @@ fn parse_num_fmt(el : @xml.XmlElement) -> NumFmt {
   { format_code, source_linked }
 }
 
-///|
-/// Read the `val="…"` attribute off a leaf element and parse as Int.
-fn axis_val_int(el : @xml.XmlElement) -> Int? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return @oxml.parse_signed_int(kv.1)
-    }
-  }
-  None
-}
-
-///|
-/// Read the `val="…"` attribute off a leaf element and parse as Bool.
-fn axis_val_bool(el : @xml.XmlElement) -> Bool? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return match kv.1 {
-        "1" | "true" => Some(true)
-        "0" | "false" => Some(false)
-        _ => None
-      }
-    }
-  }
-  None
-}
-
-///|
-/// Read the `val="…"` attribute off a leaf element as a raw String.
-fn axis_val_string(el : @xml.XmlElement) -> String? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return Some(kv.1)
-    }
-  }
-  None
-}
-
 // --- writing -----------------------------------------------------------------
 
 ///|
@@ -538,17 +501,17 @@ pub fn write_axis(
     ValAx(c) | CatAx(c) | DateAx(c) | SerAx(c) => c
   }
   w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  emit_val_int_leaf(w, "axId", core.ax_id)
+  emit_val_int(w, "axId", core.ax_id)
   match core.scaling {
     Some(s) => write_scaling(w, ctx, s)
     None => ()
   }
   match core.delete {
-    Some(b) => emit_val_bool_leaf(w, "delete", b)
+    Some(b) => emit_val_bool(w, "delete", b)
     None => ()
   }
   match core.ax_pos {
-    Some(p) => emit_val_string_leaf(w, "axPos", p.to_xml())
+    Some(p) => emit_val_string(w, "axPos", p.to_xml())
     None => ()
   }
   match core.major_gridlines {
@@ -568,15 +531,15 @@ pub fn write_axis(
     None => ()
   }
   match core.major_tick_mark {
-    Some(t) => emit_val_string_leaf(w, "majorTickMark", t.to_xml())
+    Some(t) => emit_val_string(w, "majorTickMark", t.to_xml())
     None => ()
   }
   match core.minor_tick_mark {
-    Some(t) => emit_val_string_leaf(w, "minorTickMark", t.to_xml())
+    Some(t) => emit_val_string(w, "minorTickMark", t.to_xml())
     None => ()
   }
   match core.tick_lbl_pos {
-    Some(p) => emit_val_string_leaf(w, "tickLblPos", p.to_xml())
+    Some(p) => emit_val_string(w, "tickLblPos", p.to_xml())
     None => ()
   }
   match core.sp_pr {
@@ -588,15 +551,15 @@ pub fn write_axis(
     None => ()
   }
   match core.cross_ax {
-    Some(n) => emit_val_int_leaf(w, "crossAx", n)
+    Some(n) => emit_val_int(w, "crossAx", n)
     None => ()
   }
   match core.crosses {
-    Some(c) => emit_val_string_leaf(w, "crosses", c.to_xml())
+    Some(c) => emit_val_string(w, "crosses", c.to_xml())
     None => ()
   }
   match core.crosses_at {
-    Some(s) => emit_val_string_leaf(w, "crossesAt", s)
+    Some(s) => emit_val_string(w, "crossesAt", s)
     None => ()
   }
   for ext in core.extension {
@@ -613,19 +576,19 @@ fn write_scaling(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.chart_ns, "scaling"))
   match s.log_base {
-    Some(v) => emit_val_string_leaf(w, "logBase", v)
+    Some(v) => emit_val_string(w, "logBase", v)
     None => ()
   }
   match s.orientation {
-    Some(o) => emit_val_string_leaf(w, "orientation", o.to_xml())
+    Some(o) => emit_val_string(w, "orientation", o.to_xml())
     None => ()
   }
   match s.max {
-    Some(v) => emit_val_string_leaf(w, "max", v)
+    Some(v) => emit_val_string(w, "max", v)
     None => ()
   }
   match s.min {
-    Some(v) => emit_val_string_leaf(w, "min", v)
+    Some(v) => emit_val_string(w, "min", v)
     None => ()
   }
   for ext in s.extension {
@@ -650,38 +613,5 @@ fn write_num_fmt(w : @xml.XmlWriter, nf : NumFmt) -> Unit raise @xml.XmlError {
       )
     None => ()
   }
-  w.end_element()
-}
-
-///|
-fn emit_val_int_leaf(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : Int,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), v.to_string())
-  w.end_element()
-}
-
-///|
-fn emit_val_bool_leaf(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : Bool,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), if v { "1" } else { "0" })
-  w.end_element()
-}
-
-///|
-fn emit_val_string_leaf(
-  w : @xml.XmlWriter,
-  local_name : String,
-  v : String,
-) -> Unit raise @xml.XmlError {
-  w.start_element(@xml.QName::new(@oxml.chart_ns, local_name))
-  w.attribute(@xml.QName::unqualified("val"), v)
   w.end_element()
 }

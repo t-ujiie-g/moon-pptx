@@ -142,8 +142,8 @@ pub fn parse_chart_series_core(
           extension.push(c)
         } else {
           match c.name.local_name {
-            "idx" => idx = val_int_attr(c)
-            "order" => order = val_int_attr(c)
+            "idx" => idx = val_int(c)
+            "order" => order = val_int(c)
             "tx" => tx = Some(c)
             "spPr" => sp_pr = Some(c)
             "cat" => cat = Some(c)
@@ -185,8 +185,8 @@ pub fn parse_scatter_series_core(
           extension.push(c)
         } else {
           match c.name.local_name {
-            "idx" => idx = val_int_attr(c)
-            "order" => order = val_int_attr(c)
+            "idx" => idx = val_int(c)
+            "order" => order = val_int(c)
             "tx" => tx = Some(c)
             "spPr" => sp_pr = Some(c)
             "xVal" => x_val = Some(c)
@@ -229,8 +229,8 @@ pub fn parse_bubble_series_core(
           extension.push(c)
         } else {
           match c.name.local_name {
-            "idx" => idx = val_int_attr(c)
-            "order" => order = val_int_attr(c)
+            "idx" => idx = val_int(c)
+            "order" => order = val_int(c)
             "tx" => tx = Some(c)
             "spPr" => sp_pr = Some(c)
             "xVal" => x_val = Some(c)
@@ -252,20 +252,6 @@ pub fn parse_bubble_series_core(
   // emit both leaves.
   let o = order.unwrap_or(i)
   { idx: i, order: o, tx, sp_pr, x_val, y_val, bubble_size, extension }
-}
-
-///|
-/// Read the `val="…"` attribute off a leaf element and parse it as
-/// an Int. Returns `None` if the attribute is absent or unparseable
-/// — series parsers fold this into a `Malformed` for the
-/// schema-required idx / order leaves.
-fn val_int_attr(el : @xml.XmlElement) -> Int? {
-  for kv in el.attributes {
-    if kv.0.local_name == "val" {
-      return @oxml.parse_signed_int(kv.1)
-    }
-  }
-  None
 }
 
 // --- writing -----------------------------------------------------------------
