@@ -17,10 +17,13 @@
 > all 16 standard families (`Chart::of_bar / of_line / of_pie /
 > of_area / of_radar / of_scatter / of_bubble / of_doughnut /
 > of_of_pie / of_bar_3d / of_line_3d / of_pie_3d / of_surface /
-> of_surface_3d / of_stock`). Outstanding: PowerPoint / LibreOffice
-> open-verification on the produced bytes, plus Phase 8 (SmartArt /
-> animation differentiators) and beyond. See [TODO.md](TODO.md) for
-> the phase-by-phase roadmap.
+> of_surface_3d / of_stock`). Generated decks open cleanly in
+> PowerPoint Online with no repair prompt; the bundled blank
+> template now emits every part ECMA-376 marks as required
+> (presProps / viewProps / tableStyles / docProps + the theme's
+> mandatory fmtScheme). Outstanding: Phase 8 (SmartArt / animation
+> differentiators) and beyond. See [TODO.md](TODO.md) for the
+> phase-by-phase roadmap.
 
 A pure-MoonBit library for reading, building, and writing PowerPoint
 presentations (`.pptx` / OOXML), with a type-safe builder API.
@@ -54,7 +57,7 @@ full feature comparison.
 | 2 | OPC layer over fzip | ✅ Done |
 | 3 | Read path | ✅ Done |
 | 4 | Write path | ✅ Done |
-| 5 | Builder API (create from scratch) | 🚧 5a–5f done; open-verification pending |
+| 5 | Builder API (create from scratch) | ✅ Done (PowerPoint Online verified) |
 | 6 | Tables | ✅ Done |
 | 7 | Charts (standard + chartEx, read/write/build) | ✅ Done |
 | 8 | Differentiators (SmartArt, animation, …) | 🔜 Next |
