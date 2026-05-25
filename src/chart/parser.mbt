@@ -94,7 +94,7 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
   let mut side_wall : @xml.XmlElement? = None
   let mut back_wall : @xml.XmlElement? = None
   let mut plot_area : PlotArea? = None
-  let mut legend : @xml.XmlElement? = None
+  let mut legend : ChartLegend? = None
   let mut plot_vis_only : Bool? = None
   let mut disp_blanks_as : DisplayBlanksAs? = None
   let mut show_d_lbls_over_max : Bool? = None
@@ -124,7 +124,10 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartBody raise ChartError {
             "backWall" =>
               back_wall = Some(collect_subtree_unknown(r, child, attrs))
             "plotArea" => plot_area = Some(parse_plot_area(r))
-            "legend" => legend = Some(collect_subtree_unknown(r, child, attrs))
+            "legend" =>
+              legend = Some(
+                parse_chart_legend(collect_subtree_unknown(r, child, attrs)),
+              )
             "plotVisOnly" => {
               plot_vis_only = parse_val_bool_attr(attrs)
               skip_subtree(r)

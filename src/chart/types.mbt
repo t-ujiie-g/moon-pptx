@@ -85,8 +85,8 @@ pub(all) struct ChartBody {
   /// is typed; axis bodies and currently-untyped plot kinds stay as
   /// captured `XmlElement` payloads inside their respective enums.
   plot_area : PlotArea
-  /// `<c:legend>` (CT_Legend). Optional. Captured verbatim until typed.
-  legend : @xml.XmlElement?
+  /// `<c:legend>` (CT_Legend) — typed body. Optional.
+  legend : ChartLegend?
   /// `<c:plotVisOnly val="…"/>` — show only data on visible cells.
   plot_vis_only : Bool?
   /// `<c:dispBlanksAs val="…"/>` — how to render gaps. Three-value

@@ -12,6 +12,8 @@ pub fn parse_axis_core(@xml.XmlElement) -> AxisCore raise ChartError
 
 pub fn parse_bubble_series_core(@xml.XmlElement) -> BubbleSeriesCore raise ChartError
 
+pub fn parse_chart_legend(@xml.XmlElement) -> ChartLegend raise ChartError
+
 pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartError
 
 pub fn parse_chart_title(@xml.XmlElement) -> ChartTitle
@@ -23,6 +25,8 @@ pub fn wrap_xml(@xml.XmlError) -> ChartError
 pub fn write_axis(@xml.XmlWriter, @oxml.WriteCtx, Axis) -> Unit raise @xml.XmlError
 
 pub fn write_bubble_series_core(@xml.XmlWriter, @oxml.WriteCtx, BubbleSeriesCore) -> Unit raise @xml.XmlError
+
+pub fn write_chart_legend(@xml.XmlWriter, @oxml.WriteCtx, ChartLegend) -> Unit raise @xml.XmlError
 
 pub fn write_chart_series_core(@xml.XmlWriter, @oxml.WriteCtx, ChartSeriesCore) -> Unit raise @xml.XmlError
 
@@ -235,7 +239,7 @@ pub(all) struct ChartBody {
   side_wall : @xml.XmlElement?
   back_wall : @xml.XmlElement?
   plot_area : PlotArea
-  legend : @xml.XmlElement?
+  legend : ChartLegend?
   plot_vis_only : Bool?
   disp_blanks_as : DisplayBlanksAs?
   show_d_lbls_over_max : Bool?
@@ -251,6 +255,17 @@ pub fn ChartData::new() -> Self
 pub fn ChartData::with_category(Self, String) -> Self
 pub fn ChartData::with_series(Self, String, Array[Double]) -> Self
 pub impl Show for ChartData
+
+pub(all) struct ChartLegend {
+  legend_pos : LegendPos?
+  legend_entries : Array[LegendEntry]
+  layout : @xml.XmlElement?
+  overlay : Bool?
+  sp_pr : @xml.XmlElement?
+  tx_pr : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartLegend
 
 pub(all) struct ChartSeries {
   label : String
@@ -315,6 +330,25 @@ pub(all) enum Grouping {
 pub fn Grouping::from_xml(String) -> Self?
 pub fn Grouping::to_xml(Self) -> String
 pub impl Show for Grouping
+
+pub(all) struct LegendEntry {
+  idx : Int
+  delete : Bool?
+  tx_pr : @xml.XmlElement?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub impl Show for LegendEntry
+
+pub(all) enum LegendPos {
+  LegendBottom
+  LegendTopRight
+  LegendLeft
+  LegendRight
+  LegendTop
+} derive(Eq, @debug.Debug)
+pub fn LegendPos::from_xml(String) -> Self?
+pub fn LegendPos::to_xml(Self) -> String
+pub impl Show for LegendPos
 
 pub(all) struct Line3DChartBody {
   grouping : Grouping

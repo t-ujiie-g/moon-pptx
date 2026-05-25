@@ -99,7 +99,7 @@ fn write_chart_body(
   }
   write_plot_area(w, ctx, cb.plot_area)
   match cb.legend {
-    Some(e) => @oxml.write_xml_element(w, ctx, e)
+    Some(l) => write_chart_legend(w, ctx, l)
     None => ()
   }
   match cb.plot_vis_only {
