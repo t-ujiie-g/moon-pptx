@@ -3,3 +3,9 @@ _build/
 .mooncakes/
 .moonagent/
 .claude/
+
+# Generated sample-deck output from `moon run src/cmd_sample`.
+# The build instructions in src/cmd_sample/main.mbt suggest writing
+# the deck to out/sample.pptx; keep generated artefacts out of git.
+out/
+*.pptx

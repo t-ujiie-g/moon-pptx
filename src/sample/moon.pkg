@@ -1,0 +1,12 @@
+// Shared sample-deck builder. Both the integration round-trip test
+// (`src/integration/sample_deck_test.mbt`) and the CLI binary
+// (`src/cmd_sample/main.mbt`) import `build_sample_deck()` from
+// here, so the deck definition lives in one place.
+
+import {
+  "t-ujiie-g/moon_pptx/chart",
+  "t-ujiie-g/moon_pptx/oxml",
+  "t-ujiie-g/moon_pptx/presentation",
+  "t-ujiie-g/moon_pptx/slide",
+  "t-ujiie-g/moon_pptx/units",
+}

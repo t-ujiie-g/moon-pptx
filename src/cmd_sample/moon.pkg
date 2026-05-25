@@ -1,0 +1,7 @@
+import {
+  "t-ujiie-g/moon_pptx/sample",
+}
+
+options(
+  "is-main": true,
+)
