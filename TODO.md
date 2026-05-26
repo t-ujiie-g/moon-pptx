@@ -1,11 +1,14 @@
-# moon-pptx — Development TODO / Roadmap
+# moon-pptx — Roadmap & Architecture
 
-> Pure-MoonBit library for reading, building, and writing PPTX (OOXML) presentations
-> with a type-safe builder API. Targeting publication on [mooncakes.io](https://mooncakes.io).
+> Pure-MoonBit library for reading, building, and writing PPTX (OOXML)
+> presentations with a type-safe builder API. Published on
+> [mooncakes.io](https://mooncakes.io/docs/t-ujiie-g/moon-pptx) as
+> `t-ujiie-g/moon-pptx`.
 
-This document is the **single source of truth** for development direction, phase
-breakdown, design decisions, and open questions. Update it as the project evolves.
-Living document — every PR that changes scope, design, or status should touch this file.
+This document is the **single source of truth** for development
+direction, version planning, design decisions (ADRs), open questions,
+and risks. Living document — every PR that changes scope, design, or
+status touches this file.
 
 ---
 
@@ -14,343 +17,466 @@ Living document — every PR that changes scope, design, or status should touch 
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
+| Current version | `0.1.0` (published 2026-05-26) |
 | License | Apache-2.0 |
-| MoonBit toolchain | `moon 0.1.20260427` (or newer) |
-| Primary backend | TBD (lean **Native**; verify Wasm-GC also builds for browser users) |
-| Buffer type | `FixedArray[Byte]` (matches fzip / MoonBit core convention) |
+| MoonBit toolchain | `moon 0.1.20260522` or newer |
+| Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
+| Buffer type | `FixedArray[Byte]` (matches `hustcer/fzip` + MoonBit core) |
 | Required deps | `hustcer/fzip` (DEFLATE + ZIP, pure MoonBit) |
-| Reference prior art | `python-pptx` (Python), `pptx-svg` (read+render PoC by same author) |
-| Differentiator vs `python-pptx` | Type-safe units, ADT-based fills/effects, immutable builders, plus features python-pptx lacks (SmartArt build, animation builder) |
+| Reference prior art | `python-pptx` (Python), `PptxGenJS` (JS/TS) |
+| Differentiator | All 16 standard chart families + 9 extended chartEx; lossless preservation; type-safe units; immutable + `_mut` builders; multi-backend |
+
+### What v0.1.0 delivers
+- Read + write parsers / writers for: theme, slide master, slide layout, slide, notes slide, comment-author list, comment list, all 16 standard chart families, all 9 extended chartEx families.
+- Builder API: `Presentation::new` → `add_slide_mut` / `add_picture_mut` / `add_chart_mut` / `add_chart_ex_mut` → `update_slide_mut` → `save()`.
+- Fluent text + shape styling, table builders with cell merging + borders, custom geometry AST, lossless preservation of unknown OOXML (ADR-004).
+- Generated decks open in PowerPoint Online without repair prompts; the bundled blank template emits every part ECMA-376 marks as required.
+- 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
+
+### What it does not yet do
+See **§3** (feature comparison vs python-pptx + PptxGenJS) and **§4**
+(version-driven roadmap to close every meaningful gap).
 
 ### Out of scope (initially)
 - Macros / VBA execution
-- EMF/WMF rasterization (binary preserved on read; no creation)
-- Animation playback (data round-trip only in early phases; build API later)
-- Native PDF export
+- EMF / WMF rasterization (binary preserved on read; no creation)
+- Native PDF export (separate companion library if/when needed)
+- Legacy binary `.ppt` files
 
 ---
 
-## 1. Vision & non-goals
+## 1. Vision
 
-### Vision
-A MoonBit-first PPTX library that lets you **build a complete `.pptx` from
-scratch**, **modify existing decks safely**, and **read every detail** of an
-arbitrary PPTX — all without depending on any non-MoonBit runtime.
+Make moon-pptx **the most capable PPTX library in any language**, by:
 
-### Design pillars
-1. **Pure MoonBit, mooncakes-publishable** — no FFI to host runtimes; works on Native and Wasm-GC backends from a single codebase.
-2. **Type-safe units** — `Emu` / `Pt` / `Inch` / `Cm` are distinct types; conversions are explicit.
-3. **Immutable builder API** — `Slide::new().with_shape(...).with_text(...)`; builders return new values, not mutated ones.
-4. **ADT-driven model** — `Fill`, `Stroke`, `Effect`, `Shape` are enums/sealed traits; pattern match instead of attribute soup.
-5. **Round-trip preservation** — unknown OOXML is preserved verbatim on read→write; we never silently drop data.
-6. **Beyond python-pptx where it matters** — SmartArt builder, animation builder, type-safe layout/placeholder schema.
+1. **Matching python-pptx** on every read+build feature (v0.2–v0.3).
+2. **Matching PptxGenJS** on every generation feature (v0.2–v0.3).
+3. **Exceeding both** with features only MoonBit's type system can deliver (v0.4+):
+   compile-time placeholder schema, ADT-driven exhaustive options,
+   typed builder state machines.
+4. **Closing gaps neither library covers**: SmartArt builder, animation DSL,
+   transition builder, lossless diff-write (v0.4–v0.5).
+
+### Design pillars (anchored from v0.1.0)
+1. **Pure MoonBit, mooncakes-publishable** — no FFI; single source compiles to Native / Wasm-GC / JS / Wasm.
+2. **Type-safe units** — `Emu`, `Pt`, `Inch`, `Cm`, `Angle`, `Percentage`, `RgbColor` are distinct types with explicit conversions.
+3. **Immutable builders** — `slide.with_shape(s)` returns a new value; `_mut` for in-place edits of existing decks (ADR-003).
+4. **ADT-driven model** — `Fill` / `Stroke` / `Effect` / `Shape` are enums; pattern match instead of attribute soup.
+5. **Lossless round-trip** — unknown OOXML is preserved verbatim via `extension : Array[XmlElement]` (ADR-004).
+6. **Beyond python-pptx and PptxGenJS** — extended chart families today; SmartArt + animation + compile-time placeholder schema tomorrow.
 
 ### Non-goals
-- Be a drop-in Python replacement (no Python bindings in scope).
-- Render to image/PDF (use a separate companion lib if needed).
-- Support every legacy PPT (binary `.ppt`) feature.
+- Drop-in Python or JS compatibility (no `python-pptx`-style import shims).
+- Render to image / PDF / HTML — out-of-scope for this library; a separate companion can layer on top.
+- Every legacy PPT (binary `.ppt`) feature.
 
 ---
 
-## 2. Architecture (target)
+## 2. Architecture (current as of v0.1.0)
 
 ```
 src/
-├── units/        Emu, Pt, Inch, Cm, Color, RgbColor, ThemeColor, Percentage
-├── xml/          Streaming XML reader + writer (escape, namespaces, qnames)
-├── opc/          Open Packaging Convention layer:
-│                 Package, Part, Relationship, ContentTypes
-│                 → wraps fzip; PPTX-agnostic, reusable for DOCX/XLSX later
-├── oxml/         Low-level OOXML AST (mirrors ECMA-376 element shapes)
-│                 → readers/writers per element family
-├── theme/        Theme, ColorScheme, FontScheme, FormatScheme
-├── parts/        SlideMaster, SlideLayout, Slide, NotesSlide, Comments, Theme, ...
-├── shapes/       AutoShape, TextBox, Picture, Table, Chart, Group, Connector
-├── text/         Paragraph, Run, Font, ListStyle, Hyperlink
-├── fill/         Fill ADT (Solid, Gradient, Pattern, Picture, None)
-├── stroke/       Stroke (LineStyle, DashStyle, Cap/Join, Arrow)
-├── effect/       Shadow, Glow, Reflection, Blur, SoftEdge
-├── geometry/     PresetGeometry (~154 presets), CustomGeometry, Path commands
-├── chart/        ChartData, Series, Axis builders (creation API)
-├── smartart/     Layout types, node tree builder
-├── animation/    Timeline, Trigger, Effect builders
-├── presentation/ High-level: Presentation, SlideCollection, façade entrypoint
-└── template/     Bytes-embedded minimal blank PPTX for `Presentation::new()`
-tests/            Per-module tests (one *_test.mbt per src module)
-test_fixtures/    Real-world PPTX samples (small) for read tests
-examples/         Cookbook-style end-to-end builders
-docs/             API design notes, OOXML reference cheatsheet
+├── units/           Emu, Pt, Inch, Cm, Angle, Percentage, RgbColor, HslColor, ThemeColor, ColorTransform
+├── xml/             Streaming namespace-aware XML reader + writer + ad-hoc DOM (XmlElement)
+├── opc/             Open Packaging Convention layer over fzip — Package, Part, Relationship, ContentTypes
+├── oxml/            Shared OOXML AST + helpers — Color, Fill, Stroke, EffectList, content-types, namespaces
+├── theme/           Theme, ColorScheme, FontScheme, FontCollection
+├── slide_master/    SlideMaster, SlideLayout, inheritance resolver (theme ← master ← layout)
+├── slide/           Slide, AutoShape, Picture, Connector, GroupShape, Table, GraphicFrame, TextBody, CustomGeometry
+├── notes/           NotesSlide
+├── comments/        CommentAuthorList, CommentList
+├── chart/           Standard 16 chart families + axis / title / legend / dLbls / dLbl / layout / trendline / series
+├── chart_ex/        Extended chartEx families — waterfall, treemap, sunburst, funnel, boxWhisker, paretoLine, regionMap, clusteredColumn, histogram
+├── presentation/    High-level Presentation façade — open / save / new + slide / picture / chart insertion + immutable variants
+└── integration/     Test-only — synthetic-deck fixtures + parse / re-serialise round-trip floor + cookbook compile-checks
 ```
+
+`examples/` contains two complementary user-facing entry points:
+- `examples/README.md` — cookbook of focused recipes (one feature per
+  section), verified by `src/integration/examples_test.mbt`.
+- `examples/sample-deck/` — standalone MoonBit module with its own
+  `moon.mod.json`, depending on `t-ujiie-g/moon-pptx` via a path dep
+  (`{ "path": "../.." }`) for in-repo development. After publication
+  of a new library version, downstream consumers can switch to a
+  `"version": "0.x"` dep without changing the example source.
 
 ### Naming conventions
 - Public types: `PascalCase`. Modules and functions: `snake_case`.
-- Builders return `Self` (or new value of `Self` for immutable style).
+- Builders return `Self` (or a new value of `Self` for immutable style).
 - Conversions: `from_*` / `to_*`. Fallible parse: `parse_*` returning `?` or raising.
 - Errors: subdomain-specific `*Error` suberrors; never raw `String` errors.
+- Buffer type: always `FixedArray[Byte]`.
 
 ### Multi-backend strategy
-- **Default target**: Native (CLI / library users).
-- **Verify**: Wasm-GC builds without changes (no FFI, only fzip + core).
-- Avoid: Wasm-1 (legacy), JS backend unless explicitly requested.
-- CI matrix should run on at least Native + Wasm-GC.
+- **Default**: Native (CLI / library users).
+- **CI matrix**: Native + Wasm-GC + JS + Wasm — every commit.
+- No FFI. File I/O lives at `bytes`-level public APIs; convenience helpers (e.g. `Presentation::open_path`) live behind backend gates.
 
 ---
 
-## 3. Phase roadmap
+## 3. Feature comparison vs python-pptx + PptxGenJS
 
-Phases are sequential. Each phase has a **definition of done (DoD)** that must
-be met before moving on. Mark items `[x]` as completed and link the merge commit.
+This matrix is the basis for the roadmap in **§4**. Legend:
+✅ supported · ⏳ planned (cite version) · △ partial / extension-only · ❌ not supported.
 
-### Phase 0 — Bootstrap *(complete)*
+### 3.1 Core I/O and modelling
 
-DoD: empty project builds, fzip is a verified dependency, baseline test passes,
-TODO.md is the living roadmap.
+| Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
+|---|---|---|---|---|
+| Read existing `.pptx` | ✅ | ❌ generator only | ✅ lossless | — |
+| Write `.pptx` | ✅ | ✅ | ✅ | — |
+| Lossless preservation of unknown XML | △ partial | — | ✅ ADR-004 | — |
+| Round-trip property tests | ❌ | ❌ | ✅ at every layer | — |
+| Multi-backend (Native + Browser + Node) | ❌ Python only | △ JS only | ✅ 4 backends | — |
+| Type-safe units (Emu / Pt / Inch / Cm) | ❌ raw int | ❌ raw number | ✅ newtypes | — |
+| Immutable builders | ❌ | ❌ | ✅ + opt-in `_mut` | — |
+| ADT pattern-match on shapes / fills / strokes | ❌ | △ TS unions | ✅ enums | — |
+| Structural equality (`derive(Eq)`) | ❌ | ❌ | ✅ all model nodes | — |
 
-- [x] `moon new` scaffold (`t-ujiie-g/moon-pptx`)
-- [x] `moon.mod.json` populated (description, keywords, repo, license)
-- [x] `hustcer/fzip` v0.6.1 added as dep
-- [x] `moon check` / `moon build` / `moon test` clean
-- [x] fzip round-trip smoke test (`fzip_smoke_test.mbt`)
-- [x] TODO.md drafted (this file)
-- [x] README.md skeleton with vision + status badge (`README.mbt.md`)
-- [x] CI workflow (`.github/workflows/ci.yml`): check / fmt / info-drift on Ubuntu+macOS, plus test matrix across `native` / `wasm-gc` / `js`
-- [x] Backend matrix decision recorded (see ADR-002: Accepted — Native primary, Wasm-GC and JS verified in CI; LLVM and legacy Wasm excluded)
-- [x] CLAUDE.md (Claude Code overlay) and AGENTS.md (tool-agnostic) authored; both reference TODO.md as the source of truth
-- [x] MoonBit official skills documented as required Claude Code plugin (`moonbitlang/skills` marketplace → `moonbit-skills`)
-- [x] First commit pushed to `origin/main`
+### 3.2 Slides, masters, layouts
 
----
+| Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
+|---|---|---|---|---|
+| Slide build from scratch | ✅ | ✅ | ✅ | — |
+| Slide-size selector (4:3 / 16:9 / 16:10 / …) | ✅ | ✅ | △ extension-only | ⏳ v0.2 (A5) |
+| Slide reordering | △ XML | △ | ❌ | future |
+| Slide background per slide | ✅ | ✅ color + transparency | △ extension-only | ⏳ v0.3 (A7) |
+| `defineSlideMaster` style high-level API | △ low-level | ✅ | △ pass-through model | ⏳ v0.3 (C1) |
+| Layout selection by name | ✅ | ✅ | △ by index | ⏳ v0.4 (M1) |
+| Placeholder named accessors (`slide.title`) | ✅ | △ | △ field, no accessor | ⏳ v0.3 (B1) |
+| Compile-time placeholder schema | ❌ | ❌ | ❌ | ⏳ v0.4 (M1) ⭐ |
+| Headers / footers / slide number | ✅ | ✅ chained M/L/S | △ extension-only | ⏳ v0.2 (A8) |
+| Sections | △ | △ | △ extension-only | future |
 
-### Phase 1 — Foundations: units & XML *(complete)*
+### 3.3 Shapes and text
 
-DoD: a developer can express any OOXML primitive value (units, colors, qnames)
-in MoonBit, and serialize/parse arbitrary XML round-trip without data loss.
+| Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
+|---|---|---|---|---|
+| AutoShape (preset geometry) | ✅ | ✅ | ✅ 187 `PresetShape` variants | — |
+| Custom geometry (`<a:custGeom>`) | △ XML | △ | ✅ typed AST (Phase 3h) | — |
+| Picture (PNG / JPEG / GIF / BMP / TIFF) | ✅ + WMF | ✅ + SVG + animated GIF | ✅ | — |
+| Picture: auto-detect EMU size from header | ✅ via PIL | ✅ | ❌ | ⏳ v0.2 (A1) |
+| Picture: cropping fluent builder | ✅ | ✅ | △ model has SrcRect | ⏳ v0.2 (A4) |
+| Picture: SVG (`asvg:svgBlip`) | ❌ | ✅ | ❌ | ⏳ v0.3 (C4) |
+| Connector (`<p:cxnSp>`) | ✅ | △ | ✅ | — |
+| Group shape (`<p:grpSp>`) | ✅ | △ | ✅ | — |
+| Text bodies + paragraphs + runs | ✅ | ✅ | ✅ | — |
+| Run-level: bold / italic / size / color / font | ✅ | ✅ | ✅ | — |
+| Run-level: underline / strikethrough / caps / baseline | ✅ | ✅ | ✅ | — |
+| Hyperlinks (run-level) | ✅ | ✅ | △ parser only | ⏳ v0.2 (A2) |
+| Bullets / numbered lists | ✅ | ✅ | ✅ 38-variant `AutoNumType` | — |
+| RTL / bidi text | △ | ✅ | ❌ | future |
+| Asian-script font fallback | △ | ✅ | △ `complex_script` field | future |
+| Text autofit (none / norm / shape) | ✅ | ✅ | ✅ 3-variant `AutoFit` | — |
 
-- [x] **Phase 1.1 — `units` package** *(complete)*
-  - [x] `Emu` (Int64), `Pt`, `Inch`, `Cm` as `pub(all) struct Name(Inner)` newtypes
-  - [x] Conversion table tested: 914_400 EMU = 1 inch = 72 pt = 2.54 cm
-  - [x] `Percentage` exposed as `Double` percent-value; `to_ooxml()` / `from_ooxml()` round-trip the 1/1000-percent integer
-  - [x] `Angle` exposed as `Double` degrees; `to_ooxml()` / `from_ooxml()` round-trip the 1/60_000-degree integer
-  - [x] `Show` impls for `assert_eq` diagnostics (manual — `derive(Show)` is deprecated in current MoonBit)
-  - [x] Tests pass on all four backends (`native` / `wasm-gc` / `js` / `wasm`)
-- [x] **Phase 1.2 — `units` color types** *(complete)*
-  - [x] `RgbColor` with `parse_hex` (accepts optional `#`, lowercase) and `to_hex` (uppercase, no `#`); raises `UnitsError::InvalidHexColor` for malformed input
-  - [x] `HslColor` and lossless RGB↔HSL conversion (round-trip tested within ±1 channel for representative palette); hue auto-wraps for negatives
-  - [x] `ThemeColor` enum: 17 slots (`bg1/2`, `tx1/2`, `dk1/2`, `lt1/2`, `accent1..6`, `hlink`, `folHlink`, `phClr`) — exceeds the planned 12 to cover master-level definitions and placeholder color
-  - [x] `ColorTransform` ADT (`Tint`, `Shade`, `SatMod`, `LumMod`, `Alpha`) and `SchemeColor` immutable builder (`with_transform` returns a new value)
-  - [x] `UnitsError` suberror introduced for the package
-  - [x] 33 tests pass on all four backends
+### 3.4 Tables
 
-  Deferred (not blocking Phase 1): the long-tail OOXML color transforms (`hueMod`, `redMod`, `greenMod`, `blueMod`, `comp`, `inv`, `gamma`, `gray`, etc.). Add as needed when fill/effect parsers in Phase 3 surface them.
-- [x] **Phase 1.3 — `xml` package** *(complete)*
-  - [x] `QName` type (uri + local; prefix is a serialization-only concept, not part of identity)
-  - [x] Streaming writer with namespace prefix binding, attribute and text escaping, auto-collapsing empty elements, CDATA, and typed misuse errors (`WriterMisuse`)
-  - [x] Event-based reader yielding `StartElement` / `EndElement` / `Text` / `CData`; full namespace prefix resolution including the default-namespace-doesn't-apply-to-attributes rule; entity decoding (named + numeric); comments / PIs / `<?xml … ?>` skipped; tolerates real-world OOXML
-  - [x] Round-trip test: parse → replay through writer → parse again, assert event sequences match (semantic round-trip — byte-equal isn't possible because prefixes are not preserved by event interface and there are multiple valid serialisations)
-  - [x] ADR-008 records the event-vs-DOM decision
+| Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
+|---|---|---|---|---|
+| Table build (rows × cols) | ✅ | ✅ | ✅ `Table::of_rows / of_grid` | — |
+| Cell merging (`grid_span`, `row_span`) | △ partial | ✅ | ✅ 6-helper palette | — |
+| Cell fill | ✅ | ✅ | ✅ via `TableCellProperties` | — |
+| Cell borders (per edge) | ✅ | ✅ | ✅ 6 border kinds (lnL / lnR / lnT / lnB / TlToBr / BlToTr) | — |
+| Cell margins | ✅ | ✅ | ✅ | — |
+| Cell vertical anchor | ✅ | ✅ | ✅ 5-variant `Anchor` | — |
+| Cell border fluent helpers (`with_border_left` etc.) | △ | △ | ✅ | — |
+| Table style by ID (`<a:tblPr styleId>`) | ✅ | ✅ | △ field, no preset library | future |
 
-  75 tests pass on all four backends.
+### 3.5 Charts
 
----
+| Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
+|---|---|---|---|---|
+| Bar / line / pie | ✅ | ✅ | ✅ | — |
+| Scatter / bubble | ✅ | ✅ | ✅ | — |
+| Area / radar / doughnut | ✅ | ✅ | ✅ | — |
+| Stock / surface / ofPie | △ | ❌ | ✅ | — |
+| 3-D bar / line / pie / area | ✅ | ✅ (bar3d / bubble3d) | ✅ | — |
+| Extended chartEx (waterfall / treemap / sunburst / funnel / boxWhisker / paretoLine / regionMap / clusteredColumn / histogram) | ❌ | ❌ | ✅ read+write round-trip | — |
+| Total chart families creatable | ~13 | 10 | **16 standard + 9 chartEx = 25** | — |
+| Combo chart (bar + line) | △ | ✅ | △ model supports | ⏳ v0.3 (C3) |
+| Secondary axis | △ | ✅ | △ via axId | ⏳ v0.3 (C3) |
+| Trendlines | ✅ | ❌ | ✅ typed `Trendline` (Phase 7m) | — |
+| Multi-series | ✅ | ✅ | ✅ | — |
+| Axis title / chart title | ✅ | ✅ | ✅ typed `ChartTitle` | — |
+| Legend positioning | ✅ | ✅ 5 positions | ✅ typed `ChartLegend` | — |
+| Data labels (per-point overrides) | ✅ | ✅ | ✅ typed `DLbls` + `DLbl` | — |
+| Embedded xlsx data-cache generation | ✅ | ❌ | ❌ (ADR-009: inline `<c:strLit>` instead) | ⏳ v1.0 (B3) |
+| Existing xlsx cache pass-through | ✅ | n/a | ✅ via OPC opaque part | — |
 
-### Phase 2 — OPC layer over fzip *(complete)*
+### 3.6 Multimedia, navigation, advanced
 
-DoD: read/write a PPTX (or any OPC package) at the part-and-relationship level.
-You can `Package::open(bytes)`, list parts, pick `[Content_Types].xml`, write
-back, and the result is openable in PowerPoint.
+| Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
+|---|---|---|---|---|
+| Audio embed (mp3 / wav) | ✅ | ✅ | △ extension only | ⏳ v0.3 (A6) |
+| Video embed (mp4 / mov / m4v) | ✅ `add_movie()` | ✅ | △ extension only | ⏳ v0.3 (A6) |
+| YouTube / URL video embed | ❌ | ✅ | ❌ | ⏳ v0.5 (C5) |
+| Speaker notes | ✅ read+write | ✅ `addNotes()` | ✅ read+write, ⏳ ergonomic builder | ⏳ v0.2 (A3) |
+| Comments | ✅ | ❌ | ✅ read+write | — |
+| Animations | △ XML-level | ❌ | ❌ | ⏳ v0.5 (D2) ⭐ |
+| Transitions (slide-to-slide) | △ XML-level | ❌ | △ extension-only | ⏳ v0.4 (D3) |
+| SmartArt build | ❌ identification only | ❌ | ❌ | ⏳ v0.5 (D1) ⭐ |
+| Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ❌ | ⏳ v0.2 (C2) |
+| Streaming write for huge decks | ❌ | ❌ | ❌ | ⏳ v1.0 (D5) |
+| Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ❌ | ⏳ v0.3 (D6) |
+| Document properties (creator, title, …) | ✅ | ✅ | △ fixed template | future |
+| Equation editor (`<m:oMathPara>`) | ❌ | ❌ | △ extension-only | future |
 
-- [x] **Phase 2a — `opc::Package` + `opc::Part`** *(complete)*
-  - [x] `Package::open(bytes)` / `to_bytes()` / `parts()` / `part_by_name()` / `require_part()` / `add_part()` / `remove_part()`
-  - [x] `Part { name, content_type, bytes }` + `text()` UTF-8 decoder + `Part::new` with name validation
-  - [x] `OpcError` with `ZipFailure` / `MalformedPackage` / `PartNotFound`; `wrap_fzip` boundary
-- [x] **Phase 2b — `opc::ContentTypes`** *(complete)*
-  - [x] `ContentTypes::parse` / `serialize` for `[Content_Types].xml`
-  - [x] `with_default` / `with_override` immutable builders
-  - [x] `resolve(part_name)` applies OPC rules (Override > Default; case-insensitive on extension)
-  - [x] `Package::open` requires `[Content_Types].xml` and auto-populates `Part.content_type`
-  - [x] `Package::content_types()` / `set_content_types()` / `regenerate_content_types_part()`
-- [x] **Phase 2c — `opc::Relationship` + `opc::Relationships`** *(complete)*
-  - [x] `Relationship { id, rel_type, target, target_mode }` and `TargetMode { Internal | External }`
-  - [x] `Relationships::parse` / `serialize` / `by_id` / `by_type` / `with_relationship` (rejects duplicate ids)
-  - [x] `rels_path_for(source)` computes the `.rels` location
-  - [x] `resolve_target(source, target, mode)` for relative / `..` / absolute / external resolution
-  - [x] `Package::relationships_for(source)` returns empty when the rels part is absent
-- [x] **Phase 2d — End-to-end .pptx round trip with hand-built fixture** *(complete)*
-  - [x] Test helper that constructs a minimal valid `.pptx` shape (Content Types + package rels + presentation + presentation rels + slide + image) via fzip
-  - [x] Open → mutate (add new slide + register Override + replace part bytes) → save → reopen, asserting parts, content types, and rels all survive
+### 3.7 Where moon-pptx already wins
 
-  117 tests pass on all four backends. **Phase 2 (OPC layer) closed.**
-
----
-
-### Phase 3 — Read path: parse OOXML to model *(complete)*
-
-DoD: parse a non-trivial PPTX into our typed model (`Presentation`, `Slide`,
-`Shape`, …) with **lossless preservation** of unknown XML chunks.
-
-- [x] **Phase 3a — Theme parser (`a:theme`)** *(complete)* — `src/theme/` sub-package: `Theme`, `ColorScheme` (12 slots: dk1/2 lt1/2 accent1..6 hlink folHlink), `ColorChoice` (`Srgb` + `Sys` w/ lastClr fallback), `FontScheme` w/ `FontCollection` (latin/ea/cs + per-script overrides). Strict on modelled elements, lenient via `skip_subtree` on the rest (`fmtScheme`, `objectDefaults`, …). 9 tests, all green × 4 backends.
-- [x] **Phase 3b — Slide master / layout parsers + inheritance resolver** *(complete)* — `src/slide_master/` sub-package: `SlideMaster` (clrMap + sldLayoutIdLst), `SlideLayout` (27 layout types per `ST_SlideLayoutType`, `ClrMapOverride { MasterMapping | Override(ColorMapping) }`), and `effective_color_mapping` / `resolve_slide_color` / `lookup_theme_slot` resolvers that walk the theme ← master ← layout chain. Shared `src/oxml/` namespace constants extracted in the same commit. 26 new tests, 152 total × 4 backends.
-- [x] **Phase 3c — Slide parser: shapes, group shapes, connectors, pictures, tables** *(complete)*
-  - [x] **3c1**: `src/slide/` skeleton — `Slide`, `Shape { AutoShape | Unknown(String) }`, `AutoShape` (id/name/placeholder/transform via `<a:xfrm>`), `clrMapOvr` reuse from `@slide_master`. 10 tests, 162 total × 4 backends.
-  - [x] **3c2**: `PresetShape` enum (187 `ST_ShapeType` variants) + `Geometry { Preset(PresetShape, Array[ShapeAdjustValue]) | Custom }`. Parses `<a:prstGeom prst="…">` + `<a:avLst>` adjustment formulas; `<a:custGeom>` recorded as `Custom` with path data deferred. 8 tests, 170 total × 4 backends.
-  - [x] **3c3**: `Picture` struct (id/name/transform/geometry + `embed_id` / `link_id` from `<a:blip>` + `SrcRect` crop in 1000ths-of-percent). New `Shape::Picture` variant replaces the `Unknown("pic")` placeholder. `@units.Percentage` and `@units.Angle` now derive `Eq` (needed for crop-comparison tests). 8 tests, 178 total × 4 backends.
-  - [x] **3c4**: `Connector` (`<p:cxnSp>`) with `ConnectionEnd { shape_id, idx }` for bound endpoints; `GroupShape` (`<p:grpSp>`) with recursive `children : Array[Shape]` and `<a:chOff>` / `<a:chExt>` child-coord-space fields. New `Shape::Connector` and `Shape::Group` variants; `Unknown` now only catches `graphicFrame` and `contentPart`. 8 tests, 186 total × 4 backends. **Phase 3c (slide parser) closed.**
-- [x] **Phase 3d — Text parser: paragraph, run, list style, font, hyperlink** *(complete)*
-  - [x] **3d1**: `TextBody` / `Paragraph` / `Run` / `Field` / `Break` skeleton; `plain_text()` convenience extractor; `AutoShape.text_body : Option<TextBody>`. RunProperties / ParagraphProperties currently carry only `lang` / `level` as placeholders; 3d2/3d3 fill them in. 10 tests, 196 total × 4 backends.
-  - [x] **3d2**: `RunProperties` widened — `font_size : Pt?` / `bold` / `italic` / `underline : UnderlineKind?` / `strikethrough : StrikeKind?` / `baseline : Percentage?` / `caps : CapsKind?` / `latin` / `east_asian` / `complex_script` / `fill : RunFill?` (SolidRgb/SolidTheme) / `hyperlink_click`. Bool attr accepts `1/0/true/false`. Unknown enum values collapse to `None` (graceful). `@units.Pt/Inch/Cm` now derive Eq. 16 tests, 212 total × 4 backends.
-  - [x] **3d3**: `ParagraphProperties` widened — `level` / `alignment : TextAlignment?` (7 variants) / `margin_left,indent : Emu?` / `line_spacing : Percentage?` / `space_before,space_after : Pt?` / `bullet : Bullet?`. `Bullet { BulNone | Char | AutoNum(AutoNumType, Int) | Picture }`. `AutoNumType` covers all 38 `ST_TextAutonumberScheme` values. 16 tests, 228 total × 4 backends.
-  - [x] **3d4**: `BodyProperties` (rotation:Angle / vert / wrap / anchor (5 variants) / lIns-bIns / auto_fit:`AutoFit { NoAutoFit | NormAutoFit(fontScale, lnSpcReduction) | SpAutoFit }`) + `ListStyle { default_props, level_props : Array[..,9] }`. `TextBody` carries both alongside paragraphs. 12 tests, 240 total × 4 backends. **Phase 3d (text parser) closed.**
-- [x] **Phase 3e — Fill / stroke / effect parsers** *(complete)*
-  - [x] **3e1**: Unified `@oxml.Color { base : ColorBase, transforms : Array[ColorTransform] }` covering srgb/hsl/sys/scheme/preset/scrgb plus modifier children. `@theme.ColorChoice` and `@slide.RunFill` removed in favour of `@oxml.Color`. Shared `@oxml.parse_color_element` parser used by theme slots, run fills, and (future) gradient stops / shape fills. 14 new tests, 254 total × 4 backends.
-  - [x] **3e2**: `@oxml.Fill { NoFill | SolidFill(Color) | GradientFill(Gradient) | PatternFill(Pattern) | BlipFillVariant(BlipFill) }`. `Gradient { stops, direction (Linear/PathRect/PathCircle/PathShape), rotate_with_shape?, flip? }`, `GradientStop { position, color }`, `Pattern { preset, fg, bg }`, `BlipFill { embed_id, link_id, src_rect?, fill_mode }`, `BlipFillMode { Stretch(FillRect?) | Tile(TileSpec) }`. `@slide.Picture` migrated — its `embed_id` / `link_id` / `src_rect` fields collapsed into a single `blip_fill : @oxml.BlipFill`. 14 new tests, 268 total × 4 backends.
-  - [x] **3e3**: `@oxml.Stroke` (width, cap, compound, alignment, fill, dash, join, head_end, tail_end). Enums: `LineCap` (3) / `CompoundLine` (5) / `PenAlignment` (2) / `DashStyle` (11) / `LineJoin { Round | Bevel | Miter(Percentage?) }` / `ArrowType` (6) / `ArrowSize` (3). `parse_stroke` is the entry-point; reuses `@oxml.parse_fill` for the line fill child. Wired into `AutoShape` / `Picture` / `Connector` via `stroke : Stroke?`. 17 new tests, 285 total × 4 backends.
-  - [x] **3e4**: `@oxml.EffectList` covers `<a:effectLst>` — `Blur` (rad/grow), `Glow` (rad+color), `InnerShadow` / `OuterShadow` / `PresetShadow` (blurRad+dist+dir+color, plus optional sx/sy/kx/ky/algn/rotWithShape on outerShdw), `SoftEdge` (rad), `Reflection` (full attribute soup). `RectAlignment` enum (9 values). `parse_effect_list` is the entry-point; reuses `@oxml.parse_color_element` for nested colour children. Wired into `AutoShape` / `Picture` / `Connector` via `effects : EffectList?`. `<a:effectDag>` and `<a:fillOverlay>` are recognised but skipped (not yet modelled). 18 new tests, 303 total × 4 backends. **Phase 3e (fill/stroke/effect) closed.**
-- [x] **Phase 3f — Lossless preservation (ADR-004)** *(complete)*
-  - [x] **3f1**: `@xml.XmlElement` / `@xml.XmlNode` ad-hoc DOM types + `@oxml.collect_subtree` capture helper. Mirrors the event stream (StartElement → Element node carrying children, plus Text and CData leaves). 12 new tests covering empty/single/nested/attribute/namespace/mixed/CData/post-capture-cursor cases. 317 total × 4 backends.
-  - [x] **3f2**: Wired `extension : Array[@xml.XmlElement]` into `@slide.Slide`, `AutoShape`, `Picture`, `Connector`, `GroupShape`; replaced top-level `skip_subtree` call sites with `collect_subtree`. `Shape::Unknown(String)` → `Shape::Unknown(@xml.XmlElement)` so `<p:graphicFrame>` / `<p:contentPart>` round-trip the full subtree instead of just the local name. Captures cover unknown `<p:sld>` children (transition / timing / custDataLst / extLst), `<p:cSld>` children (bg, …), `<p:spTree>` root-group metadata (nvGrpSpPr / grpSpPr), foreign-namespace siblings, and per-shape `<p:style>` / `<p:extLst>`. 8 new tests, 325 total × 4 backends.
-  - [x] **3f3**: Rolled out `extension` across the remaining model surface in four mechanical passes (a/b/c/d). a = `@theme` (Theme / ColorScheme / FontScheme / FontCollection); b = `@slide_master` (SlideMaster / SlideLayout — layout's `<p:cSld>` body is captured wholesale until the layout shape-tree parser exists); c = `@slide` text-side (TextBody / Paragraph / Run / Field / BodyProperties / ParagraphProperties / RunProperties / ListStyle), with `parse_break` now reading the rPr instead of dropping it; d = `@oxml` ADTs (Color tail modifiers like hueMod/redMod/comp/inv, plus Gradient / Pattern / BlipFill / Stroke / EffectList wholesale). 21 new tests, 346 total × 4 backends.
-  - [x] **3f3e**: Threaded the surrounding shape's `extension` array through every helper inside `@slide.parser.mbt` that previously dropped unknowns — `parse_sp_pr`, `parse_grp_sp_pr`, `parse_nv_sp_pr`, `parse_nv_pr`, `parse_nv_cxn_sp_pr`, `parse_cxn_sp_locks`, `parse_xfrm`, `parse_group_xfrm`, `parse_prst_geom`, `parse_av_lst`, `parse_clr_map_ovr`. `<a:scene3d>` / `<a:sp3d>` / `<a:extLst>` / `<p:custDataLst>` / `<p:audioFile>` / `<a:spLocks>` / `<a:hlinkClick>` (inside `<p:cNvPr>`) and every foreign-namespace child of these helpers now lands on the parent shape's (or slide's) `extension`. `Geometry::Custom` widened from `Custom` to `Custom(@xml.XmlElement)` so the `<a:custGeom>` body (`<a:pathLst>`, `<a:gdLst>`, `<a:cxnLst>`, `<a:rect>`) round-trips verbatim until a typed custGeom parser arrives. Remaining `skip_subtree` call sites in the slide parser are all on spec-defined empty leaves (`<a:off>`, `<a:ext>`, `<a:chOff>`, `<a:chExt>`, `<a:gd>`, `<p:ph>`, `<a:stCxn>`, `<a:endCxn>`, `<a:masterClrMapping>`, `<a:overrideClrMapping>`). 8 new tests, 354 total × 4 backends. **Phase 3f closed.**
-- [x] **Phase 3g — Speaker notes + Comments** *(complete)*
-  - [x] **3g1**: `src/notes/` sub-package. `NotesSlide { name, shapes : Array[@slide.Shape], clr_map_override, extension }` mirrors `Slide`; `NotesSlide::parse(bytes)` delegates to `@slide.Slide::parse_with_root(bytes, "notes")` so shape-tree behaviour (placeholders, lossless-extension, etc.) stays in lockstep with regular slides. New `NotesError { XmlFailure | Malformed | SlideFailure }`. 8 new tests, 362 total × 4 backends.
-  - [x] **3g2**: `src/comments/` — `CommentAuthorList::parse` reads `commentAuthors.xml`. `CommentAuthor { id, name, initials, last_idx, clr_idx, extension }` covers `CT_CommentAuthor`; top-level `<p:cmAuthorLst>` siblings and per-author `<p:extLst>` land on the respective `extension`. New `CommentsError { XmlFailure | Malformed }` with `wrap_xml` boundary.
-  - [x] **3g3**: `src/comments/` — `CommentList::parse` reads `commentsN.xml`. `Comment { author_id, dt : String?, idx, pos : CommentPos { x : Emu, y : Emu }, text, extension }` covers `CT_Comment`; missing `<p:pos>` raises `Malformed`; nested elements inside `<p:text>` raise (spec violates). Entity references decode through the shared XML reader. 15 new tests covering 3g2+3g3 together, 377 total × 4 backends. **Phase 3g closed.**
-- [x] **Phase 3h — Custom geometry typed AST** *(complete)* — `<a:custGeom>` lifts from the wholesale `XmlElement` capture into a typed `CustomGeometry { adjust_values, guides, connection_sites, rect, paths, extension }`. New types: `AdjCoordinate { Literal(Emu) | GuideRef(String) }`, `AdjAngle { Literal(Angle) | GuideRef(String) }`, `PathPoint { x, y }`, `PathCommand { MoveTo | LnTo | CubicBezTo | QuadBezTo | ArcTo | Close }`, `PathFillMode` (6 variants), `Path { w, h, fill, stroke, extrusion_ok, commands, extension }`, `GeomRect { l, t, r, b }`, `ConnectionSite { ang, pos, extension }`. `Geometry::Custom(@xml.XmlElement)` → `Geometry::Custom(CustomGeometry)`. Coordinate / angle attributes auto-disambiguate via integer parsing — non-numeric tokens become `GuideRef`. `<a:ahLst>` (adjust handles, rare and deeply nested) round-trip via `CustomGeometry.extension` per ADR-004 instead of being modelled today. 22 new tests, 399 total × 4 backends.
-- [x] **Phase 3i — End-to-end deck round-trip test** *(complete)* — `src/integration/` test-only package builds three synthetic-but-realistic decks (`minimal_deck` / `rich_deck` / `notes_and_comments_deck`) that exercise every read-path parser. `build_pptx(main_part, parts)` helper auto-generates `[Content_Types].xml` and `_rels/.rels` so each fixture only lists its actual parts. `parse_everything(pkg)` dispatches each part to its parser by content type and returns the count tuple `(themes, masters, layouts, slides, notes, author_lists, comment_lists)`. Tests cover: no-panic floor across all three decks, shape kinds in the rich slide (AutoShape × 2 + Picture + Connector + Group + custGeom typed AST), notes paragraph text, comment-author cross-reference, and `Package.to_bytes` → reopen → re-parse equality on Slide / Theme / NotesSlide / CommentList values. Real-world `.pptx` fixtures remain out of scope per TODO Q4 (license). 14 new tests, 413 total × 4 backends. **Phase 3 closed.**
-- [x] **Unknown-element preservation strategy** decided and implemented
-      (every model node carries `extension : Array[XmlElement]` per ADR-004; see Phase 3f1–3f3e above; the only remaining lossy skips are spec-defined empty leaves where there's nothing to preserve).
-- Chart XML parser: deferred to **Phase 7a** (`read all 13 chart types into ChartData`). Charts are large enough to deserve their own phase; the read path was always going to span Phase 3 and Phase 7a, and Phase 7a is where the work lands.
+1. **Chart families** — 25 buildable types vs python-pptx ~13 and PptxGenJS 10. waterfall / treemap / sunburst / funnel / boxWhisker / paretoLine / regionMap are not creatable in either competitor.
+2. **Lossless preservation** — every model node carries `extension : Array[XmlElement]`; third-party PPTX files round-trip with zero data loss. Neither competitor does this comprehensively.
+3. **Type-safe units** — confusing Emu with Pt fails to compile. Other libraries' integer/float dimensions invite silent unit-mix bugs.
+4. **ADT-driven exhaustive matching** — adding a new shape / fill / stroke kind that the writer hasn't handled is a compiler warning, not a silent dropped element.
+5. **Multi-backend** — single source compiles to Native (CLI / server), Wasm-GC (browser), JS (Node), Wasm. Neither python-pptx nor PptxGenJS spans this range.
+6. **Immutable + `_mut` duality** — pure-functional transforms (`prs → prs'`) when you want them; in-place edits when you don't (ADR-003).
+7. **`derive(Eq, Show)`** — structural equality + debug printing free for every model type; round-trip property tests are `assert_eq` one-liners.
 
 ---
 
-### Phase 4 — Write path: serialize model to OOXML *(in progress)*
+## 4. Roadmap
 
-DoD: any model produced by Phase 3 reads can be re-serialized and reopened by
-PowerPoint with no warnings or visual diffs.
+Version-driven from v0.1.0 onward. Each version has a **definition of
+done (DoD)**. Status legend: 🔴 not started · 🟡 in progress · 🟢 done.
 
-Per-element writers mirror the Phase 3 parsers and are sliced by package so
-each slice can ship in isolation. The Phase 4 floor for every slice is the
-round-trip property `parse → serialize → parse → Eq`; this catches any
-silent data loss without requiring a stable canonical XML serialisation.
+### 4.1 v0.2.0 — "Daily usability" · target 2026-08-31
 
-- [x] **Phase 4a — `@comments` writers** *(complete)* — `CommentAuthorList::serialize` and `CommentList::serialize` mirror their parsers. Shared `@oxml.WriteCtx` + `@oxml.write_xml_element` helper round-trips captured `extension` subtrees (including foreign-namespace siblings via on-the-fly `extN` prefixes). `@oxml.string_to_bytes` converts the writer output to part bytes. 11 new tests, 424 total × 4 backends.
-- [x] **Phase 4b — `@theme` writer** *(complete)* — `Theme::serialize` mirrors the parser: `<a:theme>` → `<a:themeElements>` → `<a:clrScheme>` (all 12 slots in canonical order) + `<a:fontScheme>` (majorFont / minorFont with latin / ea / cs leaves + script overrides). Theme-level extensions (`fmtScheme` / `objectDefaults` / `extraClrSchemeLst` and foreign-namespace siblings) round-trip via `extension`. 6 new tests, 441 total × 4 backends.
-- [x] **Phase 4c — `@oxml` shared writers** *(complete)*
-  - [x] Color writer (`@oxml.write_color`) — six base kinds + five modeled transforms; long-tail modifiers ride on `Color.extension`. 11 tests.
-  - [x] Fill writer (`@oxml.write_fill`) — all five variants (`NoFill` / `SolidFill` / `GradientFill` / `PatternFill` / `BlipFillVariant`). Gradient stops + Linear / PathRect / PathCircle / PathShape directions. BlipFill re-emits the captured `<a:blip>` subtree verbatim (so `<a:duotone>` / `<a:clrChange>` etc. round-trip even though they're not modeled). 9 tests.
-  - [x] Stroke writer (`@oxml.write_stroke`) — every modeled attribute / child + `<a:round>` / `<a:bevel>` / `<a:miter>` joins + `<a:headEnd>` / `<a:tailEnd>` arrows. Reuses `write_fill` for line fills. 8 tests.
-  - [x] EffectList writer (`@oxml.write_effect_list`) — blur / glow / innerShdw / outerShdw / prstShdw / reflection / softEdge plus `<a:fillOverlay>` preservation via `extension`. 9 tests.
-- [x] **Phase 4d — `@slide_master` writers** *(complete)* — `SlideMaster::serialize` and `SlideLayout::serialize` mirror their parsers; the captured `<p:cSld>` body (extension) is re-emitted before the modeled `<p:clrMap>` / `<p:clrMapOvr>` to preserve the schema-required element order. `SlideLayoutType::to_xml` added as the inverse of `from_xml`. Layout's `cSld` name attribute is re-injected on write since the parser pulled it onto the typed field. 10 new tests, 451 total × 4 backends.
-- [x] **Phase 4e — `@slide` + `@slide.CustomGeometry` writers** *(complete)* — `Slide::serialize` + `Slide::serialize_with_root` orchestrate the cSld / spTree / clrMapOvr structure. Captured extension elements classify by local-name into spTree-level (root-group metadata), cSld-level (bg / controls), and sld-level (transition / timing / custDataLst / extLst). Per-shape writer covers AutoShape + Picture + Connector + GroupShape + Unknown, re-using captured `<p:cNvPr>` / `<p:cNv*Pr>` / `<p:nvPr>` wrapper elements wholesale (the parser captures them verbatim, so synthesising would duplicate). Text writer covers TextBody / BodyProperties / ListStyle / Paragraph / Run / Field / Break with all modeled run/paragraph properties, plus bullet variants and the three AutoFit kinds. Custom geometry writer mirrors `parse_custom_geometry` — avLst / gdLst / cxnLst / rect / pathLst with the six PathCommand variants, AdjCoordinate / AdjAngle round-tripping literals or guide refs. 10 new tests, 488 total × 4 backends.
-- [x] **Phase 4f — `@notes` writer** *(complete)* — `NotesSlide::serialize` delegates to `@slide.Slide::serialize_with_root("notes")` so the shape-tree replay logic stays in lockstep with the regular slide writer. 3 new tests, 491 total × 4 backends.
-- [x] **Phase 4g — round-trip golden test** in `@integration` *(complete)* — `re_serialize_all(pkg)` walks every OOXML part by content type, runs `::parse(p.bytes).serialize()`, and replaces the part bytes via `remove_part` + `add_part`. `Package.to_bytes()` → reopen → re-parse yields equal model values across Theme / SlideMaster / SlideLayout / Slide / NotesSlide / CommentAuthorList / CommentList for all three fixtures. 5 new tests, 496 total × 4 backends. **Phase 4 (writer floor) closed for the modeled surface.**
-- [ ] Auto-generation of `[Content_Types].xml` and rels from model (deferred to Phase 5)
-- [ ] Numeric ID assignment (shape IDs, rId, etc.) is deterministic
-- [ ] PowerPoint open verification: manual checklist for sample decks
-- [ ] LibreOffice open verification (cross-implementation sanity)
+DoD: a user can build everything python-pptx supports today without
+dropping to XML, and the API ergonomics match.
 
----
+Status (2026-05-26): 7 of 8 items landed on `main` (A1 / A2 / A3 / A4
+/ A5 / B2 / C2 + examples). A8 (slide number / footer / date
+placeholders) deferred — needs master-side placeholder schema work
+that is more naturally bundled with C1 (`define_master`) in v0.3.
+Eight PowerPoint Online repair-banner triggers also fixed during
+v0.2 polish — every chart family + the bundled blank deck now opens
+without a repair prompt. **Ready to tag v0.2.0** once API stability
+review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
+0.1.0.
 
-### Phase 5 — Builder API: create from scratch *(substantially complete; immutable variants + open-verification pending)*
+🟢 **A1 — Image-size auto-detection from PNG / JPEG / GIF / BMP / TIFF headers**
+  - New `@oxml.detect_image_dimensions(bytes) -> (cx_emu, cy_emu)?`
+  - `Presentation::add_picture_mut(slide_idx, bytes, x, y)` overload (no cx/cy required) — auto-derives from header + DPI metadata
+  - Test fixtures: one per format
 
-DoD: a user can produce a multi-slide deck with text, shapes, and pictures **without
-ever touching XML**, starting from `Presentation::new()`.
+🟢 **A2 — Hyperlink builder**
+  - `RunProperties::with_hyperlink(url~, tooltip~ : String?)` — wires `<a:hlinkClick>`
+  - Auto-allocate slide-level rId; register relationship as `TargetMode::External`
+  - Internal: `RunProperties::with_hyperlink_to_slide(slide_idx)` for jump-to-slide actions
 
-Phase 5a–5e are merged: `Presentation::open / save / new`, typed accessors,
-`add_slide_mut`, shape builders, `Slide::with_shape`, and `update_slide_mut`
-together close the mutating builder loop and a cookbook example
-demonstrates a five-slide pitch deck end-to-end. The remaining items
-are the immutable builder variants (need `Package::clone`) and external
-open-verification.
+🟢 **A3 — Speaker notes builder**
+  - `Presentation::set_notes_mut(slide_idx, "text")` — creates / updates `/ppt/notesSlides/notesSlideN.xml`
+  - Auto-register notes master + Override content type if missing
+  - Fluent: `Slide::with_notes(text)` (returns new Slide with the linked notes slide)
 
-- [x] **Phase 5a — `Presentation` façade (open / save / typed accessors)** *(complete)* — `src/presentation/` sub-package: `Presentation::open(bytes)` wraps `@opc.Package::open` and re-wraps `OpcError` as `PptxError::OpcFailure`; `Presentation::save()` passes through `Package::to_bytes`. Typed accessors `slides() / themes() / slide_masters() / slide_layouts() / notes_slides() / comment_lists() / comment_authors()` walk parts by content type (lazy parse on demand). All seven sub-package errors flatten into `PptxError` via per-package `*Failure(String)` variants. 8 new tests, 504 total × 4 backends.
-- [x] **Phase 5b1 — `presentation.xml` typed parser + writer + `<p:sldIdLst>`-driven ordering** *(complete)* — `PresentationPart { sld_master_ids : Array[SlideMasterIdRef], sld_ids : Array[SlideIdRef], notes_master_id : SlideIdRef?, handout_master_id : SlideIdRef?, sld_sz : SlideSize?, notes_sz : NotesSize?, extension }`. Parser + writer round-trip the modeled fields and replay every unmodelled child via ADR-004 extension. `Presentation::slides()` now resolves the slide parts in `<p:sldIdLst>` source order by joining sldId rIds against `presentation.xml.rels`. Fallback to package storage order only when the package has no main-document relationship at all (malformed but not fatal). New `Presentation::presentation_part()` exposes the typed metadata to callers. 4 new tests (parse, round-trip, sldIdLst-order vs storage-order, missing-rel fallback) — 508 total × 4 backends.
-- [x] **Phase 5b2 — `Presentation::new()` blank deck** *(complete)* — `src/presentation/template.mbt` holds the canonical Office-default XML literals (one theme + one slide master + one Blank layout + zero slides) plus all `.rels` templates. `Presentation::new()` assembles them via `@opc.Package::new` + `add_part` + `regenerate_content_types_part`, then re-opens through `Presentation::open` so the returned value is identical-shaped to one obtained from `open(bytes)`. The XML-literal approach (vs constructing typed model values from scratch) sidesteps the writer's "use captured wrapper if present" path that requires an extension-populated `<p:cSld>` — typed-construction can come later if a builder needs it. 5 new tests, 513 total × 4 backends.
-- Embedded blank-template `.pptx` bytes — *superseded* by Phase 5b2's programmatic templates; no binary blob lives in the source.
-- [x] `Presentation::open(bytes) -> Presentation raise PptxError` *(Phase 5a)*
-- [x] `Presentation::save() -> FixedArray[Byte]` *(Phase 5a)*
-- [x] `Presentation::new() -> Presentation` *(Phase 5b2)*
-- [x] `Presentation::slides() -> SlideCollection` — Phase 5a + 5b1: returns `Array[Slide]` in `<p:sldIdLst>` order; the `SlideCollection` abstraction is unnecessary since `Array[Slide]` covers the same surface.
-- Builder methods:
-  - [x] **Phase 5c — `add_slide_mut(layout_index) -> String`** *(complete)* — first mutation entry point. Plumbs a blank slide through every place the package tracks it: new `/ppt/slides/slideN.xml` part, sldId entry in `presentation.xml.sldIdLst`, rel in `presentation.xml.rels`, new `slideN.xml.rels` pointing back to the layout, and `<Override>` in `[Content_Types].xml`. Standard relative-path math (`relative_target`) handles the `<Relationship Target="…">` strings. ADR-003 explicitly allows `_mut` variants for deck-editing; the immutable `with_added_slide` lifts when `@opc.Package` gains a clone API. 7 new tests, 520 total × 4 backends.
-  - [x] **Phase 5f — `Package::clone` + immutable builder variants** *(complete)* — `@opc.Package::clone() / Part::clone() / ContentTypes::clone()` deep-copy the package layer. `@presentation.Presentation::clone() / with_added_slide(layout_index~) / with_slide_updated(idx, new_slide)` are the ADR-003-compliant immutable counterparts of `add_slide_mut` / `update_slide_mut`. Both clone the package first, then run the same internal mutation, then return the new `Presentation`. 10 new tests, 545 total × 4 backends.
-  - [x] **Phase 5d — shape builders + `Slide::with_shape` + `update_slide_mut`** *(complete)* — `AutoShape::rect / ellipse / round_rect / textbox` hand-friendly constructors plus `Slide::with_shape` (immutable, copies the shapes array). `Presentation::update_slide_mut(idx, new_slide)` re-serialises a modified slide and replaces the part bytes in place. End-to-end builder flow works: `Presentation::new()` → `add_slide_mut(0)` → `slides()[i].with_shape(AutoShape::textbox(...))` → `update_slide_mut(i, …)` → `save()`. Round-trip note: hand-built shapes start with an empty `extension` array, so the *first* serialize → parse cycle gains captured `<p:cNvPr>` / `<p:cNvSpPr>` / `<p:nvPr>` wrappers — subsequent cycles are `==`-stable. 11 new tests, 531 total × 4 backends.
-  - [x] **Fluent text + shape styling** *(complete)* — `RunProperties::default().with_font_size(@units.Pt(24.0)).with_bold().with_italic().with_font("Helvetica").with_color(rgb)` for run-level styling. `Paragraph::with_alignment(AlignCenter) / with_properties(pp)` for paragraph-level. `TextBody::of_styled_text(text, rp)` + `TextBody::of_paragraphs([p0, p1])` for higher-level construction. `AutoShape::with_fill / with_no_fill / with_stroke / with_no_stroke / with_text_body` for fluent shape composition on top of `AutoShape::rect / ellipse / round_rect / textbox`. Settled on attaching `with_*` setters to the existing `AutoShape` rather than introducing separate `TextBox::new()` / `Rectangle::new()` namespace types — the underlying value is the same either way, and one path through the API keeps the surface coherent. 7 new tests, 699 total × 4 backends.
-  - [x] **Picture builder + `Presentation::add_picture_mut`** *(complete)* — `@slide.Picture::of_image(id, name, embed_id, x, y, cx, cy)` constructs the typed shape value; `@presentation.Presentation::add_picture_mut(slide_idx, bytes, x, y, cx, cy)` handles the full OPC pipeline (magic-byte format detection → media part allocation → Default content-type registration → slide `.rels` Relationship → Picture shape append → re-write of slide bytes). PNG / JPEG / GIF / BMP / TIFF detected from magic bytes. Native-only `Picture::from_path` deferred — `Presentation::add_picture_mut(slide_idx, read_file_bytes(...), …)` is the same flow with file I/O done by the caller. 7 new tests, 706 total × 4 backends.
-- [ ] Type-safe layout selection (placeholder schema as type parameter — stretch goal)
-- [x] **Phase 5e — Cookbook 5-slide pitch deck** *(complete)* — `src/integration/cookbook_test.mbt` builds a five-slide pitch deck end-to-end via the public API (`Presentation::new` → `add_slide_mut` → `with_shape` + `AutoShape::textbox / rect / ellipse` → `update_slide_mut` → `save`). Slides cover Title / Problem / Solution / Demo / Closing with rectangles + ellipses + textboxes. Tests assert shape counts per slide, sldId monotonicity (256 + i), and the title slide carries the expected text. The body of `build_pitch_deck` doubles as documentation for the high-level builder flow. 4 new tests, 535 total × 4 backends.
+🟢 **A4 — Picture crop fluent builder**
+  - `Picture::with_crop(l~, t~, r~, b~ : @units.Percentage)` — wraps `SrcRect`
+  - Crop is idempotent at the value level (replaces, not merges)
 
----
+🟢 **A5 — Slide size selector**
+  - `Presentation::set_slide_size_mut(SlideSize)` where `SlideSize { ScreenFourByThree | ScreenSixteenByNine | ScreenSixteenByTen | Letter | Legal | A4 | …}`
+  - Maps to ECMA-376's 17 `ST_SlideSizeType` values
+  - Updates `presentation.xml` `<p:sldSz>` + recomputes any `pct_of_slide_w` helpers
 
-### Phase 6 — Tables *(complete)*
+🔴 **A8 — Slide number / header / footer / date** *(deferred to bundle with v0.3 C1 `define_master` — the master-side placeholder schema is the natural home)*
+  - `Slide::with_slide_number(visible : Bool)`, `Slide::with_footer("text")`, `Slide::with_date(DateMode { Auto | Fixed(String) })`
+  - Layout-side helpers to declare the placeholders when the master doesn't already
 
-DoD: create, modify, and read tables matching python-pptx feature parity.
+🟢 **B2 — Table cell border fluent builders (extended)**
+  - `TableCell::with_borders(left~, right~, top~, bottom~ : Stroke?)` — convenience over the existing 6 `with_border_*`
+  - Per-border `Stroke` reuses `@oxml.Stroke`
 
-- [x] **Phase 6a + 6b — typed graphic-frame + table parser + writer** *(complete)* — `<p:graphicFrame>` lifts from the previous `Shape::Unknown(XmlElement)` round-trip path into a typed `Shape::GraphicFrame(GraphicFrame { id, name, transform, content : GraphicFrameContent, extension })`. The `<a:graphicData uri="…">` URI discriminates between `TableContent(Table)` (for the table uri) and `OtherGraphic(uri, XmlElement)` (chart / SmartArt / OLE / anything else — kept verbatim until their own phases). `Table { properties (tblPr captured), grid : Array[Emu], rows, extension }`, `TableRow { height, cells, extension }`, `TableCell { grid_span, row_span, h_merge, v_merge, text_body, properties (tcPr captured), extension }`. Cell text bodies share the slide text writer via the new `write_text_body_with_wrapper(uri, local)` helper. Round-trip verified for plain tables, merged-cell flags, and chart-uri pass-through. 5 new tests, 550 total × 4 backends.
-- [x] **Phase 6c — Table builder** *(complete)* — `TableCell::of_text / empty / merged_origin / h_merge_covered / v_merge_covered / hv_merge_covered` cover the standard cell-merge palette; `TableRow::of_cells(cells, height~)` and `Table::of_rows(rows, col_widths~) / of_grid(rows~, cols~, col_width~, row_height~)` build the surrounding structure. `GraphicFrame::of_table(id, name, x, y, cx, cy, table)` wraps it for use with `Slide::with_shape`. Builders synthesise an empty `<a:tblPr/>` + `<a:tcPr/>` on every value so PowerPoint sees the elements it expects without callers having to construct XmlElements. 8 new tests, 558 total × 4 backends.
-- [x] Cell merging (grid_span, row_span) — covered by Phase 6c builders.
-- [x] **Phase 6d — TableProperties + TableCellProperties typed** *(complete)* — `<a:tblPr>` and `<a:tcPr>` lift from captured `@xml.XmlElement` into typed records. `TableProperties { first_row / first_col / last_row / last_col / band_row / band_col / rtl, fill, table_style_id, extension }`; `TableCellProperties { margin_l / margin_r / margin_t / margin_b, anchor, anchor_ctr, vertical_text, border_left / right / top / bottom / tl_to_br / bl_to_tr, fill, extension }`. New `@oxml.write_stroke_with_local_name` lets the cell-border writer reuse the stroke writer for `<a:lnL>` / `<a:lnR>` / `<a:lnT>` / `<a:lnB>` / `<a:lnTlToBr>` / `<a:lnBlToTr>`. Fluent builder helpers on `TableCellProperties`: `with_margins / with_fill / with_anchor / with_border_all / with_border_*`. 7 new tests, 565 total × 4 backends.
-- [x] Cell text, fill, borders, margins — Phase 6d.
-- [x] Table styles — `tableStyleId` lifts in Phase 6d; inline `<a:tableStyle>` keeps round-tripping through `TableProperties.extension`.
-- [x] Read existing tables losslessly *(Phase 6a)*
+🟢 **C2 — Percentage / relative positioning**
+  - `@units.pct_of_slide_w(prs, 5.0) -> Emu`, `@units.pct_of_slide_h(prs, 5.0) -> Emu`
+  - `@units.Pct(5.0)` newtype + `Pct::resolve_w(prs)` / `Pct::resolve_h(prs)`
+  - README quickstart switches to percentage-based positions for readability
+
+🟢 **Docs + examples**
+  - `examples/README.md` with 8 cookbook recipes (title slide / widescreen / hyperlinks / notes / images / tables / charts / pitch deck).
+  - Each recipe verified by `src/integration/examples_test.mbt`.
+  - Main README links to `examples/`.
 
 ---
 
-### Phase 7 — Charts (creation) *(complete)*
+### 4.2 v0.3.0 — "Multimedia + Layout" · target 2026-11-30
 
-DoD: create `bar`, `line`, `pie` charts from data; read all 13 types losslessly.
+DoD: every feature PptxGenJS covers is expressible; slide masters can
+be defined programmatically end-to-end.
 
-All chart families (16 standard + 9 extended) read / write / round-trip losslessly. From-scratch builders cover all standard families with inline `<c:strLit>` / `<c:numLit>` data sources (no embedded xlsx — see ADR-009). Every modelled element body (chartSpace, chart, plotArea, all 16 plot bodies, series cores, axes, title, legend, dLbls, dLbl, layout, trendline) is typed — captured `XmlElement` only remains for deferred sub-elements where typing brings little user value (`<c:tx>` rich text, `<c:spPr>` / `<c:txPr>` styling, `<c:numRef>` / `<c:numLit>` data-source bodies, `<c:trendlineLbl>`, `<c:dTable>`).
+🔴 **A6 — Audio / video embedding**
+  - `Presentation::add_video_mut(slide_idx, bytes, x, y, cx, cy)`
+  - Magic-byte detection: mp4 / m4v / mov / wmv / avi / mp3 / wav / aiff
+  - New `Shape::Media(MediaShape { id, name, transform, media_kind, embed_id, preview_image_id? })`
+  - Parser for existing decks' `<p:videoFile>` / `<p:audioFile>` references
+  - Auto-allocate preview-image part if PowerPoint will need it
 
-- [x] **Phase 7a1 — `@chart` package skeleton + lossless capture** *(complete)* — `src/chart/` sub-package: `Chart::parse(bytes) / serialize()` reads/writes `<c:chartSpace>` with the entire body kept verbatim in `space_body : @xml.XmlElement` per ADR-004. New `ChartError { XmlFailure | Malformed }`. New `@oxml.chart_ns` namespace constant + `@oxml.ct_chart` content-type. `Shape::GraphicFrame`'s `GraphicFrameContent` gained a `ChartContent(rid : String)` variant — the chart-uri case now lifts to a typed slide-side rel id (the actual chart bytes live in the separate chart part) instead of riding through `OtherGraphic`. `Presentation::charts() -> Array[@chart.Chart]` accessor walks parts by content type. Integration test deck (`chart_deck`) carries a `/ppt/charts/chart1.xml` plus a slide that references it via `<c:chart r:id="rId2"/>`; round-trip verified through both `Chart::parse → serialize → parse` and end-to-end through `Package::to_bytes` + `re_serialize_all`. 10 new tests, 577 total × 4 backends.
-- [x] **Phase 7a2 — type `<c:chart>` header + chartSpace scalar fields** *(complete)* — `Chart::space_body` opaque capture is gone. New `Chart { date1904 / lang / rounded_corners / style, chart : ChartBody, extension }` typed surface plus `ChartBody { title / auto_title_deleted / pivot_fmts / view3d / floor / side_wall / back_wall / plot_area / legend / plot_vis_only / disp_blanks_as / show_d_lbls_over_max / extension }`. Scalar / enum leaves (`autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs`, `showDLblsOverMax`, plus the four chartSpace-level scalars) lift to typed fields; the substantial subtrees (`<c:title>`, `<c:plotArea>`, `<c:legend>`, the 3-D wrappers) keep capturing as `XmlElement?` until 7a3+. New `DisplayBlanksAs { Span | Gap | Zero }` enum with `from_xml` / `to_xml`. Parser raises `Malformed` on schema violations (missing `<c:chart>`, missing `<c:plotArea>`) per the comments-parser-style "spec-defined-required" treatment. Writer mirrors the schema element order (ECMA-376 §21.2.2.29 + §21.2.2.6). 4 new tests, 581 total × 4 backends.
-- [x] **Phase 7a3a — type `<c:plotArea>` structure + plot/axis discrimination** *(complete)* — `ChartBody.plot_area` lifts from `XmlElement` into typed `PlotArea { layout, plots : Array[Plot], axes : Array[Axis], data_table, sp_pr, extension }`. `Plot` enum names every spec'd chart-family kind (16 variants: areaChart / area3DChart / lineChart / line3DChart / stockChart / radarChart / scatterChart / pieChart / pie3DChart / doughnutChart / barChart / bar3DChart / ofPieChart / surfaceChart / surface3DChart / bubbleChart); `Axis` enum names the 4 axis kinds (valAx / catAx / dateAx / serAx). Each variant currently wraps the captured `<XmlElement>` payload so the body round-trips losslessly even though no plot-family or axis body is itself typed yet. `Plot::local_name() / element()` and `Axis::local_name() / element()` accessors. Layout / dTable / spPr stay as `XmlElement?` until later 7a slices. Writer emits children in ECMA-376 §21.2.2.14 schema order. Combination charts (multiple plots in one plotArea) supported through `plots : Array`. 3 new tests, 583 total × 4 backends.
-- [x] **Phase 7a3b — type `<c:barChart>` body** *(complete)* — `Plot::BarChart(@xml.XmlElement)` becomes `Plot::BarChart(BarChartBody)`. `BarChartBody { bar_dir, grouping, vary_colors, series, d_lbls, gap_width, overlap, ax_ids, extension }` types every CT_BarChart leaf except the still-substantial `<c:ser>` (`series : Array[@xml.XmlElement]`) and `<c:dLbls>`. New enums `BarDir { Bar | Col }` and `BarGrouping { PercentStacked | Clustered | Standard | Stacked }` with `from_xml` / `to_xml`. Parser raises `Malformed` if `<c:barDir>` is absent (schema-required). Writer dispatch (`write_plot`) handles `BarChart` typed-side and falls back to captured `XmlElement` for the other 15 variants. `Plot::element()` returns `Option[XmlElement]` (None for the now-typed `BarChart`). 6 new tests, 589 total × 4 backends.
-- [x] **Phase 7a3c — type `<c:lineChart>` body** *(complete)* — `Plot::LineChart(BarChartBody)`-style typed lift. `LineChartBody { grouping, vary_colors, series, d_lbls, drop_lines, hi_low_lines, up_down_bars, marker, smooth, ax_ids, extension }` covers the CT_LineChart leaves; `<c:ser>` / `<c:dLbls>` / the three line-decoration subtrees (`dropLines` / `hiLowLines` / `upDownBars`) stay as `XmlElement?` payloads. New `Grouping { Standard | Stacked | PercentStacked }` enum (shared with area + 3-D line/area families per CT_Grouping). Parser raises `Malformed` on missing `<c:grouping>`. 6 new tests, 595 total × 4 backends.
-- [x] **Phase 7a3d — type `<c:pieChart>` body** *(complete)* — `Plot::PieChart(PieChartBody)`. `PieChartBody { vary_colors, series, d_lbls, first_slice_ang, extension }`. Pie charts have no axes (no `axIds`); the body has no schema-required scalar fields so the parser doesn't raise Malformed for missing children. `firstSliceAng` is the integer degrees (0..360) for the starting position of the first slice. 3 new tests, 598 total × 4 backends.
-- [x] **Phase 7a3e — type area / 3-D variants / doughnut / radar** *(complete)* — Seven more chart-family bodies typed: `AreaChartBody`, `Area3DChartBody`, `Bar3DChartBody`, `Line3DChartBody`, `Pie3DChartBody`, `DoughnutChartBody`, `RadarChartBody`. New enums `BarShape { Box | Cone | ConeToMax | Cylinder | Pyramid | PyramidToMax }` (CT_Shape for 3-D bars) and `RadarStyle { Standard | Marker | Filled }` (CT_RadarStyle). The 3-D bar/line variants carry three `axIds` per schema. Doughnut adds `holeSize` to the pie-shape body. `Bar3DChart` raises `Malformed` on missing `<c:barDir>`; `Line3DChart` on missing `<c:grouping>`; `RadarChart` on missing `<c:radarStyle>`. 10 new tests, 608 total × 4 backends.
-- [x] **Phase 7a3f — type scatter / bubble / stock / surface / surface3D / ofPie** *(complete)* — The final six chart-family bodies typed. `ScatterChartBody` (with new `ScatterStyle { Line | LineMarker | Marker | None_ | Smooth | SmoothMarker }` enum, REQUIRED `scatterStyle`). `BubbleChartBody` (with new `SizeRepresents { Area | Width }` enum, plus `bubble3D` / `bubbleScale` / `showNegBubbles` scalars). `StockChartBody` (HLC/OHLC series + dropLines/hiLowLines/upDownBars). `SurfaceChartBody` + `Surface3DChartBody` (`wireframe` flag, separate types so writer dispatch stays mechanical). `OfPieChartBody` (with new `OfPieType { Pie | Bar }` and `SplitType { Auto | Cust | Percent | Pos | Val }` enums; `splitPos` kept as raw `String?` to dodge floating-point format drift). All 16 plot kinds are now typed — `Plot::element()` always returns `None` and is kept on the public surface for source compatibility. **Phase 7a (chart read path) closed for the modelled surface.** 18 new tests, 634 total × 4 backends.
-- [x] **Phase 7b — `Chart::of_bar / of_line / of_pie` from-scratch builders** *(complete)* — Data-oriented `ChartData { categories, series : Array[ChartSeries] }` value object with immutable `with_category` / `with_series` builders (ADR-003). `Chart::of_bar(data, bar_dir~, grouping~)`, `Chart::of_line(data, grouping~)`, `Chart::of_pie(data)` construct a complete typed `Chart` value with synthesized `<c:ser>` `XmlElement` payloads using inline `<c:strLit>` categories + `<c:numLit>` values (no embedded XLSX cache — keeps the builder pure-MoonBit). Tests cover argument defaults, immutability, synthesis correctness (idx/order, ptCount padding), and end-to-end round-trip through a complete `Package`. CT_BarSer / CT_LineSer / CT_PieSer typed series ASTs deferred — the builders are the user-facing surface; the series XmlElement plumbing is implementation detail until those typed bodies arrive. 15 new tests, 649 total × 4 backends.
-- [x] **Phase 7c — scatter / area / radar / bubble builders** *(complete)* — `Chart::of_area(data, grouping~)`, `Chart::of_radar(data, radar_style~)`, `Chart::of_scatter(data, scatter_style~)`, `Chart::of_bubble(data)`. Area + radar reuse `ChartData` (categories + per-category values). Scatter and bubble use new `ScatterData { series : Array[ScatterSeries { label, x, y }] }` and `BubbleData { series : Array[BubbleSeries { label, x, y, size }] }` types — both have two value axes and emit `<c:xVal>` / `<c:yVal>` (+ `<c:bubbleSize>` for bubble) instead of `<c:cat>` / `<c:val>`. 10 new tests, 659 total × 4 backends.
-- [x] **Phase 7d — builders for stock / surface / surface3D / 3-D variants / doughnut / ofPie** *(complete)* — `Chart::of_doughnut(data, hole_size~)`, `of_of_pie(data, of_pie_type~, split_type~)`, `of_bar_3d(data, bar_dir~, grouping~, shape~)`, `of_line_3d(data, grouping~)`, `of_pie_3d(data)`, `of_surface(data, wireframe~)`, `of_surface_3d(data, wireframe~)`, `of_stock(data, kind~ : StockKind { HLC | OHLC })`. 3-D variants build a three-axis plotArea via the new `three_axis_plot_area(plot)` helper (catAx + valAx + serAx). Stock builder normalises the input series to exactly 3 (HLC) or 4 (OHLC) by truncating excess or zero-padding short input. Waterfall / treemap / sunburst / histogram / boxwhisker / funnel deferred — those are *extended* chart types living under c14/c15/c16 namespaces in separate `chartEx` parts (CT_ChartExSpace), not the original CT_PlotArea schema we model today. They warrant a dedicated phase. 16 new tests, 675 total × 4 backends.
-- [x] **Phase 7e1 — `@chart_ex` package skeleton + lossless capture** *(complete)* — `src/chart_ex/` sub-package mirroring `src/chart/`'s 7a1 skeleton. New `@oxml.chart_ex_ns` namespace + `@oxml.ct_chart_ex` content-type + `@oxml.graphic_data_chart_ex_uri`. `ChartEx::parse / serialize` round-trips `<cx:chartSpace>` with the entire body kept verbatim in `space_body : @xml.XmlElement` per ADR-004. New `ChartExError { XmlFailure | Malformed }`. `GraphicFrameContent::ChartExContent(rid : String)` variant lifts slide-side chartEx URIs alongside the standard chart variant. `Presentation::charts_ex() -> Array[@chart_ex.ChartEx]` accessor. Integration fixture `chart_ex_deck` exercises a sunburst chart end-to-end (slide → rels → chartEx part); `re_serialize_all` extended to cover the new content type. 6 new tests, 686 total × 4 backends.
-- [x] **Phase 7e2 — type ChartEx body + `ChartExKind` discriminator** *(complete)* — `ChartEx::space_body` opaque capture replaced with a typed structure mirroring the chartEx schema: `ChartEx { chart_data : XmlElement?, chart : ChartExBody, extension }` → `ChartExBody { title, plot_area : ChartExPlotArea, legend, extension }` → `ChartExPlotArea { plot_area_region : ChartExPlotAreaRegion, axes, extension }` → `ChartExPlotAreaRegion { plot_surface, series : Array[ChartExSeries], extension }` → `ChartExSeries { layout_id : ChartExKind, format_idx, hidden, owner_idx, body }`. New `ChartExKind { BoxWhisker | ClusteredColumn | Funnel | ParetoLine | RegionMap | Sunburst | Treemap | Waterfall | Histogram | Other(String) }` enum — `Other` catches any future Microsoft extension layoutId so the round-trip stays lossless even when the vocabulary grows. Parser raises `Malformed` on schema violations: missing `<cx:chart>`, missing `<cx:plotArea>`, missing `<cx:plotAreaRegion>`, missing `layoutId` attribute on `<cx:series>`. The full `<cx:series>` body stays captured for round-trip — typed series bodies are a later slice. **Phase 7 (Charts) closed for the modelled surface.** 7 new tests, 692 total × 4 backends.
-- [x] **Phase 7f — typed `<c:ser>` series cores across all 16 standard families** *(complete)* — Per-family `series : Array[@xml.XmlElement]` lifts to three typed structs in `series.mbt`: `ChartSeriesCore { idx, order, tx, sp_pr, cat, val, extension }` (used by bar / line / pie / area / area3D / bar3D / line3D / pie3D / doughnut / radar / stock / surface / surface3D / ofPie — 14 families), `ScatterSeriesCore { idx, order, tx, sp_pr, x_val, y_val, extension }` (scatter has two value axes, not cat+val), and `BubbleSeriesCore { …, x_val, y_val, bubble_size, extension }` (bubble adds the third numeric source). The data-source bodies themselves (`<c:strRef>` / `<c:numRef>` / `<c:strLit>` / `<c:numLit>` payloads) keep round-tripping as captured `XmlElement?` — typed `AxDataSource` / `NumDataSource` ASTs are a later expansion point. `parse_*_series_core` raise `Malformed` on missing `<c:idx>`; `<c:order>` is schema-required but defaults to `idx` on parse (matching PowerPoint / LibreOffice lenience) and is always emitted on write. All `synthesize_*` builder helpers now construct typed cores directly. 711 tests × 4 backends.
-- [x] **Phase 7m — typed `<c:trendline>` body (CT_Trendline)** *(complete)* — Series-level `<c:trendline>` fitted-curve overlays lift from `ChartSeriesCore.extension` to a new typed `trendlines : Array[Trendline]` field on all three series-core flavours (`ChartSeriesCore`, `ScatterSeriesCore`, `BubbleSeriesCore`). `Trendline { name, sp_pr, trendline_type, order, period, forward, backward, intercept, disp_r_sqr, disp_eq, trendline_lbl, extension }` covers every CT_Trendline leaf. New `TrendlineType` enum (6 variants: Exp / Linear / Log / MovingAvg / Poly / Power — all prefixed `Trendline` to dodge collision). Floats (`forward` / `backward` / `intercept`) carry as `String?` to preserve the source token, matching `Scaling.{max,min,log_base}` / `crossesAt` / `Layout.x/y/w/h`. `<c:trendlineLbl>` (CT_TrendlineLbl) stays captured XmlElement. `parse_trendline` raises Malformed on missing `<c:trendlineType>`. Writers now emit trendlines between `<c:spPr>` and `<c:cat>`/`<c:xVal>` per ECMA-376 §21.2.2.211 schema order. Pie / doughnut / radar / surface / surface3D / pie3D parsers never push into the array since trendlines don't apply to those chart kinds. New `src/chart/chart_trendline.mbt`. 13 new tests, 782 total × 4 backends.
-- [x] **Phase 7l — typed `<c:layout>` body (CT_Layout + CT_ManualLayout)** *(complete)* — `<c:layout>` lifts from captured XmlElement to a typed `Layout { manual_layout, extension }` at four call sites: `ChartTitle.layout`, `ChartLegend.layout`, `DLbl.layout`, and `PlotArea.layout`. The inner `<c:manualLayout>` body lifts to `ManualLayout { layout_target, x_mode, y_mode, w_mode, h_mode, x, y, w, h, extension }`. New enums `LayoutTarget { LayoutInner | LayoutOuter }` (ST_LayoutTarget val=inner/outer) and `LayoutMode { LayoutEdge | LayoutFactor }` (ST_LayoutMode val=edge/factor). Floating-point coordinates carry as `String?` to dodge format drift, matching the convention already used for `Scaling.{max,min,log_base}` / `crossesAt`. `<c:extLst>` and foreign-namespace siblings ride on `Layout.extension` / `ManualLayout.extension` per ADR-004. New `src/chart/chart_layout.mbt` defines the types + `parse_layout` / `write_layout` round-trip pair. 9 new tests, 769 total × 4 backends.
-- [x] **Phase 7k — typed `<c:dLbl>` per-point overrides (CT_DLbl)** *(complete)* — `DLbls.d_lbl : Array[@xml.XmlElement]` lifts to `Array[DLbl]`. New `DLbl { idx, delete, layout, tx, num_fmt, sp_pr, tx_pr, d_lbl_pos, show_*, separator, extension }` covers the full CT_DLbl shape including both EG_DLblChoice branches: branch 1 = `<c:delete>` only (hide this point's label), branch 2 = full EG_DLbls styling override + optional `<c:layout>` / `<c:tx>`. Both branches stored as optional fields; the parser tolerates the source's choice and the writer round-trips whatever is set. `<c:layout>` / `<c:tx>` stay captured. Reuses the shared `DLblPos` / `NumFmt` types and `d_lbls_val_*` helpers from `chart_d_lbls.mbt`. `parse_d_lbl` raises Malformed on missing `<c:idx>`; `parse_d_lbls` now also raises (propagates from `parse_d_lbl`) — every plot parser that calls it already raises. New `src/chart/chart_d_lbl.mbt`. 6 new tests, 760 total × 4 backends.
-- [x] **Phase 7j — typed `<c:dLbls>` body (CT_DLbls)** *(complete)* — Each of the 14 chart families that supports data labels (bar / line / pie / area / area3D / bar3D / line3D / pie3D / doughnut / radar / ofPie / scatter / bubble / stock — every standard family except surface / surface3D which have no labels) gets its `d_lbls : @xml.XmlElement?` field lifted to `d_lbls : DLbls?`. The new `DLbls { d_lbl, num_fmt, sp_pr, tx_pr, d_lbl_pos, show_legend_key, show_val, show_cat_name, show_ser_name, show_percent, show_bubble_size, separator, extension }` covers every EG_DLbls scalar / Bool / enum / String leaf. New enum `DLblPos { DLblBestFit | DLblBottom | DLblCenter | DLblInBase | DLblInEnd | DLblLeft | DLblOutEnd | DLblRight | DLblTop }` (9-variant ST_DLblPos). Per-data-point overrides `<c:dLbl>` (CT_DLbl) stay captured in `DLbls.d_lbl : Array[XmlElement]` until a later slice. Pie-family extras (`<c:showLeaderLines>` / `<c:leaderLines>`) ride on `DLbls.extension` per ADR-004. New `src/chart/chart_d_lbls.mbt` defines the types + `parse_d_lbls` / `write_d_lbls` round-trip pair. Writer emits in ECMA-376 §21.2.2.49 schema order (dLbl* → numFmt → spPr → txPr → dLblPos → show* → separator → extension). 10 new tests, 754 total × 4 backends.
-- [x] **Phase 7i — typed `<c:legend>` body (CT_Legend)** *(complete)* — `ChartBody.legend` lifts from `@xml.XmlElement?` to a typed `ChartLegend { legend_pos, legend_entries, layout, overlay, sp_pr, tx_pr, extension }`. New enum `LegendPos { LegendBottom | LegendTopRight | LegendLeft | LegendRight | LegendTop }` (ST_LegendPos val=b/tr/l/r/t). New struct `LegendEntry { idx, delete, tx_pr, extension }` covers CT_LegendEntry; missing `<c:idx>` raises Malformed. Substantial subtrees (`<c:layout>`, `<c:spPr>`, `<c:txPr>`) keep round-tripping as captured XmlElement until later slices type them; `<c:extLst>` + foreign-namespace ride on `ChartLegend.extension` per ADR-004. New `src/chart/chart_legend.mbt` defines the types + `parse_chart_legend` / `write_chart_legend` round-trip pair. Writer emits children in ECMA-376 §21.2.2.93 schema order (legendPos → legendEntry* → layout → overlay → spPr → txPr → extension). 9 new tests, 744 total × 4 backends.
-- [x] **Phase 7h — typed `<c:title>` body (CT_Title)** *(complete)* — Both `ChartBody.title` (chart-level) and `AxisCore.title` (per-axis) lift from `@xml.XmlElement?` to a typed `ChartTitle { tx, layout, overlay, sp_pr, tx_pr, extension }`. Only the scalar `<c:overlay>` Bool leaf is typed; the substantial subtrees (`<c:tx>` rich-text / strRef, `<c:layout>` positioning, `<c:spPr>` / `<c:txPr>` styling) keep round-tripping as captured XmlElement until later slices. Foreign-namespace + `<c:extLst>` ride on `ChartTitle.extension` per ADR-004. New `src/chart/chart_title.mbt` defines the type + `parse_chart_title` / `write_chart_title` round-trip pair, used by both `parse_chart_body` and `parse_axis_core`. Writer emits children in ECMA-376 §21.2.2.210 schema order (tx → layout → overlay → spPr → txPr → extension). 8 new tests, 735 total × 4 backends.
-- [x] **Phase 7g — typed Axis (CT_AxBase core + common optional)** *(complete)* — `Axis` enum's four variants (`ValAx` / `CatAx` / `DateAx` / `SerAx`) lift from a raw `@xml.XmlElement` payload to a typed `AxisCore { ax_id, scaling, delete, ax_pos, major_gridlines, minor_gridlines, title, num_fmt, major_tick_mark, minor_tick_mark, tick_lbl_pos, sp_pr, tx_pr, cross_ax, crosses, crosses_at, extension }`. New supporting types in `src/chart/axis.mbt`: `Scaling { log_base, orientation, max, min, extension }` plus the enums `Orientation { MinMax | MaxMin }`, `AxPos { Bottom | Left | Right | Top }`, `TickMark { Cross | In | NoTick | Out }`, `TickLblPos { High | Low | NextTo | NoLbl }`, `Crosses { AutoZero | Min | Max }`, and the struct `NumFmt { format_code, source_linked }`. Per-axis-kind extras (CatAx's `lblOffset`, ValAx's `crossBetween` / `majorUnit` / `dispUnits`, etc.) round-trip via `AxisCore.extension` per ADR-004. Floats (`crossesAt`, `Scaling.max/min/log_base`) carry as `String?` to dodge format drift, matching how `OfPieChartBody.split_pos` is handled. `parse_axis_core` raises `Malformed` on missing `<c:axId>`; the rest of the schema-required leaves (`scaling`, `axPos`, `crossAx`) are stored optional so minimal fixtures still round-trip. Builders' `simple_axis_element(...) -> XmlElement` → `simple_axis_core(...) -> AxisCore` produce schema-valid axes directly. `Axis::element()` → `Axis::core()` (the captured-element accessor is gone; use `core()` to read typed fields, or `write_axis` to re-emit). 16 new tests, 727 total × 4 backends.
-- [x] **Embedded XLSX cache generation — deferred via ADR-009** *(closed)* — Charts emit inline `<c:strLit>` / `<c:numLit>` data sources, which PowerPoint and LibreOffice both render correctly. The optional `<c:externalData>` reference to a `.xlsx` part round-trips losslessly via `Chart.extension` (and the xlsx part itself rides through `@opc.Package` as an opaque part keyed by content type). Generating the xlsx body would require implementing SpreadsheetML — a separate large OOXML schema — and gives no rendering benefit; the only downside of inline literals is a slightly degraded PowerPoint "Edit Data" experience. Decision formalised in ADR-009. 3 new round-trip tests for `<c:externalData>` preservation, 785 total × 4 backends.
+🔴 **A7 — Slide background typed builder**
+  - `Slide::with_background(BgFill)` where `BgFill { Solid(Color) | Gradient(Gradient) | Picture(BlipFill) | NoFill }`
+  - Lifts `<p:cSld>`'s `<p:bg>` from extension-only to typed field
+  - Writer emits before `<p:spTree>` per ECMA-376 schema order
 
----
+🔴 **C1 — `define_master` high-level API**
+  - `Presentation::define_master(MasterDefinition)` returning master index
+  - `MasterDefinition { name : String, background : BgFill?, placeholders : Array[PlaceholderDef], slide_number : Bool, footer_text : String? }`
+  - `PlaceholderDef { kind : PlaceholderType, position : Rect, default_text : String? }`
+  - Synthesises `<p:sldMaster>` + dependent layouts
 
-### Phase 8 — Differentiators (beyond python-pptx)
+🔴 **C3 — Combo chart + secondary axis builder**
+  - `Chart::of_combo(primary : ChartPlot, secondary : ChartPlot, secondary_axis : Bool)` where `ChartPlot { Bar(ChartData) | Line(ChartData) | Area(ChartData)`
+  - Reuses existing `PlotArea` multi-plot capability
+  - Writer threads a second `valAx` when `secondary_axis = true`
 
-DoD: at least two features that python-pptx does not offer in builder form.
+🔴 **C4 — SVG image support**
+  - `Picture::of_svg(svg_bytes, fallback_png_bytes, x, y, cx, cy)`
+  - `<a:blip>` + `<asvg:svgBlip>` Office 2019+ extension
+  - Auto-emit PNG fallback for older PowerPoint
 
-- [ ] **SmartArt builder**: layout templates + node tree → DiagramML
-- [ ] **Animation builder**: timeline DSL for entrance/emphasis/exit/motion
-- [ ] **Compile-time placeholder schema**: `slide<TitleAndContent>().title("…").content("…")` with type errors if you set an unsupported placeholder
-- [ ] **Streaming write** for huge decks (avoid materializing whole XML in memory)
+🔴 **B1 — Placeholder named accessors**
+  - `Slide::placeholders() -> Array[(PlaceholderType, Shape)]`
+  - `Slide::title() -> Shape?`, `Slide::body() -> Shape?`, `Slide::placeholder(kind) -> Shape?`
+  - Keyed by existing `placeholder.type` field
 
----
-
-### Phase 9 — Polish, docs, release
-
-DoD: 1.0.0 publishable to mooncakes with stable API surface.
-
-- [ ] API stability review (mark experimental APIs)
-- [ ] mbti generated public API stable
-- [ ] README with quickstart, examples, comparison vs python-pptx
-- [ ] `examples/` covers common scenarios
-- [ ] CHANGELOG.md following Keep-a-Changelog
-- [ ] Tag `v1.0.0` and `moon publish`
+🔴 **D6 — Lossless diff-write**
+  - `Presentation::save_diff(original_bytes) -> FixedArray[Byte]`
+  - Parts whose typed model is byte-identical to the source re-emit the source bytes verbatim (skip re-serialisation)
+  - Mutated parts go through the writer
+  - Useful for editing real-world Microsoft-emitted decks where the writer's canonical serialisation differs cosmetically from Office's
 
 ---
 
-## 4. Architecture decision records (ADRs)
+### 4.3 v0.4.0 — "MoonBit differentiators" · target 2027-02-28
+
+DoD: two headline features land that no other PPTX library — in any
+language — offers.
+
+🔴 **M1 — Compile-time placeholder schema** ⭐ headline feature
+  - Per-layout typed handle: `TitleSlide`, `TitleContent`, `SectionHeader`, `TwoContent`, `Comparison`, `TitleOnly`, `Blank`, `ContentWithCaption`, `PictureWithCaption` (the 9 standard built-in layouts plus user-defined)
+  - `Presentation::add_slide_typed[L : SlideLayoutKind]() -> (Self, L)` returns the layout-typed handle
+  - Wrong placeholder access becomes a **compile error**, not a runtime check
+  - Backward-compatible: legacy `add_slide_mut(layout_index)` stays
+
+🔴 **M2 — ADT-driven chart options**
+  - `Chart::with_options(opts : Array[ChartOption])` consumes a sum type
+  - `ChartOption { Title(String) | Legend(LegendPos) | DataLabels(DLblPos) | Trendline(series_idx, TrendlineType) | SecondaryAxis(series_idx) | DataTable | NumFmt(format_code, source_linked?) | …}`
+  - Exhaustive pattern-match in the writer → forgetting an option = compiler warning
+
+🔴 **D3 — Transition builder**
+  - `Slide::with_transition(Transition)` where `Transition { Fade | Push(Direction) | Wipe(Direction) | Split(Orientation) | Reveal(Direction) | Cover(Direction) | Cut | None_ | …}` (39 ST_TransitionType variants)
+  - Timing: `transition.with_duration(ms)`, `transition.with_advance_after(ms)`, `transition.with_on_click(Bool)`
+
+🔴 **D7 — Compile-time chart-data validation**
+  - `ChartData::with_series(label, values : Array[Double])` validates `values.length() == self.categories.length()` at parse time, raises `Malformed`
+  - Investigate phantom-param approach to lift this to compile time once MoonBit's const-generics-like features stabilise
+
+🔴 **D4 — Typed picture builder state machine**
+  - `Picture::of_image(...)` returns `PictureUncropped`
+  - `.with_crop(...)` returns `PictureCropped` — no second `.with_crop` call available (compile error)
+  - `.with_effects(...)` returns `PictureFinal`
+  - `.build()` → `Picture` (the existing flat type)
+
+---
+
+### 4.4 v0.5.0 — "Animation & SmartArt" · target 2027-05-31
+
+DoD: SmartArt and animation builders land; together with v0.4
+differentiators, moon-pptx becomes demonstrably the most capable
+PPTX library available.
+
+🔴 **D2 — Animation DSL** ⭐ headline feature
+  - `Timeline { triggers : Array[Trigger] }`, `Trigger { kind : TriggerKind, effects : Array[Effect] }`
+  - `TriggerKind { OnClick | AfterPrevious | WithPrevious | Time(Pt) }`
+  - `Effect { Entrance(EntranceEffect, target_shape_id) | Emphasis(EmphasisEffect, _) | Exit(ExitEffect, _) | MotionPath(custom_path) }`
+  - ~30 standard effects (Appear / Fade / FlyIn / Wipe / Zoom / Rotate / Pulse / GrowShrink / Teeter / Spin / …)
+  - Custom motion paths reuse Phase 3h's `CustomGeometry::PathCommand` (`MoveTo` / `LnTo` / `CubicBezTo` / etc.)
+  - Emits `<p:timing>` body that was previously round-tripped through `Slide.extension`
+
+🔴 **D1 — SmartArt builder** ⭐ headline feature
+  - `SmartArt::org_chart(root : Node)`, `SmartArt::hierarchy(nodes)`, `SmartArt::cycle(nodes)`, `SmartArt::process(nodes)`, `SmartArt::list(items)`, `SmartArt::pyramid(levels)`, `SmartArt::matrix(rows × cols)`, `SmartArt::relationship(...)`
+  - `Node { text : String, children : Array[Node], style : NodeStyle? }`
+  - Emits `/ppt/diagrams/dataN.xml` + `layoutN.xml` + `colorsN.xml` + `quickStyleN.xml` (DiagramML)
+  - Cached graphic-frame fallback rendering for PowerPoint < 2010
+
+🔴 **C5 — YouTube / URL video embed**
+  - `Slide::with_youtube_video(url, x, y, cx, cy)` — uses A6 plumbing with external `videoFile` target
+  - Auto-generate / accept a preview frame image
+
+---
+
+### 4.5 v1.0.0 — "Stable" · target 2027-08-31
+
+DoD: API surface frozen; LibreOffice + Keynote verified; benchmarks
+published; xlsx cache generation as opt-in.
+
+🔴 **API stability review**
+  - Every `pub` declaration audited; mark experimental items in their doc-comment if any remain
+  - `pkg.generated.mbti` diff vs v0.5 must be additive only (no breaking changes)
+
+🔴 **B3 — Chart embedded xlsx cache generation** (long-tail)
+  - Minimal SpreadsheetML writer (CT_Workbook + CT_Worksheet + CT_SharedStrings)
+  - `Chart::of_bar(data, embed_xlsx~ = true)` etc.
+  - Resolves the "degraded Edit Data UX" called out in ADR-009
+
+🔴 **D5 — Streaming write for huge decks**
+  - `Presentation::save_streaming(emit : (FixedArray[Byte]) -> Unit)` — incremental emission per part
+  - Crucial for 1000+ slide decks generated server-side without materialising the whole `.pptx` in memory
+  - Requires fzip's incremental write API (may need upstream PR)
+
+🔴 **Verification matrix**
+  - PowerPoint 2019 / 2021 / 365 / Online: open every example without warnings
+  - LibreOffice Impress 7.x and 24.x: render parity check
+  - Keynote (current macOS): render parity check
+  - Document platform-specific quirks (e.g. SmartArt fallback paths)
+
+🔴 **Benchmarks**
+  - Throughput: slides/sec for build + save + parse on representative decks (10 / 100 / 1000 slides)
+  - Memory: peak RSS for typical 100-slide deck
+  - Comparison table vs python-pptx + PptxGenJS on the same fixtures
+
+🔴 **CHANGELOG cleanup + 1.0 announcement**
+  - Final release notes; blog post / mooncakes announcement
+
+---
+
+## 5. Open ideas (uncommitted)
+
+Not on the dated roadmap yet — tracked here so they don't get lost:
+
+- **Theme builder DSL** — `Theme::default().with_accent_palette([...])` for tweakable presets
+- **Bullet-list typed parents** — enforce indent-depth at type level
+- **Slide reordering** — `Presentation::move_slide(from, to)` (immutable + `_mut`)
+- **Master / layout cloning + edit** — `SlideLayout::clone().with_…`
+- **Equation editor** (Office Math, `<m:oMathPara>`) — read + write
+- **Form fields / ink** (`<p:contentPart>`) — read + write
+- **Compare two decks** — diff at the typed-model layer
+- **PDF export** — separate companion crate (would consume moon-pptx + a rasterizer)
+- **HTML export** — same
+- **Trait-based shape extensibility** — `trait CustomShape`, third-party `Shape::User(...)` variants
+- **Real-world fixture library** — license-clear small `.pptx` files for regression testing
+
+---
+
+## 6. Completed work (v0.1.0)
+
+Phases 0–7 closed pre-publication. Per-slice detail lives in §10
+(Living changelog).
+
+| Phase | Scope | Status |
+|---|---|---|
+| 0 | Bootstrap, deps, CI | 🟢 |
+| 1 | Units + XML foundations | 🟢 |
+| 2 | OPC layer over fzip | 🟢 |
+| 3 | Read path — theme / master / slide / text / fill+stroke+effect / notes / comments / custGeom + integration round-trip + lossless preservation (ADR-004) | 🟢 |
+| 4 | Write path — writers for every modelled element + golden round-trip | 🟢 |
+| 5 | Builder API — `Presentation::new`, `add_slide_mut`, `with_shape`, `add_picture_mut`, `add_chart_mut`, fluent text + shape styling, immutable variants | 🟢 |
+| 6 | Tables — graphic-frame + table builders + cell properties + cell merging | 🟢 |
+| 7 | Charts — 16 standard families + 9 extended chartEx, read / write / build all of them | 🟢 |
+| **v0.1.0 release** | Pure-MoonBit publication to mooncakes.io as `t-ujiie-g/moon-pptx` | 🟢 |
+
+Final v0.1.0 metrics: 795 tests × 4 backends, 100 % public-API doc
+coverage, generated decks open in PowerPoint Online without repair.
+
+---
+
+## 7. Architecture decision records (ADRs)
 
 Append-only. Each decision gets a heading, date, status, context, decision, consequences.
 
@@ -370,10 +496,10 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 
 ### ADR-003: Immutable builders over mutable setters
 - **Date**: 2026-05-10
-- **Status**: Proposed
+- **Status**: Accepted (anchored in v0.1.0)
 - **Context**: python-pptx uses mutable attribute setters. MoonBit idioms favor immutability and explicit transformation.
 - **Decision**: Builders return new values: `slide.with_shape(s)` not `slide.add_shape(s)`. Where mutation is necessary (e.g., editing existing decks), provide `_mut` variants explicitly.
-- **Consequences**: Slightly more allocation; clearer dataflow; safer with concurrency.
+- **Consequences**: Slightly more allocation; clearer dataflow; safer with concurrency. Honoured across `Presentation` (`with_added_slide` + `add_slide_mut`), `Slide::with_shape`, `AutoShape::with_*`, all of `@chart` builders.
 
 ### ADR-004: Lossless preservation of unknown XML
 - **Date**: 2026-05-10 (accepted 2026-05-21, end of Phase 3f)
@@ -386,7 +512,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Date**: 2026-05-10
 - **Status**: Accepted
 - **Context**: fzip uses a single flat package; pptx-svg uses sub-packages. Surface area for moon-pptx (units, xml, opc, oxml, theme, parts, shapes, text, fill, stroke, effect, geometry, chart, smartart, animation, presentation) is much larger than a leaf compression library — flat scope would muddle namespaces.
-- **Decision**: Set `"source": "src"` in `moon.mod.json`. Each subdomain lives at `src/<name>/` with its own `moon.pkg`. Users import as `@<name>` (e.g. `@units`, `@xml`).
+- **Decision**: Set `"source": "src"` in `moon.mod`. Each subdomain lives at `src/<name>/` with its own `moon.pkg`. Users import as `@<name>` (e.g. `@units`, `@xml`).
 - **Consequences**: One `moon.pkg` per sub-package and one `pkg.generated.mbti` per sub-package. Cross-package imports are explicit. Refactoring boundaries between phases is now low-cost: adding/removing a package is a directory move.
 
 ### ADR-006: TODO.md as single source of truth; no separate planning docs
@@ -395,6 +521,13 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Context**: AI-driven development can scatter intent across many auxiliary docs (plans, designs, reviews). This rots quickly.
 - **Decision**: All roadmap, scope, ADRs, open questions, and risk tracking live in `TODO.md`. Tool-agnostic contributor guidance lives in `AGENTS.md`; Claude-specific overlay in `CLAUDE.md`. New planning, decision, or analysis files are not created — append to `TODO.md` instead.
 - **Consequences**: One file to keep current. PRs that change scope must update `TODO.md` in the same change.
+
+### ADR-007: MoonBit official skills required for Claude Code workflow
+- **Date**: 2026-05-10
+- **Status**: Accepted
+- **Context**: Claude Code's behavior on MoonBit code improves dramatically when the official `moonbitlang/skills` plugin is loaded (orientation, agent-guide, refactoring, spec-test).
+- **Decision**: Required Claude Code plugins are documented in `CLAUDE.md` and `AGENTS.md`. Contributors install via `/plugin` add marketplace `moonbitlang/skills` then install `moonbit-skills`.
+- **Consequences**: Claude Code work without the plugin loaded is best-effort only. Contributors using other agents (Codex, OpenCode, Cursor) follow the install instructions in the upstream skills repo.
 
 ### ADR-008: XML reader is event-based; DOM is opt-in on top
 - **Date**: 2026-05-10
@@ -407,50 +540,49 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Date**: 2026-05-25
 - **Status**: Accepted
 - **Context**: Real-world `.pptx` files emitted by Microsoft Office store chart data as a `<c:externalData r:id="…"/>` reference to an embedded `.xlsx` part (a complete SpreadsheetML package containing the chart's source rows and columns). PowerPoint's "Edit Data" button opens that xlsx in Excel. The ECMA-376 schema permits an alternative inline form (`<c:strLit>` / `<c:numLit>` directly inside `<c:cat>` / `<c:val>` / `<c:xVal>` / `<c:yVal>` / `<c:bubbleSize>`); both PowerPoint and LibreOffice render charts correctly from inline literals without an xlsx part.
-- **Decision**: From-scratch chart builders (`Chart::of_bar` etc.) emit inline `<c:strLit>` / `<c:numLit>` data sources only. We do not generate xlsx caches. Existing `<c:externalData>` references in parsed charts round-trip losslessly via `Chart.extension` (ADR-004); the referenced xlsx part rides through `@opc.Package` as an opaque part keyed by content type (no SpreadsheetML parsing). python-pptx (the de-facto Python PPTX library) takes the same approach for the same reasons.
-- **Consequences**: Builder-produced charts render correctly in PowerPoint / LibreOffice but PowerPoint's "Edit Data" UX is slightly degraded (Excel opens with the inline values rather than a dedicated workbook). Implementing xlsx generation would require a separate SpreadsheetML writer (CT_Workbook + CT_Worksheet + CT_SharedStrings at minimum) — out of scope for Phase 7. If a future user case demands it, it lifts as a Phase-8-or-later feature behind a builder flag like `Chart::of_bar(data, embed_xlsx~ = true)`. Round-trip of real-world decks is unaffected — captured xlsx parts survive parse → serialize unchanged.
-
-### ADR-007: MoonBit official skills required for Claude Code workflow
-- **Date**: 2026-05-10
-- **Status**: Accepted
-- **Context**: Claude Code's behavior on MoonBit code improves dramatically when the official `moonbitlang/skills` plugin is loaded (orientation, agent-guide, refactoring, spec-test).
-- **Decision**: Required Claude Code plugins are documented in `CLAUDE.md` and `AGENTS.md`. Contributors install via `/plugin` add marketplace `moonbitlang/skills` then install `moonbit-skills`.
-- **Consequences**: Claude Code work without the plugin loaded is best-effort only. Contributors using other agents (Codex, OpenCode, Cursor) follow the install instructions in the upstream skills repo.
+- **Decision**: From-scratch chart builders (`Chart::of_bar` etc.) emit inline `<c:strLit>` / `<c:numLit>` data sources only. We do not generate xlsx caches in v0.1.0. Existing `<c:externalData>` references in parsed charts round-trip losslessly via `Chart.extension` (ADR-004); the referenced xlsx part rides through `@opc.Package` as an opaque part keyed by content type (no SpreadsheetML parsing). python-pptx (the de-facto Python PPTX library) takes the same approach for the same reasons.
+- **Consequences**: Builder-produced charts render correctly in PowerPoint / LibreOffice but PowerPoint's "Edit Data" UX is slightly degraded. v1.0 reopens this as item **B3** with an opt-in `embed_xlsx~ = true` builder flag.
 
 ---
 
-## 5. Open questions
+## 8. Open questions
 
 Open:
 
 | # | Question | Owner | Needed by |
 |---|---|---|---|
-| Q6 | How do we expose backend differences (Native file APIs vs Wasm-GC byte-only) cleanly? | — | Phase 5 polish (when we add `Presentation::open_path` / `save_path`) |
+| Q6 | How to expose backend differences (Native file I/O vs Wasm-GC byte-only) cleanly? | — | v0.2 polish (when adding `Presentation::open_path` / `save_path`) |
+| Q7 | Compile-time placeholder schema (M1): per-layout-type approach vs phantom type-parameter on `Slide`? Which is more ergonomic? | — | v0.4 design phase |
+| Q8 | SmartArt: which DiagramML layouts ship in v0.5 first? (org-chart + hierarchy + cycle + process are top candidates) | — | v0.5 scoping |
+| Q9 | Animation DSL: support custom motion paths via custGeom AST reuse in v0.5, or defer to v0.6? | — | v0.5 scoping |
+| Q10 | Lossless diff-write (D6): hash-based detection of "untouched parts" vs explicit dirty-tracking on `Presentation`? | — | v0.3 design |
 
 Resolved:
 
 - **Q1 (Native + Int64)** — resolved at Phase 1.1 (2026-05-10): `Emu = Int64` round-trips on `native` / `wasm-gc` / `wasm` / `js`.
 - **Q2 (XML reader)** — resolved at Phase 1.3 (2026-05-10): self-implemented event-based reader (`src/xml/`) per ADR-008. No suitable mooncakes lib at the time.
-- **Q3 (blank template shipping)** — resolved at Phase 5b2 (2026-05-23): no binary template ships; `Presentation::new()` assembles a blank deck programmatically from XML-literal templates in `src/presentation/template.mbt` plus the Phase 4 writers. Lets us tune the template by editing MoonBit instead of regenerating a `.pptx` and re-encoding bytes.
+- **Q3 (blank template shipping)** — resolved at Phase 5b2 (2026-05-23): no binary template ships; `Presentation::new()` assembles a blank deck programmatically from XML-literal templates plus the Phase 4 writers.
+- **Q4 (real-world fixtures)** — resolved at Phase 3i (2026-05-21): synthetic-but-realistic fixtures in `src/integration/` cover the no-panic + round-trip floor without license concerns.
 - **Q5 (Chart embedded XLSX)** — resolved at Phase 7 closure (2026-05-25): builders emit inline `<c:strLit>` / `<c:numLit>` data only; xlsx caches are preserved on round-trip but not generated. See ADR-009.
-- **Q4 (real-world fixtures)** — resolved at Phase 3i (2026-05-21): synthetic-but-realistic fixtures hand-built in `src/integration/` cover the no-panic + round-trip floor without license concerns.
 
 ---
 
-## 6. Risks & mitigations
+## 9. Risks & mitigations
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| OOXML coverage explodes scope (chart, smartart, animation are huge specs) | High | High | Phase gating; release at Phase 5 (text/shapes/picture) as v0.5; charts later |
-| MoonBit compiler/breaking changes | Medium | Medium | Pin moon version in CI; track changelogs |
+| SmartArt + animation spec scope is huge — could blow up v0.5 | High | High | Ship subset first (4 SmartArt layouts; 10 animation effects); broaden in v0.6+ |
+| Compile-time placeholder schema (M1) explodes type-system complexity | Medium | High | Prototype in a branch first; ship behind explicit opt-in API (`add_slide_typed`) so legacy `add_slide_mut` stays available |
+| MoonBit compiler / toolchain breaking changes | Medium | Medium | Pin moon version in CI; track changelogs via the `moonbit-orientation` skill |
 | fzip breaking changes | Low | Low | Pin minor version; smoke test catches regressions early |
-| PowerPoint vs LibreOffice rendering differences for our output | Medium | Medium | Manual verification matrix in Phases 4–5 |
-| Performance: large decks trigger `Int` overflow in EMU math | Medium | High | Use `Int64` for EMU from day one (units phase) |
-| API churn discourages early adopters | Medium | Medium | Mark APIs experimental until Phase 9; SemVer 0.x freely |
+| PowerPoint vs LibreOffice vs Keynote rendering differences | Medium | Medium | v1.0 explicit verification matrix |
+| API churn discourages early adopters | Medium | Medium | Mark experimental APIs in doc-comments; SemVer 0.x freely; freeze at 1.0 |
+| Performance: large decks → slow build / save | Medium | High | v1.0 benchmarks + streaming write (D5) for the worst case |
+| Browser bundle size for Wasm-GC | Low | Medium | Track post-v0.3 once chart sub-package is heaviest |
 
 ---
 
-## 7. Workflow & conventions
+## 10. Workflow & conventions
 
 ### Development loop
 ```
@@ -465,116 +597,89 @@ Run all four before committing. CI enforces them.
 ### Commit style
 - Imperative subject line, ≤72 chars.
 - Body explains *why*, not *what*.
-- Reference TODO.md phase/section when applicable: `phase 1: add Emu newtype`.
+- Reference the roadmap version or item when applicable: `v0.2 A1: add image-size auto-detect`.
 
 ### Testing
 - Every public function has at least one test.
 - Round-trip tests are mandatory at every layer (XML, OPC, OOXML, model).
-- Real-world PPTX fixtures live in `test_fixtures/` (small, license-clear).
+- Synthetic-but-realistic fixtures live in `src/integration/`; real-world `.pptx` files live in `test_fixtures/` when licensed.
 
 ### Documentation
-- Public APIs documented with `///` doc comments.
-- Examples in `examples/` are runnable and tested.
-- TODO.md is updated *in the same PR* as scope changes.
+- Public APIs documented with `///` doc comments — coverage stays at 100 %.
+- Examples in `examples/` are runnable and round-trip-tested.
+- This TODO.md is updated *in the same PR* as scope changes.
+
+### Release process (post-v0.1.0)
+1. Land all items for the target version on `main`.
+2. `moon fmt && moon check --deny-warn && moon test --target all && moon info` clean.
+3. Update CHANGELOG.md with the new version section.
+4. Bump `moon.mod` version.
+5. Tag `v0.X.0` on `main`.
+6. `moon publish` — confirms 202 Accepted (the trailing `Error: failed` line is benign for `--dry-run`).
+7. Verify the new docs render on mooncakes.io.
 
 ---
 
-## 8. Comparison vs python-pptx (target end-state)
+## 11. Living changelog (high-level)
 
-| Feature | python-pptx | moon-pptx target |
-|---|---|---|
-| Open / modify / save existing PPTX | ✅ | ✅ (Phase 4) |
-| Create from scratch | ✅ | ✅ (Phase 5) |
-| TextBox / AutoShape / Picture builders | ✅ | ✅ (Phase 5) |
-| Tables | ✅ | ✅ (Phase 6) |
-| Charts (build) | partial (~7 types) | ✅ all 13 types (Phase 7) |
-| SmartArt | read-only | ✅ build (Phase 8) |
-| Animations | read-only | ✅ build (Phase 8) |
-| Type-safe units | ❌ | ✅ (Phase 1) |
-| Immutable builders | ❌ | ✅ (Phase 5) |
-| Lossless extension preservation | partial | ✅ (Phase 3) |
-| Compile-time placeholder schema | ❌ | ✅ stretch (Phase 8) |
-| Streaming write for huge decks | ❌ | ✅ stretch (Phase 8) |
-
----
-
-## 9. Living changelog (high-level)
-
+- **2026-05-26** — **`examples/sample-deck/` reinstated as a standalone consumer module.** The 12-slide demo deck builder (previously deleted from `src/sample/` because library-internal demo code doesn't represent post-`moon add` consumer usage) is back, but now lives as a separate MoonBit module under `examples/sample-deck/` with its own `moon.mod.json` and a path dep on `../..`. From the consumer-side the import shape (`@presentation`, `@chart`, …) is identical to what a `moon add t-ujiie-g/moon-pptx` user would write, so the example doubles as a worked-out usage template. Bisection mode (per-feature isolation files for PowerPoint Online repair debugging) lives behind a compile-time `split_mode` flag in `main.mbt`. Switching to a version dep after v0.2.0 publication is a one-line edit (path → `"0.2.0"`). Path-dep verified via JSON moon.mod.json — the TOML moon.mod format isn't accepting `{ path = ".." }` syntax yet, so this module keeps the JSON form.
+- **2026-05-26** — **PowerPoint Online repair-banner fixes + sample-deck removal.** Round-trip diffs against PowerPoint's auto-repaired output surfaced eight schema-and-canonicalisation issues triggering the "needs repair" banner even when the file was spec-valid: (1) `<p:notesMasterId>` was emitting the schema-undefined `id` attribute (only valid on `<p:sldMasterId>`); (2) `<p:sldSz type="custom"/>` should drop the `type` attribute entirely for non-preset dimensions; (3) `<c:ofPieChart>` should omit `<c:splitType val="auto"/>` (PowerPoint repairs it away) and emit explicit `<c:gapWidth>=100` + `<c:secondPieSize>=75` defaults; (4) chart axes need `<c:crosses val="autoZero"/>` (every axis kind) + `<c:crossBetween val="between"/>` (valAx) per spec; (5) 3-D chart builders (`of_bar_3d` / `of_line_3d` / `of_pie_3d` / `of_surface` / `of_surface_3d`) need `<c:view3D>` + `<c:floor>` / `<c:sideWall>` / `<c:backWall>` populated; (6) `<a:custGeom>` should always emit empty `<a:ahLst/>`, `<a:cxnLst/>`, and a default zero-bound `<a:rect>`; (7) the bundled `Presentation::new()` slide-master needs `<p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>`; (8) internal-slide hyperlinks need `action="ppaction://hlinksldjump"` on `<a:hlinkClick>` plus the rt_slide rel — without it PowerPoint silently rewrites the link to a no-op. Also `notesSlide` and `Slide` writers now synthesise the required `<p:nvGrpSpPr>` + `<p:grpSpPr>` (with zero-valued `<a:xfrm>`) when no captured wrapper exists; `set_notes_mut` auto-synthesises `/ppt/notesMasters/notesMaster1.xml` + a duplicated `theme2.xml` on first call. **`src/sample/` and `src/cmd_sample/` removed** — library-internal demo code doesn't represent post-`moon add` consumer usage; a standalone consumer-example repo is planned for after v0.2.0. The cookbook in `examples/README.md` (verified by `src/integration/examples_test.mbt`) replaces it. 846 tests × 4 backends green (851 → 846 = sample_deck_test.mbt's 13 tests removed, 8 repair fix tests + 5 notes-master tests added throughout).
+- **2026-05-26** — **v0.2 batch landed on `main` (7 of 8 items)**: A1 (image-size auto-detection via PNG/JPEG/GIF/BMP/TIFF header parsing in `@oxml.detect_image_dimensions` + `Presentation::add_picture_auto_mut`), A2 (hyperlink builder — new `HyperlinkTarget` enum + `RunProperties::with_hyperlink` / `with_hyperlink_to_slide` + a resolver that allocates slide-rels rIds at `update_slide_mut` time + `rt_hyperlink` constant), A3 (`Presentation::set_notes_mut(slide_idx, text)` with body-placeholder synthesis + auto-Override registration), A4 (`Picture::with_crop(left~, top~, right~, bottom~ : Percentage)`), A5 (`SlideSizeKind` enum + `Presentation::set_slide_size_mut` covering 4:3 / 16:9 / 16:10 / widescreen / Letter / A4 / 35mm / banner / custom), B2 (`TableCellProperties::with_borders` per-edge fluent), C2 (`Presentation::pct_w` / `pct_h` / `slide_w` / `slide_h` percent-of-slide positioning). Plus an `examples/README.md` with 8 cookbook recipes verified by `src/integration/examples_test.mbt`. **A8 (slide number / footer / date placeholders) deferred** — the per-slide flags are cheap, but they only render usefully when the master defines matching placeholders, so the work is bundled with v0.3 C1 (`define_master`). 56 new tests (795 → 851 total × 4 backends).
+- **2026-05-26** — **v0.1.0 published to mooncakes.io as `t-ujiie-g/moon-pptx`.** Module renamed from `moon_pptx` to `moon-pptx` to match the repo and align with the hyphen-naming convention common on mooncakes; sub-package import aliases (`@units`, `@chart`, …) and every public API unchanged. README rewritten for an OSS audience (drops pre-alpha banner and phase table; adds sub-package map + compatibility matrix). CHANGELOG.md created. Public-API doc coverage 82 % → 100 % across 116 source files. 795 tests × 4 backends green. `moon publish --dry-run` returned 202 Accepted before tagging.
 - **2026-05-25** — Sample-deck builder + integration tests + CLI binary. New `src/sample/build.mbt` exposes `pub fn build_sample_deck()` — an 8-slide deck exercising every typed feature delivered through Phase 7 (styled title, shapes with custom fills, multi-paragraph text, 3×3 table, bar / line / pie / scatter / bubble charts). New `src/integration/sample_deck_test.mbt` carries 10 structural-validation tests (slide count, shape kinds, chart count, text content, round-trip stability). New `src/cmd_sample/main.mbt` is an `is-main` binary that emits the deck bytes as a single hex string on stdout — `moon run src/cmd_sample --target native | tail -1 | xxd -r -p > out/sample.pptx` produces a `.pptx` openable in PowerPoint / Keynote / LibreOffice. The hex+xxd dance is forced by the "no FFI" policy (CLAUDE.md §8) — MoonBit's `core` only exposes `println(Show)` for I/O. `out/` and `*.pptx` are gitignored. 795 total tests × 4 backends.
 - **2026-05-25** — **PowerPoint "needs repair" prompt eliminated for `Presentation::new()`.** Building a real sample deck and opening it in PowerPoint Online surfaced two distinct ECMA-376 violations in the bundled template, both fixed in `src/presentation/template.mbt`. (1) Five OPC parts that §13.3.6 marks as required were absent: `/ppt/presProps.xml` (CT_PresentationProperties), `/ppt/viewProps.xml` (CT_CommonViewProperties), `/ppt/tableStyles.xml` (CT_TableStyleList — required when slides carry tables), `/docProps/core.xml` (Dublin Core metadata), `/docProps/app.xml` (extended properties). New content-type constants in `@oxml/content_types.mbt` (ct_pres_props / ct_view_props / ct_table_styles / ct_core_properties / ct_extended_properties) and relationship-type constants in `@opc/relationship_types.mbt` (rt_pres_props / rt_view_props / rt_table_styles / rt_core_properties / rt_extended_properties). (2) The theme was missing `<a:fmtScheme>` (CT_StyleMatrix) — §20.1.6.10's CT_BaseStyles makes all three of clrScheme / fontScheme / fmtScheme mandatory (`minOccurs="1"`), and *this* was the actual PowerPoint repair trigger. Added the canonical 3-entry "subtle / moderate / intense" Office trio across fillStyleLst / lnStyleLst (6350 / 12700 / 19050 EMU) / effectStyleLst / bgFillStyleLst, all using the `phClr` placeholder. Theme reference also moved out of `presentation.xml.rels` (slideMaster.xml.rels owns it now — the Office convention); slides now claim rIds from rId5 onward (next-available after master + presProps + viewProps + tableStyles). `add_slide_mut`'s next-rId walk picks this up automatically. Verified by opening the generated deck in PowerPoint Online — no repair banner. 795 tests still pass × 4 backends.
 - **2026-05-25** — **Phase 7 (Charts) closed.** Remaining "embedded XLSX cache generation" item resolved via ADR-009: builders emit inline `<c:strLit>` / `<c:numLit>` data sources (same approach as python-pptx); existing `<c:externalData>` references round-trip losslessly via `Chart.extension` and the referenced xlsx part rides through `@opc.Package` as an opaque part. 3 new round-trip tests for `<c:externalData>` preservation. Open Q5 ("generate or treat as opaque cache?") resolved. 785 total tests × 4 backends.
-- **2026-05-25** — Typed `<c:trendline>` body (CT_Trendline) across all three series-core flavours (`ChartSeriesCore`, `ScatterSeriesCore`, `BubbleSeriesCore`). New `trendlines : Array[Trendline]` field replaces the captured `<c:trendline>` payload that previously rode on `extension`. `Trendline { name, sp_pr, trendline_type, order, period, forward, backward, intercept, disp_r_sqr, disp_eq, trendline_lbl, extension }` covers the full CT_Trendline shape. New `TrendlineType` enum (6 variants: Exp / Linear / Log / MovingAvg / Poly / Power -- ST_TrendlineType; prefixed `Trendline` to dodge collisions). Floats (forward / backward / intercept) carry as `String?` to preserve source tokens. `<c:trendlineLbl>` stays captured until later. `parse_trendline` raises Malformed on missing required `<c:trendlineType>`. Writers now emit trendlines between `<c:spPr>` and `<c:cat>`/`<c:xVal>` per ECMA-376 §21.2.2.211 schema order (previously trendlines rode in extension AFTER cat/val). Pie/doughnut/radar/surface families never push into the array since trendlines don't apply. New `src/chart/chart_trendline.mbt`. 13 new tests, 782 total × 4 backends.
-- **2026-05-25** — Typed `<c:layout>` body (CT_Layout + CT_ManualLayout) across the four call sites that previously captured it as XmlElement: `ChartTitle.layout`, `ChartLegend.layout`, `DLbl.layout`, and `PlotArea.layout`. New `Layout { manual_layout, extension }` wraps an optional `ManualLayout { layout_target, x_mode, y_mode, w_mode, h_mode, x, y, w, h, extension }`. New `LayoutTarget` enum (Inner/Outer) and `LayoutMode` enum (Edge/Factor). Floating coordinates carry as `String?` to preserve the source token (same convention as `Scaling.max/min/log_base` and `crossesAt`). New `src/chart/chart_layout.mbt` carries the type + parse/write round-trip pair. 9 new tests, 769 total × 4 backends.
-- **2026-05-25** — Typed `<c:dLbl>` per-data-point overrides (CT_DLbl). `DLbls.d_lbl : Array[XmlElement]` placeholder lifts to `Array[DLbl]`. New `DLbl { idx, delete, layout, tx, num_fmt, sp_pr, tx_pr, d_lbl_pos, show_legend_key, show_val, show_cat_name, show_ser_name, show_percent, show_bubble_size, separator, extension }` covers the full CT_DLbl shape — both EG_DLblChoice branches (delete-branch and full-styling-branch) stored as optional fields; parser tolerates the source's choice and writer emits whatever is set. `parse_d_lbl` raises Malformed on missing `<c:idx>`; `parse_d_lbls` now propagates that (its signature was lenient because none of its previous typed fields raised). Reuses the shared `DLblPos` / `NumFmt` types and `d_lbls_val_*` helpers from `chart_d_lbls.mbt`. 6 new tests, 760 total × 4 backends.
-- **2026-05-25** — Typed `<c:dLbls>` data-labels body (CT_DLbls) across all 14 chart families that emit it (bar / line / pie / area / area3D / bar3D / line3D / pie3D / doughnut / radar / ofPie / scatter / bubble / stock; surface / surface3D have no data labels). Per-family `d_lbls : @xml.XmlElement?` lifts to `d_lbls : DLbls?` carrying { d_lbl, num_fmt, sp_pr, tx_pr, d_lbl_pos, show_legend_key, show_val, show_cat_name, show_ser_name, show_percent, show_bubble_size, separator, extension }. New `DLblPos` enum (9 variants — bestFit / b / ctr / inBase / inEnd / l / outEnd / r / t — variants prefixed `DLbl` to dodge collision with `AxPos.Bottom` etc.). Per-data-point overrides `<c:dLbl>` (CT_DLbl) keep round-tripping as captured XmlElement in `DLbls.d_lbl : Array` until typed in a later slice. Pie-family-only `<c:showLeaderLines>` / `<c:leaderLines>` ride on `DLbls.extension` per ADR-004. `<c:numFmt>` reuses the axis-side `NumFmt` value (same shape). New `src/chart/chart_d_lbls.mbt` carries the type + parse / write round-trip pair. The lift uses sed across the 14 plot bodies + the 14 parser sites in plot_parsers.mbt + the 14 writer sites in plot_writers.mbt — every site is mechanical replacement. 10 new tests, 754 total × 4 backends.
-- **2026-05-25** — Typed `<c:legend>` body (CT_Legend). `ChartBody.legend` lifts from captured XmlElement to a typed `ChartLegend { legend_pos, legend_entries, layout, overlay, sp_pr, tx_pr, extension }`. New `LegendPos` enum (Bottom / TopRight / Left / Right / Top — the variants are prefixed with `Legend` to dodge collision with `AxPos`'s Bottom / Left / Right / Top). New `LegendEntry { idx, delete, tx_pr, extension }` covers CT_LegendEntry's per-series overrides; missing `<c:idx>` raises Malformed. Substantial subtrees (`<c:layout>`, `<c:spPr>`, `<c:txPr>`) stay captured until later slices type them. New file `src/chart/chart_legend.mbt` carries the type + `parse_chart_legend` / `write_chart_legend` round-trip pair. Writer emits children in ECMA-376 §21.2.2.93 schema order. 9 new tests, 744 total × 4 backends.
-- **2026-05-25** — Typed `<c:title>` body (CT_Title) for both chart-level and per-axis titles. `ChartBody.title` and `AxisCore.title` lift from `@xml.XmlElement?` to a typed `ChartTitle { tx, layout, overlay, sp_pr, tx_pr, extension }`. Only the scalar `<c:overlay>` leaf is typed; the heavy subtrees (`<c:tx>` rich-text, `<c:layout>`, `<c:spPr>`, `<c:txPr>`) keep round-tripping as captured XmlElement until later slices. Foreign-namespace + `<c:extLst>` ride on `ChartTitle.extension` per ADR-004. New file `src/chart/chart_title.mbt` defines the type + `parse_chart_title` / `write_chart_title` round-trip pair, shared by both call sites. Writer emits children in ECMA-376 §21.2.2.210 schema order (tx → layout → overlay → spPr → txPr → extension). 8 new tests, 735 total × 4 backends.
-- **2026-05-25** — Typed `Axis` (CT_AxBase shared core + commonly-used optional fields). `Axis` enum's four variants (ValAx / CatAx / DateAx / SerAx) lift from `@xml.XmlElement` payload to a typed `AxisCore` struct with the full required + common-optional surface (axId / scaling / delete / axPos / majorGridlines / minorGridlines / title / numFmt / majorTickMark / minorTickMark / tickLblPos / spPr / txPr / crossAx / crosses / crossesAt + extension). New file `src/chart/axis.mbt` defines the type + `parse_axis_core` / `write_axis` round-trip pair plus six supporting enums (`Orientation` / `AxPos` / `TickMark` / `TickLblPos` / `Crosses`) and one struct (`Scaling` with logBase / orientation / max / min children) and one attribute-style struct (`NumFmt { format_code, source_linked }`). Per-axis-kind extras (CatAx's `lblOffset`, ValAx's `crossBetween` / `majorUnit` / `dispUnits`, CT_DateAx's `baseTimeUnit`, CT_SerAx's `tickLblSkip`, plus `<c:extLst>` / foreign-namespace) ride on `AxisCore.extension` per ADR-004. Floats (`crossesAt` / `Scaling.{max, min, log_base}`) carry as `String?` to preserve the source token (avoids float-format drift, mirrors how `OfPieChartBody.split_pos` is handled). `Axis::element()` removed in favour of `Axis::core()` (typed accessor); the captured-XmlElement payload is gone. Builders' `simple_axis_element(...) -> XmlElement` replaced by `simple_axis_core(...) -> AxisCore` — chart builders (`Chart::of_bar` / `of_line` / `of_pie` / etc.) emit schema-valid typed axes end-to-end. 16 new tests, 727 total × 4 backends.
-- **2026-05-25** — Typed chart-series cores land. Every standard chart-family body (BarChartBody / LineChartBody / PieChartBody / AreaChartBody / Area3DChartBody / Bar3DChartBody / Line3DChartBody / Pie3DChartBody / DoughnutChartBody / RadarChartBody / StockChartBody / SurfaceChartBody / Surface3DChartBody / OfPieChartBody / ScatterChartBody / BubbleChartBody) now carries `Array[ChartSeriesCore]` (or `ScatterSeriesCore` / `BubbleSeriesCore` for the two value-axis families) instead of `Array[@xml.XmlElement]`. New `src/chart/series.mbt` defines the three typed series flavours plus `parse_*_series_core` / `write_*_series_core` round-trip pairs. Builders (`synthesize_one_series` / `synthesize_scatter_series` / `synthesize_bubble_series`) now construct typed cores. `<c:idx>` is required (raises `Malformed` if missing); `<c:order>` defaults to `idx` on parse (matching PowerPoint / LibreOffice lenience) and is always emitted on write. Data-source bodies (`<c:strRef>` / `<c:numRef>` / `<c:strLit>` / `<c:numLit>` payloads) keep round-tripping as captured XmlElement — typed `AxDataSource` / `NumDataSource` ASTs are a later expansion point. 711 tests × 4 backends.
-- **2026-05-25** — `Presentation::add_chart_mut(slide_idx, chart, x, y, cx, cy)` + `add_chart_ex_mut(...)` close the loop on chart support — `Chart::of_bar(...)` etc. produced a `Chart` value but actually attaching it to a slide required custom OPC plumbing. New flow: serialise the chart, allocate `/ppt/charts/chartN.xml`, add the part with Override content type, register a slide-level `rt_chart` relationship, and append a typed `GraphicFrame::of_chart_ref(rid)` shape. New `@slide.GraphicFrame::of_chart_ref / of_chart_ex_ref` builders; new `@opc.rt_chart / rt_chart_ex` relationship-type constants. 5 new tests, 711 total × 4 backends.
-- **2026-05-25** — `Presentation::add_picture_mut(slide_idx, bytes, x, y, cx, cy)` lands the image-insertion API. Magic-byte detector dispatches PNG / JPEG / GIF / BMP / TIFF to the right content type + extension; new media part `/ppt/media/imageN.{ext}` gets created, Default content-type entry registered, slide `.rels` gains a new rId pointing at the image, typed `Picture` shape (via `@slide.Picture::of_image`) appended to the slide tree, and the slide bytes re-written via `update_slide_mut`. Native-only `Picture::from_path` deferred — callers do file I/O themselves; the byte-level entry point covers every backend uniformly. 7 new tests, 706 total × 4 backends.
-- **2026-05-25** — Fluent text + shape styling builders. New `RunProperties::with_font_size / with_bold / with_italic / with_color / with_font` chain run-level styling; `Paragraph::with_alignment / with_properties` does the same for paragraphs; `TextBody::of_styled_text(text, rp)` + `of_paragraphs([…])` lift one-liner construction. On the shape side `AutoShape::with_fill / with_no_fill / with_stroke / with_no_stroke / with_text_body` compose on top of the existing `rect / ellipse / round_rect / textbox` builders. Settled on fluent setters on the existing `AutoShape` rather than introducing separate `TextBox::new()` / `Rectangle::new()` types — the underlying value is the same either way. 7 new tests, 699 total × 4 backends.
-- **2026-05-25** — `AutoShape` gains a typed `fill : @oxml.Fill?` field — the EG_FillProperties choice inside `<p:spPr>` (`<a:noFill>` / `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>` / `<a:grpFill>`) used to round-trip through `extension` only, so builder-built shapes had no fill and rendered as fully transparent in PowerPoint / LibreOffice. Now: `parse_sp_pr` lifts the fill choice into the typed model, the writer emits it in ECMA-376 schema order (transform → geometry → fill → ln → effects), and `AutoShape::rect` / `ellipse` / `round_rect` default to a visible light-grey fill (#DDE3EE) plus a 1pt dark outline (#445566). `AutoShape::textbox` stays transparent so text-only boxes don't paint a surprise background. Connectors and pictures pass `None` for the fill arg (line-only and blipFill-driven respectively). 692 tests still pass × 4 backends; moon check --deny-warn / fmt / info clean.
-- **2026-05-24** — Post-Phase-7 refactor + doc sweep. Stripped all "Phase XX" provenance markers from source comments and test names (~156 references across 107 files) so file headers and inline docs describe content rather than slice history. Split `src/chart/parser.mbt` (1048 lines) into `parser.mbt` (top-level walk + dispatch + attribute helpers) + `plot_parsers.mbt` (16 per-family `parse_*_chart` functions). Split `src/chart/writer.mbt` (805 lines) into `writer.mbt` + `plot_writers.mbt` symmetrically. Deleted dead-code `Plot::element()` (always `None` after Phase 7e2 typed every variant). Consolidated `axis_element` helper into `Axis::element()` so the public accessor is the single source. Removed duplicated `ignore[T](T) -> Unit` helpers in `@chart` / `@chart_ex` in favour of `let _ = self`. README status banner + phase table refreshed; AGENTS.md + CLAUDE.md stripped of stale Phase references. 692 tests still pass × 4 backends; moon check --deny-warn / fmt / info clean.
+- **2026-05-25** — Typed `<c:trendline>` body (CT_Trendline) across all three series-core flavours (`ChartSeriesCore`, `ScatterSeriesCore`, `BubbleSeriesCore`). New `trendlines : Array[Trendline]` field replaces the captured `<c:trendline>` payload that previously rode on `extension`. 13 new tests, 782 total × 4 backends.
+- **2026-05-25** — Typed `<c:layout>` body (CT_Layout + CT_ManualLayout) across the four call sites that previously captured it as XmlElement. 9 new tests, 769 total × 4 backends.
+- **2026-05-25** — Typed `<c:dLbl>` per-data-point overrides (CT_DLbl). 6 new tests, 760 total × 4 backends.
+- **2026-05-25** — Typed `<c:dLbls>` data-labels body (CT_DLbls) across all 14 chart families that emit it. 10 new tests, 754 total × 4 backends.
+- **2026-05-25** — Typed `<c:legend>` body (CT_Legend). 9 new tests, 744 total × 4 backends.
+- **2026-05-25** — Typed `<c:title>` body (CT_Title) for both chart-level and per-axis titles. 8 new tests, 735 total × 4 backends.
+- **2026-05-25** — Typed `Axis` (CT_AxBase shared core + commonly-used optional fields). 16 new tests, 727 total × 4 backends.
+- **2026-05-25** — Typed chart-series cores land across every standard chart family. 711 tests × 4 backends.
+- **2026-05-25** — `Presentation::add_chart_mut / add_chart_ex_mut` close the loop on chart support. 5 new tests, 711 total × 4 backends.
+- **2026-05-25** — `Presentation::add_picture_mut` lands the image-insertion API. 7 new tests, 706 total × 4 backends.
+- **2026-05-25** — Fluent text + shape styling builders. 7 new tests, 699 total × 4 backends.
+- **2026-05-25** — `AutoShape` gains a typed `fill : @oxml.Fill?` field — `AutoShape::rect` / `ellipse` / `round_rect` default to a visible light-grey fill (#DDE3EE) + 1pt dark outline (#445566). 692 tests pass × 4 backends.
+- **2026-05-24** — Post-Phase-7 refactor + doc sweep. Stripped "Phase XX" provenance markers from source comments (~156 references across 107 files). Split `src/chart/parser.mbt` + `writer.mbt` along the plot-family boundary. 692 tests pass × 4 backends.
+- **2026-05-24** — Phase 7e done (7e1 + 7e2 combined): `src/chart_ex/` sub-package covers the Microsoft 2014 extended chart families (waterfall, treemap, sunburst, histogram, boxWhisker, funnel, paretoLine, regionMap, clusteredColumn). `ChartExKind` discriminator with 9 variants + `Other(String)` for forward compatibility. **Phase 7 closes for the modelled surface.** 13 new tests, 692 total × 4 backends.
+- **2026-05-24** — Phase 7d done: eight more from-scratch builders complete the standard-schema chart-builder set — doughnut / ofPie / 3-D bar / 3-D line / 3-D pie / surface / surface3D / stock. 16 new tests, 675 total × 4 backends.
+- **2026-05-24** — Phase 7c done: four builders — area / radar / scatter / bubble. 10 new tests, 659 total × 4 backends.
+- **2026-05-24** — Phase 7b done: chart-from-scratch builders (`Chart::of_bar / of_line / of_pie`) with inline `<c:strLit>` + `<c:numLit>` data sources. 15 new tests, 649 total × 4 backends.
+- **2026-05-24** — Phase 7a3f done: scatter / bubble / stock / surface / surface3D / ofPie bodies typed. All 16 standard plot kinds now typed. 18 new tests, 634 total × 4 backends.
+- **2026-05-24** — Phase 7a3e done: 7 more chart family bodies typed (area / area3D / bar3D / line3D / pie3D / doughnut / radar). 10 new tests, 608 total × 4 backends.
+- **2026-05-24** — Phase 7a3c + 7a3d done: lineChart and pieChart bodies typed. 9 new tests, 598 total × 4 backends.
+- **2026-05-24** — Phase 7a3b done: barChart body typed. 6 new tests, 589 total × 4 backends.
+- **2026-05-24** — Phase 7a3a done: plotArea typed structure + plot/axis enum discriminator. 3 new tests, 583 total × 4 backends.
+- **2026-05-24** — Phase 7a2 done: `<c:chart>` outer element + chartSpace scalar fields typed. 4 new tests, 581 total × 4 backends.
+- **2026-05-24** — Phase 7a1 done: `src/chart/` sub-package reads / writes `<c:chartSpace>` with ADR-004 lossless capture. 10 new tests, 577 total × 4 backends.
+- **2026-05-23** — Doc + refactor sweep after Phase 6 closure. Promoted graphic-data URIs and four duplicate helpers into `@oxml`. 566 tests pass × 4 backends.
+- **2026-05-23** — Phase 6d done: `TableProperties` + `TableCellProperties` lifted from XmlElement to typed records. **Phase 6 closes.** 7 new tests, 565 total × 4 backends.
+- **2026-05-23** — Phase 6c done: table builders. `TableCell::of_text` / `merged_origin` / merge-covered helpers, `TableRow::of_cells`, `Table::of_rows` / `of_grid`, `GraphicFrame::of_table`. 8 new tests, 558 total × 4 backends.
+- **2026-05-23** — Phase 6a + 6b done: typed graphic-frame + table parser + writer. `<p:graphicFrame>` lifts from `Shape::Unknown` into `Shape::GraphicFrame`. 5 new tests, 550 total × 4 backends.
+- **2026-05-23** — Phase 5f done: ADR-003-compliant immutable builders (`Presentation::clone / with_added_slide / with_slide_updated`). 10 new tests, 545 total × 4 backends.
+- **2026-05-23** — Doc + refactor sweep after Phase 5e. Consolidated relationship-type constants into `@opc`. 535 tests pass × 4 backends.
+- **2026-05-23** — Phase 5e done: cookbook five-slide pitch deck builder in `src/integration/`. 4 new tests, 535 total × 4 backends.
+- **2026-05-23** — Phase 5d done: shape builders (`AutoShape::rect / ellipse / round_rect / textbox`) + `Slide::with_shape` + `Presentation::update_slide_mut`. 11 new tests, 531 total × 4 backends.
+- **2026-05-23** — Phase 5c done: `Presentation::add_slide_mut(layout_index)` — first mutation entry point. 7 new tests, 520 total × 4 backends.
+- **2026-05-23** — Phase 5b2 done: `Presentation::new()` assembles a blank deck from XML-literal templates. 5 new tests, 513 total × 4 backends.
+- **2026-05-23** — Phase 5b1 done: typed `presentation.xml` parser + writer + sldIdLst-driven slide ordering. 4 new tests, 508 total × 4 backends.
+- **2026-05-23** — Phase 5a done: `src/presentation/` façade — `Presentation::open / save` + typed accessors. 8 new tests, 504 total × 4 backends.
+- **2026-05-23** — Refactor pass after Phase 4. 496 tests pass × 4 backends.
+- **2026-05-22** — Phase 4 closed: writer slices 4a (`@comments`) → 4b (`@theme`) → 4c (`@oxml` Color / Fill / Stroke / EffectList) → 4d (`@slide_master`) → 4e (`@slide` + custom geometry) → 4f (`@notes`) → 4g (end-to-end golden in `@integration`). 83 new tests across the phase, 413 → 496 total × 4 backends.
+- **2026-05-21** — Phase 3i done: `src/integration/` test-only package adds end-to-end deck round-trip floor. 14 new tests, 413 total × 4 backends. **Phase 3 closes.**
+- **2026-05-21** — Phase 3h done: typed `CustomGeometry` AST for `<a:custGeom>`. 22 new tests, 399 total × 4 backends.
+- **2026-05-21** — Phase 3g done (3g1 + 3g2 + 3g3): notes slides + comment author list + comment list. 23 new tests across the phase, 377 total × 4 backends.
+- **2026-05-21** — Phase 3f closed: lossless preservation (ADR-004) rolled out across the entire model surface. 41 new tests across 3f1 → 3f3e, 354 total × 4 backends.
+- **2026-05-13** — Cross-parser refactor — `xml_helpers.mbt` consolidates per-parser `next_event` / `skip_subtree` / `require_attr` into `@oxml`. ~700 lines net change. 305 tests pass × 4 backends.
+- **2026-05-12** — Phase 3e closed: fill / stroke / effect parsers (3e1 → 3e4). 49 new tests, 303 total × 4 backends.
+- **2026-05-11** — Phase 3d closed: text parser (3d1 → 3d4). 54 new tests, 240 total × 4 backends.
+- **2026-05-11** — Phase 3c closed: slide parser (3c1 → 3c4) covering shape / group / connector / picture. 34 new tests, 186 total × 4 backends.
+- **2026-05-11** — Phase 3b done: slide master + layout parsers + inheritance resolver. 26 new tests, 152 total × 4 backends.
+- **2026-05-11** — Phase 3a done: theme parser. 9 new tests, 126 total × 4 backends.
+- **2026-05-11** — Phase 2 closed: OPC layer (a + b + c + d). 110 → 117 tests pass × 4 backends.
+- **2026-05-10** — Phase 1 closed: foundations (units 1.1 / colors 1.2 / xml 1.3). 75 tests pass × 4 backends.
+- **2026-05-10** — Phase 0 closed: README, CI matrix, CLAUDE.md, AGENTS.md, ADR-006, ADR-007. ADR-002 accepted.
 - **2026-05-10** — Project bootstrapped; fzip dependency wired up; smoke test green.
-- **2026-05-10** — Phase 0 closed: README, CI matrix (Ubuntu+macOS × native/wasm-gc/js), CLAUDE.md, AGENTS.md, ADR-006 (TODO.md as single source of truth), ADR-007 (MoonBit skills required). ADR-002 accepted.
-- **2026-05-10** — CI fix: added `moon update` step before `moon check` / `moon test`. First push surfaced "Failed to resolve registry dependency `hustcer/fzip`" because fresh runners have no registry index until `moon update` populates it. Fix verified locally by wiping `.mooncakes/` and reproducing.
-- **2026-05-10** — Phase 1.1 done: `src/units/` sub-package with `Emu` / `Pt` / `Inch` / `Cm` / `Percentage` / `Angle`. ADR-005 accepted (sub-packages under `src/`). 18 tests pass on all four backends.
-- **2026-05-10** — Phase 1.2 done: color types added to `src/units/` — `RgbColor` (hex parse/format), `HslColor` (RGB↔HSL conversion), `ThemeColor` enum (17 slots), `ColorTransform` ADT, `SchemeColor` immutable builder, `UnitsError` suberror. 33 tests pass on all four backends.
-- **2026-05-10** — Phase 1.3 done (in three commits): `src/xml/` sub-package complete with `QName`, `XmlError`, namespace-aware streaming `XmlWriter`, and event-based `XmlReader` with full namespace + entity handling. ADR-008 records the event-vs-DOM decision. 75 tests pass on all four backends. **Phase 1 (Foundations) closed.**
-- **2026-05-10** — Refactoring pass after Phase 1: deleted placeholder stubs (`cmd/main/`, root-package `moon-pptx.mbt` and its tests, `fzip_smoke_test.mbt`, `units_test.mbt` type-only smoke); stripped now-unused fzip import from root `moon.pkg`; refreshed README status table. Codified the 5-point refactoring checklist in `CLAUDE.md §7` so future "リファクタリング" requests apply the same lens. 73 tests still pass × 4 backends.
-- **2026-05-11** — Phase 2 a/b/c done: `src/opc/` sub-package with `Package`, `Part`, `OpcError`, `ContentTypes` (Default/Override + resolution + auto-populate), `Relationships` (parse/serialize/lookup/builder + relative/`..`/external target resolution + `rels_path_for` helper). Total 110 tests on all four backends. Phase 2d (end-to-end .pptx fixture) remaining.
-- **2026-05-11** — Phase 2d done: in-memory minimal-but-realistic `.pptx` fixture (6 parts, 2 rels files, Default + Override content-types, `..`-walking targets) exercises full open → mutate → save → reopen. **Phase 2 (OPC layer) closed.** 117 tests on all four backends.
-- **2026-05-11** — Phase 3a done: `src/theme/` reads `a:theme` into typed `Theme` / `ColorScheme` / `FontScheme`. `skip_subtree` swallows unmodelled siblings (`fmtScheme` and friends) without losing parser state — lossless preservation of the skipped sections is on the docket once ADR-004 is implemented. 126 tests on all four backends.
-- **2026-05-11** — Phase 3b done: `src/slide_master/` reads `p:sldMaster` and `p:sldLayout` into typed structs (`ColorMapping`, `SlideLayoutRef`, `ClrMapOverride`, `SlideLayoutType` with 27 spec values), and `inheritance.mbt` resolves theme ← master ← layout colour chains. Shared `src/oxml/` namespace constants extracted (used by theme + slide_master). 152 tests on all four backends.
-- **2026-05-11** — Phase 3c1 done: `src/slide/` skeleton parses `<p:sld>` into typed `Slide` with shape list (AutoShape modelled with id/name/placeholder/transform; pic/cxnSp/grpSp/graphicFrame land as `Unknown(name)` placeholders for later 3c slices). 10 tests, 162 total × 4 backends.
-- **2026-05-11** — Phase 3c2 done: `PresetShape` enum covers all 187 `ST_ShapeType` values with `from_xml` / `to_xml`; `Geometry` ADT and `ShapeAdjustValue` carry `<a:prstGeom>` adjustment formulas verbatim (formula language deferred). `<a:custGeom>` is recognised but its path data is intentionally opaque for now. 8 tests, 170 total × 4 backends.
-- **2026-05-11** — Phase 3c3 done: `Picture` shape parsed from `<p:pic>` (id, name, transform, geometry, blip embed/link rIds, srcRect crop). `Shape::Picture` variant added, `Unknown("pic")` placeholder removed. `@units.Percentage` and `@units.Angle` gained `derive(Eq)` so structural comparison works in tests. 8 tests, 178 total × 4 backends.
-- **2026-05-11** — Phase 3c4 done: `Connector` (`<p:cxnSp>`) with optional bound endpoints (`ConnectionEnd { shape_id, idx }`) and `GroupShape` (`<p:grpSp>`) with recursive `children : Array[Shape]` and the `<a:chOff>` / `<a:chExt>` child-coord-space fields. `Shape::Unknown` now only catches `graphicFrame` and `contentPart`. **Phase 3c (slide parser) closed.** 8 tests, 186 total × 4 backends.
-- **2026-05-11** — Phase 3d1 done: `TextBody` / `Paragraph` / `Run` / `Field` / `Break` model + `plain_text()` extractor; `AutoShape.text_body` field. `RunProperties` carries `lang` placeholder, `ParagraphProperties` carries `level`; the rest of the run/paragraph property surface lands across 3d2–3d4. 10 tests, 196 total × 4 backends.
-- **2026-05-11** — Phase 3d2 done: `RunProperties` now covers the practical `<a:rPr>` surface — font size (Pt) / bold / italic / underline / strikethrough / baseline (Percentage) / caps / latin+ea+cs typefaces / solid fill (RGB or theme) / hyperlink_click rId. Unknown enum values collapse to `None` gracefully. `@units.Pt/Inch/Cm` derive `Eq`. 16 tests, 212 total × 4 backends.
-- **2026-05-11** — Phase 3d3 done: `ParagraphProperties` covers `<a:pPr>` — level / alignment (7-variant `TextAlignment`) / marL/indent (Emu, negatives for hanging indent) / lineSpacing (Percentage) / spaceBefore/After (Pt). `Bullet` ADT covers `<a:buNone>` / `<a:buChar>` / `<a:buAutoNum>` (38-variant `AutoNumType`) / `<a:buBlip>`. Unknown algn values collapse to `None`; unknown buAutoNum types raise `Malformed`. 16 tests, 228 total × 4 backends.
-- **2026-05-11** — Phase 3d4 done: `BodyProperties` (rotation, vertical text, wrap, anchor, four insets, auto-fit ADT) + `ListStyle` (defPPr + 9-slot level array). `TextBody` carries both fields alongside paragraphs. **Phase 3d (text parser) closed.** 12 tests, 240 total × 4 backends.
-- **2026-05-11** — Refactor pass between Phase 3d and 3e: extracted shared UTF-8 decoder to `@oxml.bytes_to_string` (collapsed 3 copies in theme/slide_master/slide); consolidated 9 per-test `_ascii` helpers + namespace literals into `src/slide/_shared_fixtures_test.mbt`; split 1574-line `src/slide/parser.mbt` along the shape/text boundary (parser.mbt 1031 lines + text_parser.mbt 506 lines); fixed stale Phase status row in README and dangling `, charts` typo in TODO.md. 240 tests still pass × 4 backends.
-- **2026-05-12** — Phase 3e1 done: unified `@oxml.Color { base, transforms }` ADT lifts theme slots, run-level fill, and every future gradient stop / shape fill onto one parser path. Old `@theme.ColorChoice` and `@slide.RunFill` removed. `@oxml.parse_color_element` covers all six DrawingML colour elements (srgb/hsl/sys/scheme/prst/scrgb) plus the five modeled colour transforms (Tint/Shade/SatMod/LumMod/Alpha); long-tail modifiers (hueMod, redMod, comp, …) are accepted but currently dropped. `@units.HslColor` / `@units.ColorTransform` gained `derive(Eq)`. 14 new tests, 254 total × 4 backends.
-- **2026-05-12** — Phase 3e2 done: full shape-level `@oxml.Fill` ADT (`NoFill` / `SolidFill` / `GradientFill` / `PatternFill` / `BlipFillVariant`) with supporting types (`Gradient`, `GradientStop`, `GradientDirection`, `Pattern`, `BlipFill`, `BlipFillMode { Stretch | Tile }`, `TileFlip`, `TileAlignment`, `TileSpec`, `FillRect`, `SrcRect`). `@oxml.parse_fill` is the entry-point. `@slide.Picture` migrated — its three picture-blip fields collapse into one `blip_fill : @oxml.BlipFill`; the slide-local `parse_blip_fill` / `extract_blip_rels` / `parse_src_rect_attrs` helpers are gone. 14 new tests, 268 total × 4 backends.
-- **2026-05-12** — Phase 3e3 done: `@oxml.Stroke` covers `<a:ln>` — width / cap / compound / alignment / fill (reuses `@oxml.Fill`) / dash (`DashStyle` 11 presets) / join (Round/Bevel/Miter w/ optional limit) / head & tail arrows (`ArrowType` 6, `ArrowSize` 3). `parse_stroke` entry-point. Wired into `AutoShape` / `Picture` / `Connector` via `stroke : Stroke?`. 17 new tests, 285 total × 4 backends.
-- **2026-05-12** — Phase 3e4 done: `@oxml.EffectList` covers `<a:effectLst>` — Blur, Glow, InnerShadow, OuterShadow, PresetShadow, SoftEdge, Reflection plus 9-value `RectAlignment` enum. `parse_effect_list` reuses `@oxml.parse_color_element` for nested colour children; unmodelled siblings (`fillOverlay`, `effectDag`) are skipped to keep parsing tolerant. Wired into `AutoShape` / `Picture` / `Connector` via `effects : EffectList?` on `<p:spPr>` (`parse_sp_pr` widened to 4-tuple). 18 new tests, 303 total × 4 backends. **Phase 3e (fill/stroke/effect) closed.**
-- **2026-05-12** — Refactor pass after Phase 3e (safe set): extracted shared `@oxml.parse_signed_int` / `parse_signed_int64` to collapse six byte-identical signed-decimal parsers (color/fill/stroke/effect/slide/text_parser → ~180 LOC removed); collapsed 8 test-side namespace literals onto `@oxml.{drawing_ns, presentation_ns, office_relationships_ns}`; deleted 5 unused public builders (`EffectList::empty` / `Stroke::empty` / `FillRect::default` / `SrcRect::default` / `TileSpec::default`); fixed a stale header comment in `effect.mbt` (no run-level `<a:rPr>` wiring); added 2 missing negative tests (`innerShdw` without colour, `prstShdw` without `prst`). 305 tests × 4 backends. The bigger consolidation (`next_event` / `skip_subtree` / `require_attr` family across the 7 parsers) is deferred to a separate commit before Phase 4 starts.
-- **2026-05-13** — Cross-parser refactor (`xml_helpers.mbt`): consolidated per-parser copies of `next_event` / `skip_subtree` / `require_attr` (+ family) into a single shared module under `@oxml`, raising the neutral `XmlReadError`. Color/fill/stroke/effect/slide/slide_master/theme parsers now delegate; each translates back into its own domain suberror at the use site. ~700 lines net change (-671 / +562).
-- **2026-05-21** — Phase 3f1 done: `@xml.XmlElement` / `@xml.XmlNode` ad-hoc DOM types added alongside `XmlEvent`. New `@oxml.collect_subtree` helper consumes events into an `XmlElement` (used at the points where parsers previously called `skip_subtree`) so unknown OOXML chunks can round-trip per ADR-004. 12 new tests cover empty/attribute/nested/text/CDATA/mixed-content/namespace cases plus the post-capture cursor position. 317 tests × 4 backends.
-- **2026-05-21** — Phase 3f2 done: `@slide.{Slide, AutoShape, Picture, Connector, GroupShape}` gained `extension : Array[@xml.XmlElement]` fields. Slide parser replaces top-level `skip_subtree` call sites with `collect_subtree_unknown` so `<p:transition>` / `<p:timing>` / `<p:custDataLst>` / `<p:extLst>` / `<p:bg>` / foreign-namespace siblings + the implicit-root-group metadata land on `Slide.extension`; `<p:style>` / `<p:extLst>` siblings of shape bodies land on each shape's own `extension`. `Shape::Unknown(String)` → `Shape::Unknown(@xml.XmlElement)` so `<p:graphicFrame>` (table / chart / SmartArt host) and `<p:contentPart>` round-trip the full subtree instead of just the local name. 8 new tests, 325 total × 4 backends.
-- **2026-05-21** — Phase 3f3 done (a → d): rolled `extension : Array[@xml.XmlElement]` out across the remaining model surface. `@theme.{Theme, ColorScheme, FontScheme, FontCollection}` now keep `<a:fmtScheme>` / `<a:objectDefaults>` / `<a:extraClrSchemeLst>` / foreign-namespace children. `@slide_master.{SlideMaster, SlideLayout}` keep `<p:cSld>` (incl. layout's full shape tree) / `<p:txStyles>` / `<p:hf>` / `<p:transition>` / `<p:extLst>`. `@slide` text-side widens to TextBody / Paragraph / Run / Field / BodyProperties / ParagraphProperties / RunProperties / ListStyle; `parse_break` now actually parses the rPr instead of dropping it. `@oxml.Color` keeps unmodelled colour-modifier tail (`hueMod`, `redMod`, `comp`, `inv`, `gamma`, `gray`, …); `@oxml.{Gradient, Pattern, BlipFill, Stroke, EffectList}` keep unmodelled children (BlipFill captures the entire `<a:blip>` subtree so `<a:duotone>` / `<a:clrChange>` etc. round-trip; EffectList captures `<a:fillOverlay>`; Stroke captures `<a:custDash>` and `<a:extLst>`). The Phase 3 "Unknown-element preservation strategy" checkbox flips to done; one residual is helper-level skips inside `@slide.parser.mbt` (tracked as Phase 3f3e). 21 new tests, 346 total × 4 backends.
-- **2026-05-21** — Phase 3f3e done: threaded each shape's `extension` array through the helper parsers (`parse_sp_pr` / `parse_grp_sp_pr` / `parse_nv_sp_pr` / `parse_nv_pr` / `parse_nv_cxn_sp_pr` / `parse_cxn_sp_locks` / `parse_xfrm` / `parse_group_xfrm` / `parse_prst_geom` / `parse_av_lst` / `parse_clr_map_ovr`). Result: every previously-dropped child inside an `<p:spPr>` / `<p:grpSpPr>` / `<p:nvSpPr>` / `<p:nvPicPr>` / `<p:nvCxnSpPr>` (`<a:scene3d>`, `<a:sp3d>`, `<a:extLst>`, `<a:hlinkClick>` inside `<p:cNvPr>`, `<a:spLocks>` inside `<p:cNvSpPr>`, `<p:custDataLst>` / `<p:audioFile>` inside `<p:nvPr>`, foreign-namespace siblings, and `<a:custGeom>`'s full body) round-trips on the surrounding shape's `extension`. `Geometry::Custom` widened to `Custom(@xml.XmlElement)` to carry the `<a:custGeom>` payload. The remaining `skip_subtree` calls in the slide parser are all on spec-empty leaf elements where there's nothing to preserve. 8 new tests, 354 total × 4 backends. **Phase 3f (lossless preservation) closed.**
-- **2026-05-21** — Phase 3g1 done: `src/notes/` sub-package reads `<p:notes>`. `@slide` parser refactored so `Slide::parse_with_root(bytes, "notes")` (a new public entry alongside `Slide::parse`) re-uses the existing `<p:cSld>` / `<p:spTree>` / `<p:clrMapOvr>` walk for notes slides — shape-tree behaviour stays in lockstep automatically. `NotesSlide { name, shapes : Array[@slide.Shape], clr_map_override, extension }` is a thin wrapper struct so consumers pattern-match on the type, not a tag. `NotesError { XmlFailure | Malformed | SlideFailure }`. 8 new tests, 362 total × 4 backends.
-- **2026-05-21** — Phase 3g2 + 3g3 done: `src/comments/` sub-package reads both comment parts. `CommentAuthorList::parse` reads `commentAuthors.xml` into `CommentAuthor { id, name, initials, last_idx, clr_idx, extension }`. `CommentList::parse` reads `commentsN.xml` into `Comment { author_id, dt : String?, idx, pos : CommentPos { x : Emu, y : Emu }, text, extension }` — `<p:pos>` is required (raises `Malformed` if absent), `dt` is optional (older PowerPoint omits it), nested elements inside `<p:text>` raise (spec violation), entity references decode through the shared reader. New `CommentsError { XmlFailure | Malformed }` with `wrap_xml` boundary. 15 new tests, 377 total × 4 backends. **Phase 3g (speaker notes + comments) closed.**
-- **2026-05-21** — Phase 3h done: `<a:custGeom>` lifts into a typed `@slide.CustomGeometry` AST. `avLst` / `gdLst` reuse `ShapeAdjustValue`; `cxnLst` becomes `Array[ConnectionSite { ang : AdjAngle, pos : PathPoint, extension }]`; `<a:rect>` becomes `GeomRect { l, t, r, b : AdjCoordinate }`; `<a:pathLst>` becomes `Array[Path { w, h, fill : PathFillMode, stroke, extrusion_ok, commands, extension }]` with the six `PathCommand` variants (`MoveTo` / `LnTo` / `CubicBezTo` / `QuadBezTo` / `ArcTo` / `Close`). `AdjCoordinate` / `AdjAngle` auto-disambiguate literals from guide references at parse time via integer-parse-or-fall-back. `<a:ahLst>` (adjust handles — rare, deeply nested) preserved via `CustomGeometry.extension` per ADR-004 rather than typed today. `Geometry::Custom(@xml.XmlElement)` → `Geometry::Custom(CustomGeometry)` is a breaking enum change; the only call site is the slide parser's dispatch on `<a:custGeom>` and the one existing geometry test, both updated. 22 new tests, 399 total × 4 backends. **Phase 3h closed.**
-- **2026-05-24** — Phase 7e done (7e1 + 7e2 combined): `src/chart_ex/` sub-package covers the Microsoft 2014 extended chart families — waterfall, treemap, sunburst, histogram, boxWhisker, funnel, paretoLine, regionMap, clusteredColumn. Distinct schema, distinct namespace (`http://schemas.microsoft.com/office/drawing/2014/chartex` → `cx:`), distinct content type, distinct graphic-data URI. 7e1 added the skeleton with lossless capture; 7e2 typed the body: `ChartEx { chart_data, chart, extension }` → `ChartExBody` → `ChartExPlotArea` → `ChartExPlotAreaRegion { series : Array[ChartExSeries] }`. The chart kind discriminator lifts via `ChartExKind { BoxWhisker | ClusteredColumn | Funnel | ParetoLine | RegionMap | Sunburst | Treemap | Waterfall | Histogram | Other(String) }` on each series's `layoutId` attribute. `GraphicFrameContent::ChartExContent(rid)` slide-side variant. `Presentation::charts_ex()` accessor. **Phase 7 (Charts) closes here for the modelled surface — standard charts + extended charts both read / write / round-trip.** 13 new tests across 7e1+7e2, 692 total × 4 backends.
-- **2026-05-24** — Phase 7d done: eight more from-scratch builders close out the standard-schema chart-family builder set — `Chart::of_doughnut` / `of_of_pie` / `of_bar_3d` / `of_line_3d` / `of_pie_3d` / `of_surface` / `of_surface_3d` / `of_stock`. New `StockKind { HLC | OHLC }` enum + `normalize_stock_series` helper that truncates excess or zero-pads short input to the schema-required series count. 3-D variants build a 3-axis plotArea (catAx + valAx + serAx) via the new `three_axis_plot_area(plot)` helper. Extended chart types (waterfall / treemap / sunburst / histogram / boxwhisker / funnel) deferred to a future Phase 7e — they live in separate `chartEx` parts under c14/c15/c16 namespaces, not the original CT_PlotArea schema we model today. 16 new tests, 675 total × 4 backends.
-- **2026-05-24** — Phase 7c done: four more from-scratch builders — `Chart::of_area` / `of_radar` / `of_scatter` / `of_bubble`. Area + radar reuse `ChartData`. Scatter and bubble use dedicated `ScatterData` (XY pairs) and `BubbleData` (XYS triples) since both have two value axes and synthesize `<c:xVal>` / `<c:yVal>` (+ `<c:bubbleSize>`) instead of `<c:cat>` / `<c:val>`. 10 new tests, 659 total × 4 backends.
-- **2026-05-24** — Phase 7b done: chart-from-scratch builders. New `ChartData { categories, series }` immutable value (mirrors ADR-003). `Chart::of_bar(data, bar_dir~ = Col, grouping~ = Clustered)` / `Chart::of_line(data, grouping~ = Standard)` / `Chart::of_pie(data)` constructor helpers produce a complete typed `Chart` value, including a minimal catAx/valAx pair (for bar / line) and synthesized `<c:ser>` `XmlElement` payloads with inline `<c:strLit>` cats + `<c:numLit>` vals (no embedded XLSX). End-to-end test confirms a builder-produced chart drops cleanly into a Package and `Presentation::charts()` reads it back. 15 new tests, 649 total × 4 backends.
-- **2026-05-24** — Phase 7a3f done: the final six chart-family bodies typed — `ScatterChartBody` / `BubbleChartBody` / `StockChartBody` / `SurfaceChartBody` / `Surface3DChartBody` / `OfPieChartBody`. New enums: `ScatterStyle` (6 values, CT_ScatterStyle), `SizeRepresents` (2 values, CT_SizeRepresents), `OfPieType` (pie | bar), `SplitType` (5 values, CT_SplitType). `splitPos` carried as `String?` to round-trip the source representation without floating-point drift. All 16 chart-family kinds in `Plot` are now typed; `Plot::element()` is now a no-op (always `None`) kept on the public surface for source compatibility. Phase 7a (chart read path) closes here for the modelled surface. 18 new tests, 634 total × 4 backends.
-- **2026-05-24** — Phase 7a3e done: seven more chart-family bodies typed in one slice — `AreaChartBody`, `Area3DChartBody`, `Bar3DChartBody`, `Line3DChartBody`, `Pie3DChartBody`, `DoughnutChartBody`, `RadarChartBody`. New enums `BarShape` (6 values, CT_Shape) and `RadarStyle` (3 values, CT_RadarStyle). 3-D variants use three axIds; `Area3DChart` / `Bar3DChart` / `Line3DChart` add the `gapDepth` leaf; doughnut adds `holeSize`. Required scalar fields raise `Malformed` when absent (`barDir` for bar3D, `grouping` for line3D, `radarStyle` for radar). 10 new tests, 608 total × 4 backends.
-- **2026-05-24** — Phase 7a3c + 7a3d done: `<c:lineChart>` and `<c:pieChart>` bodies lift from captured `XmlElement` into typed `LineChartBody` and `PieChartBody`. Shared `Grouping { Standard | Stacked | PercentStacked }` enum (CT_Grouping) introduced for the line + area families. Line chart's three line-decoration subtrees (`dropLines` / `hiLowLines` / `upDownBars`) stay as `XmlElement?` until later. Pie chart has no axes; `firstSliceAng` is the integer-degree leaf for slice starting position. Writer dispatch covers BarChart / LineChart / PieChart typed variants; the remaining 13 plot kinds keep round-tripping through the captured-element fallback. 9 new tests across the two slices, 598 total × 4 backends.
-- **2026-05-24** — Phase 7a3b done: `<c:barChart>` body lifts from captured `XmlElement` into typed `BarChartBody`. Scalar / enum / integer leaves typed (`barDir` / `grouping` / `varyColors` / `gapWidth` / `overlap` / `axId*`); `<c:ser>` (CT_BarSer) and `<c:dLbls>` stay as `XmlElement` until later slices. New enums `BarDir { Bar | Col }`, `BarGrouping { PercentStacked | Clustered | Standard | Stacked }`. Writer dispatch over `Plot` variants (`write_plot`) lets typed and captured variants coexist. `Plot::element()` is now `Option[XmlElement]` (None for the typed barChart variant). 6 new tests, 589 total × 4 backends.
-- **2026-05-24** — Phase 7a3a done: `<c:plotArea>` body lifts from the captured `XmlElement` into typed `PlotArea { layout, plots, axes, data_table, sp_pr, extension }`. 16-variant `Plot` enum + 4-variant `Axis` enum discriminate the chart-family and axis children by their local name; bodies still ride as captured `XmlElement` per ADR-004 until later 7a slices. Combination charts (multiple plots in one `<c:plotArea>`) survive via `plots : Array[Plot]`. Writer follows ECMA-376 §21.2.2.14 schema order. 3 new tests, 583 total × 4 backends.
-- **2026-05-24** — Phase 7a2 done: `<c:chart>` outer element + chartSpace-level scalar leaves lift from the wholesale `space_body` capture into typed fields on `Chart` + new `ChartBody` sub-struct. Scalar/enum-valued leaves typed: `date1904`, `lang`, `roundedCorners`, `style`, `autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs` (enum `Span|Gap|Zero`), `showDLblsOverMax`. Substantial subtrees (`title` / `plotArea` / `legend` / `view3D` / `floor` / `sideWall` / `backWall` / `pivotFmts`) stay as captured `XmlElement?` per ADR-004 until 7a3+. Parser raises `Malformed` on missing `<c:chart>` or missing `<c:plotArea>` per ECMA-376 schema requirements (`CT_ChartSpace`, `CT_Chart`). Writer emits children in schema order. Adopted the codebase's `assert_true(x is None)` / `unwrap()` patterns for Option assertions (instead of `assert_eq(x, None)`) to dodge the new `core/debug` deprecation that fires when `assert_eq` invokes `Show` on container types. 4 new tests, 581 total × 4 backends.
-- **2026-05-24** — Phase 7a1 done: `src/chart/` sub-package reads / writes `<c:chartSpace>` end-to-end with the entire body captured per ADR-004 (`Chart { space_body : XmlElement }`). New namespace + content-type constants (`@oxml.chart_ns`, `@oxml.ct_chart`). `GraphicFrameContent` gained `ChartContent(rid)` so the slide-side `<c:chart r:id="…"/>` no longer rides through `OtherGraphic`; the actual chart bytes are exposed via `Presentation::charts()`. End-to-end `chart_deck` integration fixture (`fixtures_test.mbt` plus new `chart_test.mbt`) covers slide-side reference + chart-part round-trip + `re_serialize_all` golden. 10 new tests, 577 total × 4 backends.
-- **2026-05-23** — Doc + refactor sweep after Phase 6 closure. Promoted graphic-data URIs (`graphic_data_table_uri` plus new `graphic_data_chart_uri` / `graphic_data_diagram_uri`) into `@oxml/content_types.mbt` next to the existing `ct_*` / `rt_*` constants; dropped the local copies. Replaced the four duplicate helpers in `slide/graphic_frame_parser.mbt` (`bool_attr_opt` / `emu_attr_opt` / `lookup_attr` / second-copy attribute lookups) with their existing `@oxml` counterparts. Added a builder-side round-trip test for `TableCellProperties` confirming margins / anchor / fill come back unchanged after serialize → re-parse. README banner refreshed (Phase 6 closed) + new Tables snippet in Quickstart. 566 tests still pass × 4 backends; no semantic changes.
-- **2026-05-23** — Phase 6d done: `<a:tblPr>` + `<a:tcPr>` lift from `@xml.XmlElement` capture into typed `TableProperties { first_row / first_col / last_row / last_col / band_row / band_col / rtl, fill, table_style_id, extension }` and `TableCellProperties { margin_{l,r,t,b}, anchor, anchor_ctr, vertical_text, border_{left,right,top,bottom,tl_to_br,bl_to_tr}, fill, extension }`. New `@oxml.write_stroke_with_local_name(w, ctx, s, local)` lets the cell-border writer reuse `@oxml.write_stroke` for the six `<a:ln{L,R,T,B,TlToBr,BlToTr}>` variants. `TableCellProperties::default / with_margins / with_fill / with_anchor / with_border_all / with_border_{left,right,top,bottom}` ergonomic builders. Round-trip verified for the full attribute soup. **Phase 6 (Tables) closed.** 7 new tests, 565 total × 4 backends.
-- **2026-05-23** — Phase 6c done: table builders. `TableCell::of_text / empty / merged_origin / h_merge_covered / v_merge_covered / hv_merge_covered` cover the standard cell-merge palette. `TableRow::of_cells(cells, height~)` plus `Table::of_rows(rows, col_widths~) / of_grid(rows~, cols~, col_width~, row_height~)` build the surrounding structure. `GraphicFrame::of_table(id, name, x, y, cx, cy, table)` wraps it for `Slide::with_shape`. Empty `<a:tblPr/>` + `<a:tcPr/>` are synthesised so PowerPoint sees the elements it expects without callers ever touching `XmlElement`. 8 new tests, 558 total × 4 backends.
-- **2026-05-23** — Phase 6a + 6b done: typed graphic-frame + table parser + writer. `<p:graphicFrame>` lifts from `Shape::Unknown(XmlElement)` into `Shape::GraphicFrame(GraphicFrame { id, name, transform, content : GraphicFrameContent { TableContent(Table) | OtherGraphic(String, XmlElement) }, extension })`. The `<a:graphicData uri="…">` URI routes: the table uri gets a typed `Table { properties, grid, rows : Array[TableRow { height, cells : Array[TableCell { grid_span, row_span, h_merge, v_merge, text_body, properties, extension }] }] }` body; everything else (chart / SmartArt / OLE) round-trips through `OtherGraphic`. Cell text-body writers share the slide text writer via the new `write_text_body_with_wrapper(uri, local)` helper. Round-trip verified for plain 2×2 tables, every merged-cell flag combination, and chart-uri pass-through. 5 new tests, 550 total × 4 backends.
-- **2026-05-23** — Phase 5f done: ADR-003-compliant immutable builder variants. `@opc.Package::clone() / Part::clone() / ContentTypes::clone()` deep-copy the package layer (parts get fresh `FixedArray[Byte]` buffers; ContentTypes' defaults/overrides get fresh arrays). `@presentation.Presentation::clone() / with_added_slide(layout_index~) / with_slide_updated(idx, slide)` clone the package first, run the same internal mutation as their `_mut` counterparts, and return the new value. Closes Phase 5's main builder-API story. 10 new tests, 545 total × 4 backends.
-- **2026-05-23** — Doc + refactor sweep after Phase 5e. Consolidated the `.rels` content-type string (was duplicated as `rels_content_type` in `add_slide.mbt` and `ct_relationships` in `template.mbt`) into `@opc.rels_content_type`; promoted the ten OOXML relationship-type URLs (`officeDocument` / `slide` / `slideMaster` / `slideLayout` / `theme` / `image` / `notesSlide` / `notesMaster` / `comments` / `commentAuthors`) to `@opc.rt_*` constants and replaced the eleven hardcoded sites. `template.mbt`'s four `.rels` literals now share one `relationships_doc` builder. README banner refreshed ("Phase 4 closed" → "Phase 5 substantially closed"); Quickstart rewritten to show the actual working API instead of the planned-future stub; phase-status table updated. Phase 5 status banner in TODO.md clarified. 535 tests still pass × 4 backends; no semantic changes.
-- **2026-05-23** — Phase 5e done: cookbook example in `src/integration/cookbook_test.mbt` builds a five-slide pitch deck end-to-end (Title / Problem / Solution / Demo / Closing) using only public API. Helpers `add_centered_textbox` / `add_rect_at` / `add_ellipse_centered` show how to compose the typed shape builders into higher-level layout flows. EMU arithmetic stays in `Int64` until the builder boundary so users don't have to destructure the newtype repeatedly. Tests assert shape counts, sldId monotonicity, and title text round-trip. 4 new tests, 535 total × 4 backends.
-- **2026-05-23** — Phase 5d done: shape builders (`AutoShape::rect / ellipse / round_rect / textbox` + `TextBody::of_text` + `Paragraph::of_text`) close the gap between typed model values and hand-friendly construction. `Slide::with_shape` returns a new `Slide` with the shape appended (copies the shapes array so the original is untouched). `Presentation::update_slide_mut(idx, new_slide)` re-serialises and replaces the slide's part bytes — closes the edit loop: `new() → add_slide_mut → with_shape → update_slide_mut → save()`. Caveat documented in the builder tests: hand-built shapes' first serialize → parse cycle adds captured `<p:cNvPr>` / `<p:cNvSpPr>` / `<p:nvPr>` wrappers to `extension`, so strict `==` only holds from the second cycle onwards. 11 new tests, 531 total × 4 backends.
-- **2026-05-23** — Phase 5c done: first mutation entry point `add_slide_mut(layout_index) -> String` on `Presentation`. Appends a blank `/ppt/slides/slideN.xml` part (XML literal), threads it through `presentation.xml.sldIdLst` (next available sldId starting from 256), `presentation.xml.rels` (new rId), `slideN.xml.rels` (back-pointer to layout via `../slideLayouts/slideLayoutM.xml`), and `[Content_Types].xml` Override. The helper `relative_target` does the standard "common-prefix + ../ math" so cross-folder relationship paths come out canonical. Per ADR-003 the immutable `with_added_slide` is deferred until `@opc.Package` gains a clone API. 7 new tests, 520 total × 4 backends.
-- **2026-05-23** — Phase 5b2 done: `Presentation::new()` assembles a minimal-but-valid blank PPTX from XML-literal templates (theme / slide master / Blank layout / presentation.xml + all .rels) and a generated `[Content_Types].xml`. The package is opened-and-re-wrapped so the resulting `Presentation` is structurally identical to one from `open(bytes)`. The XML-literal approach (rather than constructing typed model values from scratch) sidesteps the writer's reliance on captured `<p:cSld>` wrappers. 5 new tests, 513 total × 4 backends.
-- **2026-05-23** — Phase 5b1 done: typed `presentation.xml` parser + writer in `@presentation`. New `PresentationPart` exposes `sld_master_ids` / `sld_ids` (drives ordering) / `notes_master_id` / `handout_master_id` / `sld_sz` / `notes_sz` + ADR-004 extension for everything else. `Presentation::slides()` now uses `<p:sldIdLst>` source order, falling back to package storage order only when there's no main-document relationship (malformed PPTX). New `Presentation::presentation_part()` exposes the typed metadata for builder consumers. 4 new tests, 508 total × 4 backends.
-- **2026-05-23** — Phase 5a done: `src/presentation/` sub-package introduces the high-level `Presentation` façade. `Presentation::open(bytes)` / `save()` wrap an `@opc.Package`; typed accessors (`slides` / `themes` / `slide_masters` / `slide_layouts` / `notes_slides` / `comment_lists` / `comment_authors`) walk parts by content type and parse lazily. New `PptxError` aggregates each sub-package's failures via per-source `*Failure(String)` variants. Slide ordering follows package storage order — true `<p:sldIdLst>` order lifts in Phase 5b. The struct field is `pkg : @opc.Package` because `package` is a reserved MoonBit keyword. 8 new tests, 504 total × 4 backends.
-- **2026-05-23** — Refactor pass after Phase 4: consolidated `write_clr_map_override` (was byte-identical in `@slide_master/writer.mbt` and `@slide/writer.mbt`) into a single public helper in `@slide_master`; extracted PPTX content-type strings into `@oxml/content_types.mbt` so Phase 4g fixtures and the upcoming `Presentation::new()` reference one set of constants; refreshed README phase-status banner ("Phase 3 closed" → "Phase 4 closed") and table (Phase 4 → Done, Phase 5 → Next). 496 tests still pass × 4 backends.
-- **2026-05-23** — CI fix for moon 0.1.20260522: adopted the new `impl Trait for T with fn method(...)` keyword across every `Show` impl (~26 files), dropped explicit aliases from every `moon.pkg` import (`"path/foo" @foo` → `"path/foo"` auto-aliases from the last segment), and migrated `moon.mod.json` → `moon.mod` (TOML format). No semantic changes. Phase 4 commits 0daff60..7eb0b71 had been green locally but failed `moon fmt --check` on CI runners that picked up the newer toolchain.
-- **2026-05-22** — Phase 4 closed: writer slices 4a (`@comments`) → 4b (`@theme`) → 4c (`@oxml` Color / Fill / Stroke / EffectList) → 4d (`@slide_master`) → 4e (`@slide` + `@slide.CustomGeometry`) → 4f (`@notes`) → 4g (end-to-end golden in `@integration`). Floor is `parse → serialize → parse → Eq`; verified across the three synthetic decks for Theme / SlideMaster / SlideLayout / Slide / NotesSlide / CommentAuthorList / CommentList. Key correctness fix during 4e: `<p:cNvPr>` / `<p:cNv*Pr>` are captured wholesale by the parser, so the writer re-emits the captured element instead of synthesising — synthesis would duplicate the wrapper in the round-tripped extension. 83 new tests across the phase, 413 → 496 total × 4 backends.
-- **2026-05-21** — Phase 3i done: `src/integration/` test-only package adds the end-to-end deck round-trip floor. Three synthetic fixtures (`minimal_deck` / `rich_deck` / `notes_and_comments_deck`) hand-built from compositional XML helpers (`fixture_theme_xml` / `fixture_master_xml` / `fixture_layout_xml` / `fixture_simple_slide_xml` / `fixture_rich_slide_xml` / `fixture_notes_xml` / `fixture_authors_xml` / `fixture_comments_xml`) exercise every Phase 3 parser via `Package::open` → `parse_everything` (content-type dispatch). Real-world `.pptx` files remain out of scope per TODO Q4. `Package.to_bytes` → reopen → re-parse equality verified on Slide / Theme / NotesSlide / CommentList. New `moon.pkg` pattern: `import { … } for "test"` block scopes test-only deps so `moon check` doesn't flag them as unused. 14 new tests, 413 total × 4 backends. **Phase 3 (Read path) closed.**
 
-(Detailed changelog: `CHANGELOG.md`, populated from Phase 9 onward.)
+(Pre-v0.1.0 detailed per-slice notes: see git history at commit `b5fc76d` and earlier. From v0.2 onward the public-facing CHANGELOG.md is canonical; this changelog stays as engineering-level detail.)

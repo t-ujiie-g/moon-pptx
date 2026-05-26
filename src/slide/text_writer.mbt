@@ -453,11 +453,23 @@ fn write_run_properties(
     }
     None => ()
   }
-  // Hyperlink-click rId.
+  // Hyperlink-click rId + optional tooltip + optional action. The
+  // `action` attribute is critical for internal-slide jumps: PowerPoint
+  // expects `action="ppaction://hlinksldjump"` whenever the rId points
+  // at another slide, and silently rewrites the hlinkClick to a no-op
+  // if it isn't present.
   match p.hyperlink_click {
     Some(rid) => {
       w.start_element(@xml.QName::new(@oxml.drawing_ns, "hlinkClick"))
       w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), rid)
+      match p.hyperlink_tooltip {
+        Some(t) => w.attribute(@xml.QName::unqualified("tooltip"), t)
+        None => ()
+      }
+      match p.hyperlink_action {
+        Some(a) => w.attribute(@xml.QName::unqualified("action"), a)
+        None => ()
+      }
       w.end_element()
     }
     None => ()

@@ -52,6 +52,10 @@ pub let ct_theme : String
 
 pub let ct_view_props : String
 
+pub fn detect_image_dimensions(FixedArray[Byte]) -> ImageDimensions?
+
+pub fn detect_image_format(FixedArray[Byte]) -> ImageFormat?
+
 pub let drawing_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
@@ -289,6 +293,27 @@ pub(all) struct GradientStop {
   position : @units.Percentage
   color : Color
 } derive(Eq, @debug.Debug)
+
+pub(all) struct ImageDimensions {
+  format : ImageFormat
+  width_px : Int
+  height_px : Int
+  dpi_x : Double
+  dpi_y : Double
+} derive(Eq, @debug.Debug)
+pub fn ImageDimensions::to_emu(Self) -> (Int64, Int64)
+pub impl Show for ImageDimensions
+
+pub(all) enum ImageFormat {
+  Png
+  Jpeg
+  Gif
+  Bmp
+  Tiff
+} derive(Eq, @debug.Debug)
+pub fn ImageFormat::content_type(Self) -> String
+pub fn ImageFormat::extension(Self) -> String
+pub impl Show for ImageFormat
 
 pub(all) struct InnerShadow {
   blur_rad : @units.Emu

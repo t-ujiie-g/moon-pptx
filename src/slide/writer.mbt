@@ -87,11 +87,54 @@ fn write_slide_xml(
   // <p:spTree>
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "spTree"))
   // spTree-level captured extensions (nvGrpSpPr, grpSpPr) emit first
-  // — they describe the implicit root group's metadata.
+  // — they describe the implicit root group's metadata. ECMA-376
+  // §19.3.1.45 marks both elements as required (`minOccurs="1"`) so
+  // we synthesise a minimal pair when the source didn't carry one
+  // (the typical case for hand-built notes slides or anything
+  // constructed without going through a parse cycle first).
+  let mut emitted_sptree_ext = false
   for ext in s.extension {
     if classify_ext(ext) is ExtSpTree {
       @oxml.write_xml_element(w, ctx, ext)
+      emitted_sptree_ext = true
     }
+  }
+  if !emitted_sptree_ext {
+    // Default wrapper matching what PowerPoint emits for a freshly-
+    // created slide: cNvPr + cNvGrpSpPr + nvPr inside nvGrpSpPr, then
+    // a grpSpPr carrying a zero-valued `<a:xfrm>`. The `<a:xfrm>` is
+    // optional per spec but PowerPoint Online's loader normalises it
+    // into existence and flags decks without it as needing repair.
+    w.start_element(@xml.QName::new(@oxml.presentation_ns, "nvGrpSpPr"))
+    w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
+    w.attribute(@xml.QName::unqualified("id"), "1")
+    w.attribute(@xml.QName::unqualified("name"), "")
+    w.end_element() // cNvPr
+    w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvGrpSpPr"))
+    w.end_element()
+    w.start_element(@xml.QName::new(@oxml.presentation_ns, "nvPr"))
+    w.end_element()
+    w.end_element() // nvGrpSpPr
+    w.start_element(@xml.QName::new(@oxml.presentation_ns, "grpSpPr"))
+    w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
+    w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
+    w.attribute(@xml.QName::unqualified("x"), "0")
+    w.attribute(@xml.QName::unqualified("y"), "0")
+    w.end_element() // off
+    w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
+    w.attribute(@xml.QName::unqualified("cx"), "0")
+    w.attribute(@xml.QName::unqualified("cy"), "0")
+    w.end_element() // ext
+    w.start_element(@xml.QName::new(@oxml.drawing_ns, "chOff"))
+    w.attribute(@xml.QName::unqualified("x"), "0")
+    w.attribute(@xml.QName::unqualified("y"), "0")
+    w.end_element() // chOff
+    w.start_element(@xml.QName::new(@oxml.drawing_ns, "chExt"))
+    w.attribute(@xml.QName::unqualified("cx"), "0")
+    w.attribute(@xml.QName::unqualified("cy"), "0")
+    w.end_element() // chExt
+    w.end_element() // xfrm
+    w.end_element() // grpSpPr
   }
   // Shapes in source order.
   for shape in s.shapes {

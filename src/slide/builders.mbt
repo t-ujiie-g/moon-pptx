@@ -145,6 +145,46 @@ pub fn RunProperties::with_font(
   { ..self, latin: Some(font_name) }
 }
 
+///|
+/// Attach an external hyperlink to this run. The URL is stored
+/// **unresolved** in `hyperlink_target`; `Presentation::update_slide_mut`
+/// allocates the slide-rels rId and writes the final
+/// `<a:hlinkClick r:id="…"/>` at serialisation time.
+///
+/// Pass an empty `tooltip` (the default) to omit the attribute.
+pub fn RunProperties::with_hyperlink(
+  self : RunProperties,
+  url : String,
+  tooltip? : String = "",
+) -> RunProperties {
+  let tt : String? = if tooltip.length() > 0 { Some(tooltip) } else { None }
+  {
+    ..self,
+    hyperlink_target: Some(ExternalUrl(url)),
+    hyperlink_click: None,
+    hyperlink_tooltip: tt,
+  }
+}
+
+///|
+/// Attach an internal hyperlink that jumps to slide `slide_idx`
+/// (zero-based, as in `Presentation::slides()`). The rId + slide
+/// relationship are allocated by `Presentation::update_slide_mut`
+/// at serialisation time.
+pub fn RunProperties::with_hyperlink_to_slide(
+  self : RunProperties,
+  slide_idx : Int,
+  tooltip? : String = "",
+) -> RunProperties {
+  let tt : String? = if tooltip.length() > 0 { Some(tooltip) } else { None }
+  {
+    ..self,
+    hyperlink_target: Some(InternalSlide(slide_idx)),
+    hyperlink_click: None,
+    hyperlink_tooltip: tt,
+  }
+}
+
 // --- AutoShape constructors ---
 
 ///|
@@ -376,6 +416,24 @@ pub fn Picture::of_image(
     },
     extension: [],
   }
+}
+
+///|
+/// Crop the picture by setting its `<a:srcRect>` to `(l, t, r, b)`
+/// percentages off each edge of the source image. Replaces any
+/// existing crop — the call is idempotent rather than additive.
+///
+/// Each value is in percent (e.g. `Percentage(10.0)` = 10 %). A
+/// 0 % crop on every edge is the same as no crop.
+pub fn Picture::with_crop(
+  self : Picture,
+  left? : @units.Percentage = @units.Percentage(0.0),
+  top? : @units.Percentage = @units.Percentage(0.0),
+  right? : @units.Percentage = @units.Percentage(0.0),
+  bottom? : @units.Percentage = @units.Percentage(0.0),
+) -> Picture {
+  let rect : @oxml.SrcRect = { left, top, right, bottom }
+  { ..self, blip_fill: { ..self.blip_fill, src_rect: Some(rect) } }
 }
 
 // --- Slide::with_shape ---

@@ -219,6 +219,12 @@ pub(all) struct GroupShape {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
+pub(all) enum HyperlinkTarget {
+  ExternalUrl(String)
+  InternalSlide(Int)
+} derive(Eq, @debug.Debug)
+pub impl Show for HyperlinkTarget
+
 pub(all) struct ListStyle {
   default_props : ParagraphProperties?
   level_props : Array[ParagraphProperties?]
@@ -302,6 +308,7 @@ pub(all) struct Picture {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Picture::of_image(Int, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn Picture::with_crop(Self, left? : @units.Percentage, top? : @units.Percentage, right? : @units.Percentage, bottom? : @units.Percentage) -> Self
 
 pub(all) struct Placeholder {
   ph_type : String
@@ -524,6 +531,9 @@ pub(all) struct RunProperties {
   complex_script : String?
   fill : @oxml.Color?
   hyperlink_click : String?
+  hyperlink_tooltip : String?
+  hyperlink_action : String?
+  hyperlink_target : HyperlinkTarget?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn RunProperties::default() -> Self
@@ -531,6 +541,8 @@ pub fn RunProperties::with_bold(Self) -> Self
 pub fn RunProperties::with_color(Self, @units.RgbColor) -> Self
 pub fn RunProperties::with_font(Self, String) -> Self
 pub fn RunProperties::with_font_size(Self, @units.Pt) -> Self
+pub fn RunProperties::with_hyperlink(Self, String, tooltip? : String) -> Self
+pub fn RunProperties::with_hyperlink_to_slide(Self, Int, tooltip? : String) -> Self
 pub fn RunProperties::with_italic(Self) -> Self
 
 pub(all) enum Shape {
@@ -620,6 +632,7 @@ pub fn TableCellProperties::with_border_bottom(Self, @oxml.Stroke) -> Self
 pub fn TableCellProperties::with_border_left(Self, @oxml.Stroke) -> Self
 pub fn TableCellProperties::with_border_right(Self, @oxml.Stroke) -> Self
 pub fn TableCellProperties::with_border_top(Self, @oxml.Stroke) -> Self
+pub fn TableCellProperties::with_borders(Self, left? : @oxml.Stroke, right? : @oxml.Stroke, top? : @oxml.Stroke, bottom? : @oxml.Stroke) -> Self
 pub fn TableCellProperties::with_fill(Self, @oxml.Fill) -> Self
 pub fn TableCellProperties::with_margins(Self, left? : @units.Emu?, right? : @units.Emu?, top? : @units.Emu?, bottom? : @units.Emu?) -> Self
 

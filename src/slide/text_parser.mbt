@@ -335,6 +335,8 @@ fn parse_run_properties(
   let mut complex_script : String? = None
   let mut fill : @oxml.Color? = None
   let mut hyperlink_click : String? = None
+  let mut hyperlink_tooltip : String? = None
+  let mut hyperlink_action : String? = None
   let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
@@ -357,6 +359,14 @@ fn parse_run_properties(
             "solidFill" => fill = parse_solid_fill(r)
             "hlinkClick" => {
               hyperlink_click = Some(extract_rid(child_attrs))
+              let t = optional_attr(child_attrs, "tooltip")
+              if t.length() > 0 {
+                hyperlink_tooltip = Some(t)
+              }
+              let a = optional_attr(child_attrs, "action")
+              if a.length() > 0 {
+                hyperlink_action = Some(a)
+              }
               skip_subtree(r)
             }
             // ln / gradFill / pattFill / blipFill / effectLst /
@@ -384,6 +394,9 @@ fn parse_run_properties(
     complex_script,
     fill,
     hyperlink_click,
+    hyperlink_tooltip,
+    hyperlink_action,
+    hyperlink_target: None,
     extension,
   }
 }

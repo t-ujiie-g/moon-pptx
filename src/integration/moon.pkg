@@ -13,7 +13,6 @@ import {
   "t-ujiie-g/moon-pptx/opc",
   "t-ujiie-g/moon-pptx/oxml",
   "t-ujiie-g/moon-pptx/presentation",
-  "t-ujiie-g/moon-pptx/sample",
   "t-ujiie-g/moon-pptx/slide",
   "t-ujiie-g/moon-pptx/slide_master",
   "t-ujiie-g/moon-pptx/theme",

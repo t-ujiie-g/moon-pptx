@@ -42,6 +42,7 @@ pub(all) struct Presentation {
 }
 pub fn Presentation::add_chart_ex_mut(Self, Int, @chart_ex.ChartEx, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
@@ -52,10 +53,16 @@ pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise P
 pub fn Presentation::new() -> Self raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
 pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
+pub fn Presentation::pct_h(Self, Double) -> @units.Emu
+pub fn Presentation::pct_w(Self, Double) -> @units.Emu
 pub fn Presentation::presentation_part(Self) -> PresentationPart? raise PptxError
 pub fn Presentation::save(Self) -> FixedArray[Byte]
+pub fn Presentation::set_notes_mut(Self, Int, String) -> Unit raise PptxError
+pub fn Presentation::set_slide_size_mut(Self, SlideSizeKind) -> Unit raise PptxError
+pub fn Presentation::slide_h(Self) -> @units.Emu
 pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] raise PptxError
 pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] raise PptxError
+pub fn Presentation::slide_w(Self) -> @units.Emu
 pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
 pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
 pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
@@ -89,6 +96,22 @@ pub(all) struct SlideSize {
   cy : @units.Emu
   size_type : String
 } derive(Eq, @debug.Debug)
+
+pub(all) enum SlideSizeKind {
+  ScreenFourByThree
+  ScreenSixteenByNine
+  ScreenSixteenByTen
+  Widescreen
+  Letter
+  A4
+  ThirtyFiveMm
+  Banner
+  Custom(@units.Emu, @units.Emu)
+} derive(Eq, @debug.Debug)
+pub fn SlideSizeKind::dimensions(Self) -> (@units.Emu, @units.Emu)
+pub fn SlideSizeKind::size_type(Self) -> String
+pub fn SlideSizeKind::to_slide_size(Self) -> SlideSize
+pub impl Show for SlideSizeKind
 
 // Type aliases
 

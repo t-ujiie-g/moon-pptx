@@ -242,3 +242,43 @@ test "TableCellProperties: builder-produced values survive serialize → reparse
     _ => fail("expected GraphicFrame")
   }
 }
+
+///|
+/// Minimal Stroke value for fluency tests — sets only a width so
+/// the value is non-default; every other field stays `None`.
+fn minimal_stroke() -> @oxml.Stroke {
+  {
+    width: Some(@units.Emu(6350L)),
+    cap: None,
+    compound: None,
+    alignment: None,
+    fill: None,
+    dash: None,
+    join: None,
+    head_end: None,
+    tail_end: None,
+    extension: [],
+  }
+}
+
+///|
+test "TableCellProperties::with_borders: applies only the Some edges" {
+  let s = minimal_stroke()
+  let p = @slide.TableCellProperties::default().with_borders(left=s, top=s)
+  assert_true(p.border_left is Some(_))
+  assert_true(p.border_right is None)
+  assert_true(p.border_top is Some(_))
+  assert_true(p.border_bottom is None)
+}
+
+///|
+test "TableCellProperties::with_borders: None args leave existing borders alone" {
+  let s = minimal_stroke()
+  let p = @slide.TableCellProperties::default()
+    .with_border_all(s)
+    .with_borders(top=s) // leaves left/right/bottom intact
+  assert_true(p.border_left is Some(_))
+  assert_true(p.border_right is Some(_))
+  assert_true(p.border_top is Some(_))
+  assert_true(p.border_bottom is Some(_))
+}

@@ -160,7 +160,8 @@ See ADRs in `TODO.md §4` for the rationale behind each convention.
 | `README.mbt.md` | Canonical README; runnable as a doc test |
 | `moon.mod` | Module manifest (deps, metadata) — TOML format |
 | `src/*/moon.pkg` | Per-sub-package config (imports, test deps) |
-| `src/<name>/` | Sub-packages: `units`, `xml`, `opc`, `oxml`, `theme`, `slide_master`, `slide`, `notes`, `comments`, `chart`, `chart_ex`, `presentation`, `integration` (tests), `sample`, `cmd_sample` (CLI scratch) |
+| `src/<name>/` | Sub-packages: `units`, `xml`, `opc`, `oxml`, `theme`, `slide_master`, `slide`, `notes`, `comments`, `chart`, `chart_ex`, `presentation`, `integration` (tests) |
+| `examples/README.md` | User-facing cookbook of focused recipes; each verified by `src/integration/examples_test.mbt` |
 | `CHANGELOG.md` | Keep-a-Changelog release notes |
 | `.githooks/pre-commit` | `moon fmt && moon check` (enable with `git config core.hooksPath .githooks`) |
 | `.github/workflows/ci.yml` | CI: check / fmt / info drift / test matrix |

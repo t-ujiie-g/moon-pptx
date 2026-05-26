@@ -169,6 +169,68 @@ test "add_picture_mut: rejects out-of-range slide index" {
   assert_true(raised is Err(@presentation.PptxError::Malformed(_)))
 }
 
+// --- add_picture_auto_mut ---
+
+///|
+/// 96×192 PNG, no pHYs → defaults to 96 DPI, so EMU = 914_400 × 1_828_800.
+fn png_96x192() -> FixedArray[Byte] {
+  let raw : Array[Int] = [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // signature
+     0x00, 0x00, 0x00, 0x0D, // IHDR length
+     0x49, 0x48, 0x44, 0x52, // "IHDR"
+     0x00, 0x00, 0x00, 0x60, // width 96
+     0x00, 0x00, 0x00, 0xC0, // height 192
+     0x08, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  ]
+  let out = FixedArray::make(raw.length(), b'\x00')
+  let mut i = 0
+  while i < raw.length() {
+    out[i] = raw[i].to_byte()
+    i = i + 1
+  }
+  out
+}
+
+///|
+test "add_picture_auto_mut: PNG dimensions derive from header" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_picture_auto_mut(
+    0,
+    png_96x192(),
+    @units.Emu(914_400L),
+    @units.Emu(0L),
+  )
+  let slide = prs.slides()[0]
+  assert_eq(slide.shapes.length(), 1)
+  match slide.shapes[0] {
+    Picture(p) => {
+      let xfrm = p.transform.unwrap()
+      // 96 px @ 96 dpi → 1 inch = 914_400 EMU
+      assert_eq(xfrm.extent.cx, @units.Emu(914_400L))
+      assert_eq(xfrm.extent.cy, @units.Emu(1_828_800L))
+      assert_eq(xfrm.offset.x, @units.Emu(914_400L))
+      assert_eq(xfrm.offset.y, @units.Emu(0L))
+    }
+    _ => fail("expected Picture")
+  }
+}
+
+///|
+test "add_picture_auto_mut: garbage bytes raise Malformed" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let garbage = FixedArray::make(16, b'\x00')
+  let r = try? prs.add_picture_auto_mut(
+    0,
+    garbage,
+    @units.Emu(0L),
+    @units.Emu(0L),
+  )
+  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+}
+
 ///|
 test "add_picture_mut: produced bytes reopen and round-trip" {
   let prs = @presentation.Presentation::new()

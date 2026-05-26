@@ -215,3 +215,37 @@ pub fn TableCellProperties::with_border_bottom(
 ) -> TableCellProperties {
   { ..self, border_bottom: Some(stroke) }
 }
+
+///|
+/// Apply per-edge borders selectively. Every argument is optional —
+/// `None` leaves that edge untouched, `Some(stroke)` replaces it.
+/// Convenience over chaining `with_border_left` / `with_border_right`
+/// / `with_border_top` / `with_border_bottom` when the borders vary
+/// per edge.
+pub fn TableCellProperties::with_borders(
+  self : TableCellProperties,
+  left? : @oxml.Stroke,
+  right? : @oxml.Stroke,
+  top? : @oxml.Stroke,
+  bottom? : @oxml.Stroke,
+) -> TableCellProperties {
+  {
+    ..self,
+    border_left: match left {
+      Some(s) => Some(s)
+      None => self.border_left
+    },
+    border_right: match right {
+      Some(s) => Some(s)
+      None => self.border_right
+    },
+    border_top: match top {
+      Some(s) => Some(s)
+      None => self.border_top
+    },
+    border_bottom: match bottom {
+      Some(s) => Some(s)
+      None => self.border_bottom
+    },
+  }
+}

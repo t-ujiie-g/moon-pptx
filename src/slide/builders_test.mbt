@@ -288,3 +288,65 @@ test "AutoShape: second round-trip is Eq-stable" {
   let s_second = @slide.Slide::parse(s_first.serialize())
   assert_true(s_first == s_second)
 }
+
+///|
+test "Picture::with_crop: applies SrcRect with the given percentages" {
+  let pic = @slide.Picture::of_image(
+    1,
+    "Pic",
+    "rId99",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  ).with_crop(
+    left=@units.Percentage(5.0),
+    top=@units.Percentage(10.0),
+    right=@units.Percentage(15.0),
+    bottom=@units.Percentage(20.0),
+  )
+  let rect = pic.blip_fill.src_rect.unwrap()
+  assert_eq(rect.left, @units.Percentage(5.0))
+  assert_eq(rect.top, @units.Percentage(10.0))
+  assert_eq(rect.right, @units.Percentage(15.0))
+  assert_eq(rect.bottom, @units.Percentage(20.0))
+}
+
+///|
+test "Picture::with_crop: defaults to 0% on all edges" {
+  let pic = @slide.Picture::of_image(
+    1,
+    "Pic",
+    "rId99",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  ).with_crop(left=@units.Percentage(10.0))
+  let rect = pic.blip_fill.src_rect.unwrap()
+  assert_eq(rect.left, @units.Percentage(10.0))
+  assert_eq(rect.top, @units.Percentage(0.0))
+  assert_eq(rect.right, @units.Percentage(0.0))
+  assert_eq(rect.bottom, @units.Percentage(0.0))
+}
+
+///|
+test "Picture::with_crop: idempotent — second call replaces, not merges" {
+  let pic = @slide.Picture::of_image(
+      1,
+      "Pic",
+      "rId99",
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+    .with_crop(left=@units.Percentage(5.0), right=@units.Percentage(5.0))
+    .with_crop(top=@units.Percentage(10.0))
+  let rect = pic.blip_fill.src_rect.unwrap()
+  // Only `top` survives — the earlier left+right crop was replaced.
+  assert_eq(rect.left, @units.Percentage(0.0))
+  assert_eq(rect.top, @units.Percentage(10.0))
+  assert_eq(rect.right, @units.Percentage(0.0))
+  assert_eq(rect.bottom, @units.Percentage(0.0))
+}

@@ -28,22 +28,39 @@ fn write_custom_geometry(
     write_gd(w, g)
   }
   w.end_element()
-  // <a:ahLst> + foreign-namespace extensions ride via `extension`.
+  // <a:ahLst> — always emit (empty if no adjust handles); PowerPoint
+  // Online flags decks without it as needing repair even though the
+  // spec marks it optional. Foreign-namespace extensions still ride
+  // through `cg.extension`.
+  let mut emitted_ah_lst = false
   for ext in cg.extension {
+    if ext.name.uri == @oxml.drawing_ns && ext.name.local_name == "ahLst" {
+      emitted_ah_lst = true
+    }
     @oxml.write_xml_element(w, ctx, ext)
   }
-  // <a:cxnLst>
-  if cg.connection_sites.length() > 0 {
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "cxnLst"))
-    for cs in cg.connection_sites {
-      write_cxn(w, ctx, cs)
-    }
+  if !emitted_ah_lst {
+    w.start_element(@xml.QName::new(@oxml.drawing_ns, "ahLst"))
     w.end_element()
   }
-  // <a:rect>
+  // <a:cxnLst> — always emit too, same reason.
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "cxnLst"))
+  for cs in cg.connection_sites {
+    write_cxn(w, ctx, cs)
+  }
+  w.end_element()
+  // <a:rect> — always emit; default to the zero-bound rectangle when
+  // the source omitted it.
   match cg.rect {
     Some(r) => write_geom_rect(w, r)
-    None => ()
+    None => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "rect"))
+      w.attribute(@xml.QName::unqualified("l"), "0")
+      w.attribute(@xml.QName::unqualified("t"), "0")
+      w.attribute(@xml.QName::unqualified("r"), "0")
+      w.attribute(@xml.QName::unqualified("b"), "0")
+      w.end_element()
+    }
   }
   // <a:pathLst>
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "pathLst"))

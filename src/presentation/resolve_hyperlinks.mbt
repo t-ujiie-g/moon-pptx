@@ -1,0 +1,234 @@
+// Hyperlink resolution.
+//
+// Runs built via `RunProperties::with_hyperlink(url)` carry an
+// **unresolved** `hyperlink_target` value. The url/slide-idx itself
+// can't live in the OOXML serialisation — OOXML stores hyperlinks as
+// a slide-rels relationship (rId) referenced from `<a:hlinkClick>`.
+//
+// `update_slide_mut` invokes `resolve_slide_hyperlinks` just before
+// serialisation: we walk the slide tree, and for every RunProperties
+// with `hyperlink_target = Some(_)` we
+//   1. Allocate the next unused rId on the slide's `.rels`
+//   2. Register the appropriate `<Relationship>` (External URL or
+//      Internal target-slide pointer)
+//   3. Set the run's `hyperlink_click` to the new rId and clear its
+//      `hyperlink_target` (resolution is now baked in)
+//   4. Mark the rels dirty
+//
+// If any rels were touched, we write them back via
+// `write_rels_for_part`.
+
+///|
+/// Walk `slide` and resolve every unresolved hyperlink against the
+/// part at `slide_name`. Returns the resolved slide. Side-effects:
+/// updates the slide's `.rels` part in the package when any
+/// resolution happens.
+fn Presentation::resolve_slide_hyperlinks(
+  self : Presentation,
+  slide_name : String,
+  slide : @slide.Slide,
+) -> @slide.Slide raise PptxError {
+  // Cheap pre-check: scan the slide for any unresolved targets so we
+  // avoid loading rels (and writing them back) when there's nothing
+  // to resolve. The vast majority of slides have no hyperlinks.
+  if !slide_has_unresolved_hyperlinks(slide) {
+    return slide
+  }
+  let initial_rels = self.pkg.relationships_for(slide_name) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let ctx = HyperlinkCtx::{
+    prs: self,
+    slide_name,
+    rels: initial_rels,
+    changed: false,
+  }
+  let new_shapes = []
+  for sh in slide.shapes {
+    new_shapes.push(resolve_shape_hyperlinks(sh, ctx))
+  }
+  if ctx.changed {
+    self.write_rels_for_part(slide_name, ctx.rels)
+  }
+  { ..slide, shapes: new_shapes }
+}
+
+///|
+/// Mutable resolution context threaded through the walk. The
+/// `rels` field is rebuilt as new relationships are appended.
+priv struct HyperlinkCtx {
+  prs : Presentation
+  slide_name : String
+  mut rels : @opc.Relationships
+  mut changed : Bool
+}
+
+///|
+/// Pre-check: does any run anywhere in this slide tree carry an
+/// unresolved hyperlink_target? Cheap walk so we skip the rels
+/// roundtrip when nothing needs resolving.
+fn slide_has_unresolved_hyperlinks(slide : @slide.Slide) -> Bool {
+  for sh in slide.shapes {
+    if shape_has_unresolved_hyperlinks(sh) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn shape_has_unresolved_hyperlinks(shape : @slide.Shape) -> Bool {
+  match shape {
+    AutoShape(a) =>
+      match a.text_body {
+        Some(tb) => text_body_has_unresolved(tb)
+        None => false
+      }
+    Group(g) => {
+      for c in g.children {
+        if shape_has_unresolved_hyperlinks(c) {
+          return true
+        }
+      }
+      false
+    }
+    _ => false
+  }
+}
+
+///|
+fn text_body_has_unresolved(tb : @slide.TextBody) -> Bool {
+  for p in tb.paragraphs {
+    for c in p.content {
+      let rp = match c {
+        RunContent(r) => r.properties
+        Break(rp) => rp
+        FieldContent(f) => f.properties
+      }
+      if rp.hyperlink_target is Some(_) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+// --- per-node resolvers ---
+
+///|
+fn resolve_shape_hyperlinks(
+  shape : @slide.Shape,
+  ctx : HyperlinkCtx,
+) -> @slide.Shape raise PptxError {
+  match shape {
+    AutoShape(a) =>
+      match a.text_body {
+        Some(tb) => {
+          let new_tb = resolve_text_body_hyperlinks(tb, ctx)
+          AutoShape({ ..a, text_body: Some(new_tb) })
+        }
+        None => shape
+      }
+    Group(g) => {
+      let new_children = []
+      for c in g.children {
+        new_children.push(resolve_shape_hyperlinks(c, ctx))
+      }
+      Group({ ..g, children: new_children })
+    }
+    _ => shape
+  }
+}
+
+///|
+fn resolve_text_body_hyperlinks(
+  tb : @slide.TextBody,
+  ctx : HyperlinkCtx,
+) -> @slide.TextBody raise PptxError {
+  let new_paragraphs = []
+  for p in tb.paragraphs {
+    let new_content = []
+    for c in p.content {
+      new_content.push(resolve_paragraph_content(c, ctx))
+    }
+    new_paragraphs.push({ ..p, content: new_content })
+  }
+  { ..tb, paragraphs: new_paragraphs }
+}
+
+///|
+fn resolve_paragraph_content(
+  c : @slide.ParagraphContent,
+  ctx : HyperlinkCtx,
+) -> @slide.ParagraphContent raise PptxError {
+  match c {
+    RunContent(r) => {
+      let new_props = resolve_run_properties(r.properties, ctx)
+      RunContent({ ..r, properties: new_props })
+    }
+    Break(rp) => Break(resolve_run_properties(rp, ctx))
+    FieldContent(f) => {
+      let new_props = resolve_run_properties(f.properties, ctx)
+      FieldContent({ ..f, properties: new_props })
+    }
+  }
+}
+
+///|
+fn resolve_run_properties(
+  rp : @slide.RunProperties,
+  ctx : HyperlinkCtx,
+) -> @slide.RunProperties raise PptxError {
+  match rp.hyperlink_target {
+    None => rp
+    Some(target) => {
+      let rid = next_unused_rid(ctx.rels)
+      let (rel, action) : (@opc.Relationship, String?) = match target {
+        ExternalUrl(url) =>
+          (
+            {
+              id: rid,
+              rel_type: @opc.rt_hyperlink,
+              target: url,
+              target_mode: External,
+            },
+            None,
+          )
+        InternalSlide(idx) => {
+          let parts = ctx.prs.ordered_slide_parts()
+          if idx < 0 || idx >= parts.length() {
+            raise Malformed(
+              "hyperlink_to_slide: target slide_idx " +
+              idx.to_string() +
+              " out of range (have " +
+              parts.length().to_string() +
+              " slides)",
+            )
+          }
+          let target_name = parts[idx].name
+          (
+            {
+              id: rid,
+              rel_type: @opc.rt_slide,
+              target: relative_target(ctx.slide_name, target_name),
+              target_mode: Internal,
+            },
+            // PowerPoint needs `action="ppaction://hlinksldjump"` to
+            // recognise the rId as a slide jump.
+            Some("ppaction://hlinksldjump"),
+          )
+        }
+      }
+      ctx.rels = ctx.rels.with_relationship(rel) catch {
+        e => raise OpcFailure(e.to_string())
+      }
+      ctx.changed = true
+      {
+        ..rp,
+        hyperlink_click: Some(rid),
+        hyperlink_action: action,
+        hyperlink_target: None,
+      }
+    }
+  }
+}

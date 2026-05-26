@@ -7,6 +7,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (toward v0.2.0)
+
+- **Image-size auto-detection** — new `@oxml.detect_image_format` /
+  `@oxml.detect_image_dimensions` for PNG / JPEG / GIF / BMP / TIFF
+  headers + DPI metadata, plus `Presentation::add_picture_auto_mut`
+  that auto-derives `(cx, cy)` from the image bytes.
+- **Hyperlink builder** — `RunProperties::with_hyperlink(url, tooltip~)`
+  for external URLs and `with_hyperlink_to_slide(slide_idx, tooltip~)`
+  for internal jumps. `Presentation::update_slide_mut` resolves the
+  target into a slide-rels rId at serialisation time. New
+  `HyperlinkTarget` enum and `@opc.rt_hyperlink` constant.
+- **Speaker notes builder** — `Presentation::set_notes_mut(slide_idx,
+  text)` synthesises `/ppt/notesSlides/notesSlideN.xml` with a body
+  placeholder carrying the text. Repeated calls replace the existing
+  notes in place; the underlying notesSlide is reused.
+- **Picture cropping** — `Picture::with_crop(left~, top~, right~,
+  bottom~ : @units.Percentage)` wraps `<a:srcRect>`. Calls are
+  idempotent; a second `with_crop` replaces rather than merging.
+- **Slide-size selector** — `SlideSizeKind { ScreenFourByThree |
+  ScreenSixteenByNine | ScreenSixteenByTen | Widescreen | Letter |
+  A4 | ThirtyFiveMm | Banner | Custom(cx, cy) }` plus
+  `Presentation::set_slide_size_mut(kind)` that updates
+  `presentation.xml`'s `<p:sldSz>`.
+- **Table cell border fluency** — `TableCellProperties::with_borders(
+  left?, right?, top?, bottom?)` selectively replaces per-edge
+  borders without disturbing the rest.
+- **Percentage / relative positioning** — `Presentation::pct_w(percent)`
+  and `pct_h(percent)` return EMU values relative to the deck's
+  current slide size; `slide_w` / `slide_h` expose the full extents.
+- **Cookbook examples** — new `examples/README.md` with 8 runnable
+  recipes (title slides / widescreen / hyperlinks / notes / images /
+  tables / charts / pitch deck). Each recipe is verified by
+  `src/integration/examples_test.mbt`.
+- **Standalone sample-deck consumer module** — new
+  `examples/sample-deck/` is a separate MoonBit module that depends
+  on `t-ujiie-g/moon-pptx` exactly the way a downstream user would.
+  Builds a 12-slide demonstration deck exercising every typed
+  feature. Generate the artefact with
+  `moon -C examples/sample-deck run main --target native | tail -1 | xxd -r -p > out/sample.pptx`.
+  Compile-time `split_mode` flag emits per-feature isolation files
+  for debugging PowerPoint Online compatibility regressions.
+
+### Fixed (PowerPoint Online compatibility)
+
+Eight schema-and-canonicalisation issues that caused PowerPoint Online
+to flag generated decks as "needs repair" — even when the file was
+spec-valid per ECMA-376. All discovered through round-trip comparisons
+against the version PowerPoint emits after its repair pass:
+
+- **notesSlide / Slide `<p:spTree>` defaults** — synthesise the
+  required `<p:nvGrpSpPr>` + `<p:grpSpPr>` (with zero-valued `<a:xfrm>`)
+  when the typed model carries no captured wrapper.
+- **Notes-master synthesis** — `Presentation::set_notes_mut` now
+  creates a `/ppt/notesMasters/notesMaster1.xml` part on first use
+  (PowerPoint refuses a notesSlide that isn't backed by a master),
+  registers it in `<p:notesMasterIdLst>`, and adds a `theme2.xml`
+  duplicate (sharing `theme1.xml` triggers repair).
+- **`<p:notesMasterId>` attribute fix** — CT_NotesMasterIdListEntry
+  defines only `r:id`, not the `id` attribute we previously emitted
+  (the latter is only valid on CT_SlideMasterIdListEntry). The
+  writer now omits `id` for notesMasterId / handoutMasterId.
+- **`<p:sldSz>` `type="custom"` omission** — PowerPoint's
+  canonicalisation drops the `type` attribute entirely for non-preset
+  dimensions rather than setting it to `"custom"`. `SlideSizeKind`
+  now returns `""` (omitted) for `Widescreen` and `Custom(_, _)`.
+- **Slide-master `<p:bg>`** — the bundled blank master now carries
+  the standard `<p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef>`.
+- **Custom-geometry defaults** — `<a:custGeom>` writers always emit
+  `<a:ahLst/>`, `<a:cxnLst/>`, and `<a:rect>` (defaults to zero
+  bounds), matching PowerPoint's normalised output.
+- **Internal-slide hyperlink action** — runs created via
+  `with_hyperlink_to_slide` now emit
+  `<a:hlinkClick action="ppaction://hlinksldjump" r:id="…"/>` so
+  PowerPoint recognises the rId as a slide jump (without `action`
+  the link was silently rewritten to a no-op).
+- **Chart axis required elements** — `simple_axis_core` now sets
+  `<c:crosses val="autoZero"/>` on every axis kind and appends
+  `<c:crossBetween val="between"/>` to valAx via the extension
+  channel (both schema-required per ECMA-376 §21.2.2.6 / §21.2.2.182).
+- **3-D chart wrappers** — `Chart::of_bar_3d` / `of_line_3d` /
+  `of_pie_3d` / `of_surface` / `of_surface_3d` now populate
+  `<c:view3D>`, `<c:floor>`, `<c:sideWall>`, `<c:backWall>` with
+  PowerPoint's default rotation + zero-thickness walls. Plus all
+  chart families gain `<c:autoTitleDeleted val="1"/>` when no
+  title is set.
+- **`<c:ofPieChart>` defaults** — `Chart::of_of_pie` now omits the
+  default `<c:splitType val="auto"/>` (PowerPoint repairs it away)
+  and emits explicit `<c:gapWidth val="100"/>` + `<c:secondPieSize
+  val="75"/>` schema defaults.
+
+### Deferred
+
+- **Slide number / footer / date placeholders (A8)** — the per-slide
+  visibility flags are cheap but they only render usefully when the
+  master defines matching placeholder shapes. Bundled into v0.3
+  alongside the high-level `define_master` API (C1).
+- **Standalone consumer-example repo (external)** — the
+  `examples/sample-deck/` module in this repo uses a path dep on the
+  parent during in-repo development. A *fully external* example repo
+  (depending on the published library via mooncakes, without any
+  shared filesystem) can come post-v0.2.0 if there's demand.
+
 ## [0.1.0] — 2026-05-26
 
 Initial public release. The library is feature-complete for the

@@ -116,16 +116,25 @@ test "minimal_deck: round-trip preserves Theme + SlideMaster + SlideLayout" {
 
 ///|
 test "rich_deck: every shape kind survives parse → serialize → re-parse" {
-  let pkg_in = @opc.Package::open(rich_deck())
-  let pkg_re = re_serialize_all(@opc.Package::open(rich_deck()))
-  let pkg_out = @opc.Package::open(pkg_re.to_bytes())
-  let s_in = @slide.Slide::parse(
-    pkg_in.require_part("/ppt/slides/slide2.xml").bytes,
+  // Two re-serialize cycles: the first cycle injects PowerPoint-Online-
+  // expected defaults (`<a:ahLst/>` / `<a:cxnLst/>` / zero `<a:rect/>`)
+  // that our hand-built fixture didn't include, so equality only holds
+  // from the second cycle onward.
+  let pkg_re1 = re_serialize_all(@opc.Package::open(rich_deck()))
+  let pkg_re2 = re_serialize_all(@opc.Package::open(pkg_re1.to_bytes()))
+  let pkg_re3 = re_serialize_all(@opc.Package::open(pkg_re2.to_bytes()))
+  let s_a = @slide.Slide::parse(
+    pkg_re2.require_part("/ppt/slides/slide2.xml").bytes,
   )
-  let s_out = @slide.Slide::parse(
-    pkg_out.require_part("/ppt/slides/slide2.xml").bytes,
+  let s_b = @slide.Slide::parse(
+    pkg_re3.require_part("/ppt/slides/slide2.xml").bytes,
   )
-  assert_true(s_in == s_out)
+  assert_true(s_a == s_b)
+  // Use `s_out = s_b` for the spot-check below.
+  let pkg_out = pkg_re3
+  let s_out = s_b
+  let _ = s_a // silence "unused" in case the let-shadow above is misread
+  let _ = pkg_out
   // Spot-check the typed custGeom AST survives intact.
   match s_out.shapes[2] {
     AutoShape(sp) =>

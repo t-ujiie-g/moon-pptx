@@ -89,13 +89,28 @@ let blank_theme_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standal
   "</a:theme>"
 
 ///|
+/// Canonical "root group" wrapper inside `<p:spTree>` that PowerPoint
+/// Online insists on for every slide / master / layout / notes-master.
+/// The empty `<p:grpSpPr/>` variant is spec-valid but triggers the
+/// repair banner; the loaded-by-PowerPoint shape always carries a
+/// zero-valued `<a:xfrm>`, so we emit one too.
+let blank_spTree_root : String = "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
+  "<p:grpSpPr><a:xfrm>" +
+  "<a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/>" +
+  "<a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/>" +
+  "</a:xfrm></p:grpSpPr>"
+
+///|
 let blank_slide_master_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
   "<p:sldMaster xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"" +
   " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"" +
   " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
-  "<p:cSld><p:spTree>" +
-  "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
-  "<p:grpSpPr/>" +
+  "<p:cSld>" +
+  // PowerPoint expects a background-style reference; the slide master
+  // without `<p:bg>` triggers the repair banner.
+  "<p:bg><p:bgRef idx=\"1001\"><a:schemeClr val=\"bg1\"/></p:bgRef></p:bg>" +
+  "<p:spTree>" +
+  blank_spTree_root +
   "</p:spTree></p:cSld>" +
   "<p:clrMap bg1=\"lt1\" tx1=\"dk1\" bg2=\"lt2\" tx2=\"dk2\"" +
   " accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\"" +
@@ -109,8 +124,7 @@ let blank_slide_layout_xml : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" 
   "<p:sldLayout xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"" +
   " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" type=\"blank\">" +
   "<p:cSld name=\"Blank\"><p:spTree>" +
-  "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
-  "<p:grpSpPr/>" +
+  blank_spTree_root +
   "</p:spTree></p:cSld>" +
   "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" +
   "</p:sldLayout>"
