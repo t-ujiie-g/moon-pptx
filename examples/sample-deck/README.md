@@ -16,26 +16,27 @@ sample-deck/
     └── main.mbt      ← CLI entry: emits the deck bytes as hex
 ```
 
-This module is **independent of the moon-pptx library itself**. It has
-its own `moon.mod.json` and depends on the library exactly the way a
-downstream consumer would. Inside the moon-pptx repo we use a path
-dependency for dev convenience (no need to publish-and-pin between
-local edits); once a new moon-pptx version is on mooncakes you can
-switch to a version-pinned dep without changing the example source.
-
-### Dev (path dep — default in this repo)
-
-```json
-"deps": {
-  "t-ujiie-g/moon-pptx": { "path": "../.." }
-}
-```
-
-### After publication (version-pinned dep)
+This module is **independent of the moon-pptx library itself**. It
+has its own `moon.mod.json` and depends on the published library
+through mooncakes:
 
 ```json
 "deps": {
   "t-ujiie-g/moon-pptx": "0.2.0"
+}
+```
+
+It serves as a worked-out example of "what a real consumer would
+write" — copy-paste the deps and the import shapes
+(`@presentation`, `@chart`, `@slide`, …) into your own project and
+you're good to go.
+
+For development against an in-progress local copy of the library
+(e.g. testing changes before the next release), swap to a path dep:
+
+```json
+"deps": {
+  "t-ujiie-g/moon-pptx": { "path": "../.." }
 }
 ```
 
