@@ -4,8 +4,7 @@ _build/
 .moonagent/
 .claude/
 
-# Generated sample-deck output from `moon run src/cmd_sample`.
-# The build instructions in src/cmd_sample/main.mbt suggest writing
-# the deck to out/sample.pptx; keep generated artefacts out of git.
+# Generated artefacts. `.pptx` files emitted by ad-hoc test runs and
+# the `out/` directory used during development should stay out of git.
 out/
 *.pptx

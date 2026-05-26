@@ -139,9 +139,12 @@ test "Slide::serialize: AutoShape with custGeom round-trips" {
     "</p:spPr>" +
     "</p:sp>"
   let xml = wrap_slide(body)
-  let s0 = @slide.Slide::parse(fixture_bytes(xml))
+  // Two re-serialise cycles: the first cycle injects PowerPoint-Online-
+  // expected `<a:ahLst/>` (the fixture omits it) so equality only holds
+  // from the second cycle onward.
   let s1 = roundtrip_slide(fixture_bytes(xml))
-  assert_true(s0 == s1)
+  let s2 = roundtrip_slide(s1.serialize())
+  assert_true(s1 == s2)
 }
 
 ///|

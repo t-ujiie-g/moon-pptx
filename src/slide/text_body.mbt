@@ -100,12 +100,65 @@ pub(all) struct RunProperties {
   /// `@oxml.Fill` ADT is a future expansion point.
   fill : @oxml.Color?
   /// `<a:hlinkClick r:id="…">` — relationship id of the click target.
+  /// Carries the **already-allocated** rId for parsed runs and for
+  /// runs whose hyperlink has been resolved at write time.
   hyperlink_click : String?
+  /// Optional tooltip (`<a:hlinkClick tooltip="…">`). Independent of
+  /// `hyperlink_click` so user-supplied tooltips survive even when
+  /// the rId resolution happens later.
+  hyperlink_tooltip : String?
+  /// Optional `action` attribute on `<a:hlinkClick>`. Set to
+  /// `"ppaction://hlinksldjump"` for internal-slide jumps so
+  /// PowerPoint recognises the rId as a jump target. External URLs
+  /// leave this `None` (PowerPoint defaults to "open URL"). The
+  /// resolver fills this in based on the unresolved `hyperlink_target`
+  /// kind.
+  hyperlink_action : String?
+  /// Unresolved hyperlink target — set by the builder
+  /// (`with_hyperlink` / `with_hyperlink_to_slide`) when the run is
+  /// built outside the package context. `Presentation::update_slide_mut`
+  /// walks each run, allocates an rId in the slide's `.rels`, registers
+  /// the relationship, and rewrites `hyperlink_click` before the slide
+  /// XML is serialised. `None` means either "no hyperlink" or
+  /// "hyperlink already resolved into `hyperlink_click`".
+  hyperlink_target : HyperlinkTarget?
   /// Lossless preservation (ADR-004): unmodelled `<a:rPr>` children
   /// (`<a:ln>`, `<a:effectLst>`, `<a:highlight>`, `<a:uLn>`,
   /// `<a:hlinkMouseOver>`, `<a:extLst>`, foreign-namespace siblings).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
+
+///|
+/// Unresolved hyperlink target carried on a `RunProperties` value
+/// while it's being built. Resolved into a slide-rels relationship
+/// + `hyperlink_click` rId by `Presentation::update_slide_mut`.
+pub(all) enum HyperlinkTarget {
+  /// External URL (`mailto:`, `https://`, `file://`, …). Emitted
+  /// with `TargetMode::External` and relationship type
+  /// `rt_hyperlink`.
+  ExternalUrl(String)
+  /// Internal jump to slide `slide_idx` (zero-based, as in
+  /// `Presentation::slides()`). Emitted with `TargetMode::Internal`
+  /// and relationship type `rt_slide` pointing at the target slide
+  /// part.
+  InternalSlide(Int)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for HyperlinkTarget with fn output(self, logger) {
+  match self {
+    ExternalUrl(u) => {
+      logger.write_string("ExternalUrl(")
+      logger.write_string(u)
+      logger.write_string(")")
+    }
+    InternalSlide(i) => {
+      logger.write_string("InternalSlide(")
+      logger.write_string(i.to_string())
+      logger.write_string(")")
+    }
+  }
+}
 
 ///|
 /// Default `RunProperties` value — every field defaults to its
@@ -125,6 +178,9 @@ pub fn RunProperties::default() -> RunProperties {
     complex_script: None,
     fill: None,
     hyperlink_click: None,
+    hyperlink_tooltip: None,
+    hyperlink_action: None,
+    hyperlink_target: None,
     extension: [],
   }
 }

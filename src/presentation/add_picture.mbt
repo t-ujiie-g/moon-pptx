@@ -39,7 +39,7 @@ pub fn Presentation::add_picture_mut(
   cy : @units.Emu,
 ) -> Unit raise PptxError {
   // 1. Detect image format from magic bytes.
-  let fmt = match detect_image_format(bytes) {
+  let fmt = match @oxml.detect_image_format(bytes) {
     Some(f) => f
     None =>
       raise Malformed(
@@ -47,9 +47,9 @@ pub fn Presentation::add_picture_mut(
       )
   }
   // 2. Allocate the next image part name.
-  let image_name = self.next_image_part_name(fmt.extension)
+  let image_name = self.next_image_part_name(fmt.extension())
   // 3. Add the image bytes as a binary part.
-  let image_part = @opc.Part::new(image_name, fmt.content_type, bytes) catch {
+  let image_part = @opc.Part::new(image_name, fmt.content_type(), bytes) catch {
     e => raise OpcFailure(e.to_string())
   }
   self.pkg.add_part(image_part) catch {
@@ -60,11 +60,11 @@ pub fn Presentation::add_picture_mut(
   //    entries (per-extension); duplicate Defaults are tolerated but
   //    we deduplicate anyway.
   let cur_ct = self.pkg.content_types()
-  let already_declared = cur_ct.defaults
-    .iter()
-    .any(fn(kv) { kv.0 == fmt.extension })
+  let ext = fmt.extension()
+  let ct = fmt.content_type()
+  let already_declared = cur_ct.defaults.iter().any(fn(kv) { kv.0 == ext })
   if !already_declared {
-    let next_ct = cur_ct.with_default(fmt.extension, fmt.content_type)
+    let next_ct = cur_ct.with_default(ext, ct)
     self.pkg.set_content_types(next_ct)
     self.pkg.regenerate_content_types_part() catch {
       e => raise OpcFailure(e.to_string())
@@ -117,66 +117,33 @@ pub fn Presentation::add_picture_mut(
   self.update_slide_mut(slide_idx, updated_slide)
 }
 
+///|
+/// Like `add_picture_mut` but auto-derives `(cx, cy)` from the image's
+/// pixel dimensions + DPI metadata. The default DPI is 96 when the
+/// file omits it; this matches PowerPoint's behaviour for raw image
+/// insertion.
+///
+/// Raises `Malformed` if `bytes` isn't a recognised PNG / JPEG /
+/// GIF / BMP / TIFF, or if the file is too short to parse dimensions.
+pub fn Presentation::add_picture_auto_mut(
+  self : Presentation,
+  slide_idx : Int,
+  bytes : FixedArray[Byte],
+  x : @units.Emu,
+  y : @units.Emu,
+) -> Unit raise PptxError {
+  let dims = match @oxml.detect_image_dimensions(bytes) {
+    Some(d) => d
+    None =>
+      raise Malformed(
+        "add_picture_auto_mut: cannot parse image dimensions (expected PNG / JPEG / GIF / BMP / TIFF with a readable header)",
+      )
+  }
+  let (cx, cy) = dims.to_emu()
+  self.add_picture_mut(slide_idx, bytes, x, y, @units.Emu(cx), @units.Emu(cy))
+}
+
 // --- helpers ---
-
-///|
-/// Image format detected from magic bytes — carries the OOXML
-/// content type and the file extension we'll use for the media
-/// part.
-priv struct ImageFormat {
-  content_type : String
-  extension : String
-}
-
-///|
-/// Inspect the leading bytes of `bytes` and return the matching
-/// image format. Recognises PNG / JPEG / GIF / BMP / TIFF.
-/// Returns `None` for anything else (caller raises Malformed).
-fn detect_image_format(bytes : FixedArray[Byte]) -> ImageFormat? {
-  // PNG: 89 50 4E 47 0D 0A 1A 0A
-  if bytes.length() >= 4 &&
-    bytes[0] == b'\x89' &&
-    bytes[1] == b'\x50' &&
-    bytes[2] == b'\x4E' &&
-    bytes[3] == b'\x47' {
-    return Some({ content_type: "image/png", extension: "png" })
-  }
-  // JPEG: FF D8 FF
-  if bytes.length() >= 3 &&
-    bytes[0] == b'\xFF' &&
-    bytes[1] == b'\xD8' &&
-    bytes[2] == b'\xFF' {
-    return Some({ content_type: "image/jpeg", extension: "jpeg" })
-  }
-  // GIF: 47 49 46 38 ("GIF8")
-  if bytes.length() >= 4 &&
-    bytes[0] == b'\x47' &&
-    bytes[1] == b'\x49' &&
-    bytes[2] == b'\x46' &&
-    bytes[3] == b'\x38' {
-    return Some({ content_type: "image/gif", extension: "gif" })
-  }
-  // BMP: 42 4D ("BM")
-  if bytes.length() >= 2 && bytes[0] == b'\x42' && bytes[1] == b'\x4D' {
-    return Some({ content_type: "image/bmp", extension: "bmp" })
-  }
-  // TIFF: 49 49 2A 00 (little-endian) or 4D 4D 00 2A (big-endian)
-  if bytes.length() >= 4 {
-    if bytes[0] == b'\x49' &&
-      bytes[1] == b'\x49' &&
-      bytes[2] == b'\x2A' &&
-      bytes[3] == b'\x00' {
-      return Some({ content_type: "image/tiff", extension: "tiff" })
-    }
-    if bytes[0] == b'\x4D' &&
-      bytes[1] == b'\x4D' &&
-      bytes[2] == b'\x00' &&
-      bytes[3] == b'\x2A' {
-      return Some({ content_type: "image/tiff", extension: "tiff" })
-    }
-  }
-  None
-}
 
 ///|
 /// Allocate the next `/ppt/media/imageN.{ext}` part name. Scans the

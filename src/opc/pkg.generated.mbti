@@ -37,6 +37,8 @@ pub let rt_core_properties : String
 
 pub let rt_extended_properties : String
 
+pub let rt_hyperlink : String
+
 pub let rt_image : String
 
 pub let rt_notes_master : String

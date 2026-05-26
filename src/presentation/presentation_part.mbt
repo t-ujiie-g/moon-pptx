@@ -395,13 +395,11 @@ fn write_master_choice(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, wrapper_local))
   w.start_element(@xml.QName::new(@oxml.presentation_ns, inner_local))
-  // `id` is only required on sldMasterId per spec. For
-  // notesMasterId / handoutMasterId we still emit it if non-zero so
-  // we don't accidentally drop user-supplied data; absent reads as
-  // 0L per `parse_single_id_list`.
-  if id_ref.id != 0L {
-    w.attribute(@xml.QName::unqualified("id"), id_ref.id.to_string())
-  }
+  // `<p:notesMasterId>` / `<p:handoutMasterId>` carry only `r:id` per
+  // ECMA-376 §19.3.1.20 / §19.3.1.16 — the `id` attribute is defined
+  // only on `<p:sldMasterId>` (CT_SlideMasterIdListEntry). Emitting
+  // it on the wrong element gets silently stripped by PowerPoint
+  // Online's loader and trips the repair banner.
   w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), id_ref.r_id)
   w.end_element()
   w.end_element()

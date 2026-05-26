@@ -97,3 +97,9 @@ pub let rt_core_properties : String = "http://schemas.openxmlformats.org/package
 /// `…/relationships/extended-properties` — package → extended (app-
 /// specific) metadata (`docProps/app.xml`).
 pub let rt_extended_properties : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"
+
+///|
+/// `…/relationships/hyperlink` — slide → external URL (used for
+/// `<a:hlinkClick>` rel ids). The target is the URL itself; the
+/// relationship's `TargetMode` is `External`.
+pub let rt_hyperlink : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"

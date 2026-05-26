@@ -290,12 +290,18 @@ test "Chart::of_doughnut: round-trips" {
 // --- Chart::of_of_pie ---
 
 ///|
-test "Chart::of_of_pie: defaults to Pie + Auto split" {
+test "Chart::of_of_pie: defaults to Pie + omits Auto split" {
   let chart = @chart.Chart::of_of_pie(quarterly_revenue())
   match chart.chart.plot_area.plots[0] {
     OfPieChart(b) => {
       assert_eq(b.of_pie_type, Pie)
-      assert_true(b.split_type is Some(Auto))
+      // Auto is the schema default — we omit `<c:splitType>` to dodge
+      // PowerPoint Online's repair banner.
+      assert_true(b.split_type is None)
+      // ofPie defaults gapWidth=100 + secondPieSize=75 are emitted
+      // explicitly so PowerPoint doesn't normalise them in.
+      assert_true(b.gap_width is Some(100))
+      assert_true(b.second_pie_size is Some(75))
     }
     _ => fail("expected OfPieChart")
   }

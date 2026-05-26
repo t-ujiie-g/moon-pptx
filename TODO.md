@@ -88,10 +88,17 @@ src/
 ├── chart/           Standard 16 chart families + axis / title / legend / dLbls / dLbl / layout / trendline / series
 ├── chart_ex/        Extended chartEx families — waterfall, treemap, sunburst, funnel, boxWhisker, paretoLine, regionMap, clusteredColumn, histogram
 ├── presentation/    High-level Presentation façade — open / save / new + slide / picture / chart insertion + immutable variants
-├── integration/     Test-only — synthetic-deck fixtures + parse / re-serialise round-trip floor
-├── sample/          End-to-end sample-deck builder (8 slides exercising every feature)
-└── cmd_sample/      `is-main` CLI that emits the sample deck bytes
+└── integration/     Test-only — synthetic-deck fixtures + parse / re-serialise round-trip floor + cookbook compile-checks
 ```
+
+`examples/` contains two complementary user-facing entry points:
+- `examples/README.md` — cookbook of focused recipes (one feature per
+  section), verified by `src/integration/examples_test.mbt`.
+- `examples/sample-deck/` — standalone MoonBit module with its own
+  `moon.mod.json`, depending on `t-ujiie-g/moon-pptx` via a path dep
+  (`{ "path": "../.." }`) for in-repo development. After publication
+  of a new library version, downstream consumers can switch to a
+  `"version": "0.x"` dep without changing the example source.
 
 ### Naming conventions
 - Public types: `PascalCase`. Modules and functions: `snake_case`.
@@ -236,46 +243,57 @@ done (DoD)**. Status legend: 🔴 not started · 🟡 in progress · 🟢 done.
 DoD: a user can build everything python-pptx supports today without
 dropping to XML, and the API ergonomics match.
 
-🔴 **A1 — Image-size auto-detection from PNG / JPEG / GIF / BMP / TIFF headers**
+Status (2026-05-26): 7 of 8 items landed on `main` (A1 / A2 / A3 / A4
+/ A5 / B2 / C2 + examples). A8 (slide number / footer / date
+placeholders) deferred — needs master-side placeholder schema work
+that is more naturally bundled with C1 (`define_master`) in v0.3.
+Eight PowerPoint Online repair-banner triggers also fixed during
+v0.2 polish — every chart family + the bundled blank deck now opens
+without a repair prompt. **Ready to tag v0.2.0** once API stability
+review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
+0.1.0.
+
+🟢 **A1 — Image-size auto-detection from PNG / JPEG / GIF / BMP / TIFF headers**
   - New `@oxml.detect_image_dimensions(bytes) -> (cx_emu, cy_emu)?`
   - `Presentation::add_picture_mut(slide_idx, bytes, x, y)` overload (no cx/cy required) — auto-derives from header + DPI metadata
   - Test fixtures: one per format
 
-🔴 **A2 — Hyperlink builder**
+🟢 **A2 — Hyperlink builder**
   - `RunProperties::with_hyperlink(url~, tooltip~ : String?)` — wires `<a:hlinkClick>`
   - Auto-allocate slide-level rId; register relationship as `TargetMode::External`
   - Internal: `RunProperties::with_hyperlink_to_slide(slide_idx)` for jump-to-slide actions
 
-🔴 **A3 — Speaker notes builder**
+🟢 **A3 — Speaker notes builder**
   - `Presentation::set_notes_mut(slide_idx, "text")` — creates / updates `/ppt/notesSlides/notesSlideN.xml`
   - Auto-register notes master + Override content type if missing
   - Fluent: `Slide::with_notes(text)` (returns new Slide with the linked notes slide)
 
-🔴 **A4 — Picture crop fluent builder**
+🟢 **A4 — Picture crop fluent builder**
   - `Picture::with_crop(l~, t~, r~, b~ : @units.Percentage)` — wraps `SrcRect`
   - Crop is idempotent at the value level (replaces, not merges)
 
-🔴 **A5 — Slide size selector**
+🟢 **A5 — Slide size selector**
   - `Presentation::set_slide_size_mut(SlideSize)` where `SlideSize { ScreenFourByThree | ScreenSixteenByNine | ScreenSixteenByTen | Letter | Legal | A4 | …}`
   - Maps to ECMA-376's 17 `ST_SlideSizeType` values
   - Updates `presentation.xml` `<p:sldSz>` + recomputes any `pct_of_slide_w` helpers
 
-🔴 **A8 — Slide number / header / footer / date**
+🔴 **A8 — Slide number / header / footer / date** *(deferred to bundle with v0.3 C1 `define_master` — the master-side placeholder schema is the natural home)*
   - `Slide::with_slide_number(visible : Bool)`, `Slide::with_footer("text")`, `Slide::with_date(DateMode { Auto | Fixed(String) })`
   - Layout-side helpers to declare the placeholders when the master doesn't already
 
-🔴 **B2 — Table cell border fluent builders (extended)**
+🟢 **B2 — Table cell border fluent builders (extended)**
   - `TableCell::with_borders(left~, right~, top~, bottom~ : Stroke?)` — convenience over the existing 6 `with_border_*`
   - Per-border `Stroke` reuses `@oxml.Stroke`
 
-🔴 **C2 — Percentage / relative positioning**
+🟢 **C2 — Percentage / relative positioning**
   - `@units.pct_of_slide_w(prs, 5.0) -> Emu`, `@units.pct_of_slide_h(prs, 5.0) -> Emu`
   - `@units.Pct(5.0)` newtype + `Pct::resolve_w(prs)` / `Pct::resolve_h(prs)`
   - README quickstart switches to percentage-based positions for readability
 
-🔴 **Docs + examples**
-  - New `examples/` directory: 8–10 runnable cookbook scripts (title slide / agenda / charts / tables / images / pitch deck end-to-end / etc.)
-  - README links to `examples/` instead of `src/integration/cookbook_test.mbt`
+🟢 **Docs + examples**
+  - `examples/README.md` with 8 cookbook recipes (title slide / widescreen / hyperlinks / notes / images / tables / charts / pitch deck).
+  - Each recipe verified by `src/integration/examples_test.mbt`.
+  - Main README links to `examples/`.
 
 ---
 
@@ -604,6 +622,9 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-05-26** — **`examples/sample-deck/` reinstated as a standalone consumer module.** The 12-slide demo deck builder (previously deleted from `src/sample/` because library-internal demo code doesn't represent post-`moon add` consumer usage) is back, but now lives as a separate MoonBit module under `examples/sample-deck/` with its own `moon.mod.json` and a path dep on `../..`. From the consumer-side the import shape (`@presentation`, `@chart`, …) is identical to what a `moon add t-ujiie-g/moon-pptx` user would write, so the example doubles as a worked-out usage template. Bisection mode (per-feature isolation files for PowerPoint Online repair debugging) lives behind a compile-time `split_mode` flag in `main.mbt`. Switching to a version dep after v0.2.0 publication is a one-line edit (path → `"0.2.0"`). Path-dep verified via JSON moon.mod.json — the TOML moon.mod format isn't accepting `{ path = ".." }` syntax yet, so this module keeps the JSON form.
+- **2026-05-26** — **PowerPoint Online repair-banner fixes + sample-deck removal.** Round-trip diffs against PowerPoint's auto-repaired output surfaced eight schema-and-canonicalisation issues triggering the "needs repair" banner even when the file was spec-valid: (1) `<p:notesMasterId>` was emitting the schema-undefined `id` attribute (only valid on `<p:sldMasterId>`); (2) `<p:sldSz type="custom"/>` should drop the `type` attribute entirely for non-preset dimensions; (3) `<c:ofPieChart>` should omit `<c:splitType val="auto"/>` (PowerPoint repairs it away) and emit explicit `<c:gapWidth>=100` + `<c:secondPieSize>=75` defaults; (4) chart axes need `<c:crosses val="autoZero"/>` (every axis kind) + `<c:crossBetween val="between"/>` (valAx) per spec; (5) 3-D chart builders (`of_bar_3d` / `of_line_3d` / `of_pie_3d` / `of_surface` / `of_surface_3d`) need `<c:view3D>` + `<c:floor>` / `<c:sideWall>` / `<c:backWall>` populated; (6) `<a:custGeom>` should always emit empty `<a:ahLst/>`, `<a:cxnLst/>`, and a default zero-bound `<a:rect>`; (7) the bundled `Presentation::new()` slide-master needs `<p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>`; (8) internal-slide hyperlinks need `action="ppaction://hlinksldjump"` on `<a:hlinkClick>` plus the rt_slide rel — without it PowerPoint silently rewrites the link to a no-op. Also `notesSlide` and `Slide` writers now synthesise the required `<p:nvGrpSpPr>` + `<p:grpSpPr>` (with zero-valued `<a:xfrm>`) when no captured wrapper exists; `set_notes_mut` auto-synthesises `/ppt/notesMasters/notesMaster1.xml` + a duplicated `theme2.xml` on first call. **`src/sample/` and `src/cmd_sample/` removed** — library-internal demo code doesn't represent post-`moon add` consumer usage; a standalone consumer-example repo is planned for after v0.2.0. The cookbook in `examples/README.md` (verified by `src/integration/examples_test.mbt`) replaces it. 846 tests × 4 backends green (851 → 846 = sample_deck_test.mbt's 13 tests removed, 8 repair fix tests + 5 notes-master tests added throughout).
+- **2026-05-26** — **v0.2 batch landed on `main` (7 of 8 items)**: A1 (image-size auto-detection via PNG/JPEG/GIF/BMP/TIFF header parsing in `@oxml.detect_image_dimensions` + `Presentation::add_picture_auto_mut`), A2 (hyperlink builder — new `HyperlinkTarget` enum + `RunProperties::with_hyperlink` / `with_hyperlink_to_slide` + a resolver that allocates slide-rels rIds at `update_slide_mut` time + `rt_hyperlink` constant), A3 (`Presentation::set_notes_mut(slide_idx, text)` with body-placeholder synthesis + auto-Override registration), A4 (`Picture::with_crop(left~, top~, right~, bottom~ : Percentage)`), A5 (`SlideSizeKind` enum + `Presentation::set_slide_size_mut` covering 4:3 / 16:9 / 16:10 / widescreen / Letter / A4 / 35mm / banner / custom), B2 (`TableCellProperties::with_borders` per-edge fluent), C2 (`Presentation::pct_w` / `pct_h` / `slide_w` / `slide_h` percent-of-slide positioning). Plus an `examples/README.md` with 8 cookbook recipes verified by `src/integration/examples_test.mbt`. **A8 (slide number / footer / date placeholders) deferred** — the per-slide flags are cheap, but they only render usefully when the master defines matching placeholders, so the work is bundled with v0.3 C1 (`define_master`). 56 new tests (795 → 851 total × 4 backends).
 - **2026-05-26** — **v0.1.0 published to mooncakes.io as `t-ujiie-g/moon-pptx`.** Module renamed from `moon_pptx` to `moon-pptx` to match the repo and align with the hyphen-naming convention common on mooncakes; sub-package import aliases (`@units`, `@chart`, …) and every public API unchanged. README rewritten for an OSS audience (drops pre-alpha banner and phase table; adds sub-package map + compatibility matrix). CHANGELOG.md created. Public-API doc coverage 82 % → 100 % across 116 source files. 795 tests × 4 backends green. `moon publish --dry-run` returned 202 Accepted before tagging.
 - **2026-05-25** — Sample-deck builder + integration tests + CLI binary. New `src/sample/build.mbt` exposes `pub fn build_sample_deck()` — an 8-slide deck exercising every typed feature delivered through Phase 7 (styled title, shapes with custom fills, multi-paragraph text, 3×3 table, bar / line / pie / scatter / bubble charts). New `src/integration/sample_deck_test.mbt` carries 10 structural-validation tests (slide count, shape kinds, chart count, text content, round-trip stability). New `src/cmd_sample/main.mbt` is an `is-main` binary that emits the deck bytes as a single hex string on stdout — `moon run src/cmd_sample --target native | tail -1 | xxd -r -p > out/sample.pptx` produces a `.pptx` openable in PowerPoint / Keynote / LibreOffice. The hex+xxd dance is forced by the "no FFI" policy (CLAUDE.md §8) — MoonBit's `core` only exposes `println(Show)` for I/O. `out/` and `*.pptx` are gitignored. 795 total tests × 4 backends.
 - **2026-05-25** — **PowerPoint "needs repair" prompt eliminated for `Presentation::new()`.** Building a real sample deck and opening it in PowerPoint Online surfaced two distinct ECMA-376 violations in the bundled template, both fixed in `src/presentation/template.mbt`. (1) Five OPC parts that §13.3.6 marks as required were absent: `/ppt/presProps.xml` (CT_PresentationProperties), `/ppt/viewProps.xml` (CT_CommonViewProperties), `/ppt/tableStyles.xml` (CT_TableStyleList — required when slides carry tables), `/docProps/core.xml` (Dublin Core metadata), `/docProps/app.xml` (extended properties). New content-type constants in `@oxml/content_types.mbt` (ct_pres_props / ct_view_props / ct_table_styles / ct_core_properties / ct_extended_properties) and relationship-type constants in `@opc/relationship_types.mbt` (rt_pres_props / rt_view_props / rt_table_styles / rt_core_properties / rt_extended_properties). (2) The theme was missing `<a:fmtScheme>` (CT_StyleMatrix) — §20.1.6.10's CT_BaseStyles makes all three of clrScheme / fontScheme / fmtScheme mandatory (`minOccurs="1"`), and *this* was the actual PowerPoint repair trigger. Added the canonical 3-entry "subtle / moderate / intense" Office trio across fillStyleLst / lnStyleLst (6350 / 12700 / 19050 EMU) / effectStyleLst / bgFillStyleLst, all using the `phClr` placeholder. Theme reference also moved out of `presentation.xml.rels` (slideMaster.xml.rels owns it now — the Office convention); slides now claim rIds from rId5 onward (next-available after master + presProps + viewProps + tableStyles). `add_slide_mut`'s next-rId walk picks this up automatically. Verified by opening the generated deck in PowerPoint Online — no repair banner. 795 tests still pass × 4 backends.

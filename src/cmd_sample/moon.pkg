@@ -1,7 +1,0 @@
-import {
-  "t-ujiie-g/moon-pptx/sample",
-}
-
-options(
-  "is-main": true,
-)

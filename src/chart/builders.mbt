@@ -458,16 +458,24 @@ pub fn Chart::of_of_pie(
   split_type? : SplitType = Auto,
 ) -> Chart {
   let series_xml = synthesize_series(data)
+  // PowerPoint Online normalises `<c:splitType val="auto"/>` away
+  // (auto IS the default behaviour) and adds explicit `<c:gapWidth>`
+  // + `<c:secondPieSize>` with their schema defaults. Doing the same
+  // up-front avoids the repair banner.
+  let resolved_split : SplitType? = match split_type {
+    Auto => None
+    other => Some(other)
+  }
   let body : OfPieChartBody = {
     of_pie_type,
     vary_colors: Some(true),
     series: series_xml,
     d_lbls: None,
-    gap_width: None,
-    split_type: Some(split_type),
+    gap_width: Some(100), // CT_OfPieChart default
+    split_type: resolved_split,
     split_pos: None,
     cust_split: None,
-    second_pie_size: None,
+    second_pie_size: Some(75), // CT_OfPieChart default
     ser_lines: [],
     extension: [],
   }
@@ -505,7 +513,7 @@ pub fn Chart::of_bar_3d(
     ax_ids: [1, 2, 3],
     extension: [],
   }
-  wrap_chart(three_axis_plot_area(Bar3DChart(body)))
+  wrap_chart_3d(three_axis_plot_area(Bar3DChart(body)))
 }
 
 ///|
@@ -526,7 +534,7 @@ pub fn Chart::of_line_3d(
     ax_ids: [1, 2, 3],
     extension: [],
   }
-  wrap_chart(three_axis_plot_area(Line3DChart(body)))
+  wrap_chart_3d(three_axis_plot_area(Line3DChart(body)))
 }
 
 ///|
@@ -548,7 +556,7 @@ pub fn Chart::of_pie_3d(data : ChartData) -> Chart {
     sp_pr: None,
     extension: [],
   }
-  wrap_chart(plot_area)
+  wrap_chart_3d(plot_area)
 }
 
 ///|
@@ -574,7 +582,7 @@ pub fn Chart::of_surface(data : ChartData, wireframe? : Bool = false) -> Chart {
     sp_pr: None,
     extension: [],
   }
-  wrap_chart(plot_area)
+  wrap_chart_3d(plot_area)
 }
 
 ///|
@@ -591,7 +599,7 @@ pub fn Chart::of_surface_3d(
     ax_ids: [1, 2, 3],
     extension: [],
   }
-  wrap_chart(three_axis_plot_area(Surface3DChart(body)))
+  wrap_chart_3d(three_axis_plot_area(Surface3DChart(body)))
 }
 
 ///|
@@ -725,17 +733,57 @@ pub fn Chart::of_pie(data : ChartData) -> Chart {
 
 ///|
 /// Wrap a plot-area-only chart definition into the full Chart shape
-/// (`<c:chartSpace>` ▸ `<c:chart>` ▸ plotArea).  Used by every
+/// (`<c:chartSpace>` ▸ `<c:chart>` ▸ plotArea). Used by every
 /// chart-level constructor here.
+///
+/// `<c:autoTitleDeleted val="1"/>` is emitted unconditionally — the
+/// spec marks it optional but PowerPoint Online flags charts without
+/// it as needing repair when there's no `<c:title>`. For 3-D charts
+/// the caller should use `wrap_chart_3d` instead, which additionally
+/// fills in `<c:view3D>` + the floor / sideWall / backWall trio that
+/// PowerPoint Online expects on any 3-D-shaped plot.
 fn wrap_chart(plot_area : PlotArea) -> Chart {
+  wrap_chart_impl(plot_area, with_view_3d=false)
+}
+
+///|
+/// Like `wrap_chart` but additionally populates the 3-D-specific
+/// chart-level fields. Called by every `of_*_3d` / `of_surface*`
+/// builder.
+fn wrap_chart_3d(plot_area : PlotArea) -> Chart {
+  wrap_chart_impl(plot_area, with_view_3d=true)
+}
+
+///|
+fn wrap_chart_impl(plot_area : PlotArea, with_view_3d~ : Bool) -> Chart {
+  let view3d : @xml.XmlElement? = if with_view_3d {
+    Some(make_view_3d())
+  } else {
+    None
+  }
+  let floor : @xml.XmlElement? = if with_view_3d {
+    Some(make_wall_element("floor"))
+  } else {
+    None
+  }
+  let side_wall : @xml.XmlElement? = if with_view_3d {
+    Some(make_wall_element("sideWall"))
+  } else {
+    None
+  }
+  let back_wall : @xml.XmlElement? = if with_view_3d {
+    Some(make_wall_element("backWall"))
+  } else {
+    None
+  }
   let chart : ChartBody = {
     title: None,
-    auto_title_deleted: None,
+    auto_title_deleted: Some(true),
     pivot_fmts: None,
-    view3d: None,
-    floor: None,
-    side_wall: None,
-    back_wall: None,
+    view3d,
+    floor,
+    side_wall,
+    back_wall,
     plot_area,
     legend: None,
     plot_vis_only: Some(true),
@@ -750,6 +798,35 @@ fn wrap_chart(plot_area : PlotArea) -> Chart {
     style: None,
     chart,
     extension: [],
+  }
+}
+
+///|
+/// `<c:view3D><c:rotX val="15"/><c:rotY val="20"/><c:rAngAx val="0"/></c:view3D>`
+/// — PowerPoint's default 3-D rotation.
+fn make_view_3d() -> @xml.XmlElement {
+  let q = @xml.QName::new(@oxml.chart_ns, "view3D")
+  {
+    name: q,
+    attributes: [],
+    children: [
+      Element(val_attr_element("rotX", "15")),
+      Element(val_attr_element("rotY", "20")),
+      Element(val_attr_element("rAngAx", "0")),
+    ],
+  }
+}
+
+///|
+/// `<c:floor>` / `<c:sideWall>` / `<c:backWall>` all share the same
+/// `<c:thickness val="0"/>`-only body PowerPoint emits as the
+/// zero-thickness default.
+fn make_wall_element(local_name : String) -> @xml.XmlElement {
+  let q = @xml.QName::new(@oxml.chart_ns, local_name)
+  {
+    name: q,
+    attributes: [],
+    children: [Element(val_attr_element("thickness", "0"))],
   }
 }
 
@@ -907,6 +984,17 @@ fn simple_axis_core(
   self_id : Int,
   cross_id : Int,
 ) -> AxisCore {
+  // ECMA-376 §21.2.2.6 (CT_CatAx) / §21.2.2.182 (CT_ValAx) make
+  // `<c:crosses>` (or `<c:crossesAt>`) required on every axis kind,
+  // and CT_ValAx additionally requires `<c:crossBetween>`. Hand-built
+  // charts otherwise pass schema validation but trigger PowerPoint
+  // Online's repair banner, so we default the chooses + (for valAx)
+  // append a `<c:crossBetween>` via the lossless-extension channel.
+  let extension : Array[@xml.XmlElement] = if local_name == "valAx" {
+    [val_attr_element("crossBetween", "between")]
+  } else {
+    []
+  }
   {
     ax_id: self_id,
     scaling: Some({
@@ -928,10 +1016,19 @@ fn simple_axis_core(
     sp_pr: None,
     tx_pr: None,
     cross_ax: Some(cross_id),
-    crosses: None,
+    crosses: Some(AutoZero),
     crosses_at: None,
-    extension: [],
+    extension,
   }
+}
+
+///|
+/// Build a `<c:LOCAL val="…"/>` chart-namespace element as an
+/// `XmlElement` for use through the lossless-extension channel.
+fn val_attr_element(local_name : String, value : String) -> @xml.XmlElement {
+  let qname = @xml.QName::new(@oxml.chart_ns, local_name)
+  let val_attr = (@xml.QName::unqualified("val"), value)
+  { name: qname, attributes: [val_attr], children: [] }
 }
 
 ///|

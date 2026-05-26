@@ -165,6 +165,20 @@ suffice.
 | `@xml` | Streaming namespace-aware XML reader + writer |
 | `@units` | `Emu`, `Pt`, `Inch`, `Cm`, `Angle`, `Percentage`, `RgbColor`, `HslColor`, `ThemeColor` |
 
+## Examples
+
+Two entry points live under [`examples/`](examples/):
+
+- [`examples/README.md`](examples/README.md) — cookbook of focused
+  recipes (title slides, widescreen sizing, hyperlinks, speaker
+  notes, picture cropping, tables with custom borders, charts from
+  data, a complete pitch deck end-to-end).
+- [`examples/sample-deck/`](examples/sample-deck/) — a standalone
+  MoonBit module that depends on moon-pptx exactly the way a
+  downstream consumer would. It builds a 12-slide demonstration
+  deck exercising every typed feature. Run it via
+  `moon -C examples/sample-deck run main --target native | tail -1 | xxd -r -p > out/sample.pptx`.
+
 ## Compatibility
 
 | Backend | Status |

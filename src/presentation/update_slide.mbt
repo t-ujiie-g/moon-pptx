@@ -33,7 +33,11 @@ pub fn Presentation::update_slide_mut(
     )
   }
   let part = parts[slide_index]
-  let bytes = new_slide.serialize() catch {
+  // Walk the slide and resolve any pending hyperlinks against the
+  // part's `.rels` before serialisation. No-op for slides whose runs
+  // carry no `hyperlink_target`.
+  let resolved = self.resolve_slide_hyperlinks(part.name, new_slide)
+  let bytes = resolved.serialize() catch {
     e => raise SlideFailure(e.to_string())
   }
   self.replace_part_bytes(part.name, bytes, @oxml.ct_slide)
