@@ -21,20 +21,60 @@ priv enum ExtScope {
 /// Classify a captured extension element by its OOXML local name.
 ///
 /// `<p:nvGrpSpPr>` / `<p:grpSpPr>` belong inside `<p:spTree>`;
-/// `<p:bg>` / `<p:controls>` belong inside `<p:cSld>`; everything else
+/// `<p:controls>` belongs inside `<p:cSld>`; everything else
 /// (`<p:transition>` / `<p:timing>` / `<p:custDataLst>` /
 /// `<p:extLst>` + foreign-namespace siblings) attaches at the sld
-/// level. Same applies for `<p:notes>` since they share the content
-/// model.
+/// level. `<p:bg>` is no longer captured here — it is the typed
+/// `Slide.background` field (roadmap A7). Same applies for `<p:notes>`
+/// since they share the content model.
 fn classify_ext(el : @xml.XmlElement) -> ExtScope {
   if el.name.uri != @oxml.presentation_ns {
     return ExtSld
   }
   match el.name.local_name {
     "nvGrpSpPr" | "grpSpPr" => ExtSpTree
-    "bg" | "controls" => ExtCSld
+    "controls" => ExtCSld
     _ => ExtSld
   }
+}
+
+///|
+/// Emit `<p:bg>` (CT_Background) — the typed slide background. Per
+/// ECMA-376's CT_CommonSlideData ordering, `<p:bg>` precedes `<p:spTree>`.
+fn write_bg(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  bg : Background,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.presentation_ns, "bg"))
+  match bg {
+    Properties(p) => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "bgPr"))
+      if p.shade_to_title {
+        w.attribute(@xml.QName::unqualified("shadeToTitle"), "1")
+      }
+      match p.fill {
+        Some(f) => @oxml.write_fill(w, ctx, f)
+        None => ()
+      }
+      match p.effects {
+        Some(e) => @oxml.write_effect_list(w, ctx, e)
+        None => ()
+      }
+      // grpFill / effectDag / extLst captured per ADR-004.
+      for ext in p.extension {
+        @oxml.write_xml_element(w, ctx, ext)
+      }
+      w.end_element() // bgPr
+    }
+    StyleReference(idx, color) => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "bgRef"))
+      w.attribute(@xml.QName::unqualified("idx"), idx.to_string())
+      @oxml.write_color(w, ctx, color)
+      w.end_element() // bgRef
+    }
+  }
+  w.end_element() // bg
 }
 
 ///|
@@ -78,7 +118,12 @@ fn write_slide_xml(
   if s.name != "" {
     w.attribute(@xml.QName::unqualified("name"), s.name)
   }
-  // cSld-level captured extensions (bg, controls).
+  // <p:bg> first per CT_CommonSlideData ordering (roadmap A7).
+  match s.background {
+    Some(bg) => write_bg(w, ctx, bg)
+    None => ()
+  }
+  // cSld-level captured extensions (controls).
   for ext in s.extension {
     if classify_ext(ext) is ExtCSld {
       @oxml.write_xml_element(w, ctx, ext)

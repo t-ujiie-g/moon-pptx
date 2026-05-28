@@ -105,6 +105,11 @@ pub(all) struct Slide {
   /// `name` from `<p:cSld name="…">`. Empty if the attribute is absent
   /// (which is the common case — slides are usually unnamed).
   name : String
+  /// `<p:cSld><p:bg>` — the slide background (roadmap A7). `None` means
+  /// the slide inherits its background from the layout / master (the
+  /// common case). Lifted out of `extension` into a typed field; see
+  /// `background.mbt`.
+  background : Background?
   /// Top-level shapes inside `<p:spTree>` in source order. The root
   /// group's own metadata (`<p:nvGrpSpPr>` / `<p:grpSpPr>`) is captured
   /// into `extension` for round-trip preservation.
@@ -115,7 +120,8 @@ pub(all) struct Slide {
   clr_map_override : @slide_master.ClrMapOverride
   /// Lossless preservation (ADR-004): unmodelled `<p:sld>` children
   /// (`<p:transition>`, `<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
-  /// unmodelled `<p:cSld>` children (`<p:bg>`, …), and unmodelled
+  /// unmodelled `<p:cSld>` children (`<p:controls>`, …; `<p:bg>` is now
+  /// the typed `background` field), and unmodelled
   /// `<p:spTree>` siblings (root group metadata, foreign-namespace
   /// extensions). Source order is preserved within the array; cross-
   /// section ordering is *not* — writers re-emit each captured

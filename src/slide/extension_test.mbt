@@ -53,7 +53,9 @@ test "ADR-004: slide-level transition and timing survive parse" {
 }
 
 ///|
-test "ADR-004: <p:cSld><p:bg> survives as slide extension" {
+test "A7: <p:cSld><p:bg> lifts into the typed background field, not extension" {
+  // Pre-A7 this `<p:bg>` round-tripped through `Slide.extension`; it is now
+  // the typed `Slide.background` field, so it must *not* appear in extension.
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
     pml_ns +
@@ -68,17 +70,10 @@ test "ADR-004: <p:cSld><p:bg> survives as slide extension" {
     "</p:cSld>" +
     "</p:sld>"
   let slide = @slide.Slide::parse(fixture_bytes(xml))
-  let bg = find_ext(slide, "bg")
-  assert_true(bg is Some(_))
-  let b = bg.unwrap()
-  assert_eq(b.children.length(), 1)
-  match b.children[0] {
-    Element(bg_ref) => {
-      assert_eq(bg_ref.name.local_name, "bgRef")
-      assert_eq(bg_ref.attributes[0].0.local_name, "idx")
-      assert_eq(bg_ref.attributes[0].1, "1001")
-    }
-    _ => fail("expected <p:bgRef> child")
+  assert_true(find_ext(slide, "bg") is None)
+  match slide.background {
+    Some(StyleReference(idx, _)) => assert_eq(idx, 1001)
+    _ => fail("expected a typed StyleReference background")
   }
 }
 

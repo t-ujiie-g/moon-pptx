@@ -111,6 +111,19 @@ pub fn AutoShape::with_no_stroke(Self) -> Self
 pub fn AutoShape::with_stroke(Self, @oxml.Stroke) -> Self
 pub fn AutoShape::with_text_body(Self, TextBody) -> Self
 
+pub(all) enum Background {
+  Properties(BackgroundProperties)
+  StyleReference(Int, @oxml.Color)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct BackgroundProperties {
+  fill : @oxml.Fill?
+  shade_to_title : Bool
+  effects : @oxml.EffectList?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn BackgroundProperties::of_fill(@oxml.Fill) -> Self
+
 pub(all) struct BodyProperties {
   rotation : @units.Angle?
   vertical_text : VerticalText?
@@ -589,6 +602,7 @@ pub(all) struct Size {
 
 pub(all) struct Slide {
   name : String
+  background : Background?
   shapes : Array[Shape]
   clr_map_override : @slide_master.ClrMapOverride
   extension : Array[@xml.XmlElement]
@@ -601,7 +615,10 @@ pub fn Slide::placeholders(Self) -> Array[(PlaceholderType, Shape)]
 pub fn Slide::serialize(Self) -> FixedArray[Byte] raise SlideError
 pub fn Slide::serialize_with_root(Self, String) -> FixedArray[Byte] raise SlideError
 pub fn Slide::title(Self) -> Shape?
+pub fn Slide::with_background(Self, @oxml.Fill) -> Self
+pub fn Slide::with_background_ref(Self, Int, @oxml.Color) -> Self
 pub fn Slide::with_shape(Self, Shape) -> Self
+pub fn Slide::without_background(Self) -> Self
 
 pub(all) enum StrikeKind {
   StNoStrike

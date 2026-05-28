@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **Typed slide background** — `<p:cSld><p:bg>` is now a typed
+  `Slide.background` field instead of round-tripping through
+  `extension`. New `Background` enum covers both `<p:bgPr>` (an
+  explicit fill, via `Properties(BackgroundProperties)`) and
+  `<p:bgRef>` (a theme style-matrix reference, via
+  `StyleReference(idx, color)`). Builders: `Slide::with_background(fill)`,
+  `Slide::with_background_ref(idx, color)`, and
+  `Slide::without_background()`. The background reuses `@oxml.Fill`, and
+  unmodelled fill forms (e.g. `<a:grpFill>`) round-trip losslessly.
+  (roadmap A7)
 - **Placeholder named accessors** — `Slide::title()` (matches `Title`
   and `CtrTitle`), `Slide::body()`, `Slide::placeholder(kind)`, and
   `Slide::placeholders()` for inspecting placeholder shapes on a parsed
