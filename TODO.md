@@ -130,6 +130,8 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Multi-backend (Native + Browser + Node) | ❌ Python only | △ JS only | ✅ 4 backends | — |
 | Type-safe units (Emu / Pt / Inch / Cm) | ❌ raw int | ❌ raw number | ✅ newtypes | — |
 | Immutable builders | ❌ | ❌ | ✅ + opt-in `_mut` | — |
+| Edit an *existing* shape in place (update / replace / map / remove) | ✅ `shape.text=`, `.left=` | ❌ generator only | △ manual rebuild via `pub(all)` struct; no helper | ⏳ v0.3 (B4) |
+| Read accessors to *locate* shapes (placeholders / title / body) | ✅ | △ | ✅ B1 (`title`/`body`/`placeholder`/`placeholders`) | — |
 | ADT pattern-match on shapes / fills / strokes | ❌ | △ TS unions | ✅ enums | — |
 | Structural equality (`derive(Eq)`) | ❌ | ❌ | ✅ all model nodes | — |
 
@@ -334,6 +336,18 @@ be defined programmatically end-to-end.
   - `Slide::placeholders() -> Array[(PlaceholderType, Shape)]`
   - `Slide::title() -> Shape?` (matches `Title`/`CtrTitle`), `Slide::body() -> Shape?`, `Slide::placeholder(kind) -> Shape?`
   - New typed `PlaceholderType` enum (16 `ST_PlaceholderType` values + `Other(String)` forward-compat) with `from_xml`/`to_xml`; `Placeholder::kind()` derives it from the raw `ph_type`. The raw `ph_type : String` field is left untouched so an absent `type` attribute (the common body/content case) stays lossless — the typed lift is a non-raising accessor, not a struct field (unlike `SlideLayoutType`, whose root `type` is effectively always present)
+
+🔴 **B4 — Pinpoint shape editing** *(high priority — surfaced by external review 2026-05-29; closes the editing-ergonomics gap below)*
+  - **Gap**: the mutation API is append-only (`Slide::with_shape`) + whole-slide replace (`update_slide_mut`). Editing an *existing* shape (retitle, move, recolour) means manually rebuilding the `shapes` array and reconstructing the `Slide` via its `pub(all)` struct — doable but unergonomic, and the B1 accessors return shape *values* with no write-back path (no index/identity handle). python-pptx does this in one line (`shape.text = …`).
+  - **Identity handle** (see open question Q11): shapes carry a unique-per-slide `id`. Add `Shape::id() -> Int?` and `Shape::name() -> String?` so callers can locate a shape without index fragility. (`Unknown` has no id → `None`.)
+  - **Slide-level** (immutable, ADR-003):
+    - `Slide::map_shapes(f : (Shape) -> Shape) -> Slide` — transform every shape (bulk recolour / reposition)
+    - `Slide::with_shape_at(index : Int, shape : Shape) -> Slide` and `Slide::with_shape_mapped(index, f) -> Slide` — replace / transform by position
+    - `Slide::with_shape_by_id(id : Int, f : (Shape) -> Shape) -> Slide` — transform the shape with that id (primary, index-stable)
+    - `Slide::without_shape(index) -> Slide` / `without_shape_by_id(id)` — remove
+  - **Presentation-level** (`_mut`, closes the find→edit→write-back loop in one call): `Presentation::map_slide_shapes_mut(slide_idx, f)` and `Presentation::update_shape_by_id_mut(slide_idx, id, f)`
+  - **DoD**: open a real deck → locate a shape via B1 accessor or id → change its text / transform / fill → save, all without touching the `shapes` array by hand or dropping to XML. Round-trip + lossless preservation of untouched shapes must hold.
+  - Decide OOB behaviour (raise `SlideError` vs return `self` unchanged) — capture in Q11. Pairs naturally with B1; together they make moon-pptx a first-class *editor*, not just a reader+builder.
 
 🔴 **D6 — Lossless diff-write**
   - `Presentation::save_diff(original_bytes) -> FixedArray[Byte]`
@@ -556,6 +570,7 @@ Open:
 | Q8 | SmartArt: which DiagramML layouts ship in v0.5 first? (org-chart + hierarchy + cycle + process are top candidates) | — | v0.5 scoping |
 | Q9 | Animation DSL: support custom motion paths via custGeom AST reuse in v0.5, or defer to v0.6? | — | v0.5 scoping |
 | Q10 | Lossless diff-write (D6): hash-based detection of "untouched parts" vs explicit dirty-tracking on `Presentation`? | — | v0.3 design |
+| Q11 | Pinpoint shape editing (B4): which identity handle is primary — array index, per-slide `id`, or a predicate/`map`? And on a bad index/id, raise `SlideError` or return `self` unchanged? Leaning id-based + `map_shapes` for bulk; index helpers as a thin convenience. | — | v0.3 (B4) design |
 
 Resolved:
 
@@ -622,6 +637,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-05-29** — **Roadmap: added B4 (pinpoint shape editing) to v0.3 from external review.** A review noted that while the core is structurally faithful (lossless round-trip, real OOXML model) and template reuse is first-class (`slide_layouts()` / `slide_masters()` / `themes()` + `add_*_mut` / `update_slide_mut`), the mutation model is append-only + whole-slide-replace: there is no public helper to overwrite an *existing* shape (`update_shape` / `replace_shape` / `map_shapes`). Confirmed against the public `.mbti`. Logged as v0.3 item **B4** (§4.2) with a feature-matrix row (§3.1) and design question **Q11** (§8). Not yet implemented — planning only.
 - **2026-05-29** — **v0.3 C4 landed: SVG image support.** `Presentation::add_svg_picture_mut(slide_idx, svg_bytes, fallback_bytes, x, y, cx, cy)` inserts an SVG picture with a raster fallback — wiring the SVG part (`image/svg+xml`) + the fallback raster part, two `rt_image` relationships, the content-type Defaults, and the `Picture` shape. The blip embeds the fallback (`r:embed`) and carries an `<asvg:svgBlip>` pointing at the SVG inside `<a:blip><a:extLst><a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">`. New `@oxml.BlipFill::svg(png_embed_id, svg_embed_id)` builds that blip into `BlipFill.extension` (exactly how a parsed SVG picture round-trips, so the writer emits it verbatim and `write_xml_element` auto-declares the new `@oxml.svg_ns`); plus `@oxml.svg_blip_ext_uri` / `ct_svg` constants and the slide-level `@slide.Picture::of_svg_image`. The full OPC pipeline lives at the presentation level (the `slide` package can't manage parts), a slight deviation from the roadmap's `Picture::of_svg` sketch. No built-in SVG rasteriser — the caller supplies the fallback (rasterisation is out of scope per §0). Refactored `add_picture_mut`'s content-type block into a shared `ensure_default_content_type` helper. 6 new tests, 866 → 872 total × 4 backends.
 - **2026-05-29** — **v0.3 A7 landed: typed slide background.** `<p:cSld><p:bg>` lifts from `extension`-only into a typed `Slide.background : Background?` field. `Background` models both forms: `Properties(BackgroundProperties)` for `<p:bgPr>` (fill + `shadeToTitle` + `effectLst` + ADR-004 `extension`) and `StyleReference(idx, @oxml.Color)` for `<p:bgRef>`. Reuses `@oxml.Fill` instead of inventing a parallel `BgFill` enum, and makes `BackgroundProperties.fill` an `Option` (mirroring `AutoShape.fill`) so the unmodelled `<a:grpFill>` form round-trips via `extension` rather than dropping. Builders `Slide::with_background` / `with_background_ref` / `without_background` (+ `BackgroundProperties::of_fill`). Parser handles `<p:bg>` in `parse_c_sld` (no longer captured into `extension`; `classify_ext` drops `"bg"`); writer emits `<p:bg>` first inside `<p:cSld>` per CT_CommonSlideData order. The old ADR-004 extension test for `<p:bg>` was repurposed to assert the typed field. One struct-literal site in `@notes` updated for the new field. 11 new tests, 855 → 866 total × 4 backends.
 - **2026-05-29** — **v0.3 B1 landed: placeholder named accessors.** New typed `@slide.PlaceholderType` enum (16 `ST_PlaceholderType` values + `Other(String)` forward-compat, mirroring `@chart_ex.ChartExKind::Other`) with `from_xml`/`to_xml`, plus `Placeholder::kind()` and four `Slide` accessors — `placeholders()`, `title()` (matches `Title`/`CtrTitle`), `body()`, `placeholder(kind)`. Design choice: the raw `Placeholder.ph_type : String` field is **kept as-is** rather than lifted to the enum, because a body/content placeholder commonly omits the `type` attribute (preserved as `""` and round-tripped by omission); collapsing that into a non-optional enum would have broken lossless round-trip (ADR-004). So the typed view is a total, non-raising accessor on top of the raw string — different from how `SlideLayoutType` was lifted (its root `type` is effectively always present, so a lossy absent→`Blank` default was acceptable there). Purely additive `.mbti` diff. 10 new tests, 845 → 855 total × 4 backends.
