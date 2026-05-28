@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (toward v0.3.0)
+
+- **Placeholder named accessors** — `Slide::title()` (matches `Title`
+  and `CtrTitle`), `Slide::body()`, `Slide::placeholder(kind)`, and
+  `Slide::placeholders()` for inspecting placeholder shapes on a parsed
+  slide. New typed `PlaceholderType` enum (the 16 `ST_PlaceholderType`
+  values plus `Other(String)` for forward compatibility) with
+  `from_xml` / `to_xml`, and `Placeholder::kind()` deriving it from the
+  raw `ph_type`. The raw string field is preserved so an absent `type`
+  attribute round-trips losslessly. (roadmap B1)
+
+## [0.2.0] — 2026-05-27
+
 ### Added (toward v0.2.0)
 
 - **Image-size auto-detection** — new `@oxml.detect_image_format` /
