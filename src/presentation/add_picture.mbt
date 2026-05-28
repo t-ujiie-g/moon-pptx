@@ -57,19 +57,8 @@ pub fn Presentation::add_picture_mut(
   }
   // 4. Register the extension's content type if it isn't already
   //    declared. PowerPoint stores image content-types as `Default`
-  //    entries (per-extension); duplicate Defaults are tolerated but
-  //    we deduplicate anyway.
-  let cur_ct = self.pkg.content_types()
-  let ext = fmt.extension()
-  let ct = fmt.content_type()
-  let already_declared = cur_ct.defaults.iter().any(fn(kv) { kv.0 == ext })
-  if !already_declared {
-    let next_ct = cur_ct.with_default(ext, ct)
-    self.pkg.set_content_types(next_ct)
-    self.pkg.regenerate_content_types_part() catch {
-      e => raise OpcFailure(e.to_string())
-    }
-  }
+  //    entries (per-extension).
+  self.ensure_default_content_type(fmt.extension(), fmt.content_type())
   // 5. Append a Relationship from the slide to the image. We have
   //    to know the slide's part name; resolve via the ordered-slide
   //    helper that `slides()` uses internally.
@@ -143,7 +132,130 @@ pub fn Presentation::add_picture_auto_mut(
   self.add_picture_mut(slide_idx, bytes, x, y, @units.Emu(cx), @units.Emu(cy))
 }
 
+///|
+/// Insert an SVG image as a new `Picture` shape on the slide at
+/// `slide_idx`, with a raster fallback (roadmap C4). `svg_bytes` is the
+/// SVG part; `fallback_bytes` is a PNG / JPEG / GIF / BMP / TIFF rendering
+/// shown by viewers that don't understand SVG (PowerPoint < 2016,
+/// thumbnails). The picture's `<a:blip>` embeds the fallback and carries an
+/// `<asvg:svgBlip>` extension pointing at the SVG.
+///
+/// `(x, y)` is the offset in EMU; `(cx, cy)` the extent. Raises `Malformed`
+/// if `fallback_bytes` isn't a recognised raster image.
+pub fn Presentation::add_svg_picture_mut(
+  self : Presentation,
+  slide_idx : Int,
+  svg_bytes : FixedArray[Byte],
+  fallback_bytes : FixedArray[Byte],
+  x : @units.Emu,
+  y : @units.Emu,
+  cx : @units.Emu,
+  cy : @units.Emu,
+) -> Unit raise PptxError {
+  // 1. The fallback must be a recognised raster image.
+  let fmt = match @oxml.detect_image_format(fallback_bytes) {
+    Some(f) => f
+    None =>
+      raise Malformed(
+        "add_svg_picture_mut: unrecognised fallback image bytes (expected PNG / JPEG / GIF / BMP / TIFF)",
+      )
+  }
+  // 2. Add both media parts. The fallback goes first so the SVG part name
+  //    picks the next index after it.
+  let fallback_name = self.next_image_part_name(fmt.extension())
+  let fallback_part = @opc.Part::new(
+    fallback_name,
+    fmt.content_type(),
+    fallback_bytes,
+  ) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  self.pkg.add_part(fallback_part) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let svg_name = self.next_image_part_name("svg")
+  let svg_part = @opc.Part::new(svg_name, @oxml.ct_svg, svg_bytes) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  self.pkg.add_part(svg_part) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  // 3. Register both content types (Default per-extension entries).
+  self.ensure_default_content_type(fmt.extension(), fmt.content_type())
+  self.ensure_default_content_type("svg", @oxml.ct_svg)
+  // 4. Two relationships from the slide: fallback (blip embed) + svg.
+  let slide_parts = self.ordered_slide_parts()
+  if slide_idx < 0 || slide_idx >= slide_parts.length() {
+    raise Malformed(
+      "add_svg_picture_mut: slide_idx " +
+      slide_idx.to_string() +
+      " out of range (0.." +
+      slide_parts.length().to_string() +
+      ")",
+    )
+  }
+  let slide_part = slide_parts[slide_idx]
+  let slide_name = slide_part.name
+  let rels0 = self.pkg.relationships_for(slide_name) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let rid_png = next_unused_rid(rels0)
+  let rels1 = rels0.with_relationship(@opc.Relationship::{
+    id: rid_png,
+    rel_type: @opc.rt_image,
+    target: relative_target(slide_name, fallback_name),
+    target_mode: Internal,
+  }) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let rid_svg = next_unused_rid(rels1)
+  let rels2 = rels1.with_relationship(@opc.Relationship::{
+    id: rid_svg,
+    rel_type: @opc.rt_image,
+    target: relative_target(slide_name, svg_name),
+    target_mode: Internal,
+  }) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  self.write_rels_for_part(slide_name, rels2)
+  // 5. Construct the typed SVG Picture and append it.
+  let pic_id = next_picture_shape_id(slide_part)
+  let pic = @slide.Picture::of_svg_image(
+    pic_id,
+    "Picture " + pic_id.to_string(),
+    rid_png,
+    rid_svg,
+    x,
+    y,
+    cx,
+    cy,
+  )
+  let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
+    e => raise SlideFailure(e.to_string())
+  }
+  let updated_slide = slide_obj.with_shape(Picture(pic))
+  self.update_slide_mut(slide_idx, updated_slide)
+}
+
 // --- helpers ---
+
+///|
+/// Declare a per-extension `Default` content-type entry if it isn't
+/// already present. PowerPoint stores media content-types this way;
+/// duplicate Defaults are tolerated, but we deduplicate anyway.
+fn Presentation::ensure_default_content_type(
+  self : Presentation,
+  ext : String,
+  ct : String,
+) -> Unit raise PptxError {
+  let cur = self.pkg.content_types()
+  if !cur.defaults.iter().any(fn(kv) { kv.0 == ext }) {
+    self.pkg.set_content_types(cur.with_default(ext, ct))
+    self.pkg.regenerate_content_types_part() catch {
+      e => raise OpcFailure(e.to_string())
+    }
+  }
+}
 
 ///|
 /// Allocate the next `/ppt/media/imageN.{ext}` part name. Scans the

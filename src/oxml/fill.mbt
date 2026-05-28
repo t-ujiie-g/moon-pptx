@@ -141,6 +141,54 @@ pub(all) struct BlipFill {
 } derive(Eq, Debug)
 
 ///|
+/// The `<a:ext>` URI that keys the SVG-blip extension inside an
+/// `<a:blip>`'s `<a:extLst>`. This GUID is fixed by Office; SVG-aware
+/// viewers (PowerPoint 2016+) recognise it and render the referenced SVG
+/// part in preference to the raster `r:embed` fallback.
+pub let svg_blip_ext_uri : String = "{96DAC541-7B7A-43D3-8B79-37D633B846F1}"
+
+///|
+/// Build a `BlipFill` for an SVG picture. `png_embed_id` is the `r:embed`
+/// of the raster fallback part (shown by viewers that don't understand
+/// SVG); `svg_embed_id` is the `r:embed` of the SVG part, wired through an
+/// `<asvg:svgBlip>` inside the blip's `<a:extLst>`.
+///
+/// The whole `<a:blip>` (with the SVG extension) is placed in `extension`,
+/// which is exactly how a parsed SVG picture round-trips — `write_fill`
+/// emits a captured blip verbatim, and `write_xml_element` auto-declares
+/// the `svg_ns` namespace. `embed_id` is also set so consumers reading the
+/// typed field see the fallback relationship.
+pub fn BlipFill::svg(png_embed_id : String, svg_embed_id : String) -> BlipFill {
+  let svg_blip = @xml.XmlElement::new(
+    @xml.QName::new(svg_ns, "svgBlip"),
+    [(@xml.QName::new(office_relationships_ns, "embed"), svg_embed_id)],
+    [],
+  )
+  let ext = @xml.XmlElement::new(
+    @xml.QName::new(drawing_ns, "ext"),
+    [(@xml.QName::unqualified("uri"), svg_blip_ext_uri)],
+    [Element(svg_blip)],
+  )
+  let ext_lst = @xml.XmlElement::new(
+    @xml.QName::new(drawing_ns, "extLst"),
+    [],
+    [Element(ext)],
+  )
+  let blip = @xml.XmlElement::new(
+    @xml.QName::new(drawing_ns, "blip"),
+    [(@xml.QName::new(office_relationships_ns, "embed"), png_embed_id)],
+    [Element(ext_lst)],
+  )
+  {
+    embed_id: png_embed_id,
+    link_id: "",
+    src_rect: None,
+    fill_mode: Stretch(None),
+    extension: [blip],
+  }
+}
+
+///|
 /// One stop in a gradient fill.
 pub(all) struct GradientStop {
   /// Stop position in `Percentage` (0% – 100%, lifted from the

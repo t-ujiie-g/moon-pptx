@@ -46,6 +46,8 @@ pub let ct_slide_layout : String
 
 pub let ct_slide_master : String
 
+pub let ct_svg : String
+
 pub let ct_table_styles : String
 
 pub let ct_theme : String
@@ -107,6 +109,10 @@ pub fn require_pct(Array[(@xml.QName, String)], String, String) -> @units.Percen
 pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
 pub fn string_to_bytes(String) -> FixedArray[Byte]
+
+pub let svg_blip_ext_uri : String
+
+pub let svg_ns : String
 
 pub fn write_color(@xml.XmlWriter, WriteCtx, Color) -> Unit raise @xml.XmlError
 
@@ -188,6 +194,7 @@ pub(all) struct BlipFill {
   fill_mode : BlipFillMode
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BlipFill::svg(String, String) -> Self
 
 pub(all) enum BlipFillMode {
   Stretch(FillRect?)

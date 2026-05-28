@@ -255,3 +255,100 @@ test "add_picture_mut: produced bytes reopen and round-trip" {
   let img = prs2.pkg.part_by_name("/ppt/media/image1.png").unwrap()
   assert_eq(img.bytes.length(), fake_png().length())
 }
+
+// --- add_svg_picture_mut (roadmap C4) ---
+
+///|
+/// Minimal SVG document as ASCII bytes. The detector never inspects it
+/// (only the raster fallback is format-detected), so any bytes work.
+fn fake_svg() -> FixedArray[Byte] {
+  let s = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1\" height=\"1\"/>"
+  let out = FixedArray::make(s.length(), b'\x00')
+  let mut i = 0
+  for c in s {
+    out[i] = c.to_int().to_byte()
+    i = i + 1
+  }
+  out
+}
+
+///|
+test "add_svg_picture_mut: wires svg + fallback parts, rels, content types" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_svg_picture_mut(
+    0,
+    fake_svg(),
+    fake_png(),
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(914_400L),
+    @units.Emu(914_400L),
+  )
+  // Two media parts: the raster fallback (image1.png) and the SVG
+  // (image2.svg), each with the right content type.
+  let png = prs.pkg.part_by_name("/ppt/media/image1.png").unwrap()
+  assert_eq(png.content_type, "image/png")
+  let svg = prs.pkg.part_by_name("/ppt/media/image2.svg").unwrap()
+  assert_eq(svg.content_type, "image/svg+xml")
+  // Both content-type Defaults are declared.
+  let cts = prs.pkg.content_types()
+  assert_true(cts.defaults.iter().any(fn(kv) { kv.0 == "png" }))
+  assert_true(
+    cts.defaults.iter().any(fn(kv) { kv.0 == "svg" && kv.1 == "image/svg+xml" }),
+  )
+  // The slide carries one SVG picture: blip embeds the fallback (rId2),
+  // svgBlip references the SVG (rId3).
+  let slide = prs.slides()[0]
+  assert_eq(slide.shapes.length(), 1)
+  match slide.shapes[0] {
+    Picture(p) => {
+      assert_eq(p.blip_fill.embed_id, "rId2")
+      let blip = p.blip_fill.extension[0]
+      assert_eq(blip.name.local_name, "blip")
+    }
+    _ => fail("expected SVG Picture shape")
+  }
+}
+
+///|
+test "add_svg_picture_mut: survives save + reopen" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_svg_picture_mut(
+    0,
+    fake_svg(),
+    fake_png(),
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  let prs2 = @presentation.Presentation::open(prs.save())
+  // Both media parts survived the zip round-trip.
+  assert_true(prs2.pkg.part_by_name("/ppt/media/image1.png") is Some(_))
+  let svg = prs2.pkg.part_by_name("/ppt/media/image2.svg").unwrap()
+  assert_eq(svg.bytes.length(), fake_svg().length())
+  // And the picture's svgBlip extension is intact.
+  match prs2.slides()[0].shapes[0] {
+    Picture(p) => assert_eq(p.blip_fill.embed_id, "rId2")
+    _ => fail("expected SVG Picture after reopen")
+  }
+}
+
+///|
+test "add_svg_picture_mut: rejects an unrecognised fallback image" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let garbage = FixedArray::make(16, b'\x00')
+  let raised = try? prs.add_svg_picture_mut(
+    0,
+    fake_svg(),
+    garbage,
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  assert_true(raised is Err(@presentation.PptxError::Malformed(_)))
+}

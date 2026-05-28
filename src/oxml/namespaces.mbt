@@ -37,3 +37,10 @@ pub let chart_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/ch
 /// (`/ppt/charts/chartExN.xml`) and use a completely different
 /// schema from the original `c:` charts. Distinct from `chart_ns`.
 pub let chart_ex_ns : String = "http://schemas.microsoft.com/office/drawing/2014/chartex"
+
+///|
+/// Microsoft SVG namespace — `asvg:` prefix. Home of `<asvg:svgBlip>`, the
+/// Office 2016+ extension that points a picture's `<a:blip>` at an embedded
+/// SVG part (with the `<a:blip r:embed>` raster acting as the fallback for
+/// older viewers). Lives inside an `<a:ext>` keyed by `svg_blip_ext_uri`.
+pub let svg_ns : String = "http://schemas.microsoft.com/office/drawing/2016/SVG/main"

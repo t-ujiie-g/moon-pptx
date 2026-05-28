@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **SVG image support** — `Presentation::add_svg_picture_mut(slide_idx,
+  svg_bytes, fallback_bytes, x, y, cx, cy)` inserts an SVG picture with a
+  raster (PNG / JPEG / …) fallback for viewers that don't understand SVG.
+  The blip embeds the fallback and carries an `<asvg:svgBlip>` extension
+  (Office 2016+) pointing at the embedded SVG part. Lower-level builders:
+  `@slide.Picture::of_svg_image` and `@oxml.BlipFill::svg`. The caller
+  supplies the fallback image (no built-in SVG rasteriser). (roadmap C4)
 - **Typed slide background** — `<p:cSld><p:bg>` is now a typed
   `Slide.background` field instead of round-tripping through
   `extension`. New `Background` enum covers both `<p:bgPr>` (an
