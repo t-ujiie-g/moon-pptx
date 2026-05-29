@@ -143,11 +143,11 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Slide-size selector (4:3 / 16:9 / 16:10 / …) | ✅ | ✅ | △ extension-only | ⏳ v0.2 (A5) |
 | Slide reordering | △ XML | △ | ❌ | future |
 | Slide background per slide | ✅ | ✅ color + transparency | ✅ typed `Slide.background` (`with_background` / `with_background_ref`) | — |
-| `defineSlideMaster` style high-level API | △ low-level | ✅ | △ pass-through model | ⏳ v0.3 (C1) |
+| `defineSlideMaster` style high-level API | △ low-level | ✅ | ✅ `Presentation::define_master(MasterDefinition)` | — |
 | Layout selection by name | ✅ | ✅ | △ by index | ⏳ v0.4 (M1) |
 | Placeholder named accessors (`slide.title`) | ✅ | △ | ✅ `title`/`body`/`placeholder`/`placeholders` + typed `PlaceholderType` | — |
 | Compile-time placeholder schema | ❌ | ❌ | ❌ | ⏳ v0.4 (M1) ⭐ |
-| Headers / footers / slide number | ✅ | ✅ chained M/L/S | △ extension-only | ⏳ v0.2 (A8) |
+| Headers / footers / slide number | ✅ | ✅ chained M/L/S | ✅ `Slide::with_footer`/`with_slide_number`/`with_date` + master-side via `define_master` | — |
 | Sections | △ | △ | △ extension-only | future |
 
 ### 3.3 Shapes and text
@@ -279,9 +279,9 @@ review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
   - Maps to ECMA-376's 17 `ST_SlideSizeType` values
   - Updates `presentation.xml` `<p:sldSz>` + recomputes any `pct_of_slide_w` helpers
 
-🔴 **A8 — Slide number / header / footer / date** *(deferred to bundle with v0.3 C1 `define_master` — the master-side placeholder schema is the natural home)*
-  - `Slide::with_slide_number(visible : Bool)`, `Slide::with_footer("text")`, `Slide::with_date(DateMode { Auto | Fixed(String) })`
-  - Layout-side helpers to declare the placeholders when the master doesn't already
+🟢 **A8 — Slide number / header / footer / date** *(landed 2026-05-29 with C1)*
+  - `Slide::with_slide_number(visible : Bool)`, `Slide::with_footer("text")`, `Slide::with_date(DateMode { Auto | Fixed(String) })` — append slide-level `dt`/`ftr`/`sldNum` placeholder shapes (idempotent: re-calling replaces). Number/auto-date use `<a:fld>` fields (`slidenum`/`datetime1`); footer/fixed-date use literal text. No `<a:xfrm>` so position inherits from the master placeholder
+  - Master-side declaration is `MasterDefinition.slide_number` / `footer_text` / `date` on `define_master` (C1) — that's where the placeholders that make these render are declared
 
 🟢 **B2 — Table cell border fluent builders (extended)**
   - `TableCell::with_borders(left~, right~, top~, bottom~ : Stroke?)` — convenience over the existing 6 `with_border_*`
@@ -317,11 +317,11 @@ be defined programmatically end-to-end.
   - `Slide::with_background(@oxml.Fill)`, `Slide::with_background_ref(idx, Color)`, `Slide::without_background()` (immutable, ADR-003) + `BackgroundProperties::of_fill`
   - Lifts `<p:cSld>`'s `<p:bg>` from extension-only to the typed `Slide.background` field (parser + writer); writer emits `<p:bg>` before `<p:spTree>` per CT_CommonSlideData order
 
-🔴 **C1 — `define_master` high-level API**
-  - `Presentation::define_master(MasterDefinition)` returning master index
-  - `MasterDefinition { name : String, background : BgFill?, placeholders : Array[PlaceholderDef], slide_number : Bool, footer_text : String? }`
-  - `PlaceholderDef { kind : PlaceholderType, position : Rect, default_text : String? }`
-  - Synthesises `<p:sldMaster>` + dependent layouts
+🟢 **C1 — `define_master` high-level API** *(landed 2026-05-29)*
+  - `Presentation::define_master(MasterDefinition) -> Int` (returns the new master index); `MasterDefinition::new(name)` + `with_placeholder` / `with_background` / `with_footer` / `with_slide_number` / `with_date` builders
+  - `MasterDefinition { name, background : @slide.Background?, placeholders : Array[PlaceholderDef], slide_number : Bool, footer_text : String?, date : Bool }` (reuses A7 `Background` instead of a fresh `BgFill`; added `date` for A8 pairing). `PlaceholderDef { kind : @slide.PlaceholderType, position : @slide.Transform, default_text : String? }` (reuses B1 `PlaceholderType` + the existing `Transform` rather than a new `Rect`)
+  - Synthesises `<p:sldMaster>` + one dependent blank `<p:sldLayout>`, wires parts / rels (master→layout+theme, layout→master, presentation→master) / content-types / `<p:sldMasterIdLst>`. Reuses the package's first theme part; defaults the master `<p:bg>` to the standard `bgRef` when none given (a master with no bg trips PowerPoint's repair banner)
+  - **Implementation note**: the master `<p:cSld>` (bg + placeholder shapes) is produced by serialising a throwaway typed `@slide.Slide` (reuses the slide writer's shape emission + XML escaping) and extracting `<p:cSld>…</p:cSld>`, then re-wrapping as a master (`<p:clrMap>` + `<p:sldLayoutIdLst>`). Verified end-to-end by save→reopen + adding a slide on the new layout
 
 🟢 **C3 — Combo chart + secondary axis builder** *(landed 2026-05-29)*
   - `Chart::of_combo(primary : ChartPlot, secondary : ChartPlot, secondary_axis? : Bool = false)` where `ChartPlot { Bar(ChartData) | Line(ChartData) | Area(ChartData) }` — overlays two plots on a shared `catAx`/`valAx` pair
@@ -640,6 +640,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-05-29** — **v0.3 C1 + A8 landed: `define_master` + header/footer/date placeholders.** `Presentation::define_master(MasterDefinition) -> Int` synthesises a `<p:sldMaster>` + one dependent blank `<p:sldLayout>` and wires them into the package (parts, rels — master→layout+theme, layout→master, presentation→master —, content-types, `<p:sldMasterIdLst>`), returning the new master index. `MasterDefinition` (+ `::new` / `with_*` builders) reuses A7 `Background` and B1 `PlaceholderType`; `PlaceholderDef` reuses the existing `Transform` for positions. The master `cSld` (bg + placeholder shapes, plus optional footer/date/slide-number placeholders) is built by serialising a throwaway typed `@slide.Slide` and extracting `<p:cSld>` — reusing the slide writer's escaping/shape emission — then re-wrapped with `<p:clrMap>` + `<p:sldLayoutIdLst>`; the master bg defaults to the standard `bgRef` when unset. A8 slide side: `@slide.Slide::with_slide_number(Bool)` / `with_footer(String)` / `with_date(DateMode{Auto|Fixed})` append idempotent slide-level `sldNum`/`ftr`/`dt` placeholders (fields for number/auto-date). Verified by save→reopen of the 2-master deck and adding a slide on the synthesised layout. 11 new tests, 902 → 912 (×4 backends). **All v0.3.0 scope except D6 (lossless diff-write) now landed.**
 - **2026-05-29** — **v0.3 A6 landed: audio / video embedding.** `Presentation::add_video_mut` / `add_audio_mut` embed a media clip + caller-supplied poster image: they add the media part + poster part, three slide relationships (`image` poster, `video`/`audio` link, `media` embed — the last two to the same media part), content-type Defaults, and the shape. New `@oxml.detect_media_format` (mp4/mov/avi/wmv + mp3/wav/aiff/m4a magic bytes) with `content_type`/`extension`/`is_video`. Modelled as a typed `Picture.media : MediaInfo?` rather than the roadmap's `Shape::Media` — a media clip *is* a `<p:pic>`, so reusing `Picture` (poster `blipFill` + transform) avoids a parallel shape kind; builder `@slide.Picture::of_media`. The writer (threaded through `write_nv_wrapper`/`write_cnvpr`) emits `<a:videoFile>`/`<a:audioFile>` + `<p:extLst><p14:media>` inside `<p:nvPr>` and a `ppaction://media` hyperlink on `<p:cNvPr>`, using `write_xml_element` to auto-declare the new `@oxml.powerpoint_2010_ns`. No parser changes — existing media refs round-trip via `Picture.extension` (ADR-004), so `media` is `None` on parse and built media re-serialises identically. New `@oxml.media_ext_uri` + `@opc.rt_video`/`rt_audio`/`rt_media`. 13 new tests, 889 → 902 total × 4 backends.
 - **2026-05-29** — **v0.3 C3 landed: combo charts + secondary axis.** New `@chart.ChartPlot { Bar \| Line \| Area }(ChartData)` enum and `Chart::of_combo(primary, secondary, secondary_axis?=false)`. Overlays two plots on a shared `catAx`/`valAx` pair; with `secondary_axis=true` it threads the standard Office 4-axis structure — primary cat(1)/val(2) plus a secondary `valAx`(4) drawn on the right crossing at `Max` and a `delete=true` secondary `catAx`(3) as its crossing partner — and binds the secondary plot to ids 3/4. Secondary series `idx`/`order` are offset past the primary's (new `synthesize_series_from`) so indices are unique chart-wide (avoids PowerPoint's repair prompt). Reuses the existing `PlotArea` multi-plot model + `simple_axis_core` (overridden via struct spread for the right/Max/delete axes). 5 new tests incl. round-trip equality, 884 → 889 total × 4 backends.
 - **2026-05-29** — **v0.3 B4 landed: pinpoint shape editing.** Closes the editing-ergonomics gap from the external review. New `@slide.Shape::id()` / `name()` accessors (identity handles; `Unknown` → `None`) + immutable `Slide` edit builders: `map_shapes`, `with_shape_at`, `with_shape_mapped`, `with_shape_by_id` (primary, index-stable), `without_shape`, `without_shape_by_id` — lookups that miss raise `SlideError`, `map_shapes` is the non-raising best-effort path. Presentation-level `map_slide_shapes_mut` / `update_shape_by_id_mut` close the find→edit→write-back loop in one call. **Writer fix**: parsed shapes capture `<p:cNvPr>` wholesale into `extension`, which had been shadowing the typed `name`/`id` on write (so renames silently didn't persist); `write_cnvpr` now overrides the captured element's `id`/`name` attribute *values* with the typed fields while preserving order + `descr`/`title`/`hlinkClick` — byte-identical for unmodified shapes (golden tests unchanged), edits now flow through. Q11 resolved. 13 new tests, 872 → 884 total × 4 backends.

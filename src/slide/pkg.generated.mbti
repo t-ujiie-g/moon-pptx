@@ -184,6 +184,11 @@ pub(all) struct CustomGeometry {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
+pub(all) enum DateMode {
+  Auto
+  Fixed(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Field {
   id : String
   field_type : String
@@ -634,10 +639,13 @@ pub fn Slide::serialize_with_root(Self, String) -> FixedArray[Byte] raise SlideE
 pub fn Slide::title(Self) -> Shape?
 pub fn Slide::with_background(Self, @oxml.Fill) -> Self
 pub fn Slide::with_background_ref(Self, Int, @oxml.Color) -> Self
+pub fn Slide::with_date(Self, DateMode) -> Self
+pub fn Slide::with_footer(Self, String) -> Self
 pub fn Slide::with_shape(Self, Shape) -> Self
 pub fn Slide::with_shape_at(Self, Int, Shape) -> Self raise SlideError
 pub fn Slide::with_shape_by_id(Self, Int, (Shape) -> Shape) -> Self raise SlideError
 pub fn Slide::with_shape_mapped(Self, Int, (Shape) -> Shape) -> Self raise SlideError
+pub fn Slide::with_slide_number(Self, Bool) -> Self
 pub fn Slide::without_background(Self) -> Self
 pub fn Slide::without_shape(Self, Int) -> Self raise SlideError
 pub fn Slide::without_shape_by_id(Self, Int) -> Self raise SlideError

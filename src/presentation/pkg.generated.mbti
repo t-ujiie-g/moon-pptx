@@ -32,10 +32,31 @@ pub(all) suberror PptxError {
 pub impl Show for PptxError
 
 // Types and methods
+pub(all) struct MasterDefinition {
+  name : String
+  background : @slide.Background?
+  placeholders : Array[PlaceholderDef]
+  slide_number : Bool
+  footer_text : String?
+  date : Bool
+}
+pub fn MasterDefinition::new(String) -> Self
+pub fn MasterDefinition::with_background(Self, @slide.Background) -> Self
+pub fn MasterDefinition::with_date(Self, Bool) -> Self
+pub fn MasterDefinition::with_footer(Self, String) -> Self
+pub fn MasterDefinition::with_placeholder(Self, @slide.PlaceholderType, @slide.Transform, default_text? : String) -> Self
+pub fn MasterDefinition::with_slide_number(Self, Bool) -> Self
+
 pub(all) struct NotesSize {
   cx : @units.Emu
   cy : @units.Emu
 } derive(Eq, @debug.Debug)
+
+pub(all) struct PlaceholderDef {
+  kind : @slide.PlaceholderType
+  position : @slide.Transform
+  default_text : String?
+}
 
 pub(all) struct Presentation {
   pkg : @opc.Package
@@ -53,6 +74,7 @@ pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
 pub fn Presentation::clone(Self) -> Self
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
+pub fn Presentation::define_master(Self, MasterDefinition) -> Int raise PptxError
 pub fn Presentation::map_slide_shapes_mut(Self, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::new() -> Self raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError

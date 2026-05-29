@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **Programmatic slide masters (`define_master`)** —
+  `Presentation::define_master(MasterDefinition)` synthesises a slide
+  master plus a dependent layout (placeholders, optional footer / date /
+  slide-number placeholders, background) and registers them, returning
+  the new master's index. Build the definition with
+  `MasterDefinition::new(name)` and `with_placeholder` /
+  `with_background` / `with_footer` / `with_slide_number` / `with_date`.
+  (roadmap C1)
+- **Slide footer / date / number placeholders** —
+  `Slide::with_footer(text)`, `Slide::with_slide_number(visible)`, and
+  `Slide::with_date(Auto | Fixed(text))` add the slide-level
+  placeholders PowerPoint fills (slide-number and auto-date use live
+  fields). These render against a master that declares the matching
+  placeholders — e.g. one built with `define_master`. (roadmap A8)
 - **Audio / video embedding** — `Presentation::add_video_mut(slide_idx,
   video_bytes, poster_bytes, …)` and `add_audio_mut(…)` embed a media
   clip with a poster frame. Formats are detected from magic bytes
