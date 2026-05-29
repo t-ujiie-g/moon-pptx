@@ -245,6 +245,17 @@ pub(all) struct ListStyle {
 } derive(Eq, @debug.Debug)
 pub fn ListStyle::empty() -> Self
 
+pub(all) struct MediaInfo {
+  kind : MediaKind
+  link_id : String
+  embed_id : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MediaKind {
+  Video
+  Audio
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Paragraph {
   properties : ParagraphProperties
   content : Array[ParagraphContent]
@@ -318,9 +329,11 @@ pub(all) struct Picture {
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
+  media : MediaInfo?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Picture::of_image(Int, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn Picture::of_media(Int, String, MediaKind, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn Picture::of_svg_image(Int, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn Picture::with_crop(Self, left? : @units.Percentage, top? : @units.Percentage, right? : @units.Percentage, bottom? : @units.Percentage) -> Self
 

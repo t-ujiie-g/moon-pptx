@@ -25,6 +25,8 @@ pub fn rels_path_for(String) -> String
 
 pub fn resolve_target(String, String, TargetMode) -> String
 
+pub let rt_audio : String
+
 pub let rt_chart : String
 
 pub let rt_chart_ex : String
@@ -40,6 +42,8 @@ pub let rt_extended_properties : String
 pub let rt_hyperlink : String
 
 pub let rt_image : String
+
+pub let rt_media : String
 
 pub let rt_notes_master : String
 
@@ -58,6 +62,8 @@ pub let rt_slide_master : String
 pub let rt_table_styles : String
 
 pub let rt_theme : String
+
+pub let rt_video : String
 
 pub let rt_view_props : String
 

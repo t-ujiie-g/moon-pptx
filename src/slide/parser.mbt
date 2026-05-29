@@ -630,7 +630,19 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
     Some(b) => b
     None => raise Malformed("<p:pic> is missing <p:blipFill>")
   }
-  { id, name, transform, geometry, stroke, effects, blip_fill: bf, extension }
+  {
+    id,
+    name,
+    transform,
+    geometry,
+    stroke,
+    effects,
+    blip_fill: bf,
+    // Media is lifted only by builders; parsed media refs round-trip via
+    // `extension` (ADR-004). See `media.mbt`.
+    media: None,
+    extension,
+  }
 }
 
 // --- AutoShape ---

@@ -414,6 +414,7 @@ pub fn Picture::of_image(
       fill_mode: Stretch(None),
       extension: [],
     },
+    media: None,
     extension: [],
   }
 }
@@ -446,6 +447,7 @@ pub fn Picture::of_svg_image(
     stroke: None,
     effects: None,
     blip_fill: @oxml.BlipFill::svg(png_embed_id, svg_embed_id),
+    media: None,
     extension: [],
   }
 }

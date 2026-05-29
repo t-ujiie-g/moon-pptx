@@ -58,6 +58,8 @@ pub fn detect_image_dimensions(FixedArray[Byte]) -> ImageDimensions?
 
 pub fn detect_image_format(FixedArray[Byte]) -> ImageFormat?
 
+pub fn detect_media_format(FixedArray[Byte]) -> MediaFormat?
+
 pub let drawing_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
@@ -71,6 +73,8 @@ pub let graphic_data_chart_uri : String
 pub let graphic_data_diagram_uri : String
 
 pub let graphic_data_table_uri : String
+
+pub let media_ext_uri : String
 
 pub fn next_event(@xml.XmlReader) -> @xml.XmlEvent raise XmlReadError
 
@@ -95,6 +99,8 @@ pub fn parse_signed_int64(String) -> Int64?
 pub fn parse_stroke(@xml.XmlReader, Array[(@xml.QName, String)]) -> Stroke raise StrokeError
 
 pub fn pct_attr_opt(Array[(@xml.QName, String)], String) -> @units.Percentage?
+
+pub let powerpoint_2010_ns : String
 
 pub let presentation_ns : String
 
@@ -341,6 +347,21 @@ pub(all) enum LineJoin {
   JoinBevel
   JoinMiter(@units.Percentage?)
 } derive(Eq, @debug.Debug)
+
+pub(all) enum MediaFormat {
+  Mp4
+  Mov
+  Avi
+  Wmv
+  Mp3
+  Wav
+  Aiff
+  M4a
+} derive(Eq, @debug.Debug)
+pub fn MediaFormat::content_type(Self) -> String
+pub fn MediaFormat::extension(Self) -> String
+pub fn MediaFormat::is_video(Self) -> Bool
+pub impl Show for MediaFormat
 
 pub(all) struct OuterShadow {
   blur_rad : @units.Emu

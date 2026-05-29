@@ -209,8 +209,8 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 
 | Feature | python-pptx | PptxGenJS | moon-pptx 0.1.0 | Target |
 |---|---|---|---|---|
-| Audio embed (mp3 / wav) | ✅ | ✅ | △ extension only | ⏳ v0.3 (A6) |
-| Video embed (mp4 / mov / m4v) | ✅ `add_movie()` | ✅ | △ extension only | ⏳ v0.3 (A6) |
+| Audio embed (mp3 / wav) | ✅ | ✅ | ✅ `add_audio_mut` (mp3 / wav / aiff / m4a) | — |
+| Video embed (mp4 / mov / m4v) | ✅ `add_movie()` | ✅ | ✅ `add_video_mut` (mp4 / mov / avi / wmv) | — |
 | YouTube / URL video embed | ❌ | ✅ | ❌ | ⏳ v0.5 (C5) |
 | Speaker notes | ✅ read+write | ✅ `addNotes()` | ✅ read+write, ⏳ ergonomic builder | ⏳ v0.2 (A3) |
 | Comments | ✅ | ❌ | ✅ read+write | — |
@@ -304,12 +304,13 @@ review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
 DoD: every feature PptxGenJS covers is expressible; slide masters can
 be defined programmatically end-to-end.
 
-🔴 **A6 — Audio / video embedding**
-  - `Presentation::add_video_mut(slide_idx, bytes, x, y, cx, cy)`
-  - Magic-byte detection: mp4 / m4v / mov / wmv / avi / mp3 / wav / aiff
-  - New `Shape::Media(MediaShape { id, name, transform, media_kind, embed_id, preview_image_id? })`
-  - Parser for existing decks' `<p:videoFile>` / `<p:audioFile>` references
-  - Auto-allocate preview-image part if PowerPoint will need it
+🟢 **A6 — Audio / video embedding** *(landed 2026-05-29)*
+  - `Presentation::add_video_mut(slide_idx, video_bytes, poster_bytes, x, y, cx, cy)` + `add_audio_mut(...)` — wire the media part + poster part, three relationships (`image` poster, `video`/`audio` link, `media` embed), content-type defaults, and the shape
+  - Magic-byte detection in `@oxml.detect_media_format`: mp4 / mov / avi / wmv (video) + mp3 / wav / aiff / m4a (audio), with `content_type` / `extension` / `is_video`
+  - **Modelled as `Picture.media : MediaInfo?` (not a new `Shape::Media`)** — a media clip *is* a `<p:pic>`, so reusing `Picture` (poster `blipFill` + `spPr` transform) avoids a parallel shape kind. `MediaInfo { kind : MediaKind, link_id, embed_id }`; builder `@slide.Picture::of_media`. The writer emits `<a:videoFile>`/`<a:audioFile>` + `<p:extLst><p14:media>` inside `<p:nvPr>` and a `ppaction://media` `<a:hlinkClick>` on `<p:cNvPr>` (threaded through `write_nv_wrapper` / `write_cnvpr`; `write_xml_element` auto-declares `p14`)
+  - **No parser changes**: existing decks' `<a:videoFile>` / `<p14:media>` already round-trip via `Picture.extension` (ADR-004), so the parser leaves `media = None` and built media re-parses to the same lossless XML (verified by stable re-serialisation). New `@oxml.powerpoint_2010_ns` / `media_ext_uri` + `@opc.rt_video` / `rt_audio` / `rt_media`
+  - Caller supplies the poster frame (no built-in video thumbnailer — consistent with C4's SVG fallback; out of scope per §0)
+  - *Deviation from the original sketch (`Shape::Media`) noted above; typed reading of existing media references can be a later lift if a consumer needs it.*
 
 🟢 **A7 — Slide background typed builder** *(landed 2026-05-29)*
   - New typed `Background` enum — `Properties(BackgroundProperties)` for `<p:bgPr>` (fill + `shadeToTitle` + effects + `extension`) and `StyleReference(idx, Color)` for `<p:bgRef>`. Reuses `@oxml.Fill` rather than a parallel `BgFill` enum (the roadmap's `BgFill { Solid|Gradient|Picture|NoFill }` is a subset of `@oxml.Fill`; no parallel types per conventions). `BackgroundProperties.fill` is `Option` (like `AutoShape.fill`) so the rare `<a:grpFill>` round-trips via `extension`
@@ -639,6 +640,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-05-29** — **v0.3 A6 landed: audio / video embedding.** `Presentation::add_video_mut` / `add_audio_mut` embed a media clip + caller-supplied poster image: they add the media part + poster part, three slide relationships (`image` poster, `video`/`audio` link, `media` embed — the last two to the same media part), content-type Defaults, and the shape. New `@oxml.detect_media_format` (mp4/mov/avi/wmv + mp3/wav/aiff/m4a magic bytes) with `content_type`/`extension`/`is_video`. Modelled as a typed `Picture.media : MediaInfo?` rather than the roadmap's `Shape::Media` — a media clip *is* a `<p:pic>`, so reusing `Picture` (poster `blipFill` + transform) avoids a parallel shape kind; builder `@slide.Picture::of_media`. The writer (threaded through `write_nv_wrapper`/`write_cnvpr`) emits `<a:videoFile>`/`<a:audioFile>` + `<p:extLst><p14:media>` inside `<p:nvPr>` and a `ppaction://media` hyperlink on `<p:cNvPr>`, using `write_xml_element` to auto-declare the new `@oxml.powerpoint_2010_ns`. No parser changes — existing media refs round-trip via `Picture.extension` (ADR-004), so `media` is `None` on parse and built media re-serialises identically. New `@oxml.media_ext_uri` + `@opc.rt_video`/`rt_audio`/`rt_media`. 13 new tests, 889 → 902 total × 4 backends.
 - **2026-05-29** — **v0.3 C3 landed: combo charts + secondary axis.** New `@chart.ChartPlot { Bar \| Line \| Area }(ChartData)` enum and `Chart::of_combo(primary, secondary, secondary_axis?=false)`. Overlays two plots on a shared `catAx`/`valAx` pair; with `secondary_axis=true` it threads the standard Office 4-axis structure — primary cat(1)/val(2) plus a secondary `valAx`(4) drawn on the right crossing at `Max` and a `delete=true` secondary `catAx`(3) as its crossing partner — and binds the secondary plot to ids 3/4. Secondary series `idx`/`order` are offset past the primary's (new `synthesize_series_from`) so indices are unique chart-wide (avoids PowerPoint's repair prompt). Reuses the existing `PlotArea` multi-plot model + `simple_axis_core` (overridden via struct spread for the right/Max/delete axes). 5 new tests incl. round-trip equality, 884 → 889 total × 4 backends.
 - **2026-05-29** — **v0.3 B4 landed: pinpoint shape editing.** Closes the editing-ergonomics gap from the external review. New `@slide.Shape::id()` / `name()` accessors (identity handles; `Unknown` → `None`) + immutable `Slide` edit builders: `map_shapes`, `with_shape_at`, `with_shape_mapped`, `with_shape_by_id` (primary, index-stable), `without_shape`, `without_shape_by_id` — lookups that miss raise `SlideError`, `map_shapes` is the non-raising best-effort path. Presentation-level `map_slide_shapes_mut` / `update_shape_by_id_mut` close the find→edit→write-back loop in one call. **Writer fix**: parsed shapes capture `<p:cNvPr>` wholesale into `extension`, which had been shadowing the typed `name`/`id` on write (so renames silently didn't persist); `write_cnvpr` now overrides the captured element's `id`/`name` attribute *values* with the typed fields while preserving order + `descr`/`title`/`hlinkClick` — byte-identical for unmodified shapes (golden tests unchanged), edits now flow through. Q11 resolved. 13 new tests, 872 → 884 total × 4 backends.
 - **2026-05-29** — **Roadmap: added B4 (pinpoint shape editing) to v0.3 from external review.** A review noted that while the core is structurally faithful (lossless round-trip, real OOXML model) and template reuse is first-class (`slide_layouts()` / `slide_masters()` / `themes()` + `add_*_mut` / `update_slide_mut`), the mutation model is append-only + whole-slide-replace: there is no public helper to overwrite an *existing* shape (`update_shape` / `replace_shape` / `map_shapes`). Confirmed against the public `.mbti`. Logged as v0.3 item **B4** (§4.2) with a feature-matrix row (§3.1) and design question **Q11** (§8). Not yet implemented — planning only.

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **Audio / video embedding** — `Presentation::add_video_mut(slide_idx,
+  video_bytes, poster_bytes, …)` and `add_audio_mut(…)` embed a media
+  clip with a poster frame. Formats are detected from magic bytes
+  (`@oxml.detect_media_format`): MP4 / MOV / AVI / WMV for video, MP3 /
+  WAV / AIFF / M4A for audio. The clip is modelled as a typed
+  `Picture.media` (`MediaInfo`) and serialises the standard
+  `<a:videoFile>` / `<a:audioFile>` + `<p14:media>` references plus a
+  `ppaction://media` hyperlink. The caller supplies the poster image.
+  (roadmap A6)
 - **Combo charts + secondary axis** — `Chart::of_combo(primary,
   secondary, secondary_axis?=false)` overlays two plots (e.g. columns +
   a line) on a shared category axis, where each plot is a

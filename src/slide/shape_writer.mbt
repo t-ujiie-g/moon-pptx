@@ -100,6 +100,7 @@ fn write_auto_shape(
     s.id,
     s.name,
     s.placeholder,
+    None,
     s.extension,
   )
   write_sp_pr(
@@ -152,6 +153,7 @@ fn write_cnvpr(
   ctx : @oxml.WriteCtx,
   id : Int,
   name : String,
+  media : MediaInfo?,
   extension : Array[@xml.XmlElement],
 ) -> Unit raise @xml.XmlError {
   let mut captured : @xml.XmlElement? = None
@@ -199,6 +201,17 @@ fn write_cnvpr(
       w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
       w.attribute(@xml.QName::unqualified("id"), id.to_string())
       w.attribute(@xml.QName::unqualified("name"), name)
+      // A media picture needs a `ppaction://media` hyperlink so PowerPoint
+      // treats the shape as a playable clip (roadmap A6).
+      match media {
+        Some(_) => {
+          w.start_element(@xml.QName::new(@oxml.drawing_ns, "hlinkClick"))
+          w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), "")
+          w.attribute(@xml.QName::unqualified("action"), "ppaction://media")
+          w.end_element()
+        }
+        None => ()
+      }
       w.end_element()
     }
   }
@@ -213,12 +226,13 @@ fn write_nv_wrapper(
   id : Int,
   name : String,
   placeholder : Placeholder?,
+  media : MediaInfo?,
   extension : Array[@xml.XmlElement],
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, wrapper_local))
   // <p:cNvPr>: emit it, with the typed id/name authoritative so edits to
   // those fields (roadmap B4) take effect.
-  write_cnvpr(w, ctx, id, name, extension)
+  write_cnvpr(w, ctx, id, name, media, extension)
   // <p:cNv*Pr>: captured if present, empty otherwise.
   let mut emitted_cnvkind = false
   for ext in extension {
@@ -231,10 +245,20 @@ fn write_nv_wrapper(
     w.start_element(@xml.QName::new(@oxml.presentation_ns, cnv_kind))
     w.end_element()
   }
-  // <p:nvPr>: placeholder (modeled) + nvPr-child captures.
+  // <p:nvPr>: placeholder (modeled) + media (modeled) + nvPr-child captures.
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "nvPr"))
   match placeholder {
     Some(ph) => write_placeholder(w, ph)
+    None => ()
+  }
+  // Typed media reference (roadmap A6): <a:videoFile>/<a:audioFile> +
+  // <p:extLst><p14:media>. Parsed media pics carry this verbatim in
+  // `extension` instead (media is None), so the two paths never overlap.
+  match media {
+    Some(m) =>
+      for el in media_nv_elements(m) {
+        @oxml.write_xml_element(w, ctx, el)
+      }
     None => ()
   }
   for ext in extension {
@@ -384,6 +408,7 @@ fn write_picture(
     p.id,
     p.name,
     None,
+    p.media,
     p.extension,
   )
   // <p:blipFill> — picture's blipFill lives in the presentation
@@ -617,6 +642,7 @@ fn write_group_shape(
     "cNvGrpSpPr",
     g.id,
     g.name,
+    None,
     None,
     g.extension,
   )
