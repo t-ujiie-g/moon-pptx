@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **Combo charts + secondary axis** — `Chart::of_combo(primary,
+  secondary, secondary_axis?=false)` overlays two plots (e.g. columns +
+  a line) on a shared category axis, where each plot is a
+  `ChartPlot { Bar | Line | Area }(ChartData)`. Passing
+  `secondary_axis=true` gives the secondary plot its own value axis
+  (drawn on the right) plus a hidden secondary category axis — the
+  standard PowerPoint secondary-axis layout. (roadmap C3)
 - **Pinpoint shape editing** — edit an *existing* shape in place instead
   of only appending. New `Shape::id()` / `Shape::name()` accessors, and
   immutable `Slide` builders `map_shapes`, `with_shape_at`,

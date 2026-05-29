@@ -195,8 +195,8 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | 3-D bar / line / pie / area | ✅ | ✅ (bar3d / bubble3d) | ✅ | — |
 | Extended chartEx (waterfall / treemap / sunburst / funnel / boxWhisker / paretoLine / regionMap / clusteredColumn / histogram) | ❌ | ❌ | ✅ read+write round-trip | — |
 | Total chart families creatable | ~13 | 10 | **16 standard + 9 chartEx = 25** | — |
-| Combo chart (bar + line) | △ | ✅ | △ model supports | ⏳ v0.3 (C3) |
-| Secondary axis | △ | ✅ | △ via axId | ⏳ v0.3 (C3) |
+| Combo chart (bar + line) | △ | ✅ | ✅ `Chart::of_combo` (`ChartPlot { Bar \| Line \| Area }`) | — |
+| Secondary axis | △ | ✅ | ✅ `of_combo(…, secondary_axis=true)` | — |
 | Trendlines | ✅ | ❌ | ✅ typed `Trendline` (Phase 7m) | — |
 | Multi-series | ✅ | ✅ | ✅ | — |
 | Axis title / chart title | ✅ | ✅ | ✅ typed `ChartTitle` | — |
@@ -322,10 +322,11 @@ be defined programmatically end-to-end.
   - `PlaceholderDef { kind : PlaceholderType, position : Rect, default_text : String? }`
   - Synthesises `<p:sldMaster>` + dependent layouts
 
-🔴 **C3 — Combo chart + secondary axis builder**
-  - `Chart::of_combo(primary : ChartPlot, secondary : ChartPlot, secondary_axis : Bool)` where `ChartPlot { Bar(ChartData) | Line(ChartData) | Area(ChartData)`
-  - Reuses existing `PlotArea` multi-plot capability
-  - Writer threads a second `valAx` when `secondary_axis = true`
+🟢 **C3 — Combo chart + secondary axis builder** *(landed 2026-05-29)*
+  - `Chart::of_combo(primary : ChartPlot, secondary : ChartPlot, secondary_axis? : Bool = false)` where `ChartPlot { Bar(ChartData) | Line(ChartData) | Area(ChartData) }` — overlays two plots on a shared `catAx`/`valAx` pair
+  - Reuses the existing `PlotArea` multi-plot capability (two `Plot`s in `plots`)
+  - With `secondary_axis=true` the secondary plot binds to its own axis pair (ids 3/4): a `valAx` drawn on the right crossing at `Max`, plus a `delete=true` secondary `catAx` as its crossing partner — the standard Office 4-axis structure
+  - Secondary plot's series `idx`/`order` are offset past the primary's (via `synthesize_series_from`) so indices stay unique chart-wide (a duplicate idx trips PowerPoint's repair prompt); round-trip verified by `assert_eq(reparsed, original)`
 
 🟢 **C4 — SVG image support** *(landed 2026-05-29)*
   - `Presentation::add_svg_picture_mut(slide_idx, svg_bytes, fallback_bytes, x, y, cx, cy)` — adds the SVG + a raster fallback part, two `rt_image` rels, `image/svg+xml` + fallback content-type Defaults, and the picture shape. (The slide-package `Picture` can't manage OPC parts, so the full pipeline lives at the presentation level rather than on a `Picture::of_svg` as the roadmap sketched; the low-level shape builder is `@slide.Picture::of_svg_image(id, name, png_embed_id, svg_embed_id, …)`.)
@@ -638,6 +639,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-05-29** — **v0.3 C3 landed: combo charts + secondary axis.** New `@chart.ChartPlot { Bar \| Line \| Area }(ChartData)` enum and `Chart::of_combo(primary, secondary, secondary_axis?=false)`. Overlays two plots on a shared `catAx`/`valAx` pair; with `secondary_axis=true` it threads the standard Office 4-axis structure — primary cat(1)/val(2) plus a secondary `valAx`(4) drawn on the right crossing at `Max` and a `delete=true` secondary `catAx`(3) as its crossing partner — and binds the secondary plot to ids 3/4. Secondary series `idx`/`order` are offset past the primary's (new `synthesize_series_from`) so indices are unique chart-wide (avoids PowerPoint's repair prompt). Reuses the existing `PlotArea` multi-plot model + `simple_axis_core` (overridden via struct spread for the right/Max/delete axes). 5 new tests incl. round-trip equality, 884 → 889 total × 4 backends.
 - **2026-05-29** — **v0.3 B4 landed: pinpoint shape editing.** Closes the editing-ergonomics gap from the external review. New `@slide.Shape::id()` / `name()` accessors (identity handles; `Unknown` → `None`) + immutable `Slide` edit builders: `map_shapes`, `with_shape_at`, `with_shape_mapped`, `with_shape_by_id` (primary, index-stable), `without_shape`, `without_shape_by_id` — lookups that miss raise `SlideError`, `map_shapes` is the non-raising best-effort path. Presentation-level `map_slide_shapes_mut` / `update_shape_by_id_mut` close the find→edit→write-back loop in one call. **Writer fix**: parsed shapes capture `<p:cNvPr>` wholesale into `extension`, which had been shadowing the typed `name`/`id` on write (so renames silently didn't persist); `write_cnvpr` now overrides the captured element's `id`/`name` attribute *values* with the typed fields while preserving order + `descr`/`title`/`hlinkClick` — byte-identical for unmodified shapes (golden tests unchanged), edits now flow through. Q11 resolved. 13 new tests, 872 → 884 total × 4 backends.
 - **2026-05-29** — **Roadmap: added B4 (pinpoint shape editing) to v0.3 from external review.** A review noted that while the core is structurally faithful (lossless round-trip, real OOXML model) and template reuse is first-class (`slide_layouts()` / `slide_masters()` / `themes()` + `add_*_mut` / `update_slide_mut`), the mutation model is append-only + whole-slide-replace: there is no public helper to overwrite an *existing* shape (`update_shape` / `replace_shape` / `map_shapes`). Confirmed against the public `.mbti`. Logged as v0.3 item **B4** (§4.2) with a feature-matrix row (§3.1) and design question **Q11** (§8). Not yet implemented — planning only.
 - **2026-05-29** — **v0.3 C4 landed: SVG image support.** `Presentation::add_svg_picture_mut(slide_idx, svg_bytes, fallback_bytes, x, y, cx, cy)` inserts an SVG picture with a raster fallback — wiring the SVG part (`image/svg+xml`) + the fallback raster part, two `rt_image` relationships, the content-type Defaults, and the `Picture` shape. The blip embeds the fallback (`r:embed`) and carries an `<asvg:svgBlip>` pointing at the SVG inside `<a:blip><a:extLst><a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">`. New `@oxml.BlipFill::svg(png_embed_id, svg_embed_id)` builds that blip into `BlipFill.extension` (exactly how a parsed SVG picture round-trips, so the writer emits it verbatim and `write_xml_element` auto-declares the new `@oxml.svg_ns`); plus `@oxml.svg_blip_ext_uri` / `ct_svg` constants and the slide-level `@slide.Picture::of_svg_image`. The full OPC pipeline lives at the presentation level (the `slide` package can't manage parts), a slight deviation from the roadmap's `Picture::of_svg` sketch. No built-in SVG rasteriser — the caller supplies the fallback (rasterisation is out of scope per §0). Refactored `add_picture_mut`'s content-type block into a shared `ensure_default_content_type` helper. 6 new tests, 866 → 872 total × 4 backends.
