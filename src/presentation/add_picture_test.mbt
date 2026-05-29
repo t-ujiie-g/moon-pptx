@@ -479,3 +479,33 @@ test "add_video_mut: rejects audio bytes; add_audio_mut rejects video bytes" {
   )
   assert_true(r2 is Err(@presentation.PptxError::Malformed(_)))
 }
+
+///|
+test "add video + audio on one slide → both <p14:media> namespaces stay in scope" {
+  // Regression: two media objects each emit a `<p14:media>`; the second
+  // must re-declare its namespace prefix (the first's xmlns is out of scope).
+  // Previously this produced an unbound-prefix error on reopen.
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_video_mut(
+    0,
+    fake_mp4(),
+    fake_png(),
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  prs.add_audio_mut(
+    0,
+    fake_mp3(),
+    fake_png(),
+    @units.Emu(200L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  // The deck must reopen without an unbound-prefix XML error.
+  let reopened = @presentation.Presentation::open(prs.save())
+  assert_eq(reopened.slides()[0].shapes.length(), 2)
+}

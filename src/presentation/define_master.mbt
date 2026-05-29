@@ -108,9 +108,10 @@ pub fn MasterDefinition::with_date(
 /// `slide_masters()`.
 ///
 /// The master carries `def`'s placeholders (plus optional footer / date /
-/// slide-number placeholders); a `Presentation::add_slide_mut` against the
-/// dependent layout then inherits them. The new master reuses the package's
-/// first theme part.
+/// slide-number placeholders); the dependent layout repeats them so a
+/// `Presentation::add_slide_mut` against that layout inherits their geometry.
+/// The new master gets its own theme part (a copy of an existing theme) —
+/// two masters sharing one theme trips PowerPoint's repair prompt.
 pub fn Presentation::define_master(
   self : Presentation,
   def : MasterDefinition,
@@ -122,26 +123,65 @@ pub fn Presentation::define_master(
   // 1. Allocate part names + ids.
   let master_name = self.next_master_part_name()
   let layout_name = self.next_layout_part_name()
-  let theme_rel_target = self.first_theme_relative_to(master_name)
+  // Each slide master needs its *own* theme part — PowerPoint flags a deck
+  // where two masters share one theme as needing repair (same lesson as the
+  // notes master). Duplicate an existing theme into a fresh part.
+  let theme_name = "/ppt/theme/theme" +
+    (self.max_part_index("/ppt/theme/theme") + 1).to_string() +
+    ".xml"
+  let src_theme = find_theme_part_name(self.pkg)
+  let src_theme_bytes = self.pkg.require_part(src_theme) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let theme_part = @opc.Part::new(
+    theme_name,
+    @oxml.ct_theme,
+    src_theme_bytes.bytes,
+  ) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  self.pkg.add_part(theme_part) catch {
+    e => raise OpcFailure(e.to_string())
+  }
   let pres = match self.presentation_part() {
     Some(p) => p
     None => raise Malformed("presentation.xml could not be parsed")
   }
-  let master_id = next_master_id(pres.sld_master_ids)
-  let layout_id = master_id + 1L
-  // 2. Build the master cSld (bg + placeholder shapes) via a throwaway slide.
-  let csld = build_master_csld(def)
-  let master_xml = wrap_slide_master_xml(csld, layout_id)
-  let layout_xml = blank_named_layout_xml(def.name)
+  // Master ids and layout ids share one id space (>= 2147483648); PowerPoint
+  // repairs a deck that reuses a value. Pick ids above *every* existing
+  // master id (presentation) AND layout id (each master's sldLayoutIdLst).
+  let mut id_base = 2147483647L
+  for r in pres.sld_master_ids {
+    if r.id > id_base {
+      id_base = r.id
+    }
+  }
+  let layout_max = self.max_slide_layout_id()
+  if layout_max > id_base {
+    id_base = layout_max
+  }
+  let master_id = id_base + 1L
+  let layout_id = id_base + 2L
+  // 2. Build the master + layout cSld (background + placeholder shapes) via a
+  //    throwaway slide. The layout carries the *same* placeholders so a slide
+  //    on it inherits their geometry (a blank layout leaves slide-level
+  //    footer / date / number placeholders unpositioned).
+  let master_xml = wrap_slide_master_xml(
+    build_placeholder_csld(def, with_bg=true),
+    layout_id,
+  )
+  let layout_xml = wrap_slide_layout_xml(
+    build_placeholder_csld(def, with_bg=false),
+  )
   // 3. Add the master + layout parts.
   self.add_xml_part(master_name, @oxml.ct_slide_master, master_xml)
   self.add_xml_part(layout_name, @oxml.ct_slide_layout, layout_xml)
-  // 4. Rels: master → layout + theme; layout → master.
+  // 4. Rels: master → layout + its own theme; layout → master.
   self.write_rels_for_part(
     master_name,
     parsed_rels(master_name, [
       ("rId1", @opc.rt_slide_layout, relative_target(master_name, layout_name)),
-      ("rId2", @opc.rt_theme, theme_rel_target),
+      ("rId2", @opc.rt_theme, relative_target(master_name, theme_name)),
     ]),
   )
   self.write_rels_for_part(
@@ -172,6 +212,7 @@ pub fn Presentation::define_master(
     .content_types()
     .with_override(master_name, @oxml.ct_slide_master)
     .with_override(layout_name, @oxml.ct_slide_layout)
+    .with_override(theme_name, @oxml.ct_theme)
   self.pkg.set_content_types(ct)
   self.pkg.regenerate_content_types_part() catch {
     e => raise OpcFailure(e.to_string())
@@ -182,9 +223,14 @@ pub fn Presentation::define_master(
 // --- master cSld synthesis ---
 
 ///|
-/// Build the master's placeholder shapes into a throwaway `@slide.Slide`,
-/// serialise it, and extract the `<p:cSld>…</p:cSld>`.
-fn build_master_csld(def : MasterDefinition) -> String raise PptxError {
+/// Build the placeholder shapes into a throwaway `@slide.Slide`, serialise
+/// it, and extract the `<p:cSld>…</p:cSld>` for re-wrapping as a master or a
+/// layout. `with_bg` adds the background (only the master carries one; the
+/// layout inherits it).
+fn build_placeholder_csld(
+  def : MasterDefinition,
+  with_bg~ : Bool,
+) -> String raise PptxError {
   let shapes : Array[@slide.Shape] = []
   let mut sid = 2
   for i, p in def.placeholders {
@@ -231,14 +277,20 @@ fn build_master_csld(def : MasterDefinition) -> String raise PptxError {
     sid = sid + 1
   }
   // A slide master without a `<p:bg>` trips PowerPoint's repair banner, so
-  // default to the standard theme background reference when none is given.
-  let background : @slide.Background = match def.background {
-    Some(b) => b
-    None => StyleReference(1001, @oxml.Color::scheme(@units.ThemeColor::Bg1))
+  // the master defaults to the standard theme background reference when none
+  // is given; the layout omits the background entirely (it inherits it).
+  let background : @slide.Background? = if with_bg {
+    match def.background {
+      Some(b) => Some(b)
+      None =>
+        Some(StyleReference(1001, @oxml.Color::scheme(@units.ThemeColor::Bg1)))
+    }
+  } else {
+    None
   }
   let slide : @slide.Slide = {
     name: "",
-    background: Some(background),
+    background,
     shapes,
     clr_map_override: @slide_master.ClrMapOverride::MasterMapping,
     extension: [],
@@ -308,39 +360,18 @@ fn wrap_slide_master_xml(csld : String, layout_id : Int64) -> String {
 }
 
 ///|
-/// A blank layout (`type="blank"`) inheriting the master, named after the
-/// master definition. Slides on this layout inherit the master placeholders.
-fn blank_named_layout_xml(name : String) -> String {
+/// Wrap an extracted `<p:cSld>` (carrying the placeholder shapes) as a
+/// `type="blank"` `<p:sldLayout>` inheriting the master. The shared
+/// placeholders give slides on this layout an inheritance source for their
+/// title / body / footer / date / slide-number geometry.
+fn wrap_slide_layout_xml(csld : String) -> String {
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
   "<p:sldLayout xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"" +
+  " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"" +
   " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" type=\"blank\">" +
-  "<p:cSld name=\"" +
-  xml_escape_attr(name) +
-  "\"><p:spTree>" +
-  "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
-  "<p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/>" +
-  "<a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>" +
-  "</p:spTree></p:cSld>" +
+  csld +
   "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" +
   "</p:sldLayout>"
-}
-
-///|
-/// Minimal attribute escape for the master/layout `name` (the only
-/// user-supplied value in a hand-built wrapper; placeholder text is escaped
-/// by the slide writer).
-fn xml_escape_attr(s : String) -> String {
-  let out = StringBuilder::new()
-  for c in s {
-    match c {
-      '&' => out.write_string("&amp;")
-      '<' => out.write_string("&lt;")
-      '>' => out.write_string("&gt;")
-      '"' => out.write_string("&quot;")
-      _ => out.write_char(c)
-    }
-  }
-  out.to_string()
 }
 
 // --- string + OPC helpers ---
@@ -456,37 +487,44 @@ fn Presentation::max_part_index(self : Presentation, prefix : String) -> Int {
 }
 
 ///|
-/// The first `/ppt/theme/themeN.xml` part, relative to `from_part`.
-/// Falls back to the conventional `theme1.xml` when none is found.
-fn Presentation::first_theme_relative_to(
-  self : Presentation,
-  from_part : String,
-) -> String {
-  let mut theme : String? = None
-  for p in self.pkg.parts() {
-    let prefix = "/ppt/theme/theme"
-    if theme is None &&
-      p.name.length() > prefix.length() &&
-      p.name.view(start_offset=0, end_offset=prefix.length()).to_owned() ==
-      prefix {
-      theme = Some(p.name)
-    }
-  }
-  match theme {
-    Some(t) => relative_target(from_part, t)
-    None => "../theme/theme1.xml"
-  }
-}
-
-///|
-/// Next `<p:sldMasterId>` id — one past the current max, floored at the
-/// spec minimum `2147483648`.
-fn next_master_id(ids : Array[SlideMasterIdRef]) -> Int64 {
+/// Largest `<p:sldLayoutId>` id across every slide master's `sldLayoutIdLst`
+/// (each master part carries its own). Returned as the shared-space floor so
+/// new master/layout ids stay clear of existing layout ids; `2147483647` if
+/// none. (Parsed as `Int64` — these ids exceed `Int`'s range.)
+fn Presentation::max_slide_layout_id(self : Presentation) -> Int64 {
+  let prefix = "/ppt/slideMasters/slideMaster"
+  let marker = "sldLayoutId id=\""
   let mut max = 2147483647L
-  for r in ids {
-    if r.id > max {
-      max = r.id
+  for p in self.pkg.parts() {
+    if p.name.length() <= prefix.length() ||
+      p.name.view(start_offset=0, end_offset=prefix.length()).to_owned() !=
+      prefix {
+      continue
+    }
+    let xml = @oxml.bytes_to_string(p.bytes) catch { _ => continue }
+    let mut from = 0
+    while true {
+      let at = str_index(xml, marker, from)
+      if at < 0 {
+        break
+      }
+      let mut j = at + marker.length()
+      let mut value = 0L
+      let mut saw_digit = false
+      while j < xml.length() {
+        let c = xml[j].to_int()
+        if c < '0'.to_int() || c > '9'.to_int() {
+          break
+        }
+        value = value * 10L + (c - '0'.to_int()).to_int64()
+        saw_digit = true
+        j = j + 1
+      }
+      if saw_digit && value > max {
+        max = value
+      }
+      from = j + 1
     }
   }
-  max + 1L
+  max
 }

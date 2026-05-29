@@ -87,6 +87,15 @@ pub fn write_xml_element(
     }
   }
   w.end_element()
+  // 6. A foreign namespace declared here (`xmlns:extN`) only scopes to this
+  //    element's subtree. Forget those bindings now so a *disjoint* sibling
+  //    subtree re-declares the URI rather than emitting a prefix that is out
+  //    of scope (which produces invalid XML — e.g. two media objects, each
+  //    with a `<p14:media>`, on one slide). Well-known prefixes (`a`/`p`/`r`)
+  //    are seeded in `ctx` and never land in `newly_bound`, so they persist.
+  for nb in newly_bound {
+    ctx.known_prefixes.remove(nb.1)
+  }
 }
 
 ///|

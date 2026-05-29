@@ -119,3 +119,66 @@ test "define_master: a slide can be added on the new layout" {
   let reopened = @presentation.Presentation::open(prs.save())
   assert_eq(reopened.slides().length(), 1)
 }
+
+///|
+test "define_master: new master gets its own theme (repair-clean)" {
+  let prs = @presentation.Presentation::new()
+  let themes_before = count_theme_parts(prs)
+  let _ = prs.define_master(brand_master())
+  // A dedicated theme part was added — two masters sharing one theme trips
+  // PowerPoint's repair prompt.
+  assert_eq(count_theme_parts(prs), themes_before + 1)
+  // The new master references a theme other than the original master's.
+  let m1 = @oxml.bytes_to_string(
+    prs.pkg
+    .part_by_name("/ppt/slideMasters/_rels/slideMaster1.xml.rels")
+    .unwrap().bytes,
+  )
+  let m2 = @oxml.bytes_to_string(
+    prs.pkg
+    .part_by_name("/ppt/slideMasters/_rels/slideMaster2.xml.rels")
+    .unwrap().bytes,
+  )
+  // slideMaster1 uses theme1; slideMaster2 must not.
+  assert_true(has_substring(m1, "theme1.xml"))
+  assert_false(has_substring(m2, "theme1.xml"))
+}
+
+///|
+test "define_master: layout declares the placeholders so slides inherit geometry" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.define_master(brand_master())
+  // The generated layout carries the footer / date / number placeholders
+  // (with positions) — without them a slide's footer renders unpositioned.
+  let layout = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/ppt/slideLayouts/slideLayout2.xml").unwrap().bytes,
+  )
+  assert_true(has_substring(layout, "type=\"ftr\""))
+  assert_true(has_substring(layout, "type=\"dt\""))
+  assert_true(has_substring(layout, "type=\"sldNum\""))
+  // …and the footer placeholder has an explicit position to inherit.
+  assert_true(has_substring(layout, "<a:off x=\"3124200\""))
+}
+
+///|
+fn count_theme_parts(prs : @presentation.Presentation) -> Int {
+  let mut n = 0
+  for p in prs.pkg.parts() {
+    if has_substring(p.name, "/ppt/theme/theme") {
+      n = n + 1
+    }
+  }
+  n
+}
+
+///|
+test "define_master: new master id clears existing layout ids (no collision)" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.define_master(brand_master())
+  let pres = prs.presentation_part().unwrap()
+  assert_eq(pres.sld_master_ids.length(), 2)
+  // slideMaster1 is 2147483648 with its layout at 2147483649; master/layout
+  // ids share one space, so the new master must clear 2147483649 (reusing it
+  // trips PowerPoint's repair). The first free id is 2147483650.
+  assert_true(pres.sld_master_ids[1].id >= 2147483650L)
+}
