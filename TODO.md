@@ -219,7 +219,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | SmartArt build | ❌ identification only | ❌ | ❌ | ⏳ v0.5 (D1) ⭐ |
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ❌ | ⏳ v0.2 (C2) |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | ⏳ v1.0 (D5) |
-| Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ❌ | ⏳ v0.3 (D6) |
+| Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
 | Document properties (creator, title, …) | ✅ | ✅ | △ fixed template | future |
 | Equation editor (`<m:oMathPara>`) | ❌ | ❌ | △ extension-only | future |
 
@@ -304,6 +304,13 @@ review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
 DoD: every feature PptxGenJS covers is expressible; slide masters can
 be defined programmatically end-to-end.
 
+Status (2026-05-30): **all items landed on `main`** — A6, A7, A8, B1, B4
+(added from external review), C1, C3, C4, D6. 914 tests × 4 backends.
+**Ready to tag v0.3.0** pending an API-stability pass (no breaking
+changes vs 0.2.0 — every change this cycle was additive `.mbti` except
+the necessary `Slide.background` / `Picture.media` struct-field additions,
+which 0.x SemVer permits).
+
 🟢 **A6 — Audio / video embedding** *(landed 2026-05-29)*
   - `Presentation::add_video_mut(slide_idx, video_bytes, poster_bytes, x, y, cx, cy)` + `add_audio_mut(...)` — wire the media part + poster part, three relationships (`image` poster, `video`/`audio` link, `media` embed), content-type defaults, and the shape
   - Magic-byte detection in `@oxml.detect_media_format`: mp4 / mov / avi / wmv (video) + mp3 / wav / aiff / m4a (audio), with `content_type` / `extension` / `is_video`
@@ -352,11 +359,10 @@ be defined programmatically end-to-end.
   - **Shipped as designed** with `Shape::id()` / `Shape::name()` accessors (the index/id handles). **Q11 resolved**: id-based + `map_shapes` are primary, index helpers are thin conveniences, and a missing id / out-of-range index raises `SlideError` (mirroring `update_slide_mut`) — `map_shapes` is the non-raising best-effort path.
   - **Writer fix (important)**: parsed shapes capture `<p:cNvPr>` wholesale into `extension`, which previously *shadowed* the typed `name`/`id` on write — so editing those fields silently didn't persist. `write_cnvpr` now re-emits the captured `<p:cNvPr>` but overrides its `id`/`name` attribute *values* with the typed fields (preserving order + `descr`/`title`/`hlinkClick` children). Byte-identical for unmodified shapes (all golden round-trip tests unchanged); edited values now flow through. Pairs with B1 — together they make moon-pptx a first-class *editor*, not just a reader+builder.
 
-🔴 **D6 — Lossless diff-write**
-  - `Presentation::save_diff(original_bytes) -> FixedArray[Byte]`
-  - Parts whose typed model is byte-identical to the source re-emit the source bytes verbatim (skip re-serialisation)
-  - Mutated parts go through the writer
-  - Useful for editing real-world Microsoft-emitted decks where the writer's canonical serialisation differs cosmetically from Office's
+🟢 **D6 — Lossless diff-write** *(landed 2026-05-29 — delivered by `save()`, no new API)*
+  - **Finding**: the property is already inherent in the architecture. The OPC layer stores each part's *source bytes* (raw ZIP-entry bytes from `Package::open`), and only `_mut` operations replace a part's bytes; `save()` (= `Package::to_bytes`) re-zips the stored bytes. So untouched parts are re-emitted verbatim and mutated parts carry the writer's output — exactly the D6 contract — **with no dirty-tracking or hashing** (Q10 resolved: retention-by-construction).
+  - The separate `save_diff(original_bytes)` API from the original sketch was deemed **redundant**: a truly general version (per-part typed-model comparison to undo *cosmetic* re-serialisation of a semantically-unchanged but explicitly re-written part) needs per-part-type parse+compare for marginal benefit, since the dominant open→edit→save flow already preserves Office's exact bytes on every untouched part. Not added; can revisit if a concrete consumer needs the cosmetic-undo case.
+  - Locked in by `src/presentation/diff_write_test.mbt`: editing one slide leaves every other part (sibling slide, theme, master, layout, `presentation.xml`, presProps) byte-for-byte identical, and a pure open→save preserves every part incl. `[Content_Types].xml`.
 
 ---
 
@@ -572,9 +578,9 @@ Open:
 | Q7 | Compile-time placeholder schema (M1): per-layout-type approach vs phantom type-parameter on `Slide`? Which is more ergonomic? | — | v0.4 design phase |
 | Q8 | SmartArt: which DiagramML layouts ship in v0.5 first? (org-chart + hierarchy + cycle + process are top candidates) | — | v0.5 scoping |
 | Q9 | Animation DSL: support custom motion paths via custGeom AST reuse in v0.5, or defer to v0.6? | — | v0.5 scoping |
-| Q10 | Lossless diff-write (D6): hash-based detection of "untouched parts" vs explicit dirty-tracking on `Presentation`? | — | v0.3 design |
 Resolved:
 
+- **Q10 (D6 untouched-part detection)** — resolved at D6 (2026-05-29): neither hashing nor dirty-tracking is needed. The OPC layer retains each part's *source bytes* and only `_mut` operations replace them, so `save()` re-emits untouched parts verbatim by construction. See D6 (§4.2).
 - **Q11 (B4 shape-edit identity handle)** — resolved at B4 (2026-05-29): id-based (`with_shape_by_id`) + `map_shapes` are primary; index helpers (`with_shape_at` / `with_shape_mapped` / `without_shape`) are thin conveniences. A missing id or out-of-range index raises `SlideError`; `map_shapes` is the non-raising best-effort path. Discovered+fixed the captured-`<p:cNvPr>` shadowing of typed `name`/`id` (see B4 writer-fix note).
 
 - **Q1 (Native + Int64)** — resolved at Phase 1.1 (2026-05-10): `Emu = Int64` round-trips on `native` / `wasm-gc` / `wasm` / `js`.
@@ -640,6 +646,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-05-30** — **v0.3 D6 closed: lossless diff-write (delivered by `save()`, no new API).** Investigation showed the property is inherent: the OPC layer stores each part's raw source bytes and only `_mut` operations replace them, so `save()` re-emits untouched parts verbatim and mutated parts carry the writer's output — the exact D6 contract, with no dirty-tracking/hashing (Q10 resolved). The sketched `save_diff(original_bytes)` API was judged redundant (a general version needs per-part-type model comparison for marginal cosmetic-undo benefit). Locked in with `src/presentation/diff_write_test.mbt` (editing one slide leaves all sibling parts byte-identical; pure open→save preserves every part incl. `[Content_Types].xml`). 2 new tests, 912 → 914 × 4 backends; no `.mbti` change. **All v0.3.0 roadmap items now landed.**
 - **2026-05-29** — **v0.3 C1 + A8 landed: `define_master` + header/footer/date placeholders.** `Presentation::define_master(MasterDefinition) -> Int` synthesises a `<p:sldMaster>` + one dependent blank `<p:sldLayout>` and wires them into the package (parts, rels — master→layout+theme, layout→master, presentation→master —, content-types, `<p:sldMasterIdLst>`), returning the new master index. `MasterDefinition` (+ `::new` / `with_*` builders) reuses A7 `Background` and B1 `PlaceholderType`; `PlaceholderDef` reuses the existing `Transform` for positions. The master `cSld` (bg + placeholder shapes, plus optional footer/date/slide-number placeholders) is built by serialising a throwaway typed `@slide.Slide` and extracting `<p:cSld>` — reusing the slide writer's escaping/shape emission — then re-wrapped with `<p:clrMap>` + `<p:sldLayoutIdLst>`; the master bg defaults to the standard `bgRef` when unset. A8 slide side: `@slide.Slide::with_slide_number(Bool)` / `with_footer(String)` / `with_date(DateMode{Auto|Fixed})` append idempotent slide-level `sldNum`/`ftr`/`dt` placeholders (fields for number/auto-date). Verified by save→reopen of the 2-master deck and adding a slide on the synthesised layout. 11 new tests, 902 → 912 (×4 backends). **All v0.3.0 scope except D6 (lossless diff-write) now landed.**
 - **2026-05-29** — **v0.3 A6 landed: audio / video embedding.** `Presentation::add_video_mut` / `add_audio_mut` embed a media clip + caller-supplied poster image: they add the media part + poster part, three slide relationships (`image` poster, `video`/`audio` link, `media` embed — the last two to the same media part), content-type Defaults, and the shape. New `@oxml.detect_media_format` (mp4/mov/avi/wmv + mp3/wav/aiff/m4a magic bytes) with `content_type`/`extension`/`is_video`. Modelled as a typed `Picture.media : MediaInfo?` rather than the roadmap's `Shape::Media` — a media clip *is* a `<p:pic>`, so reusing `Picture` (poster `blipFill` + transform) avoids a parallel shape kind; builder `@slide.Picture::of_media`. The writer (threaded through `write_nv_wrapper`/`write_cnvpr`) emits `<a:videoFile>`/`<a:audioFile>` + `<p:extLst><p14:media>` inside `<p:nvPr>` and a `ppaction://media` hyperlink on `<p:cNvPr>`, using `write_xml_element` to auto-declare the new `@oxml.powerpoint_2010_ns`. No parser changes — existing media refs round-trip via `Picture.extension` (ADR-004), so `media` is `None` on parse and built media re-serialises identically. New `@oxml.media_ext_uri` + `@opc.rt_video`/`rt_audio`/`rt_media`. 13 new tests, 889 → 902 total × 4 backends.
 - **2026-05-29** — **v0.3 C3 landed: combo charts + secondary axis.** New `@chart.ChartPlot { Bar \| Line \| Area }(ChartData)` enum and `Chart::of_combo(primary, secondary, secondary_axis?=false)`. Overlays two plots on a shared `catAx`/`valAx` pair; with `secondary_axis=true` it threads the standard Office 4-axis structure — primary cat(1)/val(2) plus a secondary `valAx`(4) drawn on the right crossing at `Max` and a `delete=true` secondary `catAx`(3) as its crossing partner — and binds the secondary plot to ids 3/4. Secondary series `idx`/`order` are offset past the primary's (new `synthesize_series_from`) so indices are unique chart-wide (avoids PowerPoint's repair prompt). Reuses the existing `PlotArea` multi-plot model + `simple_axis_core` (overridden via struct spread for the right/Max/delete axes). 5 new tests incl. round-trip equality, 884 → 889 total × 4 backends.

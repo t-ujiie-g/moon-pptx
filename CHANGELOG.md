@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **Lossless diff-write** — editing a deck and calling `save()` now
+  re-emits every *untouched* part byte-for-byte (preserving the exact
+  formatting of a real-world Office file on the parts you didn't change);
+  only the parts you mutate are re-serialised. This is inherent in how
+  parts retain their source bytes — no new API. (roadmap D6)
 - **Programmatic slide masters (`define_master`)** —
   `Presentation::define_master(MasterDefinition)` synthesises a slide
   master plus a dependent layout (placeholders, optional footer / date /
