@@ -155,9 +155,9 @@ suffice.
 
 | Package | What it covers |
 |---|---|
-| `@presentation` | High-level `Presentation` façade — `open` / `save` / `new`, slide / chart / picture insertion, immutable + mutating builders |
-| `@slide` | Slide model: `AutoShape`, `Picture`, `Connector`, `GroupShape`, `Table`, `GraphicFrame`, text bodies, custom geometry |
-| `@chart` | Standard 16 chart families with from-scratch builders (`Chart::of_bar` / `of_line` / `of_pie` / `of_scatter` / `of_bubble` / …) |
+| `@presentation` | High-level `Presentation` façade — `open` / `save` / `new`, slide / chart / picture / SVG / audio / video insertion, `define_master`, pinpoint shape editing, immutable + mutating builders |
+| `@slide` | Slide model: `AutoShape`, `Picture` (incl. SVG + media), `Connector`, `GroupShape`, `Table`, `GraphicFrame`, text bodies, custom geometry, typed background, placeholder accessors, footer / date / slide-number |
+| `@chart` | Standard 16 chart families with from-scratch builders (`Chart::of_bar` / `of_line` / `of_pie` / `of_scatter` / `of_bubble` / `of_combo` / …) plus combo + secondary-axis |
 | `@chart_ex` | Microsoft 2016 extended charts (waterfall, treemap, sunburst, …); read + write, lossless round-trip |
 | `@theme`, `@slide_master`, `@notes`, `@comments` | Theme / master / layout / speaker-notes / comments parsers and writers |
 | `@opc` | Open Packaging Convention layer (parts, content types, relationships) — usable for DOCX/XLSX too |

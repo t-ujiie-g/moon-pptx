@@ -258,53 +258,16 @@ fn Presentation::ensure_default_content_type(
 }
 
 ///|
-/// Allocate the next `/ppt/media/imageN.{ext}` part name. Scans the
-/// current package for existing image parts and picks the smallest
-/// N greater than any existing one.
+/// Allocate the next `/ppt/media/imageN.{ext}` part name, one past the
+/// highest existing N (shared scanner: `max_part_index`).
 fn Presentation::next_image_part_name(
   self : Presentation,
   extension : String,
 ) -> String {
-  let mut next = 1
-  for p in self.pkg.parts() {
-    let n = extract_image_index(p.name)
-    if n >= next {
-      next = n + 1
-    }
-  }
-  "/ppt/media/image" + next.to_string() + "." + extension
-}
-
-///|
-/// Parse the integer N out of `/ppt/media/imageN.{ext}`. Returns 0
-/// when `name` doesn't match the convention.
-fn extract_image_index(name : String) -> Int {
-  let prefix = "/ppt/media/image"
-  let total = name.length()
-  let prefix_len = prefix.length()
-  if total <= prefix_len {
-    return 0
-  }
-  let prefix_part = name.view(start_offset=0, end_offset=prefix_len)
-  if prefix_part.to_owned() != prefix {
-    return 0
-  }
-  // Find the dot separating index from extension.
-  let mut dot_at = -1
-  for i in prefix_len..<total {
-    if name[i] == '.' {
-      dot_at = i
-      break
-    }
-  }
-  if dot_at < 0 {
-    return 0
-  }
-  let middle = name.view(start_offset=prefix_len, end_offset=dot_at)
-  match @oxml.parse_signed_int(middle.to_owned()) {
-    Some(n) => n
-    None => 0
-  }
+  "/ppt/media/image" +
+  (self.max_part_index("/ppt/media/image") + 1).to_string() +
+  "." +
+  extension
 }
 
 ///|

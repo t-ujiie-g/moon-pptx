@@ -217,32 +217,8 @@ fn Presentation::next_media_part_name(
   self : Presentation,
   extension : String,
 ) -> String {
-  let prefix = "/ppt/media/media"
-  let mut next = 1
-  for p in self.pkg.parts() {
-    if p.name.length() > prefix.length() &&
-      p.name.view(start_offset=0, end_offset=prefix.length()).to_owned() ==
-      prefix {
-      // Parse the integer between the prefix and the extension dot.
-      let rest = p.name.view(start_offset=prefix.length())
-      let s = rest.to_owned()
-      let mut dot = -1
-      for i in 0..<s.length() {
-        if s[i] == '.' {
-          dot = i
-          break
-        }
-      }
-      let digits = if dot >= 0 {
-        s.view(start_offset=0, end_offset=dot).to_owned()
-      } else {
-        s
-      }
-      match @oxml.parse_signed_int(digits) {
-        Some(n) => if n >= next { next = n + 1 }
-        None => ()
-      }
-    }
-  }
-  prefix + next.to_string() + "." + extension
+  "/ppt/media/media" +
+  (self.max_part_index("/ppt/media/media") + 1).to_string() +
+  "." +
+  extension
 }

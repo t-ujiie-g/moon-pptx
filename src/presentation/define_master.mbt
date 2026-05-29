@@ -197,7 +197,10 @@ fn build_master_csld(def : MasterDefinition) -> String raise PptxError {
     )
     sid = sid + 1
   }
-  // Footer / date / slide-number placeholders along the bottom band.
+  // Footer / date / slide-number placeholders along the bottom band. The
+  // idx values (dt=10, ftr=11, sldNum=12) match the slide-side convention in
+  // `@slide`'s `with_date` / `with_footer` / `with_slide_number` so the
+  // slide placeholders inherit position from these master ones.
   match def.footer_text {
     Some(text) => {
       shapes.push(
@@ -425,7 +428,11 @@ fn Presentation::next_layout_part_name(self : Presentation) -> String {
 }
 
 ///|
-/// Highest integer N among parts named `{prefix}N.xml`, or 0.
+/// Highest integer `N` among package parts named `{prefix}N{.ext}`, or `0`
+/// if none. The shared part-name scanner behind every `next_*_part_name`
+/// (slides, layouts, masters, media, images, charts) — it reads the run of
+/// digits immediately after `prefix` up to the next `.`, so a non-matching
+/// tail (e.g. `chartEx…` under the `chart` prefix) is skipped.
 fn Presentation::max_part_index(self : Presentation, prefix : String) -> Int {
   let mut max = 0
   for p in self.pkg.parts() {
