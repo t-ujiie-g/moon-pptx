@@ -316,41 +316,10 @@ fn build_notes_slide(text : String) -> @notes.NotesSlide {
 }
 
 ///|
-/// Allocate the next `/ppt/notesSlides/notesSlideN.xml` part name.
+/// Allocate the next `/ppt/notesSlides/notesSlideN.xml` part name
+/// (shared scanner: `max_part_index`).
 fn Presentation::next_notes_part_name(self : Presentation) -> String {
-  let mut next = 1
-  for p in self.pkg.parts() {
-    let n = extract_notes_index(p.name)
-    if n >= next {
-      next = n + 1
-    }
-  }
-  "/ppt/notesSlides/notesSlide" + next.to_string() + ".xml"
-}
-
-///|
-/// Parse the integer N out of `/ppt/notesSlides/notesSlideN.xml`.
-/// Returns 0 when `name` doesn't match the convention.
-fn extract_notes_index(name : String) -> Int {
-  let prefix = "/ppt/notesSlides/notesSlide"
-  let suffix = ".xml"
-  let total = name.length()
-  let prefix_len = prefix.length()
-  let suffix_len = suffix.length()
-  if total <= prefix_len + suffix_len {
-    return 0
-  }
-  let prefix_part = name.view(start_offset=0, end_offset=prefix_len)
-  if prefix_part.to_owned() != prefix {
-    return 0
-  }
-  let suffix_part = name.view(start_offset=total - suffix_len)
-  if suffix_part.to_owned() != suffix {
-    return 0
-  }
-  let middle = name.view(start_offset=prefix_len, end_offset=total - suffix_len)
-  match @oxml.parse_signed_int(middle.to_owned()) {
-    Some(n) => n
-    None => 0
-  }
+  "/ppt/notesSlides/notesSlide" +
+  (self.max_part_index("/ppt/notesSlides/notesSlide") + 1).to_string() +
+  ".xml"
 }

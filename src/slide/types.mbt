@@ -37,9 +37,10 @@ pub(all) struct Transform {
 /// Not every shape is a placeholder — `None` covers the common case of a
 /// regular drawn shape.
 ///
-/// `ph_type` is the OOXML `ST_PlaceholderType` value as a raw string;
-/// typed-enum lift is deferred until a consumer needs typed
-/// placeholder semantics, the same way `SlideLayoutType` was lifted.
+/// `ph_type` is kept as the raw OOXML `ST_PlaceholderType` value so an
+/// absent attribute (the common body/content case) round-trips losslessly
+/// as `""`. The typed view lives in `Placeholder::kind() -> PlaceholderType`
+/// (see `placeholders.mbt`) rather than in this field.
 pub(all) struct Placeholder {
   ph_type : String
   idx : Int
@@ -104,6 +105,11 @@ pub(all) struct Slide {
   /// `name` from `<p:cSld name="…">`. Empty if the attribute is absent
   /// (which is the common case — slides are usually unnamed).
   name : String
+  /// `<p:cSld><p:bg>` — the slide background (roadmap A7). `None` means
+  /// the slide inherits its background from the layout / master (the
+  /// common case). Lifted out of `extension` into a typed field; see
+  /// `background.mbt`.
+  background : Background?
   /// Top-level shapes inside `<p:spTree>` in source order. The root
   /// group's own metadata (`<p:nvGrpSpPr>` / `<p:grpSpPr>`) is captured
   /// into `extension` for round-trip preservation.
@@ -114,7 +120,8 @@ pub(all) struct Slide {
   clr_map_override : @slide_master.ClrMapOverride
   /// Lossless preservation (ADR-004): unmodelled `<p:sld>` children
   /// (`<p:transition>`, `<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
-  /// unmodelled `<p:cSld>` children (`<p:bg>`, …), and unmodelled
+  /// unmodelled `<p:cSld>` children (`<p:controls>`, …; `<p:bg>` is now
+  /// the typed `background` field), and unmodelled
   /// `<p:spTree>` siblings (root group metadata, foreign-namespace
   /// extensions). Source order is preserved within the array; cross-
   /// section ordering is *not* — writers re-emit each captured

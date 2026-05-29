@@ -1,7 +1,10 @@
 # moon-pptx — Sample deck
 
-A 12-slide PowerPoint deck built end-to-end with
-[`t-ujiie-g/moon-pptx`](https://mooncakes.io/docs/t-ujiie-g/moon-pptx).
+A single PowerPoint deck built end-to-end with
+[`t-ujiie-g/moon-pptx`](https://mooncakes.io/docs/t-ujiie-g/moon-pptx),
+touring (almost) every feature: text, shapes, tables, the full chart
+gallery, pictures, slide backgrounds, SVG images, embedded audio/video,
+master slides with footer/date/slide-number, and in-place shape editing.
 Doubles as the canonical worked example and as a debugging helper for
 PowerPoint Online compatibility verification.
 
@@ -12,31 +15,29 @@ sample-deck/
 ├── moon.mod.json     ← separate MoonBit module
 └── main/
     ├── moon.pkg.json ← is-main: true, imports moon-pptx sub-packages
-    ├── build.mbt     ← deck builders (full deck + per-feature isolation)
+    ├── build.mbt     ← deck assembly + the original slide builders
+    ├── showcase.mbt  ← the newer feature slides (background, SVG, media, …)
     └── main.mbt      ← CLI entry: emits the deck bytes as hex
 ```
 
 This module is **independent of the moon-pptx library itself**. It
-has its own `moon.mod.json` and depends on the published library
-through mooncakes:
-
-```json
-"deps": {
-  "t-ujiie-g/moon-pptx": "0.2.0"
-}
-```
-
-It serves as a worked-out example of "what a real consumer would
-write" — copy-paste the deps and the import shapes
-(`@presentation`, `@chart`, `@slide`, …) into your own project and
-you're good to go.
-
-For development against an in-progress local copy of the library
-(e.g. testing changes before the next release), swap to a path dep:
+has its own `moon.mod.json`. While the next library version is still
+unreleased it depends on the in-repo copy through a path dep:
 
 ```json
 "deps": {
   "t-ujiie-g/moon-pptx": { "path": "../.." }
+}
+```
+
+It serves as a worked-out example of "what a real consumer would
+write" — the import shapes (`@presentation`, `@chart`, `@slide`, …)
+are exactly what you'd use in your own project. Once the library is
+published, a consumer swaps the path dep for a version:
+
+```json
+"deps": {
+  "t-ujiie-g/moon-pptx": "0.3.0"
 }
 ```
 
@@ -73,12 +74,12 @@ for f in out/split/*.hex; do
 done
 ```
 
-This produces 11 per-feature `.pptx` files
-(`00-title-only.pptx` … `10-closing.pptx`) so you can open each
-individually and identify which feature combination triggers
-PowerPoint's repair pass. The same technique drove the v0.2.0 repair
-fixes (notes-master synthesis, chart axis required elements, ofPie
-defaults, etc.).
+This produces one `.pptx` file per feature
+(`00-title-only.pptx` … `16-closing.pptx`, plus a few chart
+sub-isolations) so you can open each individually and identify which
+feature triggers PowerPoint's repair pass. The same technique drove
+the v0.2.0 repair fixes (notes-master synthesis, chart axis required
+elements, ofPie defaults, etc.).
 
 ## Slide list
 
@@ -95,4 +96,10 @@ defaults, etc.).
 | 9 | Charts II | Area / radar / doughnut grid |
 | 10 | Charts III | Scatter + bubble (two value-axis families) |
 | 11 | Charts IV | 3-D bar + stock + of-pie (extended axis + 3-D wrappers) |
-| 12 | Closing | Back-link hyperlink + speaker notes |
+| 12 | Slide background | Solid-fill slide background |
+| 13 | Combo chart | Columns + line on a secondary value axis |
+| 14 | SVG image | Vector image with a raster fallback |
+| 15 | Editing shapes | Recolour boxes already on the slide via `map_shapes` |
+| 16 | Embedded media | A movie + a sound clip (placeholder media payloads) |
+| 17 | Master / template | Defined master + footer, auto date, slide number |
+| 18 | Closing | Back-link hyperlink + speaker notes |

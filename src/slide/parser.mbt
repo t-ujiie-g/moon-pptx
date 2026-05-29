@@ -47,6 +47,7 @@ fn parse_slide_xml(
     _ => raise Malformed("expected <p:" + expected_root + "> root element")
   }
   let mut slide_name = ""
+  let mut background : Background? = None
   let shapes : Array[Shape] = []
   let mut clr_map_override : @slide_master.ClrMapOverride = MasterMapping
   let extension : Array[@xml.XmlElement] = []
@@ -59,7 +60,11 @@ fn parse_slide_xml(
           extension.push(collect_subtree_unknown(r, child, attrs))
         } else {
           match child.local_name {
-            "cSld" => slide_name = parse_c_sld(r, attrs, shapes, extension)
+            "cSld" => {
+              let (n, bg) = parse_c_sld(r, attrs, shapes, extension)
+              slide_name = n
+              background = bg
+            }
             "clrMapOvr" => clr_map_override = parse_clr_map_ovr(r, extension)
             // transition, timing, custDataLst, extLst, and any future
             // <p:sld> children we don't yet model.
@@ -70,7 +75,7 @@ fn parse_slide_xml(
       _ => ()
     }
   }
-  { name: slide_name, shapes, clr_map_override, extension }
+  { name: slide_name, background, shapes, clr_map_override, extension }
 }
 
 ///|
@@ -79,8 +84,9 @@ fn parse_c_sld(
   attrs : Array[(@xml.QName, String)],
   shapes : Array[Shape],
   extension : Array[@xml.XmlElement],
-) -> String raise SlideError {
+) -> (String, Background?) raise SlideError {
   let name = optional_attr(attrs, "name")
+  let mut background : Background? = None
   while true {
     let ev = next_event(r)
     match ev {
@@ -89,8 +95,9 @@ fn parse_c_sld(
           extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
+            "bg" => background = Some(parse_bg(r))
             "spTree" => parse_sp_tree(r, shapes, extension)
-            // bg, custDataLst, extLst, and any future <p:cSld> children.
+            // custDataLst, extLst, controls, and any future <p:cSld> child.
             _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
@@ -98,7 +105,120 @@ fn parse_c_sld(
       _ => ()
     }
   }
-  name
+  (name, background)
+}
+
+///|
+/// Parse `<p:bg>` (CT_Background) — a choice of `<p:bgPr>` (explicit fill)
+/// or `<p:bgRef>` (theme style-matrix reference). Lifts the background out
+/// of `extension` into the typed `Slide.background` field (roadmap A7).
+fn parse_bg(r : @xml.XmlReader) -> Background raise SlideError {
+  let mut bg : Background? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.presentation_ns && child.local_name == "bgPr" {
+          bg = Some(parse_bg_pr(r, child_attrs))
+        } else if child.uri == @oxml.presentation_ns &&
+          child.local_name == "bgRef" {
+          bg = Some(parse_bg_ref(r, child_attrs))
+        } else {
+          // <p:bg> is a strict bgPr|bgRef choice per ECMA-376; nothing else
+          // is valid, but skip defensively rather than mis-model.
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  match bg {
+    Some(b) => b
+    None => raise Malformed("<p:bg> has neither <p:bgPr> nor <p:bgRef>")
+  }
+}
+
+///|
+/// Parse `<p:bgPr>` (CT_BackgroundProperties): a required fill, optional
+/// `<a:effectLst>`, the `shadeToTitle` attribute, and any unmodelled
+/// children preserved per ADR-004.
+fn parse_bg_pr(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> Background raise SlideError {
+  let shade = optional_attr(attrs, "shadeToTitle")
+  let shade_to_title = shade == "1" || shade == "true"
+  let mut fill : @oxml.Fill? = None
+  let mut effects : @oxml.EffectList? = None
+  let extension : Array[@xml.XmlElement] = []
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.drawing_ns &&
+          (
+            child.local_name == "noFill" ||
+            child.local_name == "solidFill" ||
+            child.local_name == "gradFill" ||
+            child.local_name == "blipFill" ||
+            child.local_name == "pattFill"
+          ) {
+          fill = Some(
+            @oxml.parse_fill(r, child, child_attrs) catch {
+              e =>
+                raise Malformed("a:" + child.local_name + ": " + e.to_string())
+            },
+          )
+        } else if child.uri == @oxml.drawing_ns &&
+          child.local_name == "effectLst" {
+          effects = Some(
+            @oxml.parse_effect_list(r) catch {
+              e => raise Malformed("a:effectLst: " + e.to_string())
+            },
+          )
+        } else {
+          // grpFill (not modelled by @oxml.Fill), effectDag, extLst,
+          // foreign-namespace children — preserve verbatim.
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  Properties({ fill, shade_to_title, effects, extension })
+}
+
+///|
+/// Parse `<p:bgRef>` (CT_StyleMatrixReference): the required `idx` attribute
+/// plus a single colour child resolving the referenced style's `phClr`.
+fn parse_bg_ref(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> Background raise SlideError {
+  let idx = parse_int_attr(attrs, "idx")
+  let mut color : @oxml.Color? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.drawing_ns {
+          color = Some(
+            @oxml.parse_color_element(r, child, child_attrs) catch {
+              e =>
+                raise Malformed("a:" + child.local_name + ": " + e.to_string())
+            },
+          )
+        } else {
+          skip_subtree(r)
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  match color {
+    Some(c) => StyleReference(idx, c)
+    None => raise Malformed("<p:bgRef> is missing its colour child")
+  }
 }
 
 ///|
@@ -510,7 +630,19 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
     Some(b) => b
     None => raise Malformed("<p:pic> is missing <p:blipFill>")
   }
-  { id, name, transform, geometry, stroke, effects, blip_fill: bf, extension }
+  {
+    id,
+    name,
+    transform,
+    geometry,
+    stroke,
+    effects,
+    blip_fill: bf,
+    // Media is lifted only by builders; parsed media refs round-trip via
+    // `extension` (ADR-004). See `media.mbt`.
+    media: None,
+    extension,
+  }
 }
 
 // --- AutoShape ---

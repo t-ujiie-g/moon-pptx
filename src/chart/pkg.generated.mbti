@@ -232,6 +232,7 @@ pub fn Chart::of_area(ChartData, grouping? : Grouping) -> Self
 pub fn Chart::of_bar(ChartData, bar_dir? : BarDir, grouping? : BarGrouping) -> Self
 pub fn Chart::of_bar_3d(ChartData, bar_dir? : BarDir, grouping? : BarGrouping, shape? : BarShape) -> Self
 pub fn Chart::of_bubble(BubbleData) -> Self
+pub fn Chart::of_combo(ChartPlot, ChartPlot, secondary_axis? : Bool) -> Self
 pub fn Chart::of_doughnut(ChartData, hole_size? : Int) -> Self
 pub fn Chart::of_line(ChartData, grouping? : Grouping) -> Self
 pub fn Chart::of_line_3d(ChartData, grouping? : Grouping) -> Self
@@ -283,6 +284,12 @@ pub(all) struct ChartLegend {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for ChartLegend
+
+pub(all) enum ChartPlot {
+  Bar(ChartData)
+  Line(ChartData)
+  Area(ChartData)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ChartSeries {
   label : String

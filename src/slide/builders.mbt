@@ -414,6 +414,40 @@ pub fn Picture::of_image(
       fill_mode: Stretch(None),
       extension: [],
     },
+    media: None,
+    extension: [],
+  }
+}
+
+///|
+/// Construct an SVG `Picture` shape. `png_embed_id` is the `r:embed` of
+/// the raster fallback part (rendered by viewers that don't understand
+/// SVG); `svg_embed_id` is the `r:embed` of the SVG part. Both relationship
+/// ids and both media parts must be added to the OPC package separately —
+/// `@presentation.Presentation::add_svg_picture_mut` runs the full pipeline.
+///
+/// The blip embeds the raster fallback and carries an `<asvg:svgBlip>`
+/// extension pointing at the SVG (roadmap C4); otherwise identical to
+/// `Picture::of_image` (stretched fit inside a `prst="rect"` boundary).
+pub fn Picture::of_svg_image(
+  id : Int,
+  name : String,
+  png_embed_id : String,
+  svg_embed_id : String,
+  x : @units.Emu,
+  y : @units.Emu,
+  cx : @units.Emu,
+  cy : @units.Emu,
+) -> Picture {
+  {
+    id,
+    name,
+    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    geometry: Some(Preset(PresetShape::Rect, [])),
+    stroke: None,
+    effects: None,
+    blip_fill: @oxml.BlipFill::svg(png_embed_id, svg_embed_id),
+    media: None,
     extension: [],
   }
 }

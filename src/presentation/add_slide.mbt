@@ -165,46 +165,11 @@ fn Presentation::layout_part_name_at(
 /// to gap reuse and re-mix presentation order; the append rule
 /// matches what PowerPoint does.
 fn Presentation::next_slide_part_name(self : Presentation) -> String {
-  let mut next = 1
-  for p in self.pkg.parts() {
-    if p.content_type == @oxml.ct_slide {
-      let n = extract_slide_index(p.name)
-      if n >= next {
-        next = n + 1
-      }
-    }
-  }
-  "/ppt/slides/slide" + next.to_string() + ".xml"
-}
-
-///|
-/// Parse the integer N out of `/ppt/slides/slideN.xml`. Returns 0
-/// if the name doesn't fit that shape (e.g. an unusual content-typed
-/// slide part), which won't displace any real slide.
-fn extract_slide_index(name : String) -> Int {
-  let prefix = "/ppt/slides/slide"
-  let suffix = ".xml"
-  let total = name.length()
-  let prefix_len = prefix.length()
-  let suffix_len = suffix.length()
-  if total <= prefix_len + suffix_len {
-    return 0
-  }
-  // String slicing in MoonBit: substring via `op_get_view`
-  let prefix_part = name.view(start_offset=0, end_offset=prefix_len)
-  if prefix_part.to_owned() != prefix {
-    return 0
-  }
-  let middle = name.view(start_offset=prefix_len, end_offset=total - suffix_len)
-  let suffix_part = name.view(start_offset=total - suffix_len, end_offset=total)
-  if suffix_part.to_owned() != suffix {
-    return 0
-  }
-  // Parse the middle as an integer.
-  match @oxml.parse_signed_int(middle.to_owned()) {
-    Some(n) => n
-    None => 0
-  }
+  // `/ppt/slides/slide` is not a prefix of `/ppt/slideLayouts/…`, so a plain
+  // name scan counts only real slides (shared scanner: `max_part_index`).
+  "/ppt/slides/slide" +
+  (self.max_part_index("/ppt/slides/slide") + 1).to_string() +
+  ".xml"
 }
 
 ///|

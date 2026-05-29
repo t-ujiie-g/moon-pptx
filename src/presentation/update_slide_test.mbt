@@ -121,3 +121,76 @@ test "Presentation::new + add_slide_mut + update_slide_mut: end-to-end builder" 
     _ => fail("expected AutoShape textbox on slide 1")
   }
 }
+
+// --- pinpoint shape editing (roadmap B4) ---
+
+///|
+/// Build a one-slide presentation whose slide holds a rectangle with id 2.
+fn prs_with_one_rect() -> @presentation.Presentation raise {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let rect = @slide.AutoShape::rect(
+    2,
+    "Rect",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(rect)))
+  prs
+}
+
+///|
+test "update_shape_by_id_mut: renames the targeted shape, survives reopen" {
+  let prs = prs_with_one_rect()
+  prs.update_shape_by_id_mut(0, 2, fn(s) {
+    match s {
+      AutoShape(a) => AutoShape({ ..a, name: "Renamed" })
+      other => other
+    }
+  })
+  let reopened = @presentation.Presentation::open(prs.save())
+  match reopened.slides()[0].shapes[0] {
+    AutoShape(a) => assert_eq(a.name, "Renamed")
+    _ => fail("expected AutoShape")
+  }
+}
+
+///|
+test "map_slide_shapes_mut: applies to every shape on the slide" {
+  let prs = prs_with_one_rect()
+  // Append a second shape so we exercise "every".
+  let rect2 = @slide.AutoShape::rect(
+    3,
+    "Rect2",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(50L),
+    @units.Emu(50L),
+  )
+  prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(rect2)))
+  prs.map_slide_shapes_mut(0, fn(s) {
+    match s {
+      AutoShape(a) => AutoShape({ ..a, name: "All" })
+      other => other
+    }
+  })
+  let slide = prs.slides()[0]
+  assert_eq(slide.shapes.length(), 2)
+  for sh in slide.shapes {
+    match sh {
+      AutoShape(a) => assert_eq(a.name, "All")
+      _ => fail("expected AutoShape")
+    }
+  }
+}
+
+///|
+test "update_shape_by_id_mut: raises on missing id or bad slide index" {
+  let prs = prs_with_one_rect()
+  let miss = try? prs.update_shape_by_id_mut(0, 999, fn(s) { s })
+  assert_true(miss is Err(_))
+  let oob = try? prs.map_slide_shapes_mut(99, fn(s) { s })
+  assert_true(oob is Err(_))
+}

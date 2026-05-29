@@ -103,3 +103,17 @@ pub let rt_extended_properties : String = "http://schemas.openxmlformats.org/off
 /// `<a:hlinkClick>` rel ids). The target is the URL itself; the
 /// relationship's `TargetMode` is `External`.
 pub let rt_hyperlink : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+
+///|
+/// `<a:videoFile r:link>` target — the video media part. Roadmap A6.
+pub let rt_video : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/video"
+
+///|
+/// `<a:audioFile r:link>` target — the audio media part. Roadmap A6.
+pub let rt_audio : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio"
+
+///|
+/// `<p14:media r:embed>` target — the embedded media part (Office 2007+
+/// extension; the same media part is also referenced by `rt_video` /
+/// `rt_audio`). Roadmap A6.
+pub let rt_media : String = "http://schemas.microsoft.com/office/2007/relationships/media"

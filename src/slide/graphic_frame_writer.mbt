@@ -25,6 +25,7 @@ fn write_graphic_frame(
     gf.id,
     gf.name,
     None,
+    None,
     gf.extension,
   )
   // <p:xfrm> — graphicFrame's transform wrapper is presentation-ns,

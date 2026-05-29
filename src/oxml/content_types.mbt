@@ -55,6 +55,13 @@ pub let ct_comments : String = "application/vnd.openxmlformats-officedocument.pr
 pub let ct_chart : String = "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
 
 ///|
+/// `image/svg+xml` — content type for embedded SVG image parts
+/// (`/ppt/media/imageN.svg`). Registered as a per-extension `Default`
+/// entry like the raster image formats. Used by SVG picture insertion
+/// (`Presentation::add_svg_picture_mut`).
+pub let ct_svg : String = "image/svg+xml"
+
+///|
 /// `ppt/charts/chartExN.xml` — Microsoft-extended chart part for
 /// the 2016-era families (waterfall / treemap / sunburst / histogram
 /// / boxwhisker / funnel / paretoLine / regionMap / clusteredColumn).

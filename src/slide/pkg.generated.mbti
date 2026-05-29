@@ -111,6 +111,19 @@ pub fn AutoShape::with_no_stroke(Self) -> Self
 pub fn AutoShape::with_stroke(Self, @oxml.Stroke) -> Self
 pub fn AutoShape::with_text_body(Self, TextBody) -> Self
 
+pub(all) enum Background {
+  Properties(BackgroundProperties)
+  StyleReference(Int, @oxml.Color)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct BackgroundProperties {
+  fill : @oxml.Fill?
+  shade_to_title : Bool
+  effects : @oxml.EffectList?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn BackgroundProperties::of_fill(@oxml.Fill) -> Self
+
 pub(all) struct BodyProperties {
   rotation : @units.Angle?
   vertical_text : VerticalText?
@@ -169,6 +182,11 @@ pub(all) struct CustomGeometry {
   rect : GeomRect?
   paths : Array[Path]
   extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DateMode {
+  Auto
+  Fixed(String)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Field {
@@ -231,6 +249,17 @@ pub(all) struct ListStyle {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ListStyle::empty() -> Self
+
+pub(all) struct MediaInfo {
+  kind : MediaKind
+  link_id : String
+  embed_id : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MediaKind {
+  Video
+  Audio
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Paragraph {
   properties : ParagraphProperties
@@ -305,15 +334,41 @@ pub(all) struct Picture {
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
+  media : MediaInfo?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Picture::of_image(Int, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn Picture::of_media(Int, String, MediaKind, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
+pub fn Picture::of_svg_image(Int, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn Picture::with_crop(Self, left? : @units.Percentage, top? : @units.Percentage, right? : @units.Percentage, bottom? : @units.Percentage) -> Self
 
 pub(all) struct Placeholder {
   ph_type : String
   idx : Int
 } derive(Eq, @debug.Debug)
+pub fn Placeholder::kind(Self) -> PlaceholderType
+
+pub(all) enum PlaceholderType {
+  Title
+  Body
+  CtrTitle
+  SubTitle
+  Dt
+  SldNum
+  Ftr
+  Hdr
+  Obj
+  Chart
+  Tbl
+  ClipArt
+  Dgm
+  Media
+  SldImg
+  Pic
+  Other(String)
+} derive(Eq, @debug.Debug)
+pub fn PlaceholderType::from_xml(String) -> Self
+pub fn PlaceholderType::to_xml(Self) -> String
 
 pub(all) struct Point {
   x : @units.Emu
@@ -553,6 +608,8 @@ pub(all) enum Shape {
   GraphicFrame(GraphicFrame)
   Unknown(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
+pub fn Shape::id(Self) -> Int?
+pub fn Shape::name(Self) -> String?
 
 pub(all) struct ShapeAdjustValue {
   name : String
@@ -566,15 +623,32 @@ pub(all) struct Size {
 
 pub(all) struct Slide {
   name : String
+  background : Background?
   shapes : Array[Shape]
   clr_map_override : @slide_master.ClrMapOverride
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Slide::body(Self) -> Shape?
+pub fn Slide::map_shapes(Self, (Shape) -> Shape) -> Self
 pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
 pub fn Slide::parse_with_root(FixedArray[Byte], String) -> Self raise SlideError
+pub fn Slide::placeholder(Self, PlaceholderType) -> Shape?
+pub fn Slide::placeholders(Self) -> Array[(PlaceholderType, Shape)]
 pub fn Slide::serialize(Self) -> FixedArray[Byte] raise SlideError
 pub fn Slide::serialize_with_root(Self, String) -> FixedArray[Byte] raise SlideError
+pub fn Slide::title(Self) -> Shape?
+pub fn Slide::with_background(Self, @oxml.Fill) -> Self
+pub fn Slide::with_background_ref(Self, Int, @oxml.Color) -> Self
+pub fn Slide::with_date(Self, DateMode) -> Self
+pub fn Slide::with_footer(Self, String) -> Self
 pub fn Slide::with_shape(Self, Shape) -> Self
+pub fn Slide::with_shape_at(Self, Int, Shape) -> Self raise SlideError
+pub fn Slide::with_shape_by_id(Self, Int, (Shape) -> Shape) -> Self raise SlideError
+pub fn Slide::with_shape_mapped(Self, Int, (Shape) -> Shape) -> Self raise SlideError
+pub fn Slide::with_slide_number(Self, Bool) -> Self
+pub fn Slide::without_background(Self) -> Self
+pub fn Slide::without_shape(Self, Int) -> Self raise SlideError
+pub fn Slide::without_shape_by_id(Self, Int) -> Self raise SlideError
 
 pub(all) enum StrikeKind {
   StNoStrike

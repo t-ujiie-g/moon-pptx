@@ -5,7 +5,82 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] — 2026-05-30
+
+### Added (toward v0.3.0)
+
+- **Lossless diff-write** — editing a deck and calling `save()` now
+  re-emits every *untouched* part byte-for-byte (preserving the exact
+  formatting of a real-world Office file on the parts you didn't change);
+  only the parts you mutate are re-serialised. This is inherent in how
+  parts retain their source bytes — no new API. (roadmap D6)
+- **Programmatic slide masters (`define_master`)** —
+  `Presentation::define_master(MasterDefinition)` synthesises a slide
+  master plus a dependent layout (placeholders, optional footer / date /
+  slide-number placeholders, background) and registers them, returning
+  the new master's index. Build the definition with
+  `MasterDefinition::new(name)` and `with_placeholder` /
+  `with_background` / `with_footer` / `with_slide_number` / `with_date`.
+  (roadmap C1)
+- **Slide footer / date / number placeholders** —
+  `Slide::with_footer(text)`, `Slide::with_slide_number(visible)`, and
+  `Slide::with_date(Auto | Fixed(text))` add the slide-level
+  placeholders PowerPoint fills (slide-number and auto-date use live
+  fields). These render against a master that declares the matching
+  placeholders — e.g. one built with `define_master`. (roadmap A8)
+- **Audio / video embedding** — `Presentation::add_video_mut(slide_idx,
+  video_bytes, poster_bytes, …)` and `add_audio_mut(…)` embed a media
+  clip with a poster frame. Formats are detected from magic bytes
+  (`@oxml.detect_media_format`): MP4 / MOV / AVI / WMV for video, MP3 /
+  WAV / AIFF / M4A for audio. The clip is modelled as a typed
+  `Picture.media` (`MediaInfo`) and serialises the standard
+  `<a:videoFile>` / `<a:audioFile>` + `<p14:media>` references plus a
+  `ppaction://media` hyperlink. The caller supplies the poster image.
+  (roadmap A6)
+- **Combo charts + secondary axis** — `Chart::of_combo(primary,
+  secondary, secondary_axis?=false)` overlays two plots (e.g. columns +
+  a line) on a shared category axis, where each plot is a
+  `ChartPlot { Bar | Line | Area }(ChartData)`. Passing
+  `secondary_axis=true` gives the secondary plot its own value axis
+  (drawn on the right) plus a hidden secondary category axis — the
+  standard PowerPoint secondary-axis layout. (roadmap C3)
+- **Pinpoint shape editing** — edit an *existing* shape in place instead
+  of only appending. New `Shape::id()` / `Shape::name()` accessors, and
+  immutable `Slide` builders `map_shapes`, `with_shape_at`,
+  `with_shape_mapped`, `with_shape_by_id`, `without_shape`,
+  `without_shape_by_id`. At the presentation level,
+  `Presentation::map_slide_shapes_mut` and
+  `Presentation::update_shape_by_id_mut` locate a shape, transform it, and
+  write the slide back in one call. Editing a shape's `name` / `id` now
+  persists through serialisation (previously a captured `<p:cNvPr>`
+  shadowed the typed fields). (roadmap B4)
+- **SVG image support** — `Presentation::add_svg_picture_mut(slide_idx,
+  svg_bytes, fallback_bytes, x, y, cx, cy)` inserts an SVG picture with a
+  raster (PNG / JPEG / …) fallback for viewers that don't understand SVG.
+  The blip embeds the fallback and carries an `<asvg:svgBlip>` extension
+  (Office 2016+) pointing at the embedded SVG part. Lower-level builders:
+  `@slide.Picture::of_svg_image` and `@oxml.BlipFill::svg`. The caller
+  supplies the fallback image (no built-in SVG rasteriser). (roadmap C4)
+- **Typed slide background** — `<p:cSld><p:bg>` is now a typed
+  `Slide.background` field instead of round-tripping through
+  `extension`. New `Background` enum covers both `<p:bgPr>` (an
+  explicit fill, via `Properties(BackgroundProperties)`) and
+  `<p:bgRef>` (a theme style-matrix reference, via
+  `StyleReference(idx, color)`). Builders: `Slide::with_background(fill)`,
+  `Slide::with_background_ref(idx, color)`, and
+  `Slide::without_background()`. The background reuses `@oxml.Fill`, and
+  unmodelled fill forms (e.g. `<a:grpFill>`) round-trip losslessly.
+  (roadmap A7)
+- **Placeholder named accessors** — `Slide::title()` (matches `Title`
+  and `CtrTitle`), `Slide::body()`, `Slide::placeholder(kind)`, and
+  `Slide::placeholders()` for inspecting placeholder shapes on a parsed
+  slide. New typed `PlaceholderType` enum (the 16 `ST_PlaceholderType`
+  values plus `Other(String)` for forward compatibility) with
+  `from_xml` / `to_xml`, and `Placeholder::kind()` deriving it from the
+  raw `ph_type`. The raw string field is preserved so an absent `type`
+  attribute round-trips losslessly. (roadmap B1)
+
+## [0.2.0] — 2026-05-27
 
 ### Added (toward v0.2.0)
 

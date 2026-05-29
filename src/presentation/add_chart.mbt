@@ -173,50 +173,12 @@ fn Presentation::next_chart_part_name(
   self : Presentation,
   prefix : String,
 ) -> String {
-  let mut next = 1
-  for p in self.pkg.parts() {
-    let n = extract_chart_index(p.name)
-    if n >= next {
-      next = n + 1
-    }
-  }
+  // `chartN` and `chartExN` share one sequence, so take the max across both
+  // prefixes (the `chart` scan ignores `chartEx…` parts since their tail
+  // doesn't parse as an integer, and vice-versa).
+  let chart_max = self.max_part_index("/ppt/charts/chart")
+  let chart_ex_max = self.max_part_index("/ppt/charts/chartEx")
+  let next = (if chart_max > chart_ex_max { chart_max } else { chart_ex_max }) +
+    1
   "/ppt/charts/" + prefix + next.to_string() + ".xml"
-}
-
-///|
-/// Parse the integer N out of `/ppt/charts/chartN.xml` or
-/// `/ppt/charts/chartExN.xml`. Returns 0 when `name` doesn't match.
-fn extract_chart_index(name : String) -> Int {
-  let dir = "/ppt/charts/"
-  let suffix = ".xml"
-  let total = name.length()
-  let dir_len = dir.length()
-  let suffix_len = suffix.length()
-  if total <= dir_len + suffix_len {
-    return 0
-  }
-  let dir_part = name.view(start_offset=0, end_offset=dir_len)
-  if dir_part.to_owned() != dir {
-    return 0
-  }
-  let suffix_part = name.view(start_offset=total - suffix_len, end_offset=total)
-  if suffix_part.to_owned() != suffix {
-    return 0
-  }
-  let middle = name.view(start_offset=dir_len, end_offset=total - suffix_len)
-  // Strip the "chart" / "chartEx" prefix.
-  let m = middle.to_owned()
-  let stripped = if m.length() > 7 &&
-    m.view(start_offset=0, end_offset=7).to_owned() == "chartEx" {
-    m.view(start_offset=7, end_offset=m.length()).to_owned()
-  } else if m.length() > 5 &&
-    m.view(start_offset=0, end_offset=5).to_owned() == "chart" {
-    m.view(start_offset=5, end_offset=m.length()).to_owned()
-  } else {
-    return 0
-  }
-  match @oxml.parse_signed_int(stripped) {
-    Some(n) => n
-    None => 0
-  }
 }

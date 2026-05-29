@@ -100,6 +100,7 @@ fn write_auto_shape(
     s.id,
     s.name,
     s.placeholder,
+    None,
     s.extension,
   )
   write_sp_pr(
@@ -131,10 +132,92 @@ fn write_auto_shape(
 /// `cNvPicPr` / `cNvCxnSpPr` / `cNvGrpSpPr`).
 ///
 /// Both `<p:cNvPr>` and `<p:cNv*Pr>` are captured wholesale into
-/// `extension` during parse, so we look for them by local-name and
-/// emit them verbatim — synthesising only when the input didn't
-/// include them (which only happens for hand-built values, not for
-/// anything that round-trips through `::parse`).
+/// `extension` during parse. `<p:cNvPr>` goes through `write_cnvpr`
+/// (which keeps the typed `id`/`name` authoritative so B4 edits take
+/// effect); the `<p:cNv*Pr>` wrapper is emitted verbatim — both are
+/// synthesised only when the input didn't include them (hand-built
+/// values, not anything that round-trips through `::parse`).
+
+///|
+/// Emit `<p:cNvPr>`. The element is captured wholesale into `extension`
+/// during parse (it can carry `descr` / `title` / `hidden` attributes and
+/// `<a:hlinkClick>` / `<a:extLst>` children), so we re-emit the captured one
+/// verbatim — *except* we override its `id` and `name` attribute values with
+/// the typed fields. For a freshly-parsed shape those values are identical
+/// (the parser read them from this very element), so the output is
+/// byte-for-byte unchanged; once a builder edits `name`/`id` (B4), the new
+/// value flows through while everything else round-trips losslessly. When no
+/// `<p:cNvPr>` was captured (hand-built shapes), synthesise a minimal one.
+fn write_cnvpr(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  id : Int,
+  name : String,
+  media : MediaInfo?,
+  extension : Array[@xml.XmlElement],
+) -> Unit raise @xml.XmlError {
+  let mut captured : @xml.XmlElement? = None
+  for ext in extension {
+    if ext.name.uri == @oxml.presentation_ns && ext.name.local_name == "cNvPr" {
+      captured = Some(ext)
+    }
+  }
+  match captured {
+    Some(cnvpr) => {
+      let attrs : Array[(@xml.QName, String)] = []
+      let mut saw_id = false
+      let mut saw_name = false
+      for kv in cnvpr.attributes {
+        if kv.0.local_name == "id" {
+          attrs.push((kv.0, id.to_string()))
+          saw_id = true
+        } else if kv.0.local_name == "name" {
+          attrs.push((kv.0, name))
+          saw_name = true
+        } else {
+          attrs.push(kv)
+        }
+      }
+      // Defensive: the schema requires id + name. They are present (and thus
+      // replaced in place above, preserving order) for any real input; only
+      // if a malformed source omitted one do we prepend it.
+      let final_attrs : Array[(@xml.QName, String)] = []
+      if !saw_id {
+        final_attrs.push((@xml.QName::unqualified("id"), id.to_string()))
+      }
+      if !saw_name {
+        final_attrs.push((@xml.QName::unqualified("name"), name))
+      }
+      for a in attrs {
+        final_attrs.push(a)
+      }
+      @oxml.write_xml_element(
+        w,
+        ctx,
+        @xml.XmlElement::new(cnvpr.name, final_attrs, cnvpr.children),
+      )
+    }
+    None => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
+      w.attribute(@xml.QName::unqualified("id"), id.to_string())
+      w.attribute(@xml.QName::unqualified("name"), name)
+      // A media picture needs a `ppaction://media` hyperlink so PowerPoint
+      // treats the shape as a playable clip (roadmap A6).
+      match media {
+        Some(_) => {
+          w.start_element(@xml.QName::new(@oxml.drawing_ns, "hlinkClick"))
+          w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), "")
+          w.attribute(@xml.QName::unqualified("action"), "ppaction://media")
+          w.end_element()
+        }
+        None => ()
+      }
+      w.end_element()
+    }
+  }
+}
+
+///|
 fn write_nv_wrapper(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
@@ -143,24 +226,13 @@ fn write_nv_wrapper(
   id : Int,
   name : String,
   placeholder : Placeholder?,
+  media : MediaInfo?,
   extension : Array[@xml.XmlElement],
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, wrapper_local))
-  // <p:cNvPr>: captured if present (includes id/name + any hlink*
-  // children), synthesised otherwise.
-  let mut emitted_cnvpr = false
-  for ext in extension {
-    if ext.name.uri == @oxml.presentation_ns && ext.name.local_name == "cNvPr" {
-      @oxml.write_xml_element(w, ctx, ext)
-      emitted_cnvpr = true
-    }
-  }
-  if !emitted_cnvpr {
-    w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
-    w.attribute(@xml.QName::unqualified("id"), id.to_string())
-    w.attribute(@xml.QName::unqualified("name"), name)
-    w.end_element()
-  }
+  // <p:cNvPr>: emit it, with the typed id/name authoritative so edits to
+  // those fields (roadmap B4) take effect.
+  write_cnvpr(w, ctx, id, name, media, extension)
   // <p:cNv*Pr>: captured if present, empty otherwise.
   let mut emitted_cnvkind = false
   for ext in extension {
@@ -173,10 +245,20 @@ fn write_nv_wrapper(
     w.start_element(@xml.QName::new(@oxml.presentation_ns, cnv_kind))
     w.end_element()
   }
-  // <p:nvPr>: placeholder (modeled) + nvPr-child captures.
+  // <p:nvPr>: placeholder (modeled) + media (modeled) + nvPr-child captures.
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "nvPr"))
   match placeholder {
     Some(ph) => write_placeholder(w, ph)
+    None => ()
+  }
+  // Typed media reference (roadmap A6): <a:videoFile>/<a:audioFile> +
+  // <p:extLst><p14:media>. Parsed media pics carry this verbatim in
+  // `extension` instead (media is None), so the two paths never overlap.
+  match media {
+    Some(m) =>
+      for el in media_nv_elements(m) {
+        @oxml.write_xml_element(w, ctx, el)
+      }
     None => ()
   }
   for ext in extension {
@@ -326,6 +408,7 @@ fn write_picture(
     p.id,
     p.name,
     None,
+    p.media,
     p.extension,
   )
   // <p:blipFill> — picture's blipFill lives in the presentation
@@ -559,6 +642,7 @@ fn write_group_shape(
     "cNvGrpSpPr",
     g.id,
     g.name,
+    None,
     None,
     g.extension,
   )

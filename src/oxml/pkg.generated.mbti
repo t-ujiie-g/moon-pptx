@@ -46,6 +46,8 @@ pub let ct_slide_layout : String
 
 pub let ct_slide_master : String
 
+pub let ct_svg : String
+
 pub let ct_table_styles : String
 
 pub let ct_theme : String
@@ -55,6 +57,8 @@ pub let ct_view_props : String
 pub fn detect_image_dimensions(FixedArray[Byte]) -> ImageDimensions?
 
 pub fn detect_image_format(FixedArray[Byte]) -> ImageFormat?
+
+pub fn detect_media_format(FixedArray[Byte]) -> MediaFormat?
 
 pub let drawing_ns : String
 
@@ -69,6 +73,8 @@ pub let graphic_data_chart_uri : String
 pub let graphic_data_diagram_uri : String
 
 pub let graphic_data_table_uri : String
+
+pub let media_ext_uri : String
 
 pub fn next_event(@xml.XmlReader) -> @xml.XmlEvent raise XmlReadError
 
@@ -94,6 +100,8 @@ pub fn parse_stroke(@xml.XmlReader, Array[(@xml.QName, String)]) -> Stroke raise
 
 pub fn pct_attr_opt(Array[(@xml.QName, String)], String) -> @units.Percentage?
 
+pub let powerpoint_2010_ns : String
+
 pub let presentation_ns : String
 
 pub fn require_angle(Array[(@xml.QName, String)], String, String) -> @units.Angle raise XmlReadError
@@ -107,6 +115,10 @@ pub fn require_pct(Array[(@xml.QName, String)], String, String) -> @units.Percen
 pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
 pub fn string_to_bytes(String) -> FixedArray[Byte]
+
+pub let svg_blip_ext_uri : String
+
+pub let svg_ns : String
 
 pub fn write_color(@xml.XmlWriter, WriteCtx, Color) -> Unit raise @xml.XmlError
 
@@ -188,6 +200,7 @@ pub(all) struct BlipFill {
   fill_mode : BlipFillMode
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BlipFill::svg(String, String) -> Self
 
 pub(all) enum BlipFillMode {
   Stretch(FillRect?)
@@ -334,6 +347,21 @@ pub(all) enum LineJoin {
   JoinBevel
   JoinMiter(@units.Percentage?)
 } derive(Eq, @debug.Debug)
+
+pub(all) enum MediaFormat {
+  Mp4
+  Mov
+  Avi
+  Wmv
+  Mp3
+  Wav
+  Aiff
+  M4a
+} derive(Eq, @debug.Debug)
+pub fn MediaFormat::content_type(Self) -> String
+pub fn MediaFormat::extension(Self) -> String
+pub fn MediaFormat::is_video(Self) -> Bool
+pub impl Show for MediaFormat
 
 pub(all) struct OuterShadow {
   blur_rad : @units.Emu

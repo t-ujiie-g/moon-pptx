@@ -32,24 +32,50 @@ pub(all) suberror PptxError {
 pub impl Show for PptxError
 
 // Types and methods
+pub(all) struct MasterDefinition {
+  name : String
+  background : @slide.Background?
+  placeholders : Array[PlaceholderDef]
+  slide_number : Bool
+  footer_text : String?
+  date : Bool
+}
+pub fn MasterDefinition::new(String) -> Self
+pub fn MasterDefinition::with_background(Self, @slide.Background) -> Self
+pub fn MasterDefinition::with_date(Self, Bool) -> Self
+pub fn MasterDefinition::with_footer(Self, String) -> Self
+pub fn MasterDefinition::with_placeholder(Self, @slide.PlaceholderType, @slide.Transform, default_text? : String) -> Self
+pub fn MasterDefinition::with_slide_number(Self, Bool) -> Self
+
 pub(all) struct NotesSize {
   cx : @units.Emu
   cy : @units.Emu
 } derive(Eq, @debug.Debug)
 
+pub(all) struct PlaceholderDef {
+  kind : @slide.PlaceholderType
+  position : @slide.Transform
+  default_text : String?
+}
+
 pub(all) struct Presentation {
   pkg : @opc.Package
 }
+pub fn Presentation::add_audio_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_chart_ex_mut(Self, Int, @chart_ex.ChartEx, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
+pub fn Presentation::add_svg_picture_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_video_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
 pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
 pub fn Presentation::clone(Self) -> Self
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
+pub fn Presentation::define_master(Self, MasterDefinition) -> Int raise PptxError
+pub fn Presentation::map_slide_shapes_mut(Self, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::new() -> Self raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
 pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
@@ -65,6 +91,7 @@ pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] rai
 pub fn Presentation::slide_w(Self) -> @units.Emu
 pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
 pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
+pub fn Presentation::update_shape_by_id_mut(Self, Int, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
 pub fn Presentation::with_added_slide(Self, layout_index~ : Int) -> (Self, String) raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError

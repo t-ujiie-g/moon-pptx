@@ -214,6 +214,143 @@ pub fn BubbleData::with_series(
   { series: s }
 }
 
+// --- Combo charts (roadmap C3) ---
+
+///|
+/// One plot in a combo chart (`Chart::of_combo`). Each variant wraps the
+/// category-based `ChartData` it plots; the combo builder threads them onto
+/// a shared category axis (and, optionally, a secondary value axis).
+pub(all) enum ChartPlot {
+  Bar(ChartData)
+  Line(ChartData)
+  Area(ChartData)
+} derive(Eq, Debug)
+
+///|
+/// Construct a combo chart overlaying two plots (e.g. columns + a line) on a
+/// shared category axis. When `secondary_axis` is `true`, the `secondary`
+/// plot is bound to its own value axis (drawn on the right, crossing at the
+/// category-axis maximum) plus a hidden secondary category axis — the
+/// standard Office structure for a "secondary axis" combo. When `false`
+/// (the default), both plots share the single `catAx` / `valAx` pair.
+///
+/// Series indices are made unique across the whole chart by offsetting the
+/// `secondary` plot's `idx` / `order` past the `primary` plot's series — a
+/// duplicate index otherwise trips PowerPoint's repair prompt.
+pub fn Chart::of_combo(
+  primary : ChartPlot,
+  secondary : ChartPlot,
+  secondary_axis? : Bool = false,
+) -> Chart {
+  let primary_series = chart_plot_series_count(primary)
+  let secondary_ax_ids = if secondary_axis { [3, 4] } else { [1, 2] }
+  let plots = [
+    build_combo_plot(primary, [1, 2], 0),
+    build_combo_plot(secondary, secondary_ax_ids, primary_series),
+  ]
+  let axes : Array[Axis] = if secondary_axis {
+    [
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
+      // Secondary value axis: drawn on the right, crossing at the max of
+      // its (hidden) category axis.
+      ValAx({
+        ..simple_axis_core("valAx", 4, 3),
+        ax_pos: Some(Right),
+        crosses: Some(Max),
+      }),
+      // Secondary category axis: present so the secondary value axis has a
+      // crossing partner, but deleted so it doesn't render.
+      CatAx({ ..simple_axis_core("catAx", 3, 4), delete: Some(true) }),
+    ]
+  } else {
+    [
+      CatAx(simple_axis_core("catAx", 1, 2)),
+      ValAx(simple_axis_core("valAx", 2, 1)),
+    ]
+  }
+  let plot_area : PlotArea = {
+    layout: None,
+    plots,
+    axes,
+    data_table: None,
+    sp_pr: None,
+    extension: [],
+  }
+  wrap_chart(plot_area)
+}
+
+///|
+/// Number of series a `ChartPlot` contributes — used to offset the second
+/// plot's series indices so they stay unique across the chart.
+fn chart_plot_series_count(plot : ChartPlot) -> Int {
+  match plot {
+    Bar(d) | Line(d) | Area(d) => d.series.length()
+  }
+}
+
+///|
+/// Build a `Plot` for one combo member, binding it to `ax_ids` and numbering
+/// its series from `series_start`.
+fn build_combo_plot(
+  plot : ChartPlot,
+  ax_ids : Array[Int],
+  series_start : Int,
+) -> Plot {
+  match plot {
+    Bar(d) =>
+      BarChart({
+        bar_dir: Col,
+        grouping: Some(Clustered),
+        vary_colors: None,
+        series: synthesize_series_from(d, series_start),
+        d_lbls: None,
+        gap_width: None,
+        overlap: None,
+        ax_ids,
+        extension: [],
+      })
+    Line(d) =>
+      LineChart({
+        grouping: Standard,
+        vary_colors: None,
+        series: synthesize_series_from(d, series_start),
+        d_lbls: None,
+        drop_lines: None,
+        hi_low_lines: None,
+        up_down_bars: None,
+        marker: None,
+        smooth: None,
+        ax_ids,
+        extension: [],
+      })
+    Area(d) =>
+      AreaChart({
+        grouping: Some(Standard),
+        vary_colors: None,
+        series: synthesize_series_from(d, series_start),
+        d_lbls: None,
+        drop_lines: None,
+        ax_ids,
+        extension: [],
+      })
+  }
+}
+
+///|
+/// Like `synthesize_series` but numbers `idx` / `order` from `start` so a
+/// second plot's series don't collide with the first's.
+fn synthesize_series_from(
+  data : ChartData,
+  start : Int,
+) -> Array[ChartSeriesCore] {
+  let out : Array[ChartSeriesCore] = []
+  for i, s in data.series {
+    out.push(synthesize_one_series(start + i, s, data.categories))
+  }
+  out
+}
+
 // --- Chart-level constructor helpers ---
 
 ///|

@@ -35,6 +35,14 @@ pub(all) struct Picture {
   /// `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
+  /// Audio / video reference (roadmap A6). `Some` marks this `<p:pic>` as a
+  /// media object: `blip_fill` is then the poster frame, and the writer
+  /// emits `<a:videoFile>` / `<a:audioFile>` + `<p14:media>` inside
+  /// `<p:nvPr>` plus a `ppaction://media` hyperlink on `<p:cNvPr>`. `None`
+  /// for an ordinary picture. The parser leaves this `None` and round-trips
+  /// existing media references through `extension` (ADR-004); builders set
+  /// it via `Picture::of_media`.
+  media : MediaInfo?
   /// Lossless preservation (ADR-004): unmodelled `<p:pic>` siblings
   /// (`<p:style>`, `<p:extLst>`, …) captured verbatim.
   extension : Array[@xml.XmlElement]

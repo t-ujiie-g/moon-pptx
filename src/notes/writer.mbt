@@ -14,6 +14,8 @@ pub fn NotesSlide::serialize(
   // into one and delegate.
   let s : @slide.Slide = {
     name: self.name,
+    // Notes slides never carry their own `<p:bg>`.
+    background: None,
     shapes: self.shapes,
     clr_map_override: self.clr_map_override,
     extension: self.extension,

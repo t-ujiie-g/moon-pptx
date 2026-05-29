@@ -38,7 +38,41 @@
 ///|
 /// Build the sample deck and return the serialised `.pptx` bytes.
 pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
-  build_sample_deck_up_to(12)
+  let prs = @presentation.Presentation::new()
+  prs.set_slide_size_mut(Widescreen)
+  // The layout-0 feature slides, in order. They are *all pre-added* before
+  // any are filled, so the table-of-contents slide's forward "jump to
+  // section" hyperlinks resolve against slides that already exist.
+  let builders : Array[(@presentation.Presentation, Int) -> Unit raise @presentation.PptxError] = [
+    sample_title_slide,
+    sample_toc_slide,
+    sample_text_slide,
+    sample_shapes_slide,
+    sample_custom_geom_slide,
+    sample_picture_slide,
+    sample_table_slide,
+    sample_charts_1_slide,
+    sample_charts_2_slide,
+    sample_charts_3_slide,
+    sample_charts_4_slide,
+    sample_background_slide,
+    sample_combo_chart_slide,
+    sample_svg_slide,
+    sample_edit_slide,
+    sample_media_slide,
+  ]
+  for _ in 0..<builders.length() {
+    let _ = prs.add_slide_mut(0)
+  }
+  for i, f in builders {
+    f(prs, i)
+  }
+  // The master/template demo adds its own slide on the layout it defines.
+  sample_master_slide(prs)
+  // Closing slide (links back to the title).
+  let _ = prs.add_slide_mut(0)
+  sample_closing_slide(prs, prs.slides().length() - 1)
+  prs.save()
 }
 
 ///|
@@ -116,11 +150,17 @@ pub fn build_sample_chart_isolated(
 ///   7 — charts: area / radar / doughnut
 ///   8 — charts: scatter + bubble
 ///   9 — charts: 3-D bar + stock + of-pie
-///   10 — closing (with back-link hyperlink)
+///   10 — slide background
+///   11 — combo chart (secondary axis)
+///   12 — SVG image
+///   13 — editing existing shapes
+///   14 — embedded video + audio
+///   15 — master / template (footer / date / slide number)
+///   16 — closing (with back-link hyperlink)
 ///
 /// The TOC slide is intentionally excluded — its internal hyperlinks
 /// would point at non-existent slides in a two-slide deck. The full
-/// 12-slide deck (`build_sample_deck`) exercises the TOC.
+/// deck (`build_sample_deck`) exercises the TOC.
 pub fn build_sample_isolated(
   feature_idx : Int,
 ) -> FixedArray[Byte] raise @presentation.PptxError {
@@ -129,6 +169,11 @@ pub fn build_sample_isolated(
   let _ = prs.add_slide_mut(0)
   sample_title_slide(prs, 0)
   if feature_idx == 0 {
+    return prs.save()
+  }
+  // The master/template feature adds its own slide on a defined layout.
+  if feature_idx == 15 {
+    sample_master_slide(prs)
     return prs.save()
   }
   let _ = prs.add_slide_mut(0)
@@ -142,59 +187,12 @@ pub fn build_sample_isolated(
     7 => sample_charts_2_slide(prs, 1)
     8 => sample_charts_3_slide(prs, 1)
     9 => sample_charts_4_slide(prs, 1)
+    10 => sample_background_slide(prs, 1)
+    11 => sample_combo_chart_slide(prs, 1)
+    12 => sample_svg_slide(prs, 1)
+    13 => sample_edit_slide(prs, 1)
+    14 => sample_media_slide(prs, 1)
     _ => sample_closing_slide(prs, 1)
-  }
-  prs.save()
-}
-
-///|
-/// Build a deck containing the first `n` slides of the sample (1-based:
-/// `n=1` → title only; `n=12` → full deck). Used by the CLI's
-/// "split per slide" mode to bisect PowerPoint Online repair triggers.
-pub fn build_sample_deck_up_to(
-  n : Int,
-) -> FixedArray[Byte] raise @presentation.PptxError {
-  let prs = @presentation.Presentation::new()
-  prs.set_slide_size_mut(Widescreen)
-  let total = if n < 1 { 1 } else if n > 12 { 12 } else { n }
-  for _ in 0..<total {
-    let _ = prs.add_slide_mut(0)
-  }
-  if total >= 1 {
-    sample_title_slide(prs, 0)
-  }
-  if total >= 2 {
-    sample_toc_slide(prs, 1)
-  }
-  if total >= 3 {
-    sample_text_slide(prs, 2)
-  }
-  if total >= 4 {
-    sample_shapes_slide(prs, 3)
-  }
-  if total >= 5 {
-    sample_custom_geom_slide(prs, 4)
-  }
-  if total >= 6 {
-    sample_picture_slide(prs, 5)
-  }
-  if total >= 7 {
-    sample_table_slide(prs, 6)
-  }
-  if total >= 8 {
-    sample_charts_1_slide(prs, 7)
-  }
-  if total >= 9 {
-    sample_charts_2_slide(prs, 8)
-  }
-  if total >= 10 {
-    sample_charts_3_slide(prs, 9)
-  }
-  if total >= 11 {
-    sample_charts_4_slide(prs, 10)
-  }
-  if total >= 12 {
-    sample_closing_slide(prs, total - 1)
   }
   prs.save()
 }
