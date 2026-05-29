@@ -51,6 +51,7 @@ pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
 pub fn Presentation::clone(Self) -> Self
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
+pub fn Presentation::map_slide_shapes_mut(Self, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::new() -> Self raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
 pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
@@ -66,6 +67,7 @@ pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] rai
 pub fn Presentation::slide_w(Self) -> @units.Emu
 pub fn Presentation::slides(Self) -> Array[@slide.Slide] raise PptxError
 pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
+pub fn Presentation::update_shape_by_id_mut(Self, Int, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
 pub fn Presentation::with_added_slide(Self, layout_index~ : Int) -> (Self, String) raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError

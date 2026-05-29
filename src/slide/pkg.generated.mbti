@@ -590,6 +590,8 @@ pub(all) enum Shape {
   GraphicFrame(GraphicFrame)
   Unknown(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
+pub fn Shape::id(Self) -> Int?
+pub fn Shape::name(Self) -> String?
 
 pub(all) struct ShapeAdjustValue {
   name : String
@@ -609,6 +611,7 @@ pub(all) struct Slide {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Slide::body(Self) -> Shape?
+pub fn Slide::map_shapes(Self, (Shape) -> Shape) -> Self
 pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
 pub fn Slide::parse_with_root(FixedArray[Byte], String) -> Self raise SlideError
 pub fn Slide::placeholder(Self, PlaceholderType) -> Shape?
@@ -619,7 +622,12 @@ pub fn Slide::title(Self) -> Shape?
 pub fn Slide::with_background(Self, @oxml.Fill) -> Self
 pub fn Slide::with_background_ref(Self, Int, @oxml.Color) -> Self
 pub fn Slide::with_shape(Self, Shape) -> Self
+pub fn Slide::with_shape_at(Self, Int, Shape) -> Self raise SlideError
+pub fn Slide::with_shape_by_id(Self, Int, (Shape) -> Shape) -> Self raise SlideError
+pub fn Slide::with_shape_mapped(Self, Int, (Shape) -> Shape) -> Self raise SlideError
 pub fn Slide::without_background(Self) -> Self
+pub fn Slide::without_shape(Self, Int) -> Self raise SlideError
+pub fn Slide::without_shape_by_id(Self, Int) -> Self raise SlideError
 
 pub(all) enum StrikeKind {
   StNoStrike

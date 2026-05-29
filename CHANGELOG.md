@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added (toward v0.3.0)
 
+- **Pinpoint shape editing** — edit an *existing* shape in place instead
+  of only appending. New `Shape::id()` / `Shape::name()` accessors, and
+  immutable `Slide` builders `map_shapes`, `with_shape_at`,
+  `with_shape_mapped`, `with_shape_by_id`, `without_shape`,
+  `without_shape_by_id`. At the presentation level,
+  `Presentation::map_slide_shapes_mut` and
+  `Presentation::update_shape_by_id_mut` locate a shape, transform it, and
+  write the slide back in one call. Editing a shape's `name` / `id` now
+  persists through serialisation (previously a captured `<p:cNvPr>`
+  shadowed the typed fields). (roadmap B4)
 - **SVG image support** — `Presentation::add_svg_picture_mut(slide_idx,
   svg_bytes, fallback_bytes, x, y, cx, cy)` inserts an SVG picture with a
   raster (PNG / JPEG / …) fallback for viewers that don't understand SVG.
