@@ -17,7 +17,7 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.1.0` (published 2026-05-26) |
+| Current version | `0.3.0` (published 2026-05-30); `0.3.1` in progress |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -141,7 +141,9 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 |---|---|---|---|---|
 | Slide build from scratch | ✅ | ✅ | ✅ | — |
 | Slide-size selector (4:3 / 16:9 / 16:10 / …) | ✅ | ✅ | △ extension-only | ⏳ v0.2 (A5) |
-| Slide reordering | △ XML | △ | ❌ | future |
+| Slide deletion (remove a slide + its private parts) | ✅ `del slides[i]` | ❌ generator only | ✅ E1 (`remove_slide_mut` / `without_slide`) | — |
+| Slide reordering | △ XML | △ | ✅ E2 (`move_slide_mut` / `with_slide_moved`) | — |
+| Slide duplication / clone | △ `copy.deepcopy` hacks | ✅ `addSlide` from template | ✅ E3 (`duplicate_slide_mut` / `with_duplicated_slide`) | — |
 | Slide background per slide | ✅ | ✅ color + transparency | ✅ typed `Slide.background` (`with_background` / `with_background_ref`) | — |
 | `defineSlideMaster` style high-level API | △ low-level | ✅ | ✅ `Presentation::define_master(MasterDefinition)` | — |
 | Layout selection by name | ✅ | ✅ | △ by index | ⏳ v0.4 (M1) |
@@ -366,6 +368,40 @@ which 0.x SemVer permits).
 
 ---
 
+### 4.2.1 v0.3.1 — "Deck editing: arrange" · target 2026-06-30
+
+Status (2026-06-01): **all three items landed on `main`** (E1 + E2 + E3).
+939 tests × 4 backends. **Ready to tag v0.3.1** — every change is
+additive `.mbti` (no breaking change vs 0.3.0).
+
+DoD: a consumer can fully *arrange* a deck programmatically — delete,
+reorder, and duplicate slides — and save a clean package that opens in
+PowerPoint without a repair prompt. This closes the deck-level editing
+story that pairs with B4's shape-level editing. Surfaced by an external
+Skill built on this library: the build API was append-only + whole-slide
+replace, with no way to *delete*, *reorder*, or *clone* a slide (only
+`Slide::without_shape*` removed shapes within a slide). That blocked the
+"trim a template down to exactly the slides I generated" / `replaceSlides`
+flow and "duplicate this template slide, then fill it" generation.
+
+🟢 **E1 — Slide deletion** *(landed 2026-06-01)*
+  - `Presentation::remove_slide_mut(slide_index)` — mutating; the inverse of `add_slide_mut`. Unthreads the slide everywhere the OPC package tracks it: the `<p:sldId>` in `<p:sldIdLst>`, the `presentation.xml.rels` relationship, the `/ppt/slides/slideN.xml` part, its `slideN.xml.rels`, and its `[Content_Types]` `<Override>`.
+  - `Presentation::without_slide(slide_index) -> Self` — immutable counterpart (ADR-003), clones the package then removes.
+  - **Orphan garbage-collection**: slide-private parts reachable *only* through the removed slide (its notes slide, images, charts, embedded media) are removed once no surviving part's `.rels` references them (reference counting over the remaining package graph). Shared structural parts (slide **layout / master / theme / notes master**) are *never* removed — matches the external reviewer's "孤児だけ消す / 迷うなら消さない" guidance: an orphaned part only bloats the file, but deleting a still-referenced one corrupts it. Removable types are whitelisted (`ct_notes_slide` / `ct_chart` / `ct_chart_ex` / `image/*` / `video/*` / `audio/*`).
+  - New `@opc.ContentTypes::without_override(part_name)` companion to `with_override` (no-op for `Default`-typed parts like images).
+  - **DoD met**: middle-slide deletion + clear-all-slides ("replaceSlides") both round-trip via save→reopen; layout/master/theme survive; a slide-private image is collected while an image referenced by a surviving slide is kept. 8 new tests; additive `.mbti` (`remove_slide_mut` / `without_slide` / `without_override`).
+
+🟢 **E2 — Slide reordering** *(landed 2026-06-01)*
+  - `Presentation::move_slide_mut(from : Int, to : Int)` + immutable `with_slide_moved(from, to) -> Self`. `to` is the destination index in the resulting order; `from == to` is a no-op.
+  - Pure `<p:sldIdLst>` reordering — PowerPoint keys on-screen order off `sldIdLst`, not part names, so this is a cheap array-permute on `sld_ids` + re-serialise of `presentation.xml`. No part renaming, no rels / content-type churn (verified: parts keep their names across save→reopen). 7 new tests.
+
+🟢 **E3 — Slide duplication / clone** *(landed 2026-06-01)*
+  - `Presentation::duplicate_slide_mut(slide_index) -> String` (returns the new part name; appended to the end) + immutable `with_duplicated_slide(slide_index) -> (Self, String)`.
+  - Copies the slide body verbatim and wires the clone like `add_slide_mut` (new part + `.rels` + `<p:sldId>` + presentation rel + content-type override).
+  - **Q12 resolved**: the clone **re-references** the source's parts (layout / images / charts / media / notes) rather than deep-copying them. The slide `.rels` is slide-local and both slides live in `/ppt/slides/`, so the copy's `.rels` carries identical relative targets, the copied slide XML keeps its `rId` references valid unchanged, and shared parts stay alive via E1's reference-counted deletion. Leaner + round-trip-safe; trade-off is that editing a shared chart's data / notes affects both slides — a fully-independent deep-copy variant can land later if a consumer needs it. 6 new tests, incl. an E1+E3 integration (a clone keeps a shared image alive when the original slide is removed).
+
+---
+
 ### 4.3 v0.4.0 — "MoonBit differentiators" · target 2027-02-28
 
 DoD: two headline features land that no other PPTX library — in any
@@ -465,7 +501,8 @@ Not on the dated roadmap yet — tracked here so they don't get lost:
 
 - **Theme builder DSL** — `Theme::default().with_accent_palette([...])` for tweakable presets
 - **Bullet-list typed parents** — enforce indent-depth at type level
-- **Slide reordering** — `Presentation::move_slide(from, to)` (immutable + `_mut`)
+- **`replace_slides` high-level helper** — convenience wrapping E1 (clear) + `add_slide_mut` (rebuild) so the common "keep the master/layout/theme, swap in my generated slides" flow is one call; could live in the library or stay a Skill-side recipe built on E1
+- *(Slide reordering / duplication landed in v0.3.1 as **E2** / **E3** — see §4.2.1)*
 - **Master / layout cloning + edit** — `SlideLayout::clone().with_…`
 - **Equation editor** (Office Math, `<m:oMathPara>`) — read + write
 - **Form fields / ink** (`<p:contentPart>`) — read + write
@@ -580,6 +617,8 @@ Open:
 | Q9 | Animation DSL: support custom motion paths via custGeom AST reuse in v0.5, or defer to v0.6? | — | v0.5 scoping |
 Resolved:
 
+- **Q12 (E3 clone media-dedupe)** — resolved at E3 (2026-06-01): the clone *re-references* the source slide's parts (layout / images / charts / media / notes) rather than deep-copying them. Slide `.rels` is slide-local and both slides live in `/ppt/slides/`, so identical relative targets keep the copied slide XML's `rId` references valid, and shared parts stay alive via E1's reference-counted deletion. A fully-independent deep-copy variant is deferred until a consumer needs per-clone editing.
+
 - **Q10 (D6 untouched-part detection)** — resolved at D6 (2026-05-29): neither hashing nor dirty-tracking is needed. The OPC layer retains each part's *source bytes* and only `_mut` operations replace them, so `save()` re-emits untouched parts verbatim by construction. See D6 (§4.2).
 - **Q11 (B4 shape-edit identity handle)** — resolved at B4 (2026-05-29): id-based (`with_shape_by_id`) + `map_shapes` are primary; index helpers (`with_shape_at` / `with_shape_mapped` / `without_shape`) are thin conveniences. A missing id or out-of-range index raises `SlideError`; `map_shapes` is the non-raising best-effort path. Discovered+fixed the captured-`<p:cNvPr>` shadowing of typed `name`/`id` (see B4 writer-fix note).
 
@@ -646,6 +685,8 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-06-01** — **v0.3.1 refactor + doc sweep (CLAUDE.md §7).** Extracted the slide-attach tail shared by `add_slide_mut` and `duplicate_slide_mut` — append `<p:sldId>` + register the `presentation.xml.rels` rel + add the `[Content_Types]` Override — into a private `Presentation::attach_slide_to_presentation` helper (≈25 duplicated lines removed; no `.mbti` change, it's `pub`-less). Added a notesSlide-orphan GC regression test (the riskiest orphan, carrying a back-ref to its slide). Freshened the README `@presentation` capability line with slide delete / reorder / duplicate. 939 → 940 × 4 backends.
+- **2026-06-01** — **v0.3.1 landed: full deck arrangement (E1 + E2 + E3).** Closes the append-only gap surfaced by an external Skill consumer — the build API could add / replace / shape-edit slides but never delete, reorder, or clone one. **E1 deletion**: `remove_slide_mut(idx)` (mutating) + `without_slide(idx)` (immutable, ADR-003), the inverse of `add_slide_mut`, unthreading the slide from `<p:sldIdLst>`, `presentation.xml.rels`, the slide part, its `.rels`, and its `[Content_Types]` `<Override>`. Slide-private parts (notes / images / charts / media) reachable only through the removed slide are reference-count garbage-collected against the remaining package graph; shared layout / master / theme / notes-master parts are always kept (whitelisted removable content types; conservative "孤児だけ消す" policy). New `@opc.ContentTypes::without_override` companion to `with_override`. Enables the `replaceSlides` flow. **E2 reordering**: `move_slide_mut(from, to)` + `with_slide_moved` — pure `<p:sldIdLst>` permute (PowerPoint keys order off `sldIdLst`, not part names), no part renaming / rels churn. **E3 duplication**: `duplicate_slide_mut(idx) -> String` + `with_duplicated_slide` — copies the slide body verbatim and re-references the source's parts (Q12 resolved: lean re-reference over deep-copy, round-trip-safe via E1's refcounting); the building block for "duplicate this template slide, then fill it". Feature-matrix rows for deletion / reordering / duplication all flip to ✅; §5 open-ideas reordering/duplication entries promoted into the shipped E2/E3. 21 new tests, 918 → 939 × 4 backends; additive `.mbti` throughout.
 - **2026-05-30** — **Bug fix: `define_master` repair triggers + footer geometry.** Verifying the sample deck in PowerPoint surfaced three issues on the master/template slide, each confirmed by diffing PowerPoint's own repaired output. (1) **Shared theme**: the new master shared `theme1` with the original master — PowerPoint repairs that (the lesson `add_notes` already learned for the notes master). Fixed by giving each defined master its own theme part (a copy of an existing theme). (2) **ID collision**: master ids and layout ids share one id space (`>= 2147483648`); the new master's id (`max master id + 1 = 2147483649`) collided with `slideMaster1`'s existing *layout* id (`2147483649`) → repair. Fixed by basing new master/layout ids on the max over *both* the presentation's `sldMasterId`s and every master's `sldLayoutId`s (`next id = 2147483650/2147483651`, matching PowerPoint's repair). (3) **Footer rendered as a vertical strip**: the generated layout was blank, so slide-level footer / date / slide-number placeholders had no layout placeholder to inherit position from. Fixed by having the generated layout repeat the master's placeholders (with positions). Four regression tests added (dedicated theme; layout placeholders; no id collision). 918 tests × 4 backends; no `.mbti` change.
 - **2026-05-30** — **Bug fix: foreign-namespace prefix scoping in `write_xml_element` + examples expanded to v0.3.** Found while extending the sample deck: two media objects on one slide each emit a `<p14:media>`, but `WriteCtx` recorded the auto-bound `extN` prefix document-wide, so the second use referenced an out-of-scope prefix → invalid XML → PowerPoint repair. Fixed by scoping foreign-namespace bindings to the subtree that declares them (forget them after the element closes, so a disjoint sibling re-declares); well-known `a`/`p`/`r` persist. Byte-identical for single-use cases (SVG etc.), only changes the previously-broken multi-use case. Regression test added (video + audio on one slide reopens). The standalone `examples/sample-deck` now builds against the in-repo path dep and the single `sample.pptx` deck grew to 18 slides covering the v0.3 features (slide background, combo + secondary-axis chart, SVG image, in-place shape editing, embedded audio/video, and a `define_master` template slide with footer / auto-date / slide number) — described in user-facing terms, with the per-feature split mode extended to match. 915 tests × 4 backends.
 - **2026-05-30** — **Pre-release refactor sweep (CLAUDE.md §7).** Consolidated six near-identical part-name scanners — `extract_image_index` / `extract_chart_index` / `extract_slide_index` / `extract_notes_index` plus an inline scan in `next_media_part_name` — into the single shared `Presentation::max_part_index(prefix)` (already used by `define_master`); the five `next_*_part_name` helpers now derive from it (the chart one maxes over both `chart` and `chartEx` prefixes to keep their shared numbering). ~110 lines of duplicated parsing removed; no behaviour change (914 tests × 4 backends still green, `.mbti` unchanged). Also freshened the README sub-package table for the v0.3 capabilities (SVG / media / `define_master` / shape editing / background / placeholder accessors) and added a cross-reference comment for the shared dt/ftr/sldNum placeholder-idx convention. Large files (`chart/builders.mbt` 1197 L, `shape_writer.mbt` 721 L) reviewed and left as-is — cohesive, no logical split worth the churn pre-release.

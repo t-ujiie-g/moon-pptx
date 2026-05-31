@@ -75,13 +75,16 @@ pub fn Presentation::clone(Self) -> Self
 pub fn Presentation::comment_authors(Self) -> @comments.CommentAuthorList? raise PptxError
 pub fn Presentation::comment_lists(Self) -> Array[@comments.CommentList] raise PptxError
 pub fn Presentation::define_master(Self, MasterDefinition) -> Int raise PptxError
+pub fn Presentation::duplicate_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::map_slide_shapes_mut(Self, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
+pub fn Presentation::move_slide_mut(Self, Int, Int) -> Unit raise PptxError
 pub fn Presentation::new() -> Self raise PptxError
 pub fn Presentation::notes_slides(Self) -> Array[@notes.NotesSlide] raise PptxError
 pub fn Presentation::open(FixedArray[Byte]) -> Self raise PptxError
 pub fn Presentation::pct_h(Self, Double) -> @units.Emu
 pub fn Presentation::pct_w(Self, Double) -> @units.Emu
 pub fn Presentation::presentation_part(Self) -> PresentationPart? raise PptxError
+pub fn Presentation::remove_slide_mut(Self, Int) -> Unit raise PptxError
 pub fn Presentation::save(Self) -> FixedArray[Byte]
 pub fn Presentation::set_notes_mut(Self, Int, String) -> Unit raise PptxError
 pub fn Presentation::set_slide_size_mut(Self, SlideSizeKind) -> Unit raise PptxError
@@ -94,7 +97,10 @@ pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
 pub fn Presentation::update_shape_by_id_mut(Self, Int, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
 pub fn Presentation::with_added_slide(Self, layout_index~ : Int) -> (Self, String) raise PptxError
+pub fn Presentation::with_duplicated_slide(Self, Int) -> (Self, String) raise PptxError
+pub fn Presentation::with_slide_moved(Self, Int, Int) -> Self raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError
+pub fn Presentation::without_slide(Self, Int) -> Self raise PptxError
 
 pub(all) struct PresentationPart {
   sld_master_ids : Array[SlideMasterIdRef]

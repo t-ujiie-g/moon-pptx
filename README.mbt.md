@@ -155,7 +155,7 @@ suffice.
 
 | Package | What it covers |
 |---|---|
-| `@presentation` | High-level `Presentation` façade — `open` / `save` / `new`, slide / chart / picture / SVG / audio / video insertion, `define_master`, pinpoint shape editing, immutable + mutating builders |
+| `@presentation` | High-level `Presentation` façade — `open` / `save` / `new`, slide / chart / picture / SVG / audio / video insertion, slide delete / reorder / duplicate, `define_master`, pinpoint shape editing, immutable + mutating builders |
 | `@slide` | Slide model: `AutoShape`, `Picture` (incl. SVG + media), `Connector`, `GroupShape`, `Table`, `GraphicFrame`, text bodies, custom geometry, typed background, placeholder accessors, footer / date / slide-number |
 | `@chart` | Standard 16 chart families with from-scratch builders (`Chart::of_bar` / `of_line` / `of_pie` / `of_scatter` / `of_bubble` / `of_combo` / …) plus combo + secondary-axis |
 | `@chart_ex` | Microsoft 2016 extended charts (waterfall, treemap, sunburst, …); read + write, lossless round-trip |

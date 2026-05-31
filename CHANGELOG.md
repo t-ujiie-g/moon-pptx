@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-06-01
+
+Deck-level slide editing: this release adds the slide **delete**,
+**reorder**, and **duplicate** operations that were missing from the
+otherwise add-only / replace-only build API. Together with the
+shape-level editing from 0.3.0, a deck can now be arranged entirely
+programmatically.
+
+### Added
+
+- **Slide deletion** — `Presentation::remove_slide_mut(slide_index)`
+  (mutating) and `Presentation::without_slide(slide_index)` (immutable)
+  remove a slide and unthread it everywhere the package tracks it: the
+  `<p:sldIdLst>` entry, the `presentation.xml.rels` relationship, the
+  slide part, its `.rels`, and its `[Content_Types]` override. This is
+  the inverse of `add_slide_mut`. Slide-private parts reachable only
+  through the removed slide (its notes slide, images, charts, embedded
+  media) are garbage-collected; shared slide layout / master / theme
+  parts are always kept. Enables the "trim a template down to just the
+  slides you generated" flow. (roadmap E1)
+- **Slide reordering** — `Presentation::move_slide_mut(from, to)`
+  (mutating) and `Presentation::with_slide_moved(from, to)` (immutable)
+  relocate a slide to a new position. `to` is the destination index in
+  the resulting order; `from == to` is a no-op. Reordering only rewrites
+  `<p:sldIdLst>` — slide part names are unchanged. (roadmap E2)
+- **Slide duplication** — `Presentation::duplicate_slide_mut(slide_index)`
+  (returns the new slide's part name) and
+  `Presentation::with_duplicated_slide(slide_index)` (immutable) append a
+  copy of an existing slide. The copy re-references the source slide's
+  layout, images, charts, media, and notes (it does not deep-copy them),
+  so editing a shared chart's data or notes affects both slides. The
+  natural building block for "duplicate this template slide, then fill
+  it" generation. (roadmap E3)
+- **`@opc.ContentTypes::without_override(part_name)`** — companion to
+  `with_override`, used when a part is removed from the package.
+
 ## [0.3.0] — 2026-05-30
 
 ### Added (toward v0.3.0)

@@ -56,28 +56,7 @@ pub fn Presentation::add_slide_mut(
   self.pkg.add_part(slide_part) catch {
     e => raise OpcFailure(e.to_string())
   }
-  // 5. Update presentation.xml.rels — append a Relationship to the
-  //    new slide.
-  let updated_pres_rels = pres_rels.with_relationship(@opc.Relationship::{
-    id: new_slide_rid,
-    rel_type: @opc.rt_slide,
-    target: relative_target(pres_name, new_slide_name),
-    target_mode: Internal,
-  }) catch {
-    e => raise OpcFailure(e.to_string())
-  }
-  self.write_rels_for_part(pres_name, updated_pres_rels)
-  // 6. Update presentation.xml — append <p:sldId> to <p:sldIdLst>.
-  let pres = match self.presentation_part() {
-    Some(p) => p
-    None =>
-      raise Malformed("presentation.xml could not be parsed before add_slide")
-  }
-  let next_id = next_slide_id(pres.sld_ids)
-  pres.sld_ids.push({ id: next_id, r_id: new_slide_rid })
-  let new_pres_bytes = pres.serialize()
-  self.replace_part_bytes(pres_name, new_pres_bytes, @oxml.ct_presentation)
-  // 7. Add slideN.xml.rels — link the slide back to its layout.
+  // 5. Add slideN.xml.rels — link the slide back to its layout.
   let slide_rels_xml = build_slide_rels_xml(
     relative_target(new_slide_name, layout_part_name),
   )
@@ -92,7 +71,50 @@ pub fn Presentation::add_slide_mut(
   self.pkg.add_part(slide_rels_part) catch {
     e => raise OpcFailure(e.to_string())
   }
-  // 8. Update [Content_Types].xml — add Override for the new slide.
+  // 6. Thread the new slide into presentation.xml (<p:sldId>), its rels,
+  //    and [Content_Types].xml.
+  self.attach_slide_to_presentation(pres_name, new_slide_name, new_slide_rid)
+  new_slide_name
+}
+
+// --- helpers ---
+
+///|
+/// Thread a freshly-added slide part into `presentation.xml`: append its
+/// `<p:sldId>` (with a fresh slide id), register the
+/// `presentation.xml.rels` relationship under `new_slide_rid`, and add its
+/// `[Content_Types]` Override. The slide part (and its `.rels`) must already
+/// be in the package, and `new_slide_rid` must be unused in
+/// `presentation.xml.rels`. Shared by `add_slide_mut` and
+/// `duplicate_slide_mut`.
+fn Presentation::attach_slide_to_presentation(
+  self : Presentation,
+  pres_name : String,
+  new_slide_name : String,
+  new_slide_rid : String,
+) -> Unit raise PptxError {
+  let pres = match self.presentation_part() {
+    Some(p) => p
+    None =>
+      raise Malformed(
+        "presentation.xml could not be parsed while attaching a slide",
+      )
+  }
+  let next_id = next_slide_id(pres.sld_ids)
+  pres.sld_ids.push({ id: next_id, r_id: new_slide_rid })
+  self.replace_part_bytes(pres_name, pres.serialize(), @oxml.ct_presentation)
+  let pres_rels = self.pkg.relationships_for(pres_name) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let updated = pres_rels.with_relationship(@opc.Relationship::{
+    id: new_slide_rid,
+    rel_type: @opc.rt_slide,
+    target: relative_target(pres_name, new_slide_name),
+    target_mode: Internal,
+  }) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  self.write_rels_for_part(pres_name, updated)
   let ct = self.pkg
     .content_types()
     .with_override(new_slide_name, @oxml.ct_slide)
@@ -100,10 +122,7 @@ pub fn Presentation::add_slide_mut(
   self.pkg.regenerate_content_types_part() catch {
     e => raise OpcFailure(e.to_string())
   }
-  new_slide_name
 }
-
-// --- helpers ---
 
 ///|
 /// Body of a slide that just inherits its layout's master color

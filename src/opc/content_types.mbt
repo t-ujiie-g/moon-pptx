@@ -121,6 +121,27 @@ pub fn ContentTypes::with_override(
   { defaults: self.defaults, overrides: next }
 }
 
+///|
+/// Return a new catalog with every `Override` for `part_name` dropped.
+/// No-op (returns an equivalent catalog) when the part has no override —
+/// images and other extension-typed parts use `Default` entries instead,
+/// so removing them this way is intentionally harmless. Companion of
+/// `with_override`, used when a part is deleted from the package.
+pub fn ContentTypes::without_override(
+  self : ContentTypes,
+  part_name : String,
+) -> ContentTypes {
+  let next : Array[(String, String)] = Array::new(
+    capacity=self.overrides.length(),
+  )
+  for kv in self.overrides {
+    if kv.0 != part_name {
+      next.push(kv)
+    }
+  }
+  { defaults: self.defaults, overrides: next }
+}
+
 // --- internal ---
 
 ///|
