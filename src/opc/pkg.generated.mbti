@@ -93,6 +93,7 @@ pub fn ContentTypes::resolve(Self, String) -> String?
 pub fn ContentTypes::serialize(Self) -> FixedArray[Byte] raise OpcError
 pub fn ContentTypes::with_default(Self, String, String) -> Self
 pub fn ContentTypes::with_override(Self, String, String) -> Self
+pub fn ContentTypes::without_override(Self, String) -> Self
 
 pub struct Package {
   parts : Array[Part]
