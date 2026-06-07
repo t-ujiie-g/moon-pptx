@@ -163,8 +163,8 @@ fn write_transition_kind(
     Wedge => elem("wedge", None)
     Wheel(spokes) => {
       w.start_element(@xml.QName::new(@oxml.presentation_ns, "wheel"))
-      // Schema default is 4; emit only when it differs.
-      if spokes != 4 {
+      // Emit `spokes` only when it differs from the schema default.
+      if spokes != transition_default_spokes {
         w.attribute(@xml.QName::unqualified("spokes"), spokes.to_string())
       }
       w.end_element()

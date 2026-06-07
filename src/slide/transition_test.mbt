@@ -35,6 +35,50 @@ fn roundtrip_transition(
   @slide.Slide::parse(bytes).transition
 }
 
+// --- direction / speed enums: from_xml ∘ to_xml is identity ---
+
+///|
+test "transition enums: from_xml round-trips every to_xml value" {
+  let speeds : Array[@slide.TransitionSpeed] = [Slow, Medium, Fast]
+  for v in speeds {
+    assert_true(@slide.TransitionSpeed::from_xml(v.to_xml()) == v)
+  }
+  let sides : Array[@slide.TransitionSide] = [Left, Up, Right, Down]
+  for v in sides {
+    assert_true(@slide.TransitionSide::from_xml(v.to_xml()) == v)
+  }
+  let dirs : Array[@slide.TransitionDirection] = [
+    Left,
+    Up,
+    Right,
+    Down,
+    LeftUp,
+    RightUp,
+    LeftDown,
+    RightDown,
+  ]
+  for v in dirs {
+    assert_true(@slide.TransitionDirection::from_xml(v.to_xml()) == v)
+  }
+  let orients : Array[@slide.TransitionOrientation] = [Horizontal, Vertical]
+  for v in orients {
+    assert_true(@slide.TransitionOrientation::from_xml(v.to_xml()) == v)
+  }
+  let inouts : Array[@slide.TransitionInOut] = [In, Out]
+  for v in inouts {
+    assert_true(@slide.TransitionInOut::from_xml(v.to_xml()) == v)
+  }
+  let corners : Array[@slide.TransitionCorner] = [
+    LeftUp,
+    RightUp,
+    LeftDown,
+    RightDown,
+  ]
+  for v in corners {
+    assert_true(@slide.TransitionCorner::from_xml(v.to_xml()) == v)
+  }
+}
+
 // --- parse: attributes ---
 
 ///|

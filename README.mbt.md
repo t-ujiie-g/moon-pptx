@@ -156,8 +156,8 @@ suffice.
 | Package | What it covers |
 |---|---|
 | `@presentation` | High-level `Presentation` façade — `open` / `save` / `new`, slide / chart / picture / SVG / audio / video insertion, slide delete / reorder / duplicate, `define_master`, pinpoint shape editing, immutable + mutating builders |
-| `@slide` | Slide model: `AutoShape`, `Picture` (incl. SVG + media), `Connector`, `GroupShape`, `Table`, `GraphicFrame`, text bodies, custom geometry, typed background, placeholder accessors, footer / date / slide-number |
-| `@chart` | Standard 16 chart families with from-scratch builders (`Chart::of_bar` / `of_line` / `of_pie` / `of_scatter` / `of_bubble` / `of_combo` / …) plus combo + secondary-axis |
+| `@slide` | Slide model: `AutoShape`, `Picture` (incl. SVG + media; typed `Picture::builder` pipeline), `Connector`, `GroupShape`, `Table`, `GraphicFrame`, text bodies, custom geometry, typed background, typed slide transitions, placeholder accessors, footer / date / slide-number |
+| `@chart` | Standard 16 chart families with from-scratch builders (`Chart::of_bar` / `of_line` / `of_pie` / `of_scatter` / `of_bubble` / `of_combo` / …) plus combo + secondary-axis, ADT options (`Chart::with_options`), and data validation (`ChartData::validate`) |
 | `@chart_ex` | Microsoft 2016 extended charts (waterfall, treemap, sunburst, …); read + write, lossless round-trip |
 | `@theme`, `@slide_master`, `@notes`, `@comments` | Theme / master / layout / speaker-notes / comments parsers and writers |
 | `@opc` | Open Packaging Convention layer (parts, content types, relationships) — usable for DOCX/XLSX too |

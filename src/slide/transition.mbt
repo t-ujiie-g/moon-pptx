@@ -195,6 +195,13 @@ pub fn TransitionCorner::to_xml(self : TransitionCorner) -> String {
 }
 
 ///|
+/// Schema default for `<p:wheel spokes="…"/>` (CT_WheelTransition). The parser
+/// falls back to it when the attribute is absent; the writer omits the
+/// attribute when the value equals it. They must agree for round-trip
+/// stability, so both reference this single constant.
+let transition_default_spokes : Int = 4
+
+///|
 /// The transition effect — the single optional choice child of
 /// `<p:transition>` (CT_SlideTransition). `NoEffect` is `<p:transition>` with
 /// no choice child (a transition wrapper that only carries timing).

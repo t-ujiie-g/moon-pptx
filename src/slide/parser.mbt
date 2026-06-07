@@ -178,8 +178,9 @@ fn transition_kind_from(
       Some(
         Wheel(
           match @oxml.optional_attr(attrs, "spokes") {
-            Some(s) => @oxml.parse_signed_int(s).unwrap_or(4)
-            None => 4
+            Some(s) =>
+              @oxml.parse_signed_int(s).unwrap_or(transition_default_spokes)
+            None => transition_default_spokes
           },
         ),
       )
