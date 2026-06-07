@@ -661,6 +661,7 @@ pub fn Slide::with_background(Self, @oxml.Fill) -> Self
 pub fn Slide::with_background_ref(Self, Int, @oxml.Color) -> Self
 pub fn Slide::with_date(Self, DateMode) -> Self
 pub fn Slide::with_footer(Self, String) -> Self
+pub fn Slide::with_placeholder(Self, PlaceholderType, Int, text? : String) -> Self
 pub fn Slide::with_shape(Self, Shape) -> Self
 pub fn Slide::with_shape_at(Self, Int, Shape) -> Self raise SlideError
 pub fn Slide::with_shape_by_id(Self, Int, (Shape) -> Shape) -> Self raise SlideError

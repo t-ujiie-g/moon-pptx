@@ -28,6 +28,19 @@ pub fn Presentation::add_slide_mut(
   self : Presentation,
   layout_index : Int,
 ) -> String raise PptxError {
+  let layout_part_name = self.layout_part_name_at(layout_index)
+  self.add_slide_on_layout_mut(layout_part_name)
+}
+
+///|
+/// Like `add_slide_mut` but links the new slide to a layout identified by its
+/// part name rather than its index. Used by the typed layout-handle
+/// constructors (roadmap M1), which synthesise/resolve the layout part first
+/// and would otherwise have to re-derive its index.
+fn Presentation::add_slide_on_layout_mut(
+  self : Presentation,
+  layout_part_name : String,
+) -> String raise PptxError {
   // 1. Locate the main-document part name (presentation.xml).
   let pres_name = match self.main_document_part_name() {
     Some(n) => n
@@ -36,8 +49,6 @@ pub fn Presentation::add_slide_mut(
         "package has no main-document relationship; cannot add slide",
       )
   }
-  // 2. Identify the layout part the new slide should link to.
-  let layout_part_name = self.layout_part_name_at(layout_index)
   // 3. Compute the new slide's part name + rId based on existing
   //    parts and rels.
   let new_slide_name = self.next_slide_part_name()

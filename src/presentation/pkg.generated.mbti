@@ -32,6 +32,22 @@ pub(all) suberror PptxError {
 pub impl Show for PptxError
 
 // Types and methods
+pub struct BlankSlide {
+}
+pub impl LayoutPlaceholders for BlankSlide
+pub impl LayoutType for BlankSlide
+
+pub struct LayoutSlide[L] {
+  prs : Presentation
+  slide_name : String
+  slide : @slide.Slide
+  marker : L
+}
+pub fn[L : HasBody] LayoutSlide::body(Self[L], String) -> Self[L]
+pub fn[L] LayoutSlide::finish_mut(Self[L]) -> String raise PptxError
+pub fn[L : HasSubtitle] LayoutSlide::subtitle(Self[L], String) -> Self[L]
+pub fn[L : HasTitle] LayoutSlide::title(Self[L], String) -> Self[L]
+
 pub(all) struct MasterDefinition {
   name : String
   background : @slide.Background?
@@ -58,16 +74,27 @@ pub(all) struct PlaceholderDef {
   default_text : String?
 }
 
+pub(all) struct PlaceholderSpec {
+  kind : @slide.PlaceholderType
+  idx : Int
+  position : @slide.Transform
+}
+
 pub(all) struct Presentation {
   pkg : @opc.Package
 }
 pub fn Presentation::add_audio_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_blank_typed_slide_mut(Self) -> LayoutSlide[BlankSlide] raise PptxError
 pub fn Presentation::add_chart_ex_mut(Self, Int, @chart_ex.ChartEx, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_section_header_slide_mut(Self) -> LayoutSlide[SectionHeader] raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::add_svg_picture_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_title_content_slide_mut(Self) -> LayoutSlide[TitleAndContent] raise PptxError
+pub fn Presentation::add_title_only_slide_mut(Self) -> LayoutSlide[TitleOnly] raise PptxError
+pub fn Presentation::add_title_slide_mut(Self) -> LayoutSlide[TitleSlide] raise PptxError
 pub fn Presentation::add_video_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
 pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
@@ -114,6 +141,13 @@ pub(all) struct PresentationPart {
 pub fn PresentationPart::parse(FixedArray[Byte]) -> Self raise PptxError
 pub fn PresentationPart::serialize(Self) -> FixedArray[Byte] raise PptxError
 
+pub struct SectionHeader {
+}
+pub impl HasBody for SectionHeader
+pub impl HasTitle for SectionHeader
+pub impl LayoutPlaceholders for SectionHeader
+pub impl LayoutType for SectionHeader
+
 pub(all) struct SlideIdRef {
   id : Int64
   r_id : String
@@ -146,7 +180,46 @@ pub fn SlideSizeKind::size_type(Self) -> String
 pub fn SlideSizeKind::to_slide_size(Self) -> SlideSize
 pub impl Show for SlideSizeKind
 
+pub struct TitleAndContent {
+}
+pub impl HasBody for TitleAndContent
+pub impl HasTitle for TitleAndContent
+pub impl LayoutPlaceholders for TitleAndContent
+pub impl LayoutType for TitleAndContent
+
+pub struct TitleOnly {
+}
+pub impl HasTitle for TitleOnly
+pub impl LayoutPlaceholders for TitleOnly
+pub impl LayoutType for TitleOnly
+
+pub struct TitleSlide {
+}
+pub impl HasSubtitle for TitleSlide
+pub impl HasTitle for TitleSlide
+pub impl LayoutPlaceholders for TitleSlide
+pub impl LayoutType for TitleSlide
+
 // Type aliases
 
 // Traits
+pub trait HasBody {
+  fn body_spec(Self) -> PlaceholderSpec
+}
+
+pub trait HasSubtitle {
+  fn subtitle_spec(Self) -> PlaceholderSpec
+}
+
+pub trait HasTitle {
+  fn title_spec(Self) -> PlaceholderSpec
+}
+
+pub trait LayoutPlaceholders {
+  fn placeholders(Self) -> Array[PlaceholderSpec]
+}
+
+pub trait LayoutType {
+  fn layout_type(Self) -> @slide_master.SlideLayoutType
+}
 

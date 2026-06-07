@@ -162,3 +162,51 @@ pub fn Slide::title(self : Slide) -> Shape? {
 pub fn Slide::body(self : Slide) -> Shape? {
   self.placeholder(Body)
 }
+
+///|
+/// Append a placeholder shape of `kind` with placeholder index `idx`, carrying
+/// optional `text`, replacing any existing placeholder of the same kind+idx so
+/// the call is idempotent. The shape has no `<a:xfrm>`, so its position and
+/// size inherit from the matching placeholder on the slide's layout (the OOXML
+/// cascade) — it renders only when the layout declares a placeholder of that
+/// kind+idx. Generalises `with_footer` / `with_date` / `with_slide_number`,
+/// and is the building block for the typed layout handles (roadmap M1).
+pub fn Slide::with_placeholder(
+  self : Slide,
+  kind : PlaceholderType,
+  idx : Int,
+  text? : String,
+) -> Slide {
+  let kept : Array[Shape] = []
+  for s in self.shapes {
+    let drop = match s {
+      AutoShape(a) =>
+        match a.placeholder {
+          Some(ph) => ph.kind() == kind && ph.idx == idx
+          None => false
+        }
+      _ => false
+    }
+    if !drop {
+      kept.push(s)
+    }
+  }
+  let cleared = { ..self, shapes: kept }
+  let body : TextBody? = match text {
+    Some(t) => Some(TextBody::of_text(t))
+    None => None
+  }
+  let sp : AutoShape = {
+    id: cleared.next_shape_id(),
+    name: kind.to_xml() + " Placeholder",
+    placeholder: Some({ ph_type: kind.to_xml(), idx }),
+    transform: None,
+    geometry: None,
+    fill: None,
+    stroke: None,
+    effects: None,
+    text_body: body,
+    extension: [],
+  }
+  cleared.with_shape(AutoShape(sp))
+}
