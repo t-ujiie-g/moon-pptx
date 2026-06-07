@@ -24,25 +24,23 @@ sample-deck/
 ```
 
 This module is **independent of the moon-pptx library itself**. It
-has its own `moon.mod.json`. While the next library version is still
-unreleased it depends on the in-repo copy through a path dep:
-
-```json
-"deps": {
-  "t-ujiie-g/moon-pptx": { "path": "../.." }
-}
-```
-
-It serves as a worked-out example of "what a real consumer would
-write" — the import shapes (`@presentation`, `@chart`, `@slide`, …)
-are exactly what you'd use in your own project. Once the library is
-published, a consumer swaps the path dep for a version:
+has its own `moon.mod.json` and depends on the **published** library
+version — exactly what a real consumer writes:
 
 ```json
 "deps": {
   "t-ujiie-g/moon-pptx": "0.4.0"
 }
 ```
+
+So it doubles as a worked-out example of "what a real consumer would
+write" — the import shapes (`@presentation`, `@chart`, `@slide`, …)
+are exactly what you'd use in your own project. (Run `moon update` once
+so the registry index knows the version.)
+
+> **Developing moon-pptx itself?** To build this example against your
+> in-repo changes *before* publishing, point the dep at the repo root
+> instead: `"t-ujiie-g/moon-pptx": { "path": "../.." }`.
 
 ## Generate `sample.pptx`
 

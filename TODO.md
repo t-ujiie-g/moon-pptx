@@ -472,6 +472,13 @@ PPTX library available.
   - `Slide::with_youtube_video(url, x, y, cx, cy)` — uses A6 plumbing with external `videoFile` target
   - Auto-generate / accept a preview frame image
 
+🔴 **D8 — Plot-type-aware chart-option validation**
+  - **Motivation**: surfaced verifying the v0.4 sample deck in PowerPoint. `Chart::with_options(DataLabels(pos))` (M2) currently emits *any* `ST_DLblPos` value the caller passes, without checking it against the chart's plot type(s). PowerPoint then rejects the file and runs its repair pass — e.g. `outEnd` is valid on `barChart`/`pieChart` but **invalid on `lineChart`/`scatterChart`/`radarChart`** (those allow only `ctr`/`l`/`r`/`t`/`b`). The library faithfully emits the request (same philosophy as the lenient `with_series`), so an invalid combo isn't caught until PowerPoint opens it.
+  - **Goal**: catch the mismatch *before* it reaches PowerPoint, leaning on the type system where possible.
+    - Runtime first: a `Chart::validate() -> Chart raise ChartError` (pairs with D7's `ChartData::validate`) that walks each plot's `d_lbls.d_lbl_pos` and rejects positions invalid for that plot family (bar-clustered vs bar-stacked vs line/scatter/radar vs pie/doughnut). Also a non-raising `is_consistent()`.
+    - Investigate a *compile-time* lift: a per-plot-family `DataLabelPosition` (e.g. `LinePos` / `BarPos` / `PiePos`) so `with_options` on a typed chart can only accept positions its plots allow — making the invalid combo a compile error (the M1/D4-style differentiator). Feasibility TBD; the runtime gate ships regardless.
+  - **Scope note**: extends to other position/enum-vs-plot-type constraints if more surface during verification (e.g. `crossBetween` only on `valAx`). Keep it to `dLblPos` first.
+
 ---
 
 ### 4.5 v1.0.0 — "Stable" · target 2027-08-31
