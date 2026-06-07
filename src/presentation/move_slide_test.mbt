@@ -96,14 +96,18 @@ test "move_slide_mut: out-of-range index raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let _ = prs.add_slide_mut(0)
-  assert_true(
-    (try? prs.move_slide_mut(0, 9))
-    is Err(@presentation.PptxError::Malformed(_)),
-  )
-  assert_true(
-    (try? prs.move_slide_mut(-1, 0))
-    is Err(@presentation.PptxError::Malformed(_)),
-  )
+  try prs.move_slide_mut(0, 9) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
+  try prs.move_slide_mut(-1, 0) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

@@ -164,10 +164,10 @@ test "Chart::parse: typed chart-body fields from rich fixture" {
 test "Chart::parse: rejects non-chart root" {
   let xml = "<?xml version=\"1.0\"?><c:notChart xmlns:c=\"" + chart_ns + "\"/>"
   let bytes = fixture_bytes(xml)
-  let raised = try? @chart.Chart::parse(bytes)
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for non-chart root")
+  try @chart.Chart::parse(bytes) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for non-chart root")
   }
 }
 
@@ -176,10 +176,10 @@ test "Chart::parse: rejects wrong namespace" {
   // local name matches but uri is wrong → Malformed.
   let xml = "<?xml version=\"1.0\"?><x:chartSpace xmlns:x=\"http://example.com/x\"/>"
   let bytes = fixture_bytes(xml)
-  let raised = try? @chart.Chart::parse(bytes)
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for wrong-namespace root")
+  try @chart.Chart::parse(bytes) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for wrong-namespace root")
   }
 }
 
@@ -232,10 +232,10 @@ test "Chart::parse: missing <c:chart> raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     chart_ns +
     "\"/>"
-  let raised = try? @chart.Chart::parse(fixture_bytes(xml))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for chartSpace without chart")
+  try @chart.Chart::parse(fixture_bytes(xml)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for chartSpace without chart")
   }
 }
 
@@ -244,9 +244,9 @@ test "Chart::parse: missing <c:plotArea> raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     chart_ns +
     "\"><c:chart/></c:chartSpace>"
-  let raised = try? @chart.Chart::parse(fixture_bytes(xml))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for chart without plotArea")
+  try @chart.Chart::parse(fixture_bytes(xml)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for chart without plotArea")
   }
 }

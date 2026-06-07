@@ -75,10 +75,10 @@ test "ChartLegend: legendEntry without idx raises Malformed" {
   let body = "<c:legend>" +
     "<c:legendEntry><c:delete val=\"1\"/></c:legendEntry>" +
     "</c:legend>"
-  let raised = try? @chart.Chart::parse(fixture_legend_chart_xml(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for legendEntry without idx")
+  try @chart.Chart::parse(fixture_legend_chart_xml(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for legendEntry without idx")
   }
 }
 

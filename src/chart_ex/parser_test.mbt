@@ -156,10 +156,10 @@ test "ChartEx::parse: rejects <cx:series> without layoutId" {
     "</cx:plotArea>" +
     "</cx:chart>" +
     "</cx:chartSpace>"
-  let raised = try? @chart_ex.ChartEx::parse(fixture_bytes(xml))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for series without layoutId")
+  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for series without layoutId")
   }
 }
 
@@ -169,10 +169,10 @@ test "ChartEx::parse: rejects <cx:chart> without <cx:plotArea>" {
     "<cx:chartSpace xmlns:cx=\"" +
     chart_ex_ns +
     "\"><cx:chart/></cx:chartSpace>"
-  let raised = try? @chart_ex.ChartEx::parse(fixture_bytes(xml))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for chart without plotArea")
+  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for chart without plotArea")
   }
 }
 
@@ -205,10 +205,10 @@ test "ChartEx::parse: rejects standard <c:chartSpace> root" {
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     standard_ns +
     "\"/>"
-  let raised = try? @chart_ex.ChartEx::parse(fixture_bytes(xml))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for standard chartSpace root")
+  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for standard chartSpace root")
   }
 }
 
@@ -217,10 +217,10 @@ test "ChartEx::parse: rejects non-chartSpace root" {
   let xml = "<?xml version=\"1.0\"?><cx:notChart xmlns:cx=\"" +
     chart_ex_ns +
     "\"/>"
-  let raised = try? @chart_ex.ChartEx::parse(fixture_bytes(xml))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for non-chart root")
+  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for non-chart root")
   }
 }
 

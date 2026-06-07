@@ -172,20 +172,32 @@ test "attribute with prefix is namespaced" {
 
 ///|
 test "mismatched end tag raises" {
-  let r = try? drain("<a></b>")
-  assert_true(r is Err(@xml.XmlError::MismatchedEndTag(_)))
+  try drain("<a></b>") catch {
+    @xml.XmlError::MismatchedEndTag(_) => ()
+    _ => fail("expected MismatchedEndTag")
+  } noraise {
+    _ => fail("expected MismatchedEndTag")
+  }
 }
 
 ///|
 test "unbound prefix raises" {
-  let r = try? drain("<a:x/>")
-  assert_true(r is Err(@xml.XmlError::UnboundPrefix(_)))
+  try drain("<a:x/>") catch {
+    @xml.XmlError::UnboundPrefix(_) => ()
+    _ => fail("expected UnboundPrefix")
+  } noraise {
+    _ => fail("expected UnboundPrefix")
+  }
 }
 
 ///|
 test "unexpected EOF raises" {
-  let r = try? drain("<a>unfinished")
-  assert_true(r is Err(@xml.XmlError::UnexpectedEof))
+  try drain("<a>unfinished") catch {
+    @xml.XmlError::UnexpectedEof => ()
+    _ => fail("expected UnexpectedEof")
+  } noraise {
+    _ => fail("expected UnexpectedEof")
+  }
 }
 
 ///|

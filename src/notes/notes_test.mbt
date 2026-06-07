@@ -185,12 +185,20 @@ test "parse: wrong root element raises SlideFailure" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let err = try? @notes.NotesSlide::parse(fixture_bytes(xml))
-  assert_true(err is Err(@notes.NotesError::SlideFailure(_)))
+  try @notes.NotesSlide::parse(fixture_bytes(xml)) catch {
+    @notes.NotesError::SlideFailure(_) => ()
+    _ => fail("expected SlideFailure")
+  } noraise {
+    _ => fail("expected SlideFailure")
+  }
 }
 
 ///|
 test "parse: empty bytes raises SlideFailure" {
-  let err = try? @notes.NotesSlide::parse(FixedArray::make(0, b'\x00'))
-  assert_true(err is Err(@notes.NotesError::SlideFailure(_)))
+  try @notes.NotesSlide::parse(FixedArray::make(0, b'\x00')) catch {
+    @notes.NotesError::SlideFailure(_) => ()
+    _ => fail("expected SlideFailure")
+  } noraise {
+    _ => fail("expected SlideFailure")
+  }
 }

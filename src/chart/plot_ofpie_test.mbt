@@ -64,10 +64,10 @@ test "OfPieChart: missing ofPieType raises Malformed" {
   let body = "<c:ofPieChart>" +
     "<c:ser><c:idx val=\"0\"/></c:ser>" +
     "</c:ofPieChart>"
-  let raised = try? @chart.Chart::parse(fixture_ofpie_chart_xml(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed")
+  try @chart.Chart::parse(fixture_ofpie_chart_xml(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed")
   }
 }
 

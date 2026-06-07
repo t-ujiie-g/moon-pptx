@@ -33,6 +33,10 @@ test "NotesSlide::serialize: root element is <p:notes> (not <p:sld>)" {
   // Succeeds for "notes" root.
   let _ = @slide.Slide::parse_with_root(bytes, "notes")
   // Fails for "sld" root since the bytes start with <p:notes>.
-  let r = try? @slide.Slide::parse(bytes)
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(bytes) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

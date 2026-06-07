@@ -111,13 +111,19 @@ test "add_chart_mut: round-trips through save → open" {
 test "add_chart_mut: rejects out-of-range slide index" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let raised = try? prs.add_chart_mut(
-    99,
-    @chart.Chart::of_bar(small_chart_data()),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
-  )
-  assert_true(raised is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.add_chart_mut(
+      99,
+      @chart.Chart::of_bar(small_chart_data()),
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

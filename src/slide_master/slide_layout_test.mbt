@@ -144,8 +144,12 @@ test "parse: unknown layout type is rejected" {
   let xml = "<?xml version=\"1.0\"?><p:sldLayout xmlns:p=\"" +
     pl_ns +
     "\" type=\"thisisnotalayout\"><p:cSld name=\"x\"/></p:sldLayout>"
-  let r = try? @slide_master.SlideLayout::parse(layout_ascii(xml))
-  assert_true(r is Err(@slide_master.SlideMasterError::Malformed(_)))
+  try @slide_master.SlideLayout::parse(layout_ascii(xml)) catch {
+    @slide_master.SlideMasterError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -160,6 +164,10 @@ test "parse: malformed override mapping (missing slot) is rejected" {
     " tx2=\"dk2\" accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\"" +
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\"/></p:clrMapOvr></p:sldLayout>"
-  let r = try? @slide_master.SlideLayout::parse(layout_ascii(xml))
-  assert_true(r is Err(@slide_master.SlideMasterError::Malformed(_)))
+  try @slide_master.SlideLayout::parse(layout_ascii(xml)) catch {
+    @slide_master.SlideMasterError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

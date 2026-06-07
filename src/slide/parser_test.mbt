@@ -186,8 +186,12 @@ test "parse: missing xfrm components is rejected" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let r = try? @slide.Slide::parse(fixture_bytes(xml))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(fixture_bytes(xml)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -206,14 +210,22 @@ test "parse: non-integer offset attribute is rejected" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let r = try? @slide.Slide::parse(fixture_bytes(xml))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(fixture_bytes(xml)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
-  let r = try? @slide.Slide::parse(fixture_bytes("<p:sld"))
-  assert_true(r is Err(@slide.SlideError::XmlFailure(_, _)))
+  try @slide.Slide::parse(fixture_bytes("<p:sld")) catch {
+    @slide.SlideError::XmlFailure(_, _) => ()
+    _ => fail("expected XmlFailure")
+  } noraise {
+    _ => fail("expected XmlFailure")
+  }
 }
 
 ///|

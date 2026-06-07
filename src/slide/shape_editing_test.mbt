@@ -83,12 +83,21 @@ test "Slide::with_shape_mapped transforms only the indexed shape" {
 ///|
 test "Slide::with_shape_at / mapped / without raise on bad index" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  let r1 = try? slide.with_shape_at(99, slide.shapes[0])
-  assert_true(r1 is Err(_))
-  let r2 = try? slide.with_shape_mapped(-1, fn(s) { s })
-  assert_true(r2 is Err(_))
-  let r3 = try? slide.without_shape(99)
-  assert_true(r3 is Err(_))
+  try slide.with_shape_at(99, slide.shapes[0]) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
+  try slide.with_shape_mapped(-1, fn(s) { s }) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
+  try slide.without_shape(99) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
 }
 
 // --- by id ---
@@ -110,8 +119,11 @@ test "Slide::with_shape_by_id transforms the matching shape only" {
 ///|
 test "Slide::with_shape_by_id raises when the id is absent" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  let r = try? slide.with_shape_by_id(999, fn(s) { s })
-  assert_true(r is Err(_))
+  try slide.with_shape_by_id(999, fn(s) { s }) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
 }
 
 // --- removal ---
@@ -126,8 +138,11 @@ test "Slide::without_shape / without_shape_by_id drop one shape" {
   let b = slide.without_shape_by_id(4)
   assert_eq(b.shapes.length(), 2)
   assert_true(b.shapes.iter().all(fn(s) { s.id() != Some(4) }))
-  let miss = try? slide.without_shape_by_id(999)
-  assert_true(miss is Err(_))
+  try slide.without_shape_by_id(999) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
 }
 
 // --- edits survive serialisation ---

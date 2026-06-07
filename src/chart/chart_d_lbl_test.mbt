@@ -75,10 +75,10 @@ test "DLbl: missing idx raises Malformed" {
   let body = "<c:dLbls>" +
     "<c:dLbl><c:showVal val=\"1\"/></c:dLbl>" +
     "</c:dLbls>"
-  let raised = try? @chart.Chart::parse(fixture_d_lbl_bar(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for dLbl without idx")
+  try @chart.Chart::parse(fixture_d_lbl_bar(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for dLbl without idx")
   }
 }
 

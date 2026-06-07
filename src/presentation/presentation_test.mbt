@@ -205,8 +205,12 @@ test "Presentation::open: succeeds on minimal pptx bytes" {
 
 ///|
 test "Presentation::open: malformed package raises OpcFailure" {
-  let r = try? @presentation.Presentation::open(FixedArray::make(0, b'\x00'))
-  assert_true(r is Err(@presentation.PptxError::OpcFailure(_)))
+  try @presentation.Presentation::open(FixedArray::make(0, b'\x00')) catch {
+    @presentation.PptxError::OpcFailure(_) => ()
+    _ => fail("expected OpcFailure")
+  } noraise {
+    _ => fail("expected OpcFailure")
+  }
 }
 
 ///|

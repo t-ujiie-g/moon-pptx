@@ -138,8 +138,12 @@ test "remove_slide_mut: garbage-collects the slide's notes" {
 test "remove_slide_mut: out-of-range index raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let r = try? prs.remove_slide_mut(5)
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try prs.remove_slide_mut(5) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

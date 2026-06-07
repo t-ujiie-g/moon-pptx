@@ -93,10 +93,12 @@ test "duplicate_slide_mut: shared image survives deleting the original" {
 test "duplicate_slide_mut: out-of-range index raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  assert_true(
-    (try? prs.duplicate_slide_mut(7))
-    is Err(@presentation.PptxError::Malformed(_)),
-  )
+  try prs.duplicate_slide_mut(7) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

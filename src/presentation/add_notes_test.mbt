@@ -98,8 +98,12 @@ test "set_notes_mut: second call replaces bytes, doesn't create a new part" {
 test "set_notes_mut: out-of-range slide_idx raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let r = try? prs.set_notes_mut(99, "nope")
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try prs.set_notes_mut(99, "nope") catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

@@ -78,8 +78,12 @@ test "update_slide_mut: out-of-range index raises Malformed" {
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
   let dummy = @slide.Slide::parse(@fzip.str_to_u8(dummy_xml))
-  let r = try? prs.update_slide_mut(0, dummy)
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try prs.update_slide_mut(0, dummy) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -189,8 +193,14 @@ test "map_slide_shapes_mut: applies to every shape on the slide" {
 ///|
 test "update_shape_by_id_mut: raises on missing id or bad slide index" {
   let prs = prs_with_one_rect()
-  let miss = try? prs.update_shape_by_id_mut(0, 999, fn(s) { s })
-  assert_true(miss is Err(_))
-  let oob = try? prs.map_slide_shapes_mut(99, fn(s) { s })
-  assert_true(oob is Err(_))
+  try prs.update_shape_by_id_mut(0, 999, fn(s) { s }) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
+  try prs.map_slide_shapes_mut(99, fn(s) { s }) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an error")
+  }
 }

@@ -30,13 +30,21 @@ test "parse_hex accepts both # prefix and lowercase" {
 test "parse_hex rejects malformed input" {
   // wrong length
   for bad in ["", "F", "FF", "FFFF", "FFFFF", "FFFFFFF", "##FF0000"] {
-    let result = try? @units.RgbColor::parse_hex(bad)
-    assert_true(result is Err(@units.UnitsError::InvalidHexColor(_)))
+    try @units.RgbColor::parse_hex(bad) catch {
+      @units.UnitsError::InvalidHexColor(_) => ()
+      _ => fail("expected InvalidHexColor")
+    } noraise {
+      _ => fail("expected InvalidHexColor")
+    }
   }
   // non-hex digit
   for bad in ["GGGGGG", "FF00ZZ", "12345G"] {
-    let result = try? @units.RgbColor::parse_hex(bad)
-    assert_true(result is Err(@units.UnitsError::InvalidHexColor(_)))
+    try @units.RgbColor::parse_hex(bad) catch {
+      @units.UnitsError::InvalidHexColor(_) => ()
+      _ => fail("expected InvalidHexColor")
+    } noraise {
+      _ => fail("expected InvalidHexColor")
+    }
   }
 }
 

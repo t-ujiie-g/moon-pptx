@@ -71,10 +71,10 @@ test "BarChart: missing <c:barDir> raises Malformed" {
     "<c:axId val=\"2\"/>" +
     "</c:barChart>"
   let bytes = fixture_bar_chart_xml(body)
-  let raised = try? @chart.Chart::parse(bytes)
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for barChart without barDir")
+  try @chart.Chart::parse(bytes) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for barChart without barDir")
   }
 }
 

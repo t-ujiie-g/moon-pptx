@@ -103,15 +103,23 @@ test "CommentAuthorList::parse: missing required attribute raises Malformed" {
     "\">" +
     "<p:cmAuthor id=\"0\" name=\"A\" initials=\"A\" lastIdx=\"0\"/>" +
     "</p:cmAuthorLst>"
-  let err = try? @comments.CommentAuthorList::parse(fixture_bytes(xml))
-  assert_true(err is Err(@comments.CommentsError::Malformed(_)))
+  try @comments.CommentAuthorList::parse(fixture_bytes(xml)) catch {
+    @comments.CommentsError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
 test "CommentAuthorList::parse: wrong root element raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><p:cmLst xmlns:p=\"" + pml_ns + "\"/>"
-  let err = try? @comments.CommentAuthorList::parse(fixture_bytes(xml))
-  assert_true(err is Err(@comments.CommentsError::Malformed(_)))
+  try @comments.CommentAuthorList::parse(fixture_bytes(xml)) catch {
+    @comments.CommentsError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 // --- commentsN.xml ---
@@ -183,8 +191,12 @@ test "CommentList::parse: missing <p:pos> raises Malformed" {
     "\">" +
     "<p:cm authorId=\"0\" idx=\"1\"><p:text>oops</p:text></p:cm>" +
     "</p:cmLst>"
-  let err = try? @comments.CommentList::parse(fixture_bytes(xml))
-  assert_true(err is Err(@comments.CommentsError::Malformed(_)))
+  try @comments.CommentList::parse(fixture_bytes(xml)) catch {
+    @comments.CommentsError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -196,8 +208,12 @@ test "CommentList::parse: nested element inside <p:text> raises Malformed" {
     "<p:pos x=\"0\" y=\"0\"/>" +
     "<p:text><p:foo/></p:text>" +
     "</p:cm></p:cmLst>"
-  let err = try? @comments.CommentList::parse(fixture_bytes(xml))
-  assert_true(err is Err(@comments.CommentsError::Malformed(_)))
+  try @comments.CommentList::parse(fixture_bytes(xml)) catch {
+    @comments.CommentsError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -219,8 +235,12 @@ test "CommentList::parse: unknown child of <p:cm> is preserved" {
 ///|
 test "CommentList::parse: wrong root element raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><p:cmAuthorLst xmlns:p=\"" + pml_ns + "\"/>"
-  let err = try? @comments.CommentList::parse(fixture_bytes(xml))
-  assert_true(err is Err(@comments.CommentsError::Malformed(_)))
+  try @comments.CommentList::parse(fixture_bytes(xml)) catch {
+    @comments.CommentsError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

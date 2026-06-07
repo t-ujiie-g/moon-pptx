@@ -201,10 +201,10 @@ test "AxisCore: numFmt without sourceLinked attribute" {
 ///|
 test "AxisCore: missing axId raises Malformed" {
   let body = "<c:catAx><c:crossAx val=\"2\"/></c:catAx>"
-  let raised = try? @chart.Chart::parse(fixture_axis_chart_xml(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for axis without axId")
+  try @chart.Chart::parse(fixture_axis_chart_xml(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for axis without axId")
   }
 }
 

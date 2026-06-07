@@ -50,10 +50,10 @@ test "Bar3DChart: missing barDir raises Malformed" {
     "<c:axId val=\"2\"/>" +
     "<c:axId val=\"3\"/>" +
     "</c:bar3DChart>"
-  let raised = try? @chart.Chart::parse(fixture_3d_chart_xml(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed")
+  try @chart.Chart::parse(fixture_3d_chart_xml(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed")
   }
 }
 

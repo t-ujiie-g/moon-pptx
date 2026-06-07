@@ -98,15 +98,23 @@ test "part_by_name returns None for missing parts" {
 ///|
 test "open raises when [Content_Types].xml is missing" {
   let bytes = @fzip.zip_sync([("foo.xml", @fzip.str_to_u8("<foo/>"))])
-  let r = try? @opc.Package::open(bytes)
-  assert_true(r is Err(@opc.OpcError::MalformedPackage(_)))
+  try @opc.Package::open(bytes) catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
 }
 
 ///|
 test "require_part raises PartNotFound" {
   let pkg = @opc.Package::new()
-  let r = try? pkg.require_part("/missing")
-  assert_true(r is Err(@opc.OpcError::PartNotFound(_)))
+  try pkg.require_part("/missing") catch {
+    @opc.OpcError::PartNotFound(_) => ()
+    _ => fail("expected PartNotFound")
+  } noraise {
+    _ => fail("expected PartNotFound")
+  }
 }
 
 ///|
@@ -127,16 +135,24 @@ test "add_part rejects duplicate names" {
   let p1 = @opc.Part::new("/x.xml", "", @fzip.str_to_u8("<x/>"))
   let p2 = @opc.Part::new("/x.xml", "", @fzip.str_to_u8("<x2/>"))
   pkg.add_part(p1)
-  let r = try? pkg.add_part(p2)
-  assert_true(r is Err(@opc.OpcError::MalformedPackage(_)))
+  try pkg.add_part(p2) catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
 }
 
 ///|
 test "Part::new validates names" {
   let bytes = @fzip.str_to_u8("x")
   for bad in ["", "foo.xml", "/foo/", "/a//b.xml"] {
-    let r = try? @opc.Part::new(bad, "", bytes)
-    assert_true(r is Err(@opc.OpcError::MalformedPackage(_)))
+    try @opc.Part::new(bad, "", bytes) catch {
+      @opc.OpcError::MalformedPackage(_) => ()
+      _ => fail("expected MalformedPackage")
+    } noraise {
+      _ => fail("expected MalformedPackage")
+    }
   }
 }
 
@@ -151,8 +167,12 @@ test "name conversion helpers are inverses" {
 ///|
 test "open propagates fzip failures as ZipFailure" {
   let bytes : FixedArray[Byte] = FixedArray::make(8, b'\xFF')
-  let r = try? @opc.Package::open(bytes)
-  assert_true(r is Err(@opc.OpcError::ZipFailure(_, _)))
+  try @opc.Package::open(bytes) catch {
+    @opc.OpcError::ZipFailure(_, _) => ()
+    _ => fail("expected ZipFailure")
+  } noraise {
+    _ => fail("expected ZipFailure")
+  }
 }
 
 ///|
