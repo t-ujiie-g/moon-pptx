@@ -51,12 +51,12 @@ test "Slide::serialize: clrMapOvr (master mapping) round-trips" {
 }
 
 ///|
-test "Slide::serialize: slide-level extension (transition / timing) preserved" {
+test "Slide::serialize: slide-level transition + timing round-trip" {
   let s1 = roundtrip_slide(typical_title_slide())
+  // D3: <p:transition> is the typed field now; <p:timing> + the root-group
+  // metadata (<p:nvGrpSpPr> + <p:grpSpPr>) still ride on extension.
+  assert_true(s1.transition is Some(_))
   let names = s1.extension.map(fn(e) { e.name.local_name })
-  // The fixture has <p:transition> + <p:timing> at sld level, plus the
-  // root-group metadata (<p:nvGrpSpPr> + <p:grpSpPr>) inside spTree.
-  assert_true(names.contains("transition"))
   assert_true(names.contains("timing"))
   assert_true(names.contains("nvGrpSpPr"))
   assert_true(names.contains("grpSpPr"))

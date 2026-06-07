@@ -293,6 +293,7 @@ fn build_placeholder_csld(
     background,
     shapes,
     clr_map_override: @slide_master.ClrMapOverride::MasterMapping,
+    transition: None,
     extension: [],
   }
   let xml = @oxml.bytes_to_string(slide.serialize()) catch {
@@ -364,11 +365,16 @@ fn wrap_slide_master_xml(csld : String, layout_id : Int64) -> String {
 /// `type="blank"` `<p:sldLayout>` inheriting the master. The shared
 /// placeholders give slides on this layout an inheritance source for their
 /// title / body / footer / date / slide-number geometry.
-fn wrap_slide_layout_xml(csld : String) -> String {
+fn wrap_slide_layout_xml(
+  csld : String,
+  layout_type? : String = "blank",
+) -> String {
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
   "<p:sldLayout xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"" +
   " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"" +
-  " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" type=\"blank\">" +
+  " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" type=\"" +
+  layout_type +
+  "\">" +
   csld +
   "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" +
   "</p:sldLayout>"

@@ -118,8 +118,12 @@ pub(all) struct Slide {
   /// layouts do. Reuses the layout's enum so the inheritance resolver
   /// works uniformly.
   clr_map_override : @slide_master.ClrMapOverride
+  /// `<p:transition>` — the slide's entrance transition (roadmap D3). `None`
+  /// means the slide has no transition effect (the common case). Lifted out
+  /// of `extension` into a typed field; see `transition.mbt`.
+  transition : Transition?
   /// Lossless preservation (ADR-004): unmodelled `<p:sld>` children
-  /// (`<p:transition>`, `<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
+  /// (`<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
   /// unmodelled `<p:cSld>` children (`<p:controls>`, …; `<p:bg>` is now
   /// the typed `background` field), and unmodelled
   /// `<p:spTree>` siblings (root group metadata, foreign-namespace

@@ -10,6 +10,7 @@ fn slide_of_picture(pic : @slide.Picture) -> @slide.Slide {
     background: None,
     shapes: [Picture(pic)],
     clr_map_override: @slide_master.ClrMapOverride::MasterMapping,
+    transition: None,
     extension: [],
   }
 }

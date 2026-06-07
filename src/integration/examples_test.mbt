@@ -237,3 +237,115 @@ test "example 8: 3-slide pitch deck with widescreen + notes + chart + link" {
   assert_eq(prs2.charts().length(), 1)
   assert_eq(prs2.notes_slides().length(), 1)
 }
+
+///|
+test "example 9: typed layout slides (compile-time placeholder schema)" {
+  let prs = @presentation.Presentation::new()
+  // Each constructor returns a handle that only exposes the layout's
+  // placeholders. `.subtitle(...)` exists on a title slide; calling it on
+  // a title-and-content handle would not compile.
+  let _ = prs
+    .add_title_slide_mut()
+    .title("Quarterly Review")
+    .subtitle("FY2026 · Q3")
+    .finish_mut()
+  let _ = prs
+    .add_title_content_slide_mut()
+    .title("Agenda")
+    .body("Results · Outlook · Q&A")
+    .finish_mut()
+  let prs2 = @presentation.Presentation::open(prs.save())
+  assert_eq(prs2.slides().length(), 2)
+  assert_true(prs2.slides()[0].title() is Some(_))
+  assert_true(prs2.slides()[1].body() is Some(_))
+}
+
+///|
+test "example 10: slide transitions" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  // A fade that also auto-advances after 3 seconds.
+  let s = prs.slides()[0].with_transition(
+    @slide.Transition::fade().with_advance_after(3000),
+  )
+  prs.update_slide_mut(0, s)
+  let prs2 = @presentation.Presentation::open(prs.save())
+  assert_true(prs2.slides()[0].transition is Some(_))
+}
+
+///|
+test "example 11: ADT-driven chart options" {
+  let data = @chart.ChartData::new()
+    .with_category("Q1")
+    .with_category("Q2")
+    .with_series("Revenue", [100.0, 200.0])
+  let chart = @chart.Chart::of_bar(data).with_options([
+    Title("Revenue"),
+    Legend(LegendBottom),
+    DataLabels(DLblOutEnd),
+  ])
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_chart_mut(
+    0,
+    chart,
+    prs.pct_w(10.0),
+    prs.pct_h(15.0),
+    prs.pct_w(80.0),
+    prs.pct_h(70.0),
+  )
+  assert_eq(prs.charts().length(), 1)
+  assert_true(prs.charts()[0].chart.title is Some(_))
+}
+
+///|
+test "example 12: typed picture builder pipeline" {
+  let outline : @oxml.Stroke = {
+    width: Some(@units.Emu(12_700L)),
+    cap: None,
+    compound: None,
+    alignment: None,
+    fill: None,
+    dash: None,
+    join: None,
+    head_end: None,
+    tail_end: None,
+    extension: [],
+  }
+  // builder → crop → effects → build. Cropping twice would not compile.
+  let pic = @slide.Picture::builder(
+      5,
+      "Logo",
+      "rId2",
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(914_400L),
+      @units.Emu(914_400L),
+    )
+    .with_crop(left=@units.Percentage(10.0), right=@units.Percentage(10.0))
+    .with_effects(outline~)
+    .build()
+  assert_true(pic.blip_fill.src_rect is Some(_))
+  assert_true(pic.stroke is Some(_))
+}
+
+///|
+test "example 13: chart-data validation" {
+  // A consistent table validates and composes straight into a builder.
+  let good = @chart.ChartData::new()
+    .with_category("Q1")
+    .with_category("Q2")
+    .with_series("Revenue", [10.0, 20.0])
+  let _ = @chart.Chart::of_bar(good.validate())
+  // A series with the wrong number of values is caught.
+  let bad = @chart.ChartData::new()
+    .with_category("Q1")
+    .with_category("Q2")
+    .with_series("Revenue", [10.0])
+  assert_eq(bad.is_consistent(), false)
+  try bad.validate() |> ignore catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected validate to raise on a mismatched series")
+  }
+}

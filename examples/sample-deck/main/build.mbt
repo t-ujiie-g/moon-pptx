@@ -69,9 +69,26 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
   }
   // The master/template demo adds its own slide on the layout it defines.
   sample_master_slide(prs)
+  // Typed layout slides — the compile-time placeholder schema (M1). Adds its
+  // own slides on synthesised layouts.
+  sample_typed_layout_slides(prs)
   // Closing slide (links back to the title).
   let _ = prs.add_slide_mut(0)
   sample_closing_slide(prs, prs.slides().length() - 1)
+  // Slide transitions (v0.4 D3) — cycle a few effects across every slide so
+  // the deck animates on advance.
+  let transitions = [
+    @slide.Transition::fade(),
+    @slide.Transition::push(@slide.TransitionSide::Left),
+    @slide.Transition::wipe(@slide.TransitionSide::Up),
+    @slide.Transition::cover(@slide.TransitionDirection::LeftDown),
+  ]
+  for i in 0..<prs.slides().length() {
+    prs.update_slide_mut(
+      i,
+      prs.slides()[i].with_transition(transitions[i % transitions.length()]),
+    )
+  }
   prs.save()
 }
 
@@ -677,22 +694,26 @@ fn sample_picture_slide(
     prs.pct_h(20.0),
   )
 
-  // Add a second picture, this time with an explicit larger extent
-  // and a 15 % crop on each edge to show the fluent crop builder.
-  let cropped = @slide.Picture::of_image(
-    20,
-    "CroppedChecker",
-    "rId2", // rId2 is what `add_picture_auto_mut` allocated above.
-    prs.pct_w(40.0),
-    prs.pct_h(20.0),
-    prs.pct_w(50.0),
-    prs.pct_h(70.0),
-  ).with_crop(
-    left=@units.Percentage(15.0),
-    right=@units.Percentage(15.0),
-    top=@units.Percentage(15.0),
-    bottom=@units.Percentage(15.0),
-  )
+  // Add a second picture with an explicit larger extent and a 15 % crop on
+  // each edge — via the typed picture builder (v0.4 D4). The pipeline
+  // builder → with_crop → build is compile-time-checked: cropping twice, or
+  // applying effects after build, wouldn't compile.
+  let cropped = @slide.Picture::builder(
+      20,
+      "CroppedChecker",
+      "rId2", // rId2 is what `add_picture_auto_mut` allocated above.
+      prs.pct_w(40.0),
+      prs.pct_h(20.0),
+      prs.pct_w(50.0),
+      prs.pct_h(70.0),
+    )
+    .with_crop(
+      left=@units.Percentage(15.0),
+      right=@units.Percentage(15.0),
+      top=@units.Percentage(15.0),
+      bottom=@units.Percentage(15.0),
+    )
+    .build()
   prs.update_slide_mut(
     idx,
     prs.slides()[idx].with_shape(@slide.Picture(cropped)),
@@ -700,7 +721,7 @@ fn sample_picture_slide(
 
   // Speaker notes describing what the slide demonstrates.
   prs.set_notes_mut(
-    idx, "Left: original 16x16 BMP, size auto-derived from the header. Right: same image with a 15% crop on each edge — fluent with_crop builder.",
+    idx, "Left: original 16x16 BMP, size auto-derived from the header. Right: same image with a 15% crop on each edge — typed Picture::builder pipeline (D4).",
   )
 }
 
