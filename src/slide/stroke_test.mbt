@@ -80,6 +80,10 @@ test "shape stroke: a:ln with arrows lands on the right ends" {
 ///|
 test "shape stroke: bad inner colour bubbles up as SlideError" {
   let body = "<a:ln><a:solidFill><a:srgbClr val=\"GGGGGG\"/></a:solidFill></a:ln>"
-  let r = try? @slide.Slide::parse(slide_with_sp_body(body))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_sp_body(body)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

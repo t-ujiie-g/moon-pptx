@@ -84,8 +84,12 @@ test "CDATA section" {
 test "CDATA payload with ]]> is rejected" {
   let w = @xml.XmlWriter::new()
   w.start_element(@xml.QName::unqualified("foo"))
-  let r = try? w.cdata("oops ]]> closing")
-  assert_true(r is Err(@xml.XmlError::WriterMisuse(_)))
+  try w.cdata("oops ]]> closing") catch {
+    @xml.XmlError::WriterMisuse(_) => ()
+    _ => fail("expected WriterMisuse")
+  } noraise {
+    _ => fail("expected WriterMisuse")
+  }
 }
 
 ///|
@@ -93,23 +97,35 @@ test "attribute outside start tag is rejected" {
   let w = @xml.XmlWriter::new()
   w.start_element(@xml.QName::unqualified("foo"))
   w.text("body")
-  let r = try? w.attribute(@xml.QName::unqualified("late"), "x")
-  assert_true(r is Err(@xml.XmlError::WriterMisuse(_)))
+  try w.attribute(@xml.QName::unqualified("late"), "x") catch {
+    @xml.XmlError::WriterMisuse(_) => ()
+    _ => fail("expected WriterMisuse")
+  } noraise {
+    _ => fail("expected WriterMisuse")
+  }
 }
 
 ///|
 test "to_string with unclosed elements is rejected" {
   let w = @xml.XmlWriter::new()
   w.start_element(@xml.QName::unqualified("foo"))
-  let r = try? w.to_string()
-  assert_true(r is Err(@xml.XmlError::WriterMisuse(_)))
+  try w.to_string() catch {
+    @xml.XmlError::WriterMisuse(_) => ()
+    _ => fail("expected WriterMisuse")
+  } noraise {
+    _ => fail("expected WriterMisuse")
+  }
 }
 
 ///|
 test "unbound prefix raises UnboundPrefix" {
   let w = @xml.XmlWriter::new()
-  let r = try? w.start_element(@xml.QName::new(a_uri, "rect"))
-  assert_true(r is Err(@xml.XmlError::UnboundPrefix(_)))
+  try w.start_element(@xml.QName::new(a_uri, "rect")) catch {
+    @xml.XmlError::UnboundPrefix(_) => ()
+    _ => fail("expected UnboundPrefix")
+  } noraise {
+    _ => fail("expected UnboundPrefix")
+  }
 }
 
 ///|

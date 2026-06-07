@@ -146,12 +146,18 @@ test "pPr: buAutoNum default startAt is 1" {
 
 ///|
 test "pPr: buAutoNum with unknown type rejected" {
-  let r = try? @slide.Slide::parse(
-    slide_with_ppr(
-      "<a:pPr><a:buAutoNum type=\"thisIsNotASchemeAtAll\"/></a:pPr>",
-    ),
-  )
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try
+    @slide.Slide::parse(
+      slide_with_ppr(
+        "<a:pPr><a:buAutoNum type=\"thisIsNotASchemeAtAll\"/></a:pPr>",
+      ),
+    )
+  catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

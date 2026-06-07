@@ -119,25 +119,32 @@ test "parse External TargetMode" {
 ///|
 test "parse rejects malformed input" {
   let bad = "<?xml version=\"1.0\"?><Relationships><Relationship/></Relationships>"
-  let r1 = try? @opc.Relationships::parse(
-    @opc.package_root,
-    @fzip.str_to_u8(bad),
-  )
-  assert_true(r1 is Err(@opc.OpcError::MalformedPackage(_)))
+  try @opc.Relationships::parse(@opc.package_root, @fzip.str_to_u8(bad)) catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
   let bad2 = rels_xml("<Relationship Id=\"rId1\" Type=\"x\"/>") // no Target
-  let r2 = try? @opc.Relationships::parse(
-    @opc.package_root,
-    @fzip.str_to_u8(bad2),
-  )
-  assert_true(r2 is Err(@opc.OpcError::MalformedPackage(_)))
+  try
+    @opc.Relationships::parse(@opc.package_root, @fzip.str_to_u8(bad2))
+  catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
   let bad3 = rels_xml(
     "<Relationship Id=\"rId1\" Type=\"x\" Target=\"y\" TargetMode=\"Weird\"/>",
   )
-  let r3 = try? @opc.Relationships::parse(
-    @opc.package_root,
-    @fzip.str_to_u8(bad3),
-  )
-  assert_true(r3 is Err(@opc.OpcError::MalformedPackage(_)))
+  try
+    @opc.Relationships::parse(@opc.package_root, @fzip.str_to_u8(bad3))
+  catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
 }
 
 ///|
@@ -178,8 +185,12 @@ test "with_relationship rejects duplicate ids" {
     target_mode: @opc.TargetMode::Internal,
   }
   let rels = @opc.Relationships::new(@opc.package_root).with_relationship(r1)
-  let res = try? rels.with_relationship(r2)
-  assert_true(res is Err(@opc.OpcError::MalformedPackage(_)))
+  try rels.with_relationship(r2) catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
 }
 
 ///|

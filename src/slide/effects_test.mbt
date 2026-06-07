@@ -58,6 +58,10 @@ test "shape effects: malformed nested colour bubbles up as SlideError" {
   let body = "<a:effectLst>" +
     "<a:glow rad=\"63500\"><a:srgbClr val=\"BAD\"/></a:glow>" +
     "</a:effectLst>"
-  let r = try? @slide.Slide::parse(slide_with_sp_pr_for_effects(body))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_sp_pr_for_effects(body)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

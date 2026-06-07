@@ -171,8 +171,14 @@ test "Stroke: custDash is silently skipped" {
 
 ///|
 test "Stroke: bad colour inside solidFill wraps as FillFailure" {
-  let r = try? parse_stroke_inner(
-    "<a:ln><a:solidFill><a:srgbClr val=\"GGGGGG\"/></a:solidFill></a:ln>",
-  )
-  assert_true(r is Err(@oxml.StrokeError::FillFailure(_)))
+  try
+    parse_stroke_inner(
+      "<a:ln><a:solidFill><a:srgbClr val=\"GGGGGG\"/></a:solidFill></a:ln>",
+    )
+  catch {
+    @oxml.StrokeError::FillFailure(_) => ()
+    _ => fail("expected FillFailure")
+  } noraise {
+    _ => fail("expected FillFailure")
+  }
 }

@@ -73,6 +73,10 @@ test "add_slide_mut: save → reopen round-trips" {
 ///|
 test "add_slide_mut: out-of-range layout index raises Malformed" {
   let prs = @presentation.Presentation::new()
-  let r = try? prs.add_slide_mut(5)
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try prs.add_slide_mut(5) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

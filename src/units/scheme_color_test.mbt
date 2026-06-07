@@ -13,8 +13,12 @@ test "ThemeColor xml round trip for every variant" {
 ///|
 test "ThemeColor::from_xml rejects unknown names" {
   for bad in ["", "BG1", "accent7", "accent10", "bgX", "purple"] {
-    let result = try? @units.ThemeColor::from_xml(bad)
-    assert_true(result is Err(@units.UnitsError::UnknownSchemeColor(_)))
+    try @units.ThemeColor::from_xml(bad) catch {
+      @units.UnitsError::UnknownSchemeColor(_) => ()
+      _ => fail("expected UnknownSchemeColor")
+    } noraise {
+      _ => fail("expected UnknownSchemeColor")
+    }
   }
 }
 

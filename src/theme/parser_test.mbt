@@ -141,8 +141,12 @@ test "parse: missing clrScheme is rejected" {
     drawing +
     "\"><a:themeElements><a:fontScheme name=\"x\"><a:majorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:majorFont><a:minorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont></a:fontScheme></a:themeElements></a:theme>"
   let bytes = ascii_bytes(xml)
-  let r = try? @theme.Theme::parse(bytes)
-  assert_true(r is Err(@theme.ThemeError::MalformedTheme(_)))
+  try @theme.Theme::parse(bytes) catch {
+    @theme.ThemeError::MalformedTheme(_) => ()
+    _ => fail("expected MalformedTheme")
+  } noraise {
+    _ => fail("expected MalformedTheme")
+  }
 }
 
 ///|
@@ -167,15 +171,23 @@ test "parse: missing slot in clrScheme is rejected" {
     "<a:fontScheme name=\"x\"><a:majorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:majorFont>" +
     "<a:minorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont></a:fontScheme>" +
     "</a:themeElements></a:theme>"
-  let r = try? @theme.Theme::parse(ascii_bytes(xml))
-  assert_true(r is Err(@theme.ThemeError::MalformedTheme(_)))
+  try @theme.Theme::parse(ascii_bytes(xml)) catch {
+    @theme.ThemeError::MalformedTheme(_) => ()
+    _ => fail("expected MalformedTheme")
+  } noraise {
+    _ => fail("expected MalformedTheme")
+  }
 }
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
   let bytes = ascii_bytes("<a:theme xmlns:a=\"" + drawing + "\"><not closed>")
-  let r = try? @theme.Theme::parse(bytes)
-  assert_true(r is Err(@theme.ThemeError::XmlFailure(_, _)))
+  try @theme.Theme::parse(bytes) catch {
+    @theme.ThemeError::XmlFailure(_, _) => ()
+    _ => fail("expected XmlFailure")
+  } noraise {
+    _ => fail("expected XmlFailure")
+  }
 }
 
 ///|
@@ -185,8 +197,12 @@ test "parse: unsupported color element rejected" {
     "\"><a:themeElements><a:clrScheme name=\"x\">" +
     "<a:dk1><a:scrgbClr r=\"50000\" g=\"50000\" b=\"50000\"/></a:dk1>" +
     "</a:clrScheme></a:themeElements></a:theme>"
-  let r = try? @theme.Theme::parse(ascii_bytes(xml))
-  assert_true(r is Err(@theme.ThemeError::MalformedTheme(_)))
+  try @theme.Theme::parse(ascii_bytes(xml)) catch {
+    @theme.ThemeError::MalformedTheme(_) => ()
+    _ => fail("expected MalformedTheme")
+  } noraise {
+    _ => fail("expected MalformedTheme")
+  }
 }
 
 // --- ADR-004 lossless preservation ---

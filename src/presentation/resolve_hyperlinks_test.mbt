@@ -164,11 +164,14 @@ test "with_hyperlink_to_slide: out-of-range raises Malformed" {
     @units.Emu(1L),
     "",
   ).with_text_body(tb)
-  let r = try? prs.update_slide_mut(
-    0,
-    prs.slides()[0].with_shape(@slide.AutoShape(box)),
-  )
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

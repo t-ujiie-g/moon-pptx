@@ -54,8 +54,12 @@ test "Fill: solidFill with srgbClr" {
 
 ///|
 test "Fill: solidFill missing colour child rejected" {
-  let r = try? parse_inner_fill("<a:solidFill/>")
-  assert_true(r is Err(@oxml.FillError::MalformedFill(_)))
+  try parse_inner_fill("<a:solidFill/>") catch {
+    @oxml.FillError::MalformedFill(_) => ()
+    _ => fail("expected MalformedFill")
+  } noraise {
+    _ => fail("expected MalformedFill")
+  }
 }
 
 // --- GradientFill ---
@@ -105,10 +109,14 @@ test "Fill: path gradient" {
 
 ///|
 test "Fill: gradient with no stops rejected" {
-  let r = try? parse_inner_fill(
-    "<a:gradFill><a:gsLst/><a:lin ang=\"0\"/></a:gradFill>",
-  )
-  assert_true(r is Err(@oxml.FillError::MalformedFill(_)))
+  try
+    parse_inner_fill("<a:gradFill><a:gsLst/><a:lin ang=\"0\"/></a:gradFill>")
+  catch {
+    @oxml.FillError::MalformedFill(_) => ()
+    _ => fail("expected MalformedFill")
+  } noraise {
+    _ => fail("expected MalformedFill")
+  }
 }
 
 // --- PatternFill ---
@@ -141,8 +149,12 @@ test "Fill: pattFill missing fgClr rejected" {
   let inner = "<a:pattFill prst=\"x\">" +
     "<a:bgClr><a:srgbClr val=\"FFFFFF\"/></a:bgClr>" +
     "</a:pattFill>"
-  let r = try? parse_inner_fill(inner)
-  assert_true(r is Err(@oxml.FillError::MalformedFill(_)))
+  try parse_inner_fill(inner) catch {
+    @oxml.FillError::MalformedFill(_) => ()
+    _ => fail("expected MalformedFill")
+  } noraise {
+    _ => fail("expected MalformedFill")
+  }
 }
 
 // --- BlipFill ---
@@ -214,16 +226,24 @@ test "Fill: blipFill with linked rId only" {
 ///|
 test "Fill: blipFill with neither embed nor link rejected" {
   let inner = "<a:blipFill><a:blip/></a:blipFill>"
-  let r = try? parse_inner_fill(inner)
-  assert_true(r is Err(@oxml.FillError::MalformedFill(_)))
+  try parse_inner_fill(inner) catch {
+    @oxml.FillError::MalformedFill(_) => ()
+    _ => fail("expected MalformedFill")
+  } noraise {
+    _ => fail("expected MalformedFill")
+  }
 }
 
 // --- error / unknown ---
 
 ///|
 test "Fill: unknown wrapper rejected" {
-  let r = try? parse_inner_fill("<a:weirdFill/>")
-  assert_true(r is Err(@oxml.FillError::UnknownFillElement(_)))
+  try parse_inner_fill("<a:weirdFill/>") catch {
+    @oxml.FillError::UnknownFillElement(_) => ()
+    _ => fail("expected UnknownFillElement")
+  } noraise {
+    _ => fail("expected UnknownFillElement")
+  }
 }
 
 ///|
@@ -232,6 +252,10 @@ test "Fill: gs with bad color wrapped as ColorFailure" {
     "<a:gsLst><a:gs pos=\"0\"><a:srgbClr val=\"GGGGGG\"/></a:gs></a:gsLst>" +
     "<a:lin ang=\"0\"/>" +
     "</a:gradFill>"
-  let r = try? parse_inner_fill(inner)
-  assert_true(r is Err(@oxml.FillError::ColorFailure(_)))
+  try parse_inner_fill(inner) catch {
+    @oxml.FillError::ColorFailure(_) => ()
+    _ => fail("expected ColorFailure")
+  } noraise {
+    _ => fail("expected ColorFailure")
+  }
 }

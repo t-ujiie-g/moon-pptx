@@ -183,8 +183,12 @@ test "parse: cubicBezTo with wrong point count raises Malformed" {
   let body = "<a:custGeom><a:pathLst><a:path>" +
     "<a:cubicBezTo><a:pt x=\"0\" y=\"0\"/></a:cubicBezTo>" +
     "</a:path></a:pathLst></a:custGeom>"
-  let r = try? @slide.Slide::parse(slide_with_sp_pr(body))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_sp_pr(body)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 // --- AdjCoordinate / AdjAngle disambiguation ---
@@ -285,8 +289,12 @@ test "parse: cxn without <a:pos> raises Malformed" {
   let body = "<a:custGeom><a:cxnLst>" +
     "<a:cxn ang=\"0\"/>" +
     "</a:cxnLst><a:pathLst/></a:custGeom>"
-  let r = try? @slide.Slide::parse(slide_with_sp_pr(body))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_sp_pr(body)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

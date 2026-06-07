@@ -123,8 +123,12 @@ test "parse: missing clrMap is rejected" {
     p_ns +
     "\">" +
     "<p:sldLayoutIdLst/></p:sldMaster>"
-  let r = try? @slide_master.SlideMaster::parse(ascii_bytes(xml))
-  assert_true(r is Err(@slide_master.SlideMasterError::Malformed(_)))
+  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+    @slide_master.SlideMasterError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -137,8 +141,12 @@ test "parse: clrMap missing required slot is rejected" {
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\"/>" + // folHlink missing
     "</p:sldMaster>"
-  let r = try? @slide_master.SlideMaster::parse(ascii_bytes(xml))
-  assert_true(r is Err(@slide_master.SlideMasterError::Malformed(_)))
+  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+    @slide_master.SlideMasterError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -151,8 +159,12 @@ test "parse: clrMap with unknown enum value is rejected" {
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\" folHlink=\"folHlink\"/>" +
     "</p:sldMaster>"
-  let r = try? @slide_master.SlideMaster::parse(ascii_bytes(xml))
-  assert_true(r is Err(@slide_master.SlideMasterError::Malformed(_)))
+  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+    @slide_master.SlideMasterError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -168,12 +180,20 @@ test "parse: sldLayoutId without r:id is rejected" {
     " hlink=\"hlink\" folHlink=\"folHlink\"/>" +
     "<p:sldLayoutIdLst><p:sldLayoutId id=\"1\"/></p:sldLayoutIdLst>" +
     "</p:sldMaster>"
-  let r = try? @slide_master.SlideMaster::parse(ascii_bytes(xml))
-  assert_true(r is Err(@slide_master.SlideMasterError::Malformed(_)))
+  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+    @slide_master.SlideMasterError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
-  let r = try? @slide_master.SlideMaster::parse(ascii_bytes("<p:sldMaster"))
-  assert_true(r is Err(@slide_master.SlideMasterError::XmlFailure(_, _)))
+  try @slide_master.SlideMaster::parse(ascii_bytes("<p:sldMaster")) catch {
+    @slide_master.SlideMasterError::XmlFailure(_, _) => ()
+    _ => fail("expected XmlFailure")
+  } noraise {
+    _ => fail("expected XmlFailure")
+  }
 }

@@ -160,26 +160,42 @@ test "Color: long-tail modifiers (hueMod, redMod, comp) silently dropped" {
 
 ///|
 test "Color: unknown colour element rejected" {
-  let r = try? parse_inner_color("<a:weirdClr val=\"x\"/>")
-  assert_true(r is Err(@oxml.ColorError::UnknownColorElement(_)))
+  try parse_inner_color("<a:weirdClr val=\"x\"/>") catch {
+    @oxml.ColorError::UnknownColorElement(_) => ()
+    _ => fail("expected UnknownColorElement")
+  } noraise {
+    _ => fail("expected UnknownColorElement")
+  }
 }
 
 ///|
 test "Color: srgbClr missing val rejected" {
-  let r = try? parse_inner_color("<a:srgbClr/>")
-  assert_true(r is Err(@oxml.ColorError::MalformedColor(_)))
+  try parse_inner_color("<a:srgbClr/>") catch {
+    @oxml.ColorError::MalformedColor(_) => ()
+    _ => fail("expected MalformedColor")
+  } noraise {
+    _ => fail("expected MalformedColor")
+  }
 }
 
 ///|
 test "Color: srgbClr with bad hex rejected" {
-  let r = try? parse_inner_color("<a:srgbClr val=\"GG0000\"/>")
-  assert_true(r is Err(@oxml.ColorError::MalformedColor(_)))
+  try parse_inner_color("<a:srgbClr val=\"GG0000\"/>") catch {
+    @oxml.ColorError::MalformedColor(_) => ()
+    _ => fail("expected MalformedColor")
+  } noraise {
+    _ => fail("expected MalformedColor")
+  }
 }
 
 ///|
 test "Color: schemeClr with unknown val rejected" {
-  let r = try? parse_inner_color("<a:schemeClr val=\"weirdo\"/>")
-  assert_true(r is Err(@oxml.ColorError::MalformedColor(_)))
+  try parse_inner_color("<a:schemeClr val=\"weirdo\"/>") catch {
+    @oxml.ColorError::MalformedColor(_) => ()
+    _ => fail("expected MalformedColor")
+  } noraise {
+    _ => fail("expected MalformedColor")
+  }
 }
 
 // --- convenience constructors ---

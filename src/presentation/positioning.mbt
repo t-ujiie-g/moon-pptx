@@ -55,13 +55,13 @@ fn Presentation::slide_size_or_default(self : Presentation) -> SlideSize {
     cy: @units.Emu(6_858_000L),
     size_type: "screen4x3",
   }
-  let parsed = try? self.presentation_part()
+  let parsed = self.presentation_part() catch { _ => None }
   match parsed {
-    Ok(Some(p)) =>
+    Some(p) =>
       match p.sld_sz {
         Some(s) => s
         None => default
       }
-    _ => default
+    None => default
   }
 }

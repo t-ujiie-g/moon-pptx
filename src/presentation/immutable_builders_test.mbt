@@ -80,6 +80,10 @@ test "Presentation::clone: cloned package mutation doesn't reach original" {
 ///|
 test "with_added_slide: out-of-range layout raises Malformed" {
   let prs = @presentation.Presentation::new()
-  let r = try? prs.with_added_slide(layout_index=99)
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try prs.with_added_slide(layout_index=99) catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

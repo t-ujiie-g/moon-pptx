@@ -143,30 +143,42 @@ test "add_picture_mut: rejects unknown image format" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let garbage = FixedArray::make(16, b'\x00')
-  let raised = try? prs.add_picture_mut(
-    0,
-    garbage,
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
-  )
-  assert_true(raised is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.add_picture_mut(
+      0,
+      garbage,
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
 test "add_picture_mut: rejects out-of-range slide index" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let raised = try? prs.add_picture_mut(
-    99,
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
-  )
-  assert_true(raised is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.add_picture_mut(
+      99,
+      fake_png(),
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 // --- add_picture_auto_mut ---
@@ -222,13 +234,14 @@ test "add_picture_auto_mut: garbage bytes raise Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let garbage = FixedArray::make(16, b'\x00')
-  let r = try? prs.add_picture_auto_mut(
-    0,
-    garbage,
-    @units.Emu(0L),
-    @units.Emu(0L),
-  )
-  assert_true(r is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.add_picture_auto_mut(0, garbage, @units.Emu(0L), @units.Emu(0L))
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -341,16 +354,22 @@ test "add_svg_picture_mut: rejects an unrecognised fallback image" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let garbage = FixedArray::make(16, b'\x00')
-  let raised = try? prs.add_svg_picture_mut(
-    0,
-    fake_svg(),
-    garbage,
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
-  )
-  assert_true(raised is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.add_svg_picture_mut(
+      0,
+      fake_svg(),
+      garbage,
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 // --- add_video_mut / add_audio_mut (roadmap A6) ---
@@ -458,26 +477,38 @@ test "add_audio_mut: mp3 lands as audio/mpeg" {
 test "add_video_mut: rejects audio bytes; add_audio_mut rejects video bytes" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let r1 = try? prs.add_video_mut(
-    0,
-    fake_mp3(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
-  )
-  assert_true(r1 is Err(@presentation.PptxError::Malformed(_)))
-  let r2 = try? prs.add_audio_mut(
-    0,
-    fake_mp4(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
-  )
-  assert_true(r2 is Err(@presentation.PptxError::Malformed(_)))
+  try
+    prs.add_video_mut(
+      0,
+      fake_mp3(),
+      fake_png(),
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
+  try
+    prs.add_audio_mut(
+      0,
+      fake_mp4(),
+      fake_png(),
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

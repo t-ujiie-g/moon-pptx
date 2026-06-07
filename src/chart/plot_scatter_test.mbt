@@ -40,10 +40,10 @@ test "ScatterChart: missing scatterStyle raises Malformed" {
     "<c:axId val=\"1\"/>" +
     "<c:axId val=\"2\"/>" +
     "</c:scatterChart>"
-  let raised = try? @chart.Chart::parse(fixture_scatter_chart_xml(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed")
+  try @chart.Chart::parse(fixture_scatter_chart_xml(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed")
   }
 }
 

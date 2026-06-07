@@ -57,8 +57,12 @@ test "PresetShape: round-trip every variant via to_xml -> from_xml" {
 
 ///|
 test "PresetShape::from_xml: unknown value rejected" {
-  let r = try? @slide.PresetShape::from_xml("notashape")
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.PresetShape::from_xml("notashape") catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 // --- Slide / parser integration ---
@@ -149,8 +153,12 @@ test "parse: missing geometry leaves field None (permissive)" {
 ///|
 test "parse: prstGeom unknown preset value rejected" {
   let body = "<a:prstGeom prst=\"unknownPreset\"><a:avLst/></a:prstGeom>"
-  let r = try? @slide.Slide::parse(slide_with_sp_pr(body))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_sp_pr(body)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|

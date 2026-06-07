@@ -133,10 +133,10 @@ test "Trendline: spPr and trendlineLbl subtrees captured" {
 ///|
 test "Trendline: missing trendlineType raises Malformed" {
   let body = "<c:trendline><c:order val=\"2\"/></c:trendline>"
-  let raised = try? @chart.Chart::parse(fixture_trendline_in_bar(body))
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for trendline without trendlineType")
+  try @chart.Chart::parse(fixture_trendline_in_bar(body)) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for trendline without trendlineType")
   }
 }
 

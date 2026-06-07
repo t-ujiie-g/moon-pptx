@@ -152,8 +152,12 @@ test "parse: blip with neither embed nor link is rejected" {
   let inner = "<p:nvPicPr><p:cNvPr id=\"1\" name=\"x\"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr>" +
     "<p:blipFill><a:blip/></p:blipFill>" +
     "<p:spPr/>"
-  let r = try? @slide.Slide::parse(slide_with_pic(inner))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_pic(inner)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }
 
 ///|
@@ -161,6 +165,10 @@ test "parse: srcRect with non-integer attribute is rejected" {
   let inner = "<p:nvPicPr><p:cNvPr id=\"1\" name=\"x\"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr>" +
     "<p:blipFill><a:blip r:embed=\"rId1\"/><a:srcRect l=\"oops\"/></p:blipFill>" +
     "<p:spPr/>"
-  let r = try? @slide.Slide::parse(slide_with_pic(inner))
-  assert_true(r is Err(@slide.SlideError::Malformed(_)))
+  try @slide.Slide::parse(slide_with_pic(inner)) catch {
+    @slide.SlideError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
 }

@@ -91,10 +91,10 @@ test "LineChart: missing <c:grouping> raises Malformed" {
     "<c:axId val=\"2\"/>" +
     "</c:lineChart>"
   let bytes = fixture_line_chart_xml(body)
-  let raised = try? @chart.Chart::parse(bytes)
-  match raised {
-    Err(_) => ()
-    Ok(_) => fail("expected Malformed for lineChart without grouping")
+  try @chart.Chart::parse(bytes) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected Malformed for lineChart without grouping")
   }
 }
 

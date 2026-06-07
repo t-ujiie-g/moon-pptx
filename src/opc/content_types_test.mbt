@@ -50,15 +50,23 @@ test "resolve: unknown extension returns None" {
 ///|
 test "parse rejects elements outside the content-types namespace" {
   let xml = "<?xml version=\"1.0\"?><Types><Default Extension=\"xml\" ContentType=\"x\"/></Types>"
-  let r = try? @opc.ContentTypes::parse(@fzip.str_to_u8(xml))
-  assert_true(r is Err(@opc.OpcError::MalformedPackage(_)))
+  try @opc.ContentTypes::parse(@fzip.str_to_u8(xml)) catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
 }
 
 ///|
 test "parse rejects missing required attribute" {
   let xml = ct_xml("<Default Extension=\"xml\"/>")
-  let r = try? @opc.ContentTypes::parse(@fzip.str_to_u8(xml))
-  assert_true(r is Err(@opc.OpcError::MalformedPackage(_)))
+  try @opc.ContentTypes::parse(@fzip.str_to_u8(xml)) catch {
+    @opc.OpcError::MalformedPackage(_) => ()
+    _ => fail("expected MalformedPackage")
+  } noraise {
+    _ => fail("expected MalformedPackage")
+  }
 }
 
 ///|
