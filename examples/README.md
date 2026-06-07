@@ -295,6 +295,114 @@ let bytes = prs.save()
 
 ---
 
+## 9. Typed layout slides (compile-time placeholder schema)
+
+Each typed constructor returns a handle that only exposes the placeholders
+its layout actually has — so a typo like `.body()` on a title slide is a
+**compile error**, not a silently-dropped shape.
+
+```moonbit
+let prs = @presentation.Presentation::new()
+
+let _ = prs.add_title_slide_mut()
+  .title("Quarterly Review")
+  .subtitle("FY2026 · Q3")    // only a title slide has a subtitle
+  .finish_mut()
+
+let _ = prs.add_title_content_slide_mut()
+  .title("Agenda")
+  .body("Results · Outlook · Q&A")
+  .finish_mut()
+```
+
+Constructors: `add_title_slide_mut` (title + subtitle),
+`add_title_content_slide_mut` (title + body),
+`add_section_header_slide_mut` (title + body), `add_title_only_slide_mut`
+(title), `add_blank_typed_slide_mut` (no placeholders). Each resolves or
+synthesises the matching `<p:sldLayout>`. The index-based
+`add_slide_mut(layout_index)` still works for full control.
+
+---
+
+## 10. Slide transitions
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+// A fade that also auto-advances after 3 seconds.
+let s = prs.slides()[0].with_transition(
+  @slide.Transition::fade().with_advance_after(3000),
+)
+prs.update_slide_mut(0, s)
+```
+
+Other effects: `Transition::push(Right)`, `wipe(Up)`, `cover(LeftDown)`,
+`split(Vertical, In)`, `cut`, `zoom(In)`, `dissolve`, plus the rest of the
+base set via `Transition::of_kind(...)`. Tune timing with `with_speed`,
+`with_on_click`, and `with_advance_after`.
+
+---
+
+## 11. ADT-driven chart options
+
+```moonbit
+let data = @chart.ChartData::new()
+  .with_category("Q1").with_category("Q2")
+  .with_series("Revenue", [100.0, 200.0])
+
+let chart = @chart.Chart::of_bar(data).with_options([
+  Title("Revenue"),
+  Legend(LegendBottom),
+  DataLabels(DLblOutEnd),
+])
+```
+
+`ChartOption` also covers `TitleDeleted`, `LegendHidden`,
+`DataLabelsHidden`, `DataTable(true)`, `Style(n)`, `RoundedCorners(b)`,
+`PlotVisibleOnly(b)`, and `DisplayBlanks(...)`.
+
+---
+
+## 12. Typed picture builder pipeline
+
+The crop-then-effects pipeline is enforced by the type system: cropping
+twice, or applying effects after `build()`, won't compile.
+
+```moonbit
+let pic = @slide.Picture::builder(
+    5, "Logo", "rId2",
+    @units.Emu(0L), @units.Emu(0L),
+    @units.Emu(914_400L), @units.Emu(914_400L),
+  )
+  .with_crop(left=@units.Percentage(10.0), right=@units.Percentage(10.0))
+  .with_effects(outline=my_stroke)
+  .build()
+```
+
+`Picture::of_image` / `with_crop` remain as the unconstrained flat path.
+
+---
+
+## 13. Chart-data validation
+
+`with_series` is lenient by default (short rows are zero-padded). Call
+`validate()` for a strict check that a series has exactly one value per
+category — it returns the data so it composes straight into a builder:
+
+```moonbit
+let data = @chart.ChartData::new()
+  .with_category("Q1").with_category("Q2")
+  .with_series("Revenue", [10.0, 20.0])
+
+let chart = @chart.Chart::of_bar(data.validate())   // raises Malformed on a mismatch
+```
+
+Use the non-raising `data.is_consistent()` for a boolean check.
+`ScatterData` and `BubbleData` have matching `validate` / `is_consistent`.
+
+---
+
 ## Where to next?
 
 - [TODO.md](../TODO.md) — full feature comparison vs python-pptx + PptxGenJS and the v0.3 / v0.4 / v0.5 roadmap.

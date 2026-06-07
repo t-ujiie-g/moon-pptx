@@ -5,6 +5,57 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-06-07
+
+MoonBit-differentiator release: features that lean on the type system to
+catch mistakes at compile time, plus richer typed builders for
+transitions, charts, and pictures. Every change is additive — code
+written against 0.3.x keeps compiling.
+
+### Added
+
+- **Compile-time placeholder schema** (⭐) — typed layout handles make a
+  slide layout's placeholder set part of its type. `Presentation::`
+  `add_title_slide_mut` / `add_title_content_slide_mut` /
+  `add_section_header_slide_mut` / `add_title_only_slide_mut` /
+  `add_blank_typed_slide_mut` return a `LayoutSlide[L]` whose
+  `title` / `subtitle` / `body` accessors are gated by capability traits —
+  accessing a placeholder the layout doesn't have (e.g. `.body()` on a
+  title slide) is a **compile error**, not a runtime check. `finish_mut()`
+  commits the built slide. Each constructor resolves an existing
+  `<p:sldLayout>` of the right type or synthesises one (wiring it into the
+  master). The index-based `add_slide_mut(layout_index)` is unchanged.
+  No other PPTX library — in any language — offers this. (roadmap M1)
+- **ADT-driven chart options** — `Chart::with_options(Array[ChartOption])`
+  folds a sum-type option list into the chart model:
+  `Title` / `TitleDeleted` / `Legend` / `LegendHidden` / `DataLabels` /
+  `DataLabelsHidden` / `DataTable` / `Style` / `RoundedCorners` /
+  `PlotVisibleOnly` / `DisplayBlanks`. The option handling is exhaustive,
+  so a new option that isn't handled is a compiler error. (roadmap M2)
+- **Typed slide transitions** — `Slide::with_transition(Transition)` /
+  `without_transition()`. `Transition` covers the base CT_SlideTransition
+  effects (`fade` / `cut` / `push` / `wipe` / `cover` / `pull` / `split` /
+  `blinds` / `checker` / `comb` / `randomBar` / `strips` / `wheel` /
+  `zoom` / `circle` / `diamond` / `dissolve` / `newsflash` / `plus` /
+  `random` / `wedge`) with typed direction/orientation enums, plus
+  `with_speed` / `with_on_click` / `with_advance_after` timing.
+  `<p:transition>` is lifted into a typed `Slide.transition` field.
+  (roadmap D3)
+- **Typed picture builder state machine** — `Picture::builder(...)` opens a
+  compile-time-checked pipeline: `.with_crop(...)` → `.with_effects(...)` →
+  `.build()`. Cropping twice, or applying effects after `build`, is a type
+  error. The flat `Picture::of_image` / `with_crop` stay as the
+  unconstrained path. (roadmap D4)
+- **Chart-data validation** — `ChartData::validate()` (and
+  `ScatterData` / `BubbleData` counterparts) raises `Malformed` when a
+  series' value count doesn't match the category count, returning `self`
+  so it composes (`Chart::of_bar(data.validate())`); non-raising
+  `is_consistent()` for a boolean check. The `with_series` builders stay
+  lenient (pad/truncate) by default. (roadmap D7)
+- **`Slide::with_placeholder(kind, idx, text?)`** — a generic typed
+  placeholder builder (generalises `with_footer` / `with_date` /
+  `with_slide_number`); the building block behind the typed layout handles.
+
 ## [0.3.1] — 2026-06-01
 
 Deck-level slide editing: this release adds the slide **delete**,

@@ -4,9 +4,12 @@ A single PowerPoint deck built end-to-end with
 [`t-ujiie-g/moon-pptx`](https://mooncakes.io/docs/t-ujiie-g/moon-pptx),
 touring (almost) every feature: text, shapes, tables, the full chart
 gallery, pictures, slide backgrounds, SVG images, embedded audio/video,
-master slides with footer/date/slide-number, and in-place shape editing.
-Doubles as the canonical worked example and as a debugging helper for
-PowerPoint Online compatibility verification.
+master slides with footer/date/slide-number, and in-place shape editing —
+plus the v0.4 additions: typed layout slides (compile-time placeholder
+schema), slide transitions, ADT-driven chart options, the typed picture
+builder, and chart-data validation. Doubles as the canonical worked
+example and as a debugging helper for PowerPoint Online compatibility
+verification.
 
 ## Layout
 
@@ -37,7 +40,7 @@ published, a consumer swaps the path dep for a version:
 
 ```json
 "deps": {
-  "t-ujiie-g/moon-pptx": "0.3.0"
+  "t-ujiie-g/moon-pptx": "0.4.0"
 }
 ```
 

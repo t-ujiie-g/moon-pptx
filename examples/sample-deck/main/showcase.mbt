@@ -43,7 +43,9 @@ fn sample_combo_chart_slide(
   prs.update_slide_mut(
     idx,
     prs.slides()[idx].with_shape(
-      @slide.AutoShape(heading(prs, 2, "Combo charts (columns + line on a 2nd axis)")),
+      @slide.AutoShape(
+        heading(prs, 2, "Combo charts + chart options (M2) + data validation (D7)"),
+      ),
     ),
   )
   let revenue = @chart.ChartData::new()
@@ -58,11 +60,26 @@ fn sample_combo_chart_slide(
     .with_category("Q3")
     .with_category("Q4")
     .with_series("Margin %", [38.0, 41.0, 44.0, 47.0])
+  // D7: validate the data (one value per category) before building. The data
+  // is consistent here; a mismatch would raise. ChartError → PptxError.
+  let revenue = revenue.validate() catch {
+    e => raise @presentation.ChartFailure(e.to_string())
+  }
+  let margin = margin.validate() catch {
+    e => raise @presentation.ChartFailure(e.to_string())
+  }
+  // M2: configure the chart with a sum-type option list.
   let combo = @chart.Chart::of_combo(
     @chart.ChartPlot::Bar(revenue),
     @chart.ChartPlot::Line(margin),
     secondary_axis=true,
-  )
+  ).with_options([
+    @chart.ChartOption::Title("Revenue vs. margin %"),
+    @chart.ChartOption::Legend(@chart.LegendPos::LegendBottom),
+    // `ctr` is valid for both bar and line plots; `outEnd` would be rejected
+    // on the line plot (PowerPoint only allows ctr/l/r/t/b for line labels).
+    @chart.ChartOption::DataLabels(@chart.DLblPos::DLblCenter),
+  ])
   prs.add_chart_mut(
     idx,
     combo,
@@ -208,6 +225,30 @@ fn sample_master_slide(
     .with_date(@slide.DateMode::Auto)
     .with_slide_number(true),
   )
+}
+
+///|
+/// Typed layout slides — the compile-time placeholder schema (v0.4 M1). Each
+/// constructor returns a handle that only exposes the placeholders its layout
+/// has, so `.subtitle()` / `.body()` calls that don't fit the layout are
+/// compile errors. These add their own slides (on synthesised layouts).
+fn sample_typed_layout_slides(
+  prs : @presentation.Presentation,
+) -> Unit raise @presentation.PptxError {
+  // A section header (title + body), built through the typed handle.
+  let _ = prs
+    .add_section_header_slide_mut()
+    .title("Typed layouts (M1)")
+    .body("These slides use the compile-time placeholder schema.")
+    .finish_mut()
+  // A title-and-content slide — `.body()` is available only because this
+  // layout has a body placeholder; calling it on a title-only handle would
+  // not compile.
+  let _ = prs
+    .add_title_content_slide_mut()
+    .title("Compile-time placeholder safety")
+    .body("Accessing a placeholder the layout lacks is a compile error, not a runtime check — no other PPTX library offers this.")
+    .finish_mut()
 }
 
 // --- synthetic assets for the SVG / media demos ---

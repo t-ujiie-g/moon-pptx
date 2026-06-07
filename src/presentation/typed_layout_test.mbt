@@ -97,6 +97,28 @@ test "M1 layout synthesis is idempotent across same-type slides" {
 }
 
 ///|
+test "M1 successive typed layouts attach to the same (main) master" {
+  // Regression: with a second master present (define_master), synthesising two
+  // layouts must keep attaching them to the main master. `replace_part_bytes`
+  // reorders parts, so a "first in package order" pick used to drift to the
+  // wrong master and split the two layouts apart.
+  let prs = @presentation.Presentation::new()
+  let _ = prs.define_master(@presentation.MasterDefinition::new("Extra"))
+  let _ = prs.add_section_header_slide_mut().title("A").finish_mut()
+  let _ = prs.add_title_content_slide_mut().title("B").body("b").finish_mut()
+  let prs2 = @presentation.Presentation::open(prs.save())
+  // The main master accumulated both synthesised layouts (blank + secHead +
+  // obj = 3 refs); the bug split them across masters, leaving max 2.
+  let mut max_layouts = 0
+  for m in prs2.slide_masters() {
+    if m.layout_refs.length() > max_layouts {
+      max_layouts = m.layout_refs.length()
+    }
+  }
+  assert_eq(max_layouts, 3)
+}
+
+///|
 test "M1 mixed deck: several typed layouts coexist and reopen" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_title_slide_mut().title("Deck").subtitle("2026").finish_mut()

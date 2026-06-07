@@ -30,8 +30,11 @@ fn Presentation::ensure_layout_of_type(
       }
     }
   }
-  // 2. Synthesise, attached to the first slide master.
-  let master_name = match find_first_master_part_name(self.pkg) {
+  // 2. Synthesise, attached to the main (lowest-index) slide master. We
+  //    select by part-name index, not package order: `replace_part_bytes`
+  //    (remove + re-add) reorders parts, so a plain "first in order" pick
+  //    would drift to a different master across successive calls.
+  let master_name = match find_main_master_part_name(self.pkg) {
     Some(n) => n
     None => raise Malformed("package has no slide master to attach a layout to")
   }
@@ -92,14 +95,35 @@ fn Presentation::ensure_layout_of_type(
 }
 
 ///|
-/// The first slide-master part name in package order, or `None`.
-fn find_first_master_part_name(pkg : @opc.Package) -> String? {
+/// The main slide-master part name — the one with the lowest
+/// `/ppt/slideMasters/slideMasterN.xml` index — or `None`. Chosen by name
+/// (not package order) so it stays stable when `replace_part_bytes` reorders
+/// parts between calls.
+fn find_main_master_part_name(pkg : @opc.Package) -> String? {
+  let prefix = "/ppt/slideMasters/slideMaster"
+  let mut best : String? = None
+  let mut best_n = 0
   for p in pkg.parts() {
     if p.content_type == @oxml.ct_slide_master {
-      return Some(p.name)
+      let rest = if p.name.length() > prefix.length() {
+        p.name.view(start_offset=prefix.length()).to_owned()
+      } else {
+        ""
+      }
+      let dot = str_index(rest, ".", 0)
+      let digits = if dot >= 0 {
+        rest.view(start_offset=0, end_offset=dot).to_owned()
+      } else {
+        rest
+      }
+      let n = @oxml.parse_signed_int(digits).unwrap_or(0)
+      if best is None || n < best_n {
+        best = Some(p.name)
+        best_n = n
+      }
     }
   }
-  None
+  best
 }
 
 ///|
