@@ -22,11 +22,11 @@ priv enum ExtScope {
 ///
 /// `<p:nvGrpSpPr>` / `<p:grpSpPr>` belong inside `<p:spTree>`;
 /// `<p:controls>` belongs inside `<p:cSld>`; everything else
-/// (`<p:transition>` / `<p:timing>` / `<p:custDataLst>` /
-/// `<p:extLst>` + foreign-namespace siblings) attaches at the sld
-/// level. `<p:bg>` is no longer captured here — it is the typed
-/// `Slide.background` field (roadmap A7). Same applies for `<p:notes>`
-/// since they share the content model.
+/// (`<p:timing>` / `<p:custDataLst>` / `<p:extLst>` + foreign-namespace
+/// siblings) attaches at the sld level. `<p:bg>` (roadmap A7) and
+/// `<p:transition>` (roadmap D3) are no longer captured here — they are the
+/// typed `Slide.background` / `Slide.transition` fields. Same applies for
+/// `<p:notes>` since they share the content model.
 fn classify_ext(el : @xml.XmlElement) -> ExtScope {
   if el.name.uri != @oxml.presentation_ns {
     return ExtSld
@@ -75,6 +75,103 @@ fn write_bg(
     }
   }
   w.end_element() // bg
+}
+
+///|
+/// Emit `<p:transition>` (CT_SlideTransition) — the typed slide transition
+/// (roadmap D3). Default-valued attributes (`spd="fast"`, `advClick="1"`) are
+/// omitted; they re-parse to the same model. The single effect child precedes
+/// the preserved `<p:sndAc>` / `<p:extLst>` extensions.
+fn write_transition(
+  w : @xml.XmlWriter,
+  ctx : @oxml.WriteCtx,
+  t : Transition,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.presentation_ns, "transition"))
+  if t.speed != Fast {
+    w.attribute(@xml.QName::unqualified("spd"), t.speed.to_xml())
+  }
+  if !t.advance_on_click {
+    w.attribute(@xml.QName::unqualified("advClick"), "0")
+  }
+  match t.advance_after {
+    Some(ms) => w.attribute(@xml.QName::unqualified("advTm"), ms.to_string())
+    None => ()
+  }
+  write_transition_kind(w, t.kind)
+  // <p:sndAc> / <p:extLst> captured per ADR-004.
+  for ext in t.extension {
+    @oxml.write_xml_element(w, ctx, ext)
+  }
+  w.end_element() // transition
+}
+
+///|
+/// Emit the single transition-effect child element. `NoEffect` emits nothing
+/// (the `<p:transition>` carries only timing). Each effect element is a leaf
+/// carrying its direction / orientation / flag attribute.
+fn write_transition_kind(
+  w : @xml.XmlWriter,
+  kind : TransitionKind,
+) -> Unit raise @xml.XmlError {
+  // Open a `<p:NAME>` effect element with a single `dir`-style attribute.
+  fn elem(name : String, attr : String?) -> Unit raise @xml.XmlError {
+    w.start_element(@xml.QName::new(@oxml.presentation_ns, name))
+    match attr {
+      Some(v) => w.attribute(@xml.QName::unqualified("dir"), v)
+      None => ()
+    }
+    w.end_element()
+  }
+
+  match kind {
+    NoEffect => ()
+    Blinds(o) => elem("blinds", Some(o.to_xml()))
+    Checker(o) => elem("checker", Some(o.to_xml()))
+    Circle => elem("circle", None)
+    Comb(o) => elem("comb", Some(o.to_xml()))
+    Cover(d) => elem("cover", Some(d.to_xml()))
+    Cut(thru_black) => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "cut"))
+      if thru_black {
+        w.attribute(@xml.QName::unqualified("thruBlk"), "1")
+      }
+      w.end_element()
+    }
+    Diamond => elem("diamond", None)
+    Dissolve => elem("dissolve", None)
+    Fade(thru_black) => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "fade"))
+      if thru_black {
+        w.attribute(@xml.QName::unqualified("thruBlk"), "1")
+      }
+      w.end_element()
+    }
+    Newsflash => elem("newsflash", None)
+    Plus => elem("plus", None)
+    Pull(d) => elem("pull", Some(d.to_xml()))
+    Push(s) => elem("push", Some(s.to_xml()))
+    Random => elem("random", None)
+    RandomBar(o) => elem("randomBar", Some(o.to_xml()))
+    Split(orient, dir) => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "split"))
+      w.attribute(@xml.QName::unqualified("orient"), orient.to_xml())
+      w.attribute(@xml.QName::unqualified("dir"), dir.to_xml())
+      w.end_element()
+    }
+    Strips(c) => elem("strips", Some(c.to_xml()))
+    Wedge => elem("wedge", None)
+    Wheel(spokes) => {
+      w.start_element(@xml.QName::new(@oxml.presentation_ns, "wheel"))
+      // Schema default is 4; emit only when it differs.
+      if spokes != 4 {
+        w.attribute(@xml.QName::unqualified("spokes"), spokes.to_string())
+      }
+      w.end_element()
+    }
+    Wipe(s) => elem("wipe", Some(s.to_xml()))
+    Zoom(d) => elem("zoom", Some(d.to_xml()))
+  }
 }
 
 ///|
@@ -189,8 +286,14 @@ fn write_slide_xml(
   w.end_element() // cSld
   // <p:clrMapOvr> — shared writer in @slide_master.
   @slide_master.write_clr_map_override(w, s.clr_map_override)
-  // sld-level extensions (transition / timing / custDataLst / extLst
-  // / foreign-namespace).
+  // <p:transition> after <p:clrMapOvr>, before <p:timing>, per CT_Slide
+  // ordering (roadmap D3). Lifted out of `extension`, so the sld-level replay
+  // below no longer carries it.
+  match s.transition {
+    Some(t) => write_transition(w, ctx, t)
+    None => ()
+  }
+  // sld-level extensions (timing / custDataLst / extLst / foreign-namespace).
   for ext in s.extension {
     if classify_ext(ext) is ExtSld {
       @oxml.write_xml_element(w, ctx, ext)

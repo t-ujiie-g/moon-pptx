@@ -19,7 +19,7 @@ fn find_ext(slide : @slide.Slide, local_name : String) -> @xml.XmlElement? {
 // --- Slide.extension captures the top-level non-shape children. ---
 
 ///|
-test "ADR-004: slide-level transition and timing survive parse" {
+test "ADR-004: slide-level timing survives parse; transition lifts to typed field" {
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +
     pml_ns +
@@ -33,21 +33,17 @@ test "ADR-004: slide-level transition and timing survive parse" {
     "<p:timing/>" +
     "</p:sld>"
   let slide = @slide.Slide::parse(fixture_bytes(xml))
-  // transition + timing + nvGrpSpPr + grpSpPr = 4 captured nodes.
-  // (Implicit-root-group metadata moves to the slide-level extension too.)
-  let transition = find_ext(slide, "transition")
-  assert_true(transition is Some(_))
-  let t = transition.unwrap()
-  assert_eq(t.name.uri, pml_ns)
-  // Source-order attribute and child are preserved.
-  assert_eq(t.attributes.length(), 1)
-  assert_eq(t.attributes[0].0.local_name, "spd")
-  assert_eq(t.attributes[0].1, "med")
-  assert_eq(t.children.length(), 1)
-  match t.children[0] {
-    Element(fade) => assert_eq(fade.name.local_name, "fade")
-    _ => fail("expected <p:fade/> child")
+  // D3: `<p:transition>` is now the typed `Slide.transition` field, so it must
+  // *not* appear in extension (mirrors A7's `<p:bg>` lift below).
+  assert_true(find_ext(slide, "transition") is None)
+  match slide.transition {
+    Some(t) => {
+      assert_true(t.speed == Medium)
+      assert_true(t.kind == Fade(false))
+    }
+    None => fail("expected a typed transition")
   }
+  // `<p:timing>` is still unmodelled and round-trips via extension.
   let timing = find_ext(slide, "timing")
   assert_true(timing is Some(_))
 }

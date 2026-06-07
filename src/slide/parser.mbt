@@ -50,6 +50,7 @@ fn parse_slide_xml(
   let mut background : Background? = None
   let shapes : Array[Shape] = []
   let mut clr_map_override : @slide_master.ClrMapOverride = MasterMapping
+  let mut transition : Transition? = None
   let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
@@ -66,8 +67,9 @@ fn parse_slide_xml(
               background = bg
             }
             "clrMapOvr" => clr_map_override = parse_clr_map_ovr(r, extension)
-            // transition, timing, custDataLst, extLst, and any future
-            // <p:sld> children we don't yet model.
+            "transition" => transition = Some(parse_transition(r, attrs))
+            // timing, custDataLst, extLst, and any future <p:sld> children we
+            // don't yet model.
             _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
         }
@@ -75,7 +77,116 @@ fn parse_slide_xml(
       _ => ()
     }
   }
-  { name: slide_name, background, shapes, clr_map_override, extension }
+  {
+    name: slide_name,
+    background,
+    shapes,
+    clr_map_override,
+    transition,
+    extension,
+  }
+}
+
+///|
+/// Parse `<p:transition>` (CT_SlideTransition) — the `spd` / `advClick` /
+/// `advTm` attributes plus the optional single transition-effect child. Lifts
+/// the transition out of `extension` into the typed `Slide.transition` field
+/// (roadmap D3). `<p:sndAc>` / `<p:extLst>` and any unmodelled children are
+/// preserved per ADR-004.
+fn parse_transition(
+  r : @xml.XmlReader,
+  attrs : Array[(@xml.QName, String)],
+) -> Transition raise SlideError {
+  let speed = match @oxml.optional_attr(attrs, "spd") {
+    Some(s) => TransitionSpeed::from_xml(s)
+    None => Fast
+  }
+  let advance_on_click = match @oxml.bool_attr_opt(attrs, "advClick") {
+    Some(b) => b
+    None => true
+  }
+  let advance_after = match @oxml.optional_attr(attrs, "advTm") {
+    Some(s) => @oxml.parse_signed_int(s)
+    None => None
+  }
+  let mut kind : TransitionKind = NoEffect
+  let extension : Array[@xml.XmlElement] = []
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) =>
+        if child.uri == @oxml.presentation_ns {
+          match transition_kind_from(child.local_name, child_attrs) {
+            // A modelled effect element is a leaf (attribute-only); consume its
+            // (empty) subtree to balance the reader.
+            Some(k) => {
+              kind = k
+              skip_subtree(r)
+            }
+            // <p:sndAc>, <p:extLst>, or anything else — preserve verbatim.
+            None =>
+              extension.push(collect_subtree_unknown(r, child, child_attrs))
+          }
+        } else {
+          extension.push(collect_subtree_unknown(r, child, child_attrs))
+        }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  { kind, speed, advance_on_click, advance_after, extension }
+}
+
+///|
+/// Map a `<p:transition>` choice-child local name + attributes to a typed
+/// `TransitionKind`. Returns `None` for non-effect children (`sndAc`,
+/// `extLst`, …) so the caller preserves them in `extension`. Direction /
+/// orientation attributes default to the schema's first value when absent.
+fn transition_kind_from(
+  local_name : String,
+  attrs : Array[(@xml.QName, String)],
+) -> TransitionKind? {
+  let dir = @oxml.optional_attr_or(attrs, "dir", "")
+  match local_name {
+    "blinds" => Some(Blinds(TransitionOrientation::from_xml(dir)))
+    "checker" => Some(Checker(TransitionOrientation::from_xml(dir)))
+    "circle" => Some(Circle)
+    "comb" => Some(Comb(TransitionOrientation::from_xml(dir)))
+    "cover" => Some(Cover(TransitionDirection::from_xml(dir)))
+    "cut" => Some(Cut(@oxml.bool_attr_opt(attrs, "thruBlk").unwrap_or(false)))
+    "diamond" => Some(Diamond)
+    "dissolve" => Some(Dissolve)
+    "fade" => Some(Fade(@oxml.bool_attr_opt(attrs, "thruBlk").unwrap_or(false)))
+    "newsflash" => Some(Newsflash)
+    "plus" => Some(Plus)
+    "pull" => Some(Pull(TransitionDirection::from_xml(dir)))
+    "push" => Some(Push(TransitionSide::from_xml(dir)))
+    "random" => Some(Random)
+    "randomBar" => Some(RandomBar(TransitionOrientation::from_xml(dir)))
+    "split" =>
+      Some(
+        Split(
+          TransitionOrientation::from_xml(
+            @oxml.optional_attr_or(attrs, "orient", ""),
+          ),
+          TransitionInOut::from_xml(dir),
+        ),
+      )
+    "strips" => Some(Strips(TransitionCorner::from_xml(dir)))
+    "wedge" => Some(Wedge)
+    "wheel" =>
+      Some(
+        Wheel(
+          match @oxml.optional_attr(attrs, "spokes") {
+            Some(s) => @oxml.parse_signed_int(s).unwrap_or(4)
+            None => 4
+          },
+        ),
+      )
+    "wipe" => Some(Wipe(TransitionSide::from_xml(dir)))
+    "zoom" => Some(Zoom(TransitionInOut::from_xml(dir)))
+    _ => None
+  }
 }
 
 ///|

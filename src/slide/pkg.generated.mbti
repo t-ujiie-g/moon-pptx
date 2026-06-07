@@ -626,6 +626,7 @@ pub(all) struct Slide {
   background : Background?
   shapes : Array[Shape]
   clr_map_override : @slide_master.ClrMapOverride
+  transition : Transition?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Slide::body(Self) -> Shape?
@@ -646,9 +647,11 @@ pub fn Slide::with_shape_at(Self, Int, Shape) -> Self raise SlideError
 pub fn Slide::with_shape_by_id(Self, Int, (Shape) -> Shape) -> Self raise SlideError
 pub fn Slide::with_shape_mapped(Self, Int, (Shape) -> Shape) -> Self raise SlideError
 pub fn Slide::with_slide_number(Self, Bool) -> Self
+pub fn Slide::with_transition(Self, Transition) -> Self
 pub fn Slide::without_background(Self) -> Self
 pub fn Slide::without_shape(Self, Int) -> Self raise SlideError
 pub fn Slide::without_shape_by_id(Self, Int) -> Self raise SlideError
+pub fn Slide::without_transition(Self) -> Self
 
 pub(all) enum StrikeKind {
   StNoStrike
@@ -757,6 +760,106 @@ pub(all) struct Transform {
   offset : Point
   extent : Size
 } derive(Eq, @debug.Debug)
+
+pub(all) struct Transition {
+  kind : TransitionKind
+  speed : TransitionSpeed
+  advance_on_click : Bool
+  advance_after : Int?
+  extension : Array[@xml.XmlElement]
+} derive(Eq, @debug.Debug)
+pub fn Transition::cover(TransitionDirection) -> Self
+pub fn Transition::cut(through_black? : Bool) -> Self
+pub fn Transition::dissolve() -> Self
+pub fn Transition::fade(through_black? : Bool) -> Self
+pub fn Transition::none() -> Self
+pub fn Transition::of_kind(TransitionKind) -> Self
+pub fn Transition::push(TransitionSide) -> Self
+pub fn Transition::split(TransitionOrientation, TransitionInOut) -> Self
+pub fn Transition::wipe(TransitionSide) -> Self
+pub fn Transition::with_advance_after(Self, Int) -> Self
+pub fn Transition::with_on_click(Self, Bool) -> Self
+pub fn Transition::with_speed(Self, TransitionSpeed) -> Self
+pub fn Transition::without_advance_after(Self) -> Self
+pub fn Transition::zoom(TransitionInOut) -> Self
+
+pub(all) enum TransitionCorner {
+  LeftUp
+  RightUp
+  LeftDown
+  RightDown
+} derive(Eq, @debug.Debug)
+pub fn TransitionCorner::from_xml(String) -> Self
+pub fn TransitionCorner::to_xml(Self) -> String
+
+pub(all) enum TransitionDirection {
+  Left
+  Up
+  Right
+  Down
+  LeftUp
+  RightUp
+  LeftDown
+  RightDown
+} derive(Eq, @debug.Debug)
+pub fn TransitionDirection::from_xml(String) -> Self
+pub fn TransitionDirection::to_xml(Self) -> String
+
+pub(all) enum TransitionInOut {
+  In
+  Out
+} derive(Eq, @debug.Debug)
+pub fn TransitionInOut::from_xml(String) -> Self
+pub fn TransitionInOut::to_xml(Self) -> String
+
+pub(all) enum TransitionKind {
+  NoEffect
+  Blinds(TransitionOrientation)
+  Checker(TransitionOrientation)
+  Circle
+  Comb(TransitionOrientation)
+  Cover(TransitionDirection)
+  Cut(Bool)
+  Diamond
+  Dissolve
+  Fade(Bool)
+  Newsflash
+  Plus
+  Pull(TransitionDirection)
+  Push(TransitionSide)
+  Random
+  RandomBar(TransitionOrientation)
+  Split(TransitionOrientation, TransitionInOut)
+  Strips(TransitionCorner)
+  Wedge
+  Wheel(Int)
+  Wipe(TransitionSide)
+  Zoom(TransitionInOut)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TransitionOrientation {
+  Horizontal
+  Vertical
+} derive(Eq, @debug.Debug)
+pub fn TransitionOrientation::from_xml(String) -> Self
+pub fn TransitionOrientation::to_xml(Self) -> String
+
+pub(all) enum TransitionSide {
+  Left
+  Up
+  Right
+  Down
+} derive(Eq, @debug.Debug)
+pub fn TransitionSide::from_xml(String) -> Self
+pub fn TransitionSide::to_xml(Self) -> String
+
+pub(all) enum TransitionSpeed {
+  Slow
+  Medium
+  Fast
+} derive(Eq, @debug.Debug)
+pub fn TransitionSpeed::from_xml(String) -> Self
+pub fn TransitionSpeed::to_xml(Self) -> String
 
 pub(all) enum UnderlineKind {
   UlNone

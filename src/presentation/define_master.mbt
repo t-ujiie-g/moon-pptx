@@ -293,6 +293,7 @@ fn build_placeholder_csld(
     background,
     shapes,
     clr_map_override: @slide_master.ClrMapOverride::MasterMapping,
+    transition: None,
     extension: [],
   }
   let xml = @oxml.bytes_to_string(slide.serialize()) catch {

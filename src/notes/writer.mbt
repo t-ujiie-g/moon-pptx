@@ -18,6 +18,8 @@ pub fn NotesSlide::serialize(
     background: None,
     shapes: self.shapes,
     clr_map_override: self.clr_map_override,
+    // Notes slides never carry a `<p:transition>`.
+    transition: None,
     extension: self.extension,
   }
   s.serialize_with_root("notes") catch {
