@@ -195,7 +195,9 @@ pub impl Show for BubbleChartBody
 pub(all) struct BubbleData {
   series : Array[BubbleSeries]
 } derive(Eq, @debug.Debug)
+pub fn BubbleData::is_consistent(Self) -> Bool
 pub fn BubbleData::new() -> Self
+pub fn BubbleData::validate(Self) -> Self raise ChartError
 pub fn BubbleData::with_series(Self, String, Array[Double], Array[Double], Array[Double]) -> Self
 pub impl Show for BubbleData
 
@@ -270,7 +272,9 @@ pub(all) struct ChartData {
   categories : Array[String]
   series : Array[ChartSeries]
 } derive(Eq, @debug.Debug)
+pub fn ChartData::is_consistent(Self) -> Bool
 pub fn ChartData::new() -> Self
+pub fn ChartData::validate(Self) -> Self raise ChartError
 pub fn ChartData::with_category(Self, String) -> Self
 pub fn ChartData::with_series(Self, String, Array[Double]) -> Self
 pub impl Show for ChartData
@@ -632,7 +636,9 @@ pub impl Show for ScatterChartBody
 pub(all) struct ScatterData {
   series : Array[ScatterSeries]
 } derive(Eq, @debug.Debug)
+pub fn ScatterData::is_consistent(Self) -> Bool
 pub fn ScatterData::new() -> Self
+pub fn ScatterData::validate(Self) -> Self raise ChartError
 pub fn ScatterData::with_series(Self, String, Array[Double], Array[Double]) -> Self
 pub impl Show for ScatterData
 
