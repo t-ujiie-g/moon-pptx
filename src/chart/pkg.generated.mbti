@@ -246,6 +246,7 @@ pub fn Chart::of_surface(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::of_surface_3d(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::parse(FixedArray[Byte]) -> Self raise ChartError
 pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
+pub fn Chart::with_options(Self, Array[ChartOption]) -> Self
 pub impl Show for Chart
 
 pub(all) struct ChartBody {
@@ -284,6 +285,21 @@ pub(all) struct ChartLegend {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub impl Show for ChartLegend
+
+pub(all) enum ChartOption {
+  Title(String)
+  TitleDeleted
+  Legend(LegendPos)
+  LegendHidden
+  DataLabels(DLblPos)
+  DataLabelsHidden
+  DataTable(Bool)
+  Style(Int)
+  RoundedCorners(Bool)
+  PlotVisibleOnly(Bool)
+  DisplayBlanks(DisplayBlanksAs)
+} derive(Eq, @debug.Debug)
+pub impl Show for ChartOption
 
 pub(all) enum ChartPlot {
   Bar(ChartData)
