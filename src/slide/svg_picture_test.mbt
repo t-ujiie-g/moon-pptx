@@ -11,6 +11,7 @@ fn slide_of_picture(pic : @slide.Picture) -> @slide.Slide {
     shapes: [Picture(pic)],
     clr_map_override: @slide_master.ClrMapOverride::MasterMapping,
     transition: None,
+    timing: None,
     extension: [],
   }
 }

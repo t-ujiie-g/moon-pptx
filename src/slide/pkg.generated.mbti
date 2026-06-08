@@ -10,6 +10,8 @@ import {
 }
 
 // Values
+pub let anim_default_duration_ms : Int
+
 pub fn wrap_xml(@xml.XmlError) -> SlideError
 
 // Errors
@@ -38,6 +40,38 @@ pub(all) enum Anchor {
   AnchorDistributed
 } derive(Eq, @debug.Debug)
 pub fn Anchor::from_xml(String) -> Self?
+
+pub(all) enum AnimDirection {
+  Up
+  Down
+  Left
+  Right
+} derive(Eq, @debug.Debug)
+pub fn AnimDirection::to_filter(Self) -> String
+
+pub(all) enum AnimEffect {
+  Entrance(VisualEffect)
+  Exit(VisualEffect)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum AnimOrientation {
+  Horizontal
+  Vertical
+} derive(Eq, @debug.Debug)
+pub fn AnimOrientation::to_filter(Self) -> String
+
+pub(all) enum AnimStart {
+  OnClick
+  WithPrevious
+  AfterPrevious
+} derive(Eq, @debug.Debug)
+
+pub(all) struct AnimStep {
+  effect : AnimEffect
+  target_shape_id : Int
+  start : AnimStart
+  duration_ms : Int
+} derive(Eq, @debug.Debug)
 
 pub(all) enum AutoFit {
   NoAutoFit
@@ -646,6 +680,7 @@ pub(all) struct Slide {
   shapes : Array[Shape]
   clr_map_override : @slide_master.ClrMapOverride
   transition : Transition?
+  timing : Timeline?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Slide::body(Self) -> Shape?
@@ -657,6 +692,7 @@ pub fn Slide::placeholders(Self) -> Array[(PlaceholderType, Shape)]
 pub fn Slide::serialize(Self) -> FixedArray[Byte] raise SlideError
 pub fn Slide::serialize_with_root(Self, String) -> FixedArray[Byte] raise SlideError
 pub fn Slide::title(Self) -> Shape?
+pub fn Slide::with_animations(Self, Timeline) -> Self
 pub fn Slide::with_background(Self, @oxml.Fill) -> Self
 pub fn Slide::with_background_ref(Self, Int, @oxml.Color) -> Self
 pub fn Slide::with_date(Self, DateMode) -> Self
@@ -668,6 +704,7 @@ pub fn Slide::with_shape_by_id(Self, Int, (Shape) -> Shape) -> Self raise SlideE
 pub fn Slide::with_shape_mapped(Self, Int, (Shape) -> Shape) -> Self raise SlideError
 pub fn Slide::with_slide_number(Self, Bool) -> Self
 pub fn Slide::with_transition(Self, Transition) -> Self
+pub fn Slide::without_animations(Self) -> Self
 pub fn Slide::without_background(Self) -> Self
 pub fn Slide::without_shape(Self, Int) -> Self raise SlideError
 pub fn Slide::without_shape_by_id(Self, Int) -> Self raise SlideError
@@ -775,6 +812,14 @@ pub fn TextBody::of_paragraphs(Array[Paragraph]) -> Self
 pub fn TextBody::of_styled_text(String, RunProperties) -> Self
 pub fn TextBody::of_text(String) -> Self
 pub fn TextBody::plain_text(Self) -> String
+
+pub(all) struct Timeline {
+  steps : Array[AnimStep]
+} derive(Eq, @debug.Debug)
+pub fn Timeline::after_previous(Self, AnimEffect, Int, duration_ms? : Int) -> Self
+pub fn Timeline::new() -> Self
+pub fn Timeline::on_click(Self, AnimEffect, Int, duration_ms? : Int) -> Self
+pub fn Timeline::with_previous(Self, AnimEffect, Int, duration_ms? : Int) -> Self
 
 pub(all) struct Transform {
   offset : Point
@@ -913,6 +958,19 @@ pub(all) enum VerticalText {
   VertWordArtVertRtl
 } derive(Eq, @debug.Debug)
 pub fn VerticalText::from_xml(String) -> Self?
+
+pub(all) enum VisualEffect {
+  Appear
+  Fade
+  Wipe(AnimDirection)
+  Blinds(AnimOrientation)
+  RandomBars(AnimOrientation)
+  Dissolve
+  Wedge
+  Wheel(Int)
+} derive(Eq, @debug.Debug)
+pub fn VisualEffect::filter(Self) -> String?
+pub fn VisualEffect::preset_id(Self) -> Int
 
 pub(all) enum WrapKind {
   WrapNone
