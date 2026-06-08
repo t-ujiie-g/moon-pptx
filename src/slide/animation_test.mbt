@@ -301,6 +301,71 @@ test "timing: emphasis composes with entrance in one timeline" {
   assert_true(has(xml, "<p:animRot by=\"43200000\">"))
 }
 
+// --- Motion paths (slice 3) ---
+
+///|
+test "MotionPath::to_path_string formats the animMotion mini-language" {
+  // Move, line, cubic curve, close — terminated by the E end marker.
+  let p = @slide.MotionPath::new()
+    .move_to(0.0, 0.0)
+    .line_to(0.3, 0.1)
+    .curve_to(0.4, 0.2, 0.5, 0.0, 0.6, 0.1)
+    .close()
+  assert_eq(p.to_path_string(), "M 0 0 L 0.3 0.1 C 0.4 0.2 0.5 0 0.6 0.1 Z E")
+}
+
+///|
+test "MotionPath::line is a one-segment relative move" {
+  assert_eq(
+    @slide.MotionPath::line(0.25, -0.1).to_path_string(),
+    "M 0 0 L 0.25 -0.1 E",
+  )
+}
+
+///|
+test "timing: motion emits <p:animMotion> with the path + ppt_x/ppt_y" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(
+        @slide.Motion(@slide.MotionPath::line(0.3, 0.1)),
+        5,
+        duration_ms=2000,
+      ),
+    ),
+  )
+  assert_true(has(xml, "presetClass=\"path\""))
+  assert_true(
+    has(
+      xml, "<p:animMotion origin=\"layout\" path=\"M 0 0 L 0.3 0.1 E\" pathEditMode=\"relative\">",
+    ),
+  )
+  assert_true(has(xml, "<p:attrName>ppt_x</p:attrName>"))
+  assert_true(has(xml, "<p:attrName>ppt_y</p:attrName>"))
+  assert_true(has(xml, "<p:spTgt spid=\"5\"/>"))
+  // Motion does not toggle visibility.
+  assert_false(has(xml, "style.visibility"))
+}
+
+///|
+test "timing: motion composes after an entrance in one timeline" {
+  let base = anim_base_slide()
+  let tl = @slide.Timeline::new()
+    .on_click(@slide.Entrance(@slide.Fade), 2)
+    .after_previous(
+      @slide.Motion(
+        @slide.MotionPath::new()
+        .move_to(0.0, 0.0)
+        .curve_to(0.1, 0.1, 0.2, -0.1, 0.3, 0.0),
+      ),
+      2,
+    )
+  let xml = anim_xml(base.with_animations(tl))
+  assert_true(has(xml, "presetClass=\"entr\""))
+  assert_true(has(xml, "presetClass=\"path\""))
+  assert_true(has(xml, "C 0.1 0.1 0.2 -0.1 0.3 0"))
+}
+
 // --- Build-only round-trip (A6-style) ---
 
 ///|
@@ -310,6 +375,7 @@ test "timing: built timeline re-serialises stably (build-only round-trip)" {
     @slide.Timeline::new()
     .on_click(@slide.Entrance(@slide.Fade), 2)
     .with_previous(@slide.Emphasis(@slide.Spin(360)), 2)
+    .after_previous(@slide.Motion(@slide.MotionPath::line(0.2, 0.0)), 2)
     .after_previous(@slide.Exit(@slide.Wipe(@slide.Up)), 3),
   )
   let xml1 = anim_xml(animated)

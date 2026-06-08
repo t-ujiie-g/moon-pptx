@@ -9,7 +9,7 @@
 // list of effects, each targeting a shape with a start mode — and the writer
 // (`animation_writer.mbt`) synthesises the full canonical tree.
 //
-// Scope (slices 1–2, documented like the A6/A7/C4/D3 deviations):
+// Scope (slices 1–3, documented like the A6/A7/C4/D3 deviations):
 //   * **Entrance + Exit** effects driven by a DrawingML `<p:animEffect>` filter
 //     (or a bare `<p:set>` for Appear/Disappear). The same filter family powers
 //     both; an entrance plays it `in` and reveals the shape, an exit plays it
@@ -17,6 +17,8 @@
 //   * **Emphasis** effects (slice 2) on an already-visible shape — Spin
 //     (`<p:animRot>`), Grow/Shrink (`<p:animScale>`), Change Fill Colour
 //     (`<p:animClr>`) — no visibility toggle.
+//   * **Motion paths** (slice 3) — a custom `MotionPath` the shape travels
+//     along (`<p:animMotion>`), in `0..1` slide-fraction coordinates.
 //   * Start modes: on click / with previous / after previous, grouped into the
 //     standard click-driven main sequence.
 //   * **Build-only** (like A6 media): a typed `Slide.timing` is emitted by the
@@ -25,12 +27,11 @@
 //     timeline re-serialises stably rather than round-tripping to an equal
 //     model — the established build-only deviation.
 //
-// Deferred follow-ups (the model extends additively): **motion paths** (reusing
-// `CustomGeometry::PathCommand`), Fly-In-style positional `<p:anim>` effects,
-// per-paragraph text builds (`<p:bldLst>`), typed *parsing* of `<p:timing>` into
-// `Timeline`, and precise per-direction `presetSubtype` UI hints (the writer
-// emits `presetSubtype="0"`, which PowerPoint renders from the behaviour
-// regardless).
+// Deferred follow-ups (the model extends additively): Fly-In-style positional
+// `<p:anim>` effects, per-paragraph text builds (`<p:bldLst>`), typed *parsing*
+// of `<p:timing>` into `Timeline`, and precise per-direction `presetSubtype` UI
+// hints (the writer emits `presetSubtype="0"`, which PowerPoint renders from the
+// behaviour regardless).
 
 ///|
 /// Direction for a directional effect — the argument of a `filter` like
@@ -158,18 +159,149 @@ pub fn EmphasisEffect::preset_id(self : EmphasisEffect) -> Int {
 }
 
 ///|
-/// An animation applied to a shape: an `Entrance` (the shape appears), an `Exit`
-/// (the shape leaves), or an `Emphasis` (an in-place effect on a visible shape).
-/// Entrance / Exit wrap the shared `VisualEffect` (the writer plays its filter
-/// `in`/`out` and toggles `style.visibility`); `Emphasis` wraps an
-/// `EmphasisEffect` (a transform / colour behaviour, no visibility change).
+/// A point on a motion path, as a fraction of the slide width / height
+/// (`0.0` = left / top edge, `1.0` = right / bottom edge). In the default
+/// relative edit mode the coordinates are offsets from the shape's start
+/// position, so `(0, 0)` is "no movement" and `(0.25, 0)` travels a quarter of
+/// the slide to the right.
+pub(all) struct MotionPoint {
+  x : Double
+  y : Double
+} derive(Eq, Debug)
+
+///|
+/// One command of a motion path — the `<p:animMotion path="…">` mini-language
+/// (`M` move, `L` line, `C` cubic curve, `Z` close). Coordinates are
+/// slide-fraction `MotionPoint`s.
+pub(all) enum MotionCommand {
+  MoveTo(MotionPoint)
+  LineTo(MotionPoint)
+  CurveTo(MotionPoint, MotionPoint, MotionPoint)
+  Close
+} derive(Eq, Debug)
+
+///|
+/// A custom motion path — the route a shape travels, as an ordered list of
+/// `MotionCommand`s in slide-fraction coordinates. Build it fluently:
 ///
-/// (Motion-path effects are a documented follow-up; this enum extends to them
-/// additively.)
+/// ```
+/// let path = MotionPath::new().move_to(0.0, 0.0).line_to(0.3, 0.1)
+/// slide.with_animations(Timeline::new().on_click(Motion(path), shape_id))
+/// ```
+///
+/// **Deviation from the roadmap sketch** (documented like D4 / C4): the roadmap
+/// suggested reusing Phase 3h's `CustomGeometry::PathCommand`, but that type's
+/// `PathPoint` carries EMU / guide-reference coordinates (`<a:path>` shape
+/// space), whereas `<p:animMotion>` uses `0..1` slide fractions — a different
+/// coordinate space. A dedicated fractional `MotionPath` keeps each model in
+/// its own units rather than overloading one type across two meanings.
+pub(all) struct MotionPath {
+  commands : Array[MotionCommand]
+} derive(Eq, Debug)
+
+///|
+/// An empty motion path. Add segments with `move_to` / `line_to` / `curve_to` /
+/// `close`.
+pub fn MotionPath::new() -> MotionPath {
+  { commands: [] }
+}
+
+///|
+/// Append a command. Immutable (ADR-003).
+fn MotionPath::add(self : MotionPath, cmd : MotionCommand) -> MotionPath {
+  let commands = self.commands.copy()
+  commands.push(cmd)
+  { commands, }
+}
+
+///|
+/// Move the pen to `(x, y)` without drawing — conventionally the first command.
+pub fn MotionPath::move_to(
+  self : MotionPath,
+  x : Double,
+  y : Double,
+) -> MotionPath {
+  self.add(MoveTo({ x, y }))
+}
+
+///|
+/// Travel in a straight line to `(x, y)`.
+pub fn MotionPath::line_to(
+  self : MotionPath,
+  x : Double,
+  y : Double,
+) -> MotionPath {
+  self.add(LineTo({ x, y }))
+}
+
+///|
+/// Travel along a cubic Bézier curve via control points `(x1, y1)` / `(x2, y2)`
+/// to the end point `(x3, y3)`.
+pub fn MotionPath::curve_to(
+  self : MotionPath,
+  x1 : Double,
+  y1 : Double,
+  x2 : Double,
+  y2 : Double,
+  x3 : Double,
+  y3 : Double,
+) -> MotionPath {
+  self.add(CurveTo({ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }))
+}
+
+///|
+/// Close the path back to the last `move_to`.
+pub fn MotionPath::close(self : MotionPath) -> MotionPath {
+  self.add(Close)
+}
+
+///|
+/// A straight-line motion from the shape's start position by `(dx, dy)`
+/// slide-fractions — the common one-segment case.
+pub fn MotionPath::line(dx : Double, dy : Double) -> MotionPath {
+  MotionPath::new().move_to(0.0, 0.0).line_to(dx, dy)
+}
+
+///|
+/// The `path` attribute string for `<p:animMotion>` — each command in the
+/// mini-language, terminated by the `E` end marker PowerPoint always appends.
+pub fn MotionPath::to_path_string(self : MotionPath) -> String {
+  fn pt(p : MotionPoint) -> String {
+    p.x.to_string() + " " + p.y.to_string()
+  }
+
+  let parts : Array[String] = []
+  for cmd in self.commands {
+    match cmd {
+      MoveTo(p) => parts.push("M " + pt(p))
+      LineTo(p) => parts.push("L " + pt(p))
+      CurveTo(a, b, c) => parts.push("C " + pt(a) + " " + pt(b) + " " + pt(c))
+      Close => parts.push("Z")
+    }
+  }
+  parts.push("E")
+  let mut s = ""
+  for i, part in parts {
+    if i > 0 {
+      s = s + " "
+    }
+    s = s + part
+  }
+  s
+}
+
+///|
+/// An animation applied to a shape: an `Entrance` (the shape appears), an `Exit`
+/// (the shape leaves), an `Emphasis` (an in-place effect on a visible shape), or
+/// a `Motion` (the shape travels along a path). Entrance / Exit wrap the shared
+/// `VisualEffect` (the writer plays its filter `in`/`out` and toggles
+/// `style.visibility`); `Emphasis` wraps an `EmphasisEffect` (a transform /
+/// colour behaviour); `Motion` wraps a `MotionPath` (an `<p:animMotion>`).
 pub(all) enum AnimEffect {
   Entrance(VisualEffect)
   Exit(VisualEffect)
   Emphasis(EmphasisEffect)
+  Motion(MotionPath)
 } derive(Eq, Debug)
 
 ///|

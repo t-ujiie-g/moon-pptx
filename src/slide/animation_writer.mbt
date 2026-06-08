@@ -99,9 +99,19 @@ fn anim_tgt(spid : String) -> @xml.XmlNode {
 }
 
 ///|
-/// A `<p:attrNameLst>` carrying one `<p:attrName>`.
+/// A `<p:attrNameLst>` carrying one `<p:attrName>` per name.
+fn anim_attr_names(names : Array[String]) -> @xml.XmlNode {
+  anim_node(
+    "attrNameLst",
+    [],
+    names.map(fn(n) { anim_node("attrName", [], [@xml.Text(n)]) }),
+  )
+}
+
+///|
+/// A `<p:attrNameLst>` carrying a single `<p:attrName>`.
 fn anim_attr_name(name : String) -> @xml.XmlNode {
-  anim_node("attrNameLst", [], [anim_node("attrName", [], [@xml.Text(name)])])
+  anim_attr_names([name])
 }
 
 ///|
@@ -153,6 +163,29 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
         anim_tgt(spid),
       ]),
     ])
+  }
+
+  // <p:animMotion> travelling the given path (relative to the shape's start).
+  fn motion_node(path : MotionPath) -> @xml.XmlNode {
+    anim_node(
+      "animMotion",
+      [
+        ("origin", "layout"),
+        ("path", path.to_path_string()),
+        ("pathEditMode", "relative"),
+      ],
+      [
+        anim_node("cBhvr", [], [
+          anim_node(
+            "cTn",
+            [("id", gen.next().to_string()), ("dur", dur), ("fill", "hold")],
+            [],
+          ),
+          anim_tgt(spid),
+          anim_attr_names(["ppt_x", "ppt_y"]),
+        ]),
+      ],
+    )
   }
 
   // A held <p:cBhvr> for an emphasis behaviour: <p:cTn dur=… fill=hold> + tgt +
@@ -214,6 +247,7 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
           anim_node("to", [], [anim_srgb(color.to_hex())]),
         ]),
       ]
+    Motion(path) => [motion_node(path)]
   }
 }
 
@@ -229,6 +263,9 @@ fn anim_effect_par(
     Entrance(e) => ("entr", e.preset_id())
     Exit(e) => ("exit", e.preset_id())
     Emphasis(e) => ("emph", e.preset_id())
+    // Custom freeform motion path — presetID 0 = no named preset; PowerPoint
+    // labels it "Custom Path" and renders from the `path` attribute.
+    Motion(_) => ("path", 0)
   }
   let eff_id = gen.next()
   let behaviors = anim_behaviors(gen, step)

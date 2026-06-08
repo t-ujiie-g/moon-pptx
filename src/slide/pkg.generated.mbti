@@ -53,6 +53,7 @@ pub(all) enum AnimEffect {
   Entrance(VisualEffect)
   Exit(VisualEffect)
   Emphasis(EmphasisEffect)
+  Motion(MotionPath)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum AnimOrientation {
@@ -301,6 +302,29 @@ pub(all) struct MediaInfo {
 pub(all) enum MediaKind {
   Video
   Audio
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MotionCommand {
+  MoveTo(MotionPoint)
+  LineTo(MotionPoint)
+  CurveTo(MotionPoint, MotionPoint, MotionPoint)
+  Close
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MotionPath {
+  commands : Array[MotionCommand]
+} derive(Eq, @debug.Debug)
+pub fn MotionPath::close(Self) -> Self
+pub fn MotionPath::curve_to(Self, Double, Double, Double, Double, Double, Double) -> Self
+pub fn MotionPath::line(Double, Double) -> Self
+pub fn MotionPath::line_to(Self, Double, Double) -> Self
+pub fn MotionPath::move_to(Self, Double, Double) -> Self
+pub fn MotionPath::new() -> Self
+pub fn MotionPath::to_path_string(Self) -> String
+
+pub(all) struct MotionPoint {
+  x : Double
+  y : Double
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Paragraph {
