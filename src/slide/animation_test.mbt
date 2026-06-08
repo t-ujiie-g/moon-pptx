@@ -222,6 +222,85 @@ test "timing: a leading with_previous step behaves like on_click" {
   assert_false(has(xml, "nodeType=\"withEffect\""))
 }
 
+// --- Emphasis effects (slice 2) ---
+
+///|
+test "EmphasisEffect::preset_id classifies each emphasis" {
+  assert_eq(@slide.EmphasisEffect::Spin(360).preset_id(), 8)
+  assert_eq(@slide.EmphasisEffect::GrowShrink(150).preset_id(), 6)
+  assert_eq(
+    @slide.EmphasisEffect::ChangeFillColor(@units.RgbColor::new(0, 0, 0)).preset_id(),
+    4,
+  )
+}
+
+///|
+test "timing: Spin emphasis emits <p:animRot> on the rotation attribute" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(
+        @slide.Emphasis(@slide.Spin(360)),
+        2,
+        duration_ms=2000,
+      ),
+    ),
+  )
+  assert_true(has(xml, "presetClass=\"emph\""))
+  // 360° in 60000ths of a degree.
+  assert_true(has(xml, "<p:animRot by=\"21600000\">"))
+  assert_true(has(xml, "<p:attrName>r</p:attrName>"))
+  assert_true(has(xml, "dur=\"2000\""))
+  // Emphasis does not toggle visibility.
+  assert_false(has(xml, "style.visibility"))
+}
+
+///|
+test "timing: GrowShrink emphasis emits <p:animScale> with a <p:by>" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(
+        @slide.Emphasis(@slide.GrowShrink(150)),
+        5,
+      ),
+    ),
+  )
+  assert_true(has(xml, "<p:animScale>"))
+  // 150% in 1000ths of a percent.
+  assert_true(has(xml, "<p:by x=\"150000\" y=\"150000\"/>"))
+  assert_true(has(xml, "<p:spTgt spid=\"5\"/>"))
+}
+
+///|
+test "timing: ChangeFillColor emphasis emits <p:animClr> to an <a:srgbClr>" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(
+        @slide.Emphasis(@slide.ChangeFillColor(@units.RgbColor::new(255, 0, 0))),
+        2,
+      ),
+    ),
+  )
+  assert_true(has(xml, "<p:animClr clrSpc=\"rgb\">"))
+  assert_true(has(xml, "<a:srgbClr val=\"FF0000\"/>"))
+  assert_true(has(xml, "<p:attrName>fillColor</p:attrName>"))
+}
+
+///|
+test "timing: emphasis composes with entrance in one timeline" {
+  let base = anim_base_slide()
+  let tl = @slide.Timeline::new()
+    .on_click(@slide.Entrance(@slide.Fade), 2)
+    .after_previous(@slide.Emphasis(@slide.Spin(720)), 2, duration_ms=1500)
+  let xml = anim_xml(base.with_animations(tl))
+  assert_true(has(xml, "presetClass=\"entr\""))
+  assert_true(has(xml, "presetClass=\"emph\""))
+  // 720° = two turns.
+  assert_true(has(xml, "<p:animRot by=\"43200000\">"))
+}
+
 // --- Build-only round-trip (A6-style) ---
 
 ///|
@@ -230,6 +309,7 @@ test "timing: built timeline re-serialises stably (build-only round-trip)" {
   let animated = base.with_animations(
     @slide.Timeline::new()
     .on_click(@slide.Entrance(@slide.Fade), 2)
+    .with_previous(@slide.Emphasis(@slide.Spin(360)), 2)
     .after_previous(@slide.Exit(@slide.Wipe(@slide.Up)), 3),
   )
   let xml1 = anim_xml(animated)

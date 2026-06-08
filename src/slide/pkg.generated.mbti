@@ -52,6 +52,7 @@ pub fn AnimDirection::to_filter(Self) -> String
 pub(all) enum AnimEffect {
   Entrance(VisualEffect)
   Exit(VisualEffect)
+  Emphasis(EmphasisEffect)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum AnimOrientation {
@@ -222,6 +223,13 @@ pub(all) enum DateMode {
   Auto
   Fixed(String)
 } derive(Eq, @debug.Debug)
+
+pub(all) enum EmphasisEffect {
+  Spin(Int)
+  GrowShrink(Int)
+  ChangeFillColor(@units.RgbColor)
+} derive(Eq, @debug.Debug)
+pub fn EmphasisEffect::preset_id(Self) -> Int
 
 pub(all) struct Field {
   id : String

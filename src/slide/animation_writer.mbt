@@ -93,16 +93,38 @@ fn group_anim_steps(steps : Array[AnimStep]) -> Array[AnimGroup] {
 }
 
 ///|
-/// The behaviour children of one effect node — a `<p:set>` toggling
-/// `style.visibility` plus, for non-`Appear` effects, a `<p:animEffect>` playing
-/// the filter. Entrance reveals at the start; exit plays out then hides.
+/// A `<p:tgtEl>` pointing at the shape with id `spid`.
+fn anim_tgt(spid : String) -> @xml.XmlNode {
+  anim_node("tgtEl", [], [anim_node("spTgt", [("spid", spid)], [])])
+}
+
+///|
+/// A `<p:attrNameLst>` carrying one `<p:attrName>`.
+fn anim_attr_name(name : String) -> @xml.XmlNode {
+  anim_node("attrNameLst", [], [anim_node("attrName", [], [@xml.Text(name)])])
+}
+
+///|
+/// A drawing-namespace `<a:srgbClr val="…"/>` (the colour child of `<p:to>` in
+/// `<p:animClr>`).
+fn anim_srgb(hex : String) -> @xml.XmlNode {
+  @xml.Element(
+    @xml.XmlElement::new(
+      @xml.QName::new(@oxml.drawing_ns, "srgbClr"),
+      [(@xml.QName::unqualified("val"), hex)],
+      [],
+    ),
+  )
+}
+
+///|
+/// The behaviour children of one effect node, dispatched by class. Entrance
+/// reveals via a `<p:set>` then plays the filter `in`; exit plays it `out` then
+/// hides; emphasis animates a property in place with no visibility change.
 fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
   let spid = step.target_shape_id.to_string()
   let dur = step.duration_ms.to_string()
-  let (is_entrance, filter) = match step.effect {
-    Entrance(e) => (true, e.filter())
-    Exit(e) => (false, e.filter())
-  }
+
   // <p:set> toggling style.visibility to `vis`, held from `delay`.
   fn set_node(vis : String, delay : String) -> @xml.XmlNode {
     anim_node("set", [], [
@@ -116,10 +138,8 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
             ]),
           ],
         ),
-        anim_node("tgtEl", [], [anim_node("spTgt", [("spid", spid)], [])]),
-        anim_node("attrNameLst", [], [
-          anim_node("attrName", [], [@xml.Text("style.visibility")]),
-        ]),
+        anim_tgt(spid),
+        anim_attr_name("style.visibility"),
       ]),
       anim_node("to", [], [anim_node("strVal", [("val", vis)], [])]),
     ])
@@ -130,30 +150,71 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
     anim_node("animEffect", [("transition", transition), ("filter", f)], [
       anim_node("cBhvr", [], [
         anim_node("cTn", [("id", gen.next().to_string()), ("dur", dur)], []),
-        anim_node("tgtEl", [], [anim_node("spTgt", [("spid", spid)], [])]),
+        anim_tgt(spid),
       ]),
     ])
   }
 
-  let nodes : Array[@xml.XmlNode] = []
-  if is_entrance {
-    // Reveal at the start, then play the filter in.
-    nodes.push(set_node("visible", "0"))
-    match filter {
-      Some(f) => nodes.push(anim_effect_node("in", f))
+  // A held <p:cBhvr> for an emphasis behaviour: <p:cTn dur=… fill=hold> + tgt +
+  // optional attrNameLst.
+  fn emph_cbhvr(attr : String?) -> @xml.XmlNode {
+    let children = [
+      anim_node(
+        "cTn",
+        [("id", gen.next().to_string()), ("dur", dur), ("fill", "hold")],
+        [],
+      ),
+      anim_tgt(spid),
+    ]
+    match attr {
+      Some(a) => children.push(anim_attr_name(a))
       None => ()
     }
-  } else {
-    // Play the filter out, then hide once it ends (instant for Appear).
-    match filter {
-      Some(f) => {
-        nodes.push(anim_effect_node("out", f))
-        nodes.push(set_node("hidden", dur))
-      }
-      None => nodes.push(set_node("hidden", "0"))
-    }
+    anim_node("cBhvr", [], children)
   }
-  nodes
+
+  match step.effect {
+    Entrance(e) => {
+      // Reveal at the start, then play the filter in.
+      let nodes = [set_node("visible", "0")]
+      match e.filter() {
+        Some(f) => nodes.push(anim_effect_node("in", f))
+        None => ()
+      }
+      nodes
+    }
+    Exit(e) =>
+      // Play the filter out, then hide once it ends (instant for Appear).
+      match e.filter() {
+        Some(f) => [anim_effect_node("out", f), set_node("hidden", dur)]
+        None => [set_node("hidden", "0")]
+      }
+    Emphasis(Spin(degrees)) =>
+      // <p:animRot by="degrees*60000"> on the rotation attribute `r`.
+      [
+        anim_node("animRot", [("by", (degrees * 60000).to_string())], [
+          emph_cbhvr(Some("r")),
+        ]),
+      ]
+    Emphasis(GrowShrink(percent)) => {
+      // <p:animScale> with <p:by x/y> in 1000ths of a percent.
+      let v = (percent * 1000).to_string()
+      [
+        anim_node("animScale", [], [
+          emph_cbhvr(None),
+          anim_node("by", [("x", v), ("y", v)], []),
+        ]),
+      ]
+    }
+    Emphasis(ChangeFillColor(color)) =>
+      // <p:animClr clrSpc="rgb"> to an <a:srgbClr>.
+      [
+        anim_node("animClr", [("clrSpc", "rgb")], [
+          emph_cbhvr(Some("fillColor")),
+          anim_node("to", [], [anim_srgb(color.to_hex())]),
+        ]),
+      ]
+  }
 }
 
 ///|
@@ -167,6 +228,7 @@ fn anim_effect_par(
   let (preset_class, preset_id) = match step.effect {
     Entrance(e) => ("entr", e.preset_id())
     Exit(e) => ("exit", e.preset_id())
+    Emphasis(e) => ("emph", e.preset_id())
   }
   let eff_id = gen.next()
   let behaviors = anim_behaviors(gen, step)
