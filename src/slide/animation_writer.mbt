@@ -24,6 +24,16 @@
 // `<p:animEffect>`).
 
 ///|
+/// `<p:animScale><p:by>` is expressed in 1000ths of a percent, so 150 % is
+/// `150000`. (`<p:animRot by>` reuses `@units.ooxml_per_degree` instead.)
+let anim_scale_per_percent : Int = 1000
+
+///|
+/// The end of an animation's normalised time line — `<p:tav tm>` runs `0`
+/// (start) to `100000` (100 %).
+let anim_time_end : String = "100000"
+
+///|
 /// Monotonic `<p:cTn id="…">` allocator. cTn ids must be unique within the
 /// timing tree; PowerPoint emits them increasing in document order, which the
 /// build order here preserves.
@@ -203,7 +213,7 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
         tgt,
         anim_attr_names([attr]),
       ]),
-      anim_node("tavLst", [], [tav("0", v0), tav("100000", v1)]),
+      anim_node("tavLst", [], [tav("0", v0), tav(anim_time_end, v1)]),
     ])
   }
 
@@ -274,15 +284,17 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
           }
       }
     Emphasis(Spin(degrees)) =>
-      // <p:animRot by="degrees*60000"> on the rotation attribute `r`.
+      // <p:animRot by="…"> — rotation in OOXML 1/60000-degree units.
       [
-        anim_node("animRot", [("by", (degrees * 60000).to_string())], [
-          emph_cbhvr(Some("r")),
-        ]),
+        anim_node(
+          "animRot",
+          [("by", (degrees * @units.ooxml_per_degree).to_string())],
+          [emph_cbhvr(Some("r"))],
+        ),
       ]
     Emphasis(GrowShrink(percent)) => {
       // <p:animScale> with <p:by x/y> in 1000ths of a percent.
-      let v = (percent * 1000).to_string()
+      let v = (percent * anim_scale_per_percent).to_string()
       [
         anim_node("animScale", [], [
           emph_cbhvr(None),

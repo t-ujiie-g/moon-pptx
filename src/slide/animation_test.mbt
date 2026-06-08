@@ -66,6 +66,18 @@ fn anim_base_slide() -> @slide.Slide raise {
   @slide.Slide::parse(typical_title_slide())
 }
 
+// --- Direction / orientation filter words ---
+
+///|
+test "AnimDirection / AnimOrientation map to their filter words" {
+  assert_eq(@slide.AnimDirection::Up.to_filter(), "up")
+  assert_eq(@slide.AnimDirection::Down.to_filter(), "down")
+  assert_eq(@slide.AnimDirection::Left.to_filter(), "left")
+  assert_eq(@slide.AnimDirection::Right.to_filter(), "right")
+  assert_eq(@slide.AnimOrientation::Horizontal.to_filter(), "horizontal")
+  assert_eq(@slide.AnimOrientation::Vertical.to_filter(), "vertical")
+}
+
 // --- VisualEffect metadata ---
 
 ///|
