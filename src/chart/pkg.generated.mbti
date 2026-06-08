@@ -230,6 +230,7 @@ pub(all) struct Chart {
   chart : ChartBody
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Chart::is_consistent(Self) -> Bool
 pub fn Chart::of_area(ChartData, grouping? : Grouping) -> Self
 pub fn Chart::of_bar(ChartData, bar_dir? : BarDir, grouping? : BarGrouping) -> Self
 pub fn Chart::of_bar_3d(ChartData, bar_dir? : BarDir, grouping? : BarGrouping, shape? : BarShape) -> Self
@@ -248,6 +249,7 @@ pub fn Chart::of_surface(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::of_surface_3d(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::parse(FixedArray[Byte]) -> Self raise ChartError
 pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
+pub fn Chart::validate(Self) -> Self raise ChartError
 pub fn Chart::with_options(Self, Array[ChartOption]) -> Self
 pub impl Show for Chart
 
