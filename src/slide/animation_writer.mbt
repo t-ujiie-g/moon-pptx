@@ -93,9 +93,19 @@ fn group_anim_steps(steps : Array[AnimStep]) -> Array[AnimGroup] {
 }
 
 ///|
-/// A `<p:tgtEl>` pointing at the shape with id `spid`.
-fn anim_tgt(spid : String) -> @xml.XmlNode {
-  anim_node("tgtEl", [], [anim_node("spTgt", [("spid", spid)], [])])
+/// A `<p:tgtEl>` pointing at the shape with id `spid`, or — when `paragraph` is
+/// `Some(p)` — at that shape's `p`-th text paragraph (`<p:txEl><p:pRg>`).
+fn anim_tgt(spid : String, paragraph : Int?) -> @xml.XmlNode {
+  let sp_children : Array[@xml.XmlNode] = match paragraph {
+    Some(p) =>
+      [
+        anim_node("txEl", [], [
+          anim_node("pRg", [("st", p.to_string()), ("end", p.to_string())], []),
+        ]),
+      ]
+    None => []
+  }
+  anim_node("tgtEl", [], [anim_node("spTgt", [("spid", spid)], sp_children)])
 }
 
 ///|
@@ -134,6 +144,9 @@ fn anim_srgb(hex : String) -> @xml.XmlNode {
 fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
   let spid = step.target_shape_id.to_string()
   let dur = step.duration_ms.to_string()
+  // Every behaviour of this step targets the same element — the whole shape, or
+  // one paragraph for a by-paragraph build.
+  let tgt = anim_tgt(spid, step.paragraph)
 
   // <p:set> toggling style.visibility to `vis`, held from `delay`.
   fn set_node(vis : String, delay : String) -> @xml.XmlNode {
@@ -148,7 +161,7 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
             ]),
           ],
         ),
-        anim_tgt(spid),
+        tgt,
         anim_attr_name("style.visibility"),
       ]),
       anim_node("to", [], [anim_node("strVal", [("val", vis)], [])]),
@@ -160,8 +173,37 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
     anim_node("animEffect", [("transition", transition), ("filter", f)], [
       anim_node("cBhvr", [], [
         anim_node("cTn", [("id", gen.next().to_string()), ("dur", dur)], []),
-        anim_tgt(spid),
+        tgt,
       ]),
+    ])
+  }
+
+  // <p:anim> moving the shape along one axis between an off-slide value and its
+  // natural position — Fly In (`is_in`) starts off-slide, Fly Out ends off-slide.
+  // The off-slide value follows PowerPoint's fly convention (half the shape's
+  // own width/height past the edge), referencing `#ppt_w` / `#ppt_h`.
+  fn fly_node(is_in : Bool, dir : AnimDirection) -> @xml.XmlNode {
+    let (attr, off) = match dir {
+      Left => ("ppt_x", "0-#ppt_w/2")
+      Right => ("ppt_x", "1+#ppt_w/2")
+      Up => ("ppt_y", "0-#ppt_h/2")
+      Down => ("ppt_y", "1+#ppt_h/2")
+    }
+    let home = "#" + attr
+    let (v0, v1) = if is_in { (off, home) } else { (home, off) }
+    fn tav(tm : String, v : String) -> @xml.XmlNode {
+      anim_node("tav", [("tm", tm)], [
+        anim_node("val", [], [anim_node("strVal", [("val", v)], [])]),
+      ])
+    }
+
+    anim_node("anim", [("calcmode", "lin"), ("valueType", "num")], [
+      anim_node("cBhvr", [], [
+        anim_node("cTn", [("id", gen.next().to_string()), ("dur", dur)], []),
+        tgt,
+        anim_attr_names([attr]),
+      ]),
+      anim_node("tavLst", [], [tav("0", v0), tav("100000", v1)]),
     ])
   }
 
@@ -181,7 +223,7 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
             [("id", gen.next().to_string()), ("dur", dur), ("fill", "hold")],
             [],
           ),
-          anim_tgt(spid),
+          tgt,
           anim_attr_names(["ppt_x", "ppt_y"]),
         ]),
       ],
@@ -197,7 +239,7 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
         [("id", gen.next().to_string()), ("dur", dur), ("fill", "hold")],
         [],
       ),
-      anim_tgt(spid),
+      tgt,
     ]
     match attr {
       Some(a) => children.push(anim_attr_name(a))
@@ -208,19 +250,28 @@ fn anim_behaviors(gen : IdGen, step : AnimStep) -> Array[@xml.XmlNode] {
 
   match step.effect {
     Entrance(e) => {
-      // Reveal at the start, then play the filter in.
+      // Reveal at the start, then play the motion: a fly-in <p:anim>, a filter
+      // <p:animEffect>, or nothing (Appear is the bare set).
       let nodes = [set_node("visible", "0")]
-      match e.filter() {
-        Some(f) => nodes.push(anim_effect_node("in", f))
-        None => ()
+      match e.fly_direction() {
+        Some(dir) => nodes.push(fly_node(true, dir))
+        None =>
+          match e.filter() {
+            Some(f) => nodes.push(anim_effect_node("in", f))
+            None => ()
+          }
       }
       nodes
     }
     Exit(e) =>
-      // Play the filter out, then hide once it ends (instant for Appear).
-      match e.filter() {
-        Some(f) => [anim_effect_node("out", f), set_node("hidden", dur)]
-        None => [set_node("hidden", "0")]
+      // Play the motion out, then hide once it ends (instant for Disappear).
+      match e.fly_direction() {
+        Some(dir) => [fly_node(false, dir), set_node("hidden", dur)]
+        None =>
+          match e.filter() {
+            Some(f) => [anim_effect_node("out", f), set_node("hidden", dur)]
+            None => [set_node("hidden", "0")]
+          }
       }
     Emphasis(Spin(degrees)) =>
       // <p:animRot by="degrees*60000"> on the rotation attribute `r`.
@@ -258,6 +309,7 @@ fn anim_effect_par(
   gen : IdGen,
   step : AnimStep,
   node_type : String,
+  grpid_of : (Int) -> Int,
 ) -> @xml.XmlNode {
   let (preset_class, preset_id) = match step.effect {
     Entrance(e) => ("entr", e.preset_id())
@@ -266,6 +318,12 @@ fn anim_effect_par(
     // Custom freeform motion path — presetID 0 = no named preset; PowerPoint
     // labels it "Custom Path" and renders from the `path` attribute.
     Motion(_) => ("path", 0)
+  }
+  // Whole-shape effects sit in the default group 0; a by-paragraph build links
+  // each paragraph effect to its shape's build group (matching the <p:bldP>).
+  let grp_id = match step.paragraph {
+    Some(_) => grpid_of(step.target_shape_id)
+    None => 0
   }
   let eff_id = gen.next()
   let behaviors = anim_behaviors(gen, step)
@@ -278,7 +336,7 @@ fn anim_effect_par(
         ("presetClass", preset_class),
         ("presetSubtype", "0"),
         ("fill", "hold"),
-        ("grpId", "0"),
+        ("grpId", grp_id.to_string()),
         ("nodeType", node_type),
       ],
       [
@@ -292,7 +350,11 @@ fn anim_effect_par(
 ///|
 /// One main-sequence group `<p:par>` — the click/after trigger wrapping the
 /// 0-delay holder wrapping each effect par.
-fn anim_group_par(gen : IdGen, group : AnimGroup) -> @xml.XmlNode {
+fn anim_group_par(
+  gen : IdGen,
+  group : AnimGroup,
+  grpid_of : (Int) -> Int,
+) -> @xml.XmlNode {
   let trigger_id = gen.next()
   let holder_id = gen.next()
   let trigger_delay = if group.is_click { "indefinite" } else { "0" }
@@ -307,7 +369,7 @@ fn anim_group_par(gen : IdGen, group : AnimGroup) -> @xml.XmlNode {
     } else {
       "withEffect"
     }
-    effect_pars.push(anim_effect_par(gen, step, node_type))
+    effect_pars.push(anim_effect_par(gen, step, node_type, grpid_of))
   }
   anim_node("par", [], [
     anim_node("cTn", [("id", trigger_id.to_string()), ("fill", "hold")], [
@@ -342,10 +404,28 @@ fn anim_seq_cond(name : String, evt : String) -> @xml.XmlNode {
 fn timing_element(timeline : Timeline) -> @xml.XmlElement {
   let gen : IdGen = { n: 0 }
   let groups = group_anim_steps(timeline.steps)
+  // Shapes with a by-paragraph effect, in first-seen order; each gets a build
+  // group id (its index + 1, so they never collide with the default group 0).
+  let build_shapes : Array[Int] = []
+  for step in timeline.steps {
+    if step.paragraph is Some(_) && !build_shapes.contains(step.target_shape_id) {
+      build_shapes.push(step.target_shape_id)
+    }
+  }
+  let grpid_of = fn(spid : Int) -> Int {
+    for i, s in build_shapes {
+      if s == spid {
+        return i + 1
+      }
+    }
+    0
+  }
   let root_id = gen.next() // 1 — tmRoot
   let seq_id = gen.next() // 2 — mainSeq
-  let group_pars = groups.map(fn(g) { anim_group_par(gen, g) })
-  anim_el("timing", [], [
+  let group_pars = groups.map(fn(g) { anim_group_par(gen, g, grpid_of) })
+  // <p:tnLst> followed by an optional <p:bldLst> declaring each by-paragraph
+  // build (CT_SlideTiming order: tnLst, bldLst).
+  let timing_children = [
     anim_node("tnLst", [], [
       anim_node("par", [], [
         anim_node(
@@ -376,7 +456,22 @@ fn timing_element(timeline : Timeline) -> @xml.XmlElement {
         ),
       ]),
     ]),
-  ])
+  ]
+  if build_shapes.length() > 0 {
+    let bld_ps = build_shapes.map(fn(spid) {
+      anim_node(
+        "bldP",
+        [
+          ("spid", spid.to_string()),
+          ("grpId", grpid_of(spid).to_string()),
+          ("build", "p"),
+        ],
+        [],
+      )
+    })
+    timing_children.push(anim_node("bldLst", [], bld_ps))
+  }
+  anim_el("timing", [], timing_children)
 }
 
 ///|

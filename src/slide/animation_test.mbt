@@ -301,6 +301,71 @@ test "timing: emphasis composes with entrance in one timeline" {
   assert_true(has(xml, "<p:animRot by=\"43200000\">"))
 }
 
+// --- Fly In / Fly Out (slice 4) ---
+
+///|
+test "VisualEffect: FlyIn classifies as a fly, not a filter" {
+  assert_true(@slide.VisualEffect::FlyIn(Left).fly_direction() is Some(Left))
+  assert_true(@slide.VisualEffect::FlyIn(Left).filter() is None)
+  assert_eq(@slide.VisualEffect::FlyIn(Up).preset_id(), 2)
+  // A filter effect has no fly direction.
+  assert_true(@slide.VisualEffect::Fade.fly_direction() is None)
+}
+
+///|
+test "timing: FlyIn entrance moves ppt_x from off-slide to home" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(
+        @slide.Entrance(@slide.FlyIn(@slide.Left)),
+        5,
+      ),
+    ),
+  )
+  assert_true(has(xml, "presetClass=\"entr\""))
+  // Reveal + a positional <p:anim> on ppt_x (no <p:animEffect> filter).
+  assert_true(has(xml, "<p:strVal val=\"visible\"/>"))
+  assert_true(has(xml, "<p:anim calcmode=\"lin\" valueType=\"num\">"))
+  assert_true(has(xml, "<p:attrName>ppt_x</p:attrName>"))
+  assert_true(has(xml, "<p:strVal val=\"0-#ppt_w/2\"/>"))
+  assert_true(has(xml, "<p:strVal val=\"#ppt_x\"/>"))
+  assert_false(has(xml, "<p:animEffect"))
+}
+
+///|
+test "timing: FlyOut exit moves home to off-slide then hides" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(@slide.Exit(@slide.FlyIn(@slide.Down)), 5),
+    ),
+  )
+  assert_true(has(xml, "presetClass=\"exit\""))
+  assert_true(has(xml, "<p:attrName>ppt_y</p:attrName>"))
+  // Off-slide value at the END (tm=100000) for a fly-out below the slide.
+  assert_true(has(xml, "<p:strVal val=\"1+#ppt_h/2\"/>"))
+  // Exit hides the shape afterwards.
+  assert_true(has(xml, "<p:strVal val=\"hidden\"/>"))
+}
+
+///|
+test "timing: each fly direction targets the right axis + off-slide value" {
+  let base = anim_base_slide()
+  fn fly_xml(dir : @slide.AnimDirection) -> String raise {
+    anim_xml(
+      base.with_animations(
+        @slide.Timeline::new().on_click(@slide.Entrance(@slide.FlyIn(dir)), 2),
+      ),
+    )
+  }
+
+  assert_true(has(fly_xml(Right), "<p:strVal val=\"1+#ppt_w/2\"/>"))
+  assert_true(has(fly_xml(Right), "<p:attrName>ppt_x</p:attrName>"))
+  assert_true(has(fly_xml(Up), "<p:strVal val=\"0-#ppt_h/2\"/>"))
+  assert_true(has(fly_xml(Up), "<p:attrName>ppt_y</p:attrName>"))
+}
+
 // --- Motion paths (slice 3) ---
 
 ///|
@@ -366,6 +431,54 @@ test "timing: motion composes after an entrance in one timeline" {
   assert_true(has(xml, "C 0.1 0.1 0.2 -0.1 0.3 0"))
 }
 
+// --- By-paragraph text builds (slice 5) ---
+
+///|
+test "timing: a paragraph-targeted effect emits a <p:pRg> + a <p:bldP>" {
+  let base = anim_base_slide()
+  let tl = @slide.Timeline::new()
+    .on_click(@slide.Entrance(@slide.Fade), 3, paragraph=0)
+    .on_click(@slide.Entrance(@slide.Fade), 3, paragraph=1)
+  let xml = anim_xml(base.with_animations(tl))
+  // Each effect targets a paragraph range, not the whole shape.
+  assert_true(has(xml, "<p:txEl><p:pRg st=\"0\" end=\"0\"/></p:txEl>"))
+  assert_true(has(xml, "<p:txEl><p:pRg st=\"1\" end=\"1\"/></p:txEl>"))
+  // The shape is declared as a by-paragraph build.
+  assert_true(has(xml, "<p:bldLst>"))
+  assert_true(has(xml, "<p:bldP spid=\"3\" grpId=\"1\" build=\"p\"/>"))
+}
+
+///|
+test "timing: a whole-shape effect has no <p:pRg> and no <p:bldLst>" {
+  let base = anim_base_slide()
+  let xml = anim_xml(
+    base.with_animations(
+      @slide.Timeline::new().on_click(@slide.Entrance(@slide.Fade), 2),
+    ),
+  )
+  assert_false(has(xml, "<p:pRg"))
+  assert_false(has(xml, "<p:bldLst>"))
+}
+
+///|
+test "timing: build-group ids match between paragraph effects and their <p:bldP>" {
+  let base = anim_base_slide()
+  // Two shapes built by paragraph → distinct grpIds 1 and 2; a whole-shape
+  // effect stays in group 0.
+  let tl = @slide.Timeline::new()
+    .on_click(@slide.Entrance(@slide.Fade), 3, paragraph=0)
+    .on_click(@slide.Entrance(@slide.Wipe(@slide.Up)), 4, paragraph=0)
+    .with_previous(@slide.Emphasis(@slide.Spin(360)), 2)
+  let xml = anim_xml(base.with_animations(tl))
+  assert_true(has(xml, "<p:bldP spid=\"3\" grpId=\"1\" build=\"p\"/>"))
+  assert_true(has(xml, "<p:bldP spid=\"4\" grpId=\"2\" build=\"p\"/>"))
+  // The paragraph effects carry their shape's build grpId on the cTn.
+  assert_true(has(xml, "grpId=\"1\""))
+  assert_true(has(xml, "grpId=\"2\""))
+  // The whole-shape emphasis stays in the default group 0.
+  assert_true(has(xml, "grpId=\"0\""))
+}
+
 // --- Build-only round-trip (A6-style) ---
 
 ///|
@@ -373,9 +486,10 @@ test "timing: built timeline re-serialises stably (build-only round-trip)" {
   let base = anim_base_slide()
   let animated = base.with_animations(
     @slide.Timeline::new()
-    .on_click(@slide.Entrance(@slide.Fade), 2)
+    .on_click(@slide.Entrance(@slide.FlyIn(@slide.Left)), 2)
     .with_previous(@slide.Emphasis(@slide.Spin(360)), 2)
     .after_previous(@slide.Motion(@slide.MotionPath::line(0.2, 0.0)), 2)
+    .on_click(@slide.Entrance(@slide.Fade), 3, paragraph=0)
     .after_previous(@slide.Exit(@slide.Wipe(@slide.Up)), 3),
   )
   let xml1 = anim_xml(animated)

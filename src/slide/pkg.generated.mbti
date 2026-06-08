@@ -73,6 +73,7 @@ pub(all) struct AnimStep {
   target_shape_id : Int
   start : AnimStart
   duration_ms : Int
+  paragraph : Int?
 } derive(Eq, @debug.Debug)
 
 pub(all) enum AutoFit {
@@ -848,10 +849,10 @@ pub fn TextBody::plain_text(Self) -> String
 pub(all) struct Timeline {
   steps : Array[AnimStep]
 } derive(Eq, @debug.Debug)
-pub fn Timeline::after_previous(Self, AnimEffect, Int, duration_ms? : Int) -> Self
+pub fn Timeline::after_previous(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
 pub fn Timeline::new() -> Self
-pub fn Timeline::on_click(Self, AnimEffect, Int, duration_ms? : Int) -> Self
-pub fn Timeline::with_previous(Self, AnimEffect, Int, duration_ms? : Int) -> Self
+pub fn Timeline::on_click(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
+pub fn Timeline::with_previous(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
 
 pub(all) struct Transform {
   offset : Point
@@ -993,6 +994,7 @@ pub fn VerticalText::from_xml(String) -> Self?
 
 pub(all) enum VisualEffect {
   Appear
+  FlyIn(AnimDirection)
   Fade
   Wipe(AnimDirection)
   Blinds(AnimOrientation)
@@ -1002,6 +1004,7 @@ pub(all) enum VisualEffect {
   Wheel(Int)
 } derive(Eq, @debug.Debug)
 pub fn VisualEffect::filter(Self) -> String?
+pub fn VisualEffect::fly_direction(Self) -> AnimDirection?
 pub fn VisualEffect::preset_id(Self) -> Int
 
 pub(all) enum WrapKind {

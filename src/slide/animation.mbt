@@ -9,16 +9,21 @@
 // list of effects, each targeting a shape with a start mode — and the writer
 // (`animation_writer.mbt`) synthesises the full canonical tree.
 //
-// Scope (slices 1–3, documented like the A6/A7/C4/D3 deviations):
+// Scope (slices 1–5, documented like the A6/A7/C4/D3 deviations):
 //   * **Entrance + Exit** effects driven by a DrawingML `<p:animEffect>` filter
 //     (or a bare `<p:set>` for Appear/Disappear). The same filter family powers
 //     both; an entrance plays it `in` and reveals the shape, an exit plays it
 //     `out` and hides it.
+//   * **Fly In / Fly Out** (slice 4) — a positional `<p:anim>` moving the shape
+//     in from / out to a slide edge, paired with the visibility set.
 //   * **Emphasis** effects (slice 2) on an already-visible shape — Spin
 //     (`<p:animRot>`), Grow/Shrink (`<p:animScale>`), Change Fill Colour
 //     (`<p:animClr>`) — no visibility toggle.
 //   * **Motion paths** (slice 3) — a custom `MotionPath` the shape travels
 //     along (`<p:animMotion>`), in `0..1` slide-fraction coordinates.
+//   * **By-paragraph text builds** (slice 5) — an effect can target one text
+//     paragraph (`AnimStep.paragraph`); such shapes get a `<p:bldP build="p">`
+//     so a multi-bullet body reveals one line per click.
 //   * Start modes: on click / with previous / after previous, grouped into the
 //     standard click-driven main sequence.
 //   * **Build-only** (like A6 media): a typed `Slide.timing` is emitted by the
@@ -27,11 +32,11 @@
 //     timeline re-serialises stably rather than round-tripping to an equal
 //     model — the established build-only deviation.
 //
-// Deferred follow-ups (the model extends additively): Fly-In-style positional
-// `<p:anim>` effects, per-paragraph text builds (`<p:bldLst>`), typed *parsing*
-// of `<p:timing>` into `Timeline`, and precise per-direction `presetSubtype` UI
-// hints (the writer emits `presetSubtype="0"`, which PowerPoint renders from the
-// behaviour regardless).
+// Deferred follow-ups (the model extends additively): typed *parsing* of an
+// existing `<p:timing>` into `Timeline` (the lossless path is `extension`; a
+// lossy parse into this simplified model is intentionally not attempted), and
+// precise per-direction `presetSubtype` UI hints (the writer emits
+// `presetSubtype="0"`, which PowerPoint renders from the behaviour regardless).
 
 ///|
 /// Direction for a directional effect — the argument of a `filter` like
@@ -81,6 +86,9 @@ pub fn AnimOrientation::to_filter(self : AnimOrientation) -> String {
 pub(all) enum VisualEffect {
   /// Instant show (entrance) / hide (exit) — no `<p:animEffect>`.
   Appear
+  /// Fly in from / out to the given edge (`<p:anim>` on `ppt_x` / `ppt_y`).
+  /// The direction is the edge the shape travels from (entrance) or to (exit).
+  FlyIn(AnimDirection)
   /// Fade in / out (`filter="fade"`).
   Fade
   /// Directional wipe (`filter="wipe(up|down|left|right)"`).
@@ -103,6 +111,7 @@ pub(all) enum VisualEffect {
 pub fn VisualEffect::preset_id(self : VisualEffect) -> Int {
   match self {
     Appear => 1
+    FlyIn(_) => 2
     Fade => 10
     Wipe(_) => 22
     Blinds(_) => 3
@@ -114,11 +123,14 @@ pub fn VisualEffect::preset_id(self : VisualEffect) -> Int {
 }
 
 ///|
-/// The `<p:animEffect filter="…">` string, or `None` for `Appear` (which is a
-/// bare `<p:set>` with no `<p:animEffect>`). Exhaustive over `VisualEffect`.
+/// The `<p:animEffect filter="…">` string for the filter-driven effects, or
+/// `None` for the two that are not filters — `Appear` (a bare `<p:set>`) and
+/// `FlyIn` (a positional `<p:anim>`; see `fly_direction`). Exhaustive over
+/// `VisualEffect`.
 pub fn VisualEffect::filter(self : VisualEffect) -> String? {
   match self {
     Appear => None
+    FlyIn(_) => None
     Fade => Some("fade")
     Wipe(d) => Some("wipe(" + d.to_filter() + ")")
     Blinds(o) => Some("blinds(" + o.to_filter() + ")")
@@ -126,6 +138,18 @@ pub fn VisualEffect::filter(self : VisualEffect) -> String? {
     Dissolve => Some("dissolve")
     Wedge => Some("wedge")
     Wheel(spokes) => Some("wheel(" + spokes.to_string() + ")")
+  }
+}
+
+///|
+/// The fly direction for `FlyIn`, or `None` for every other effect. Orthogonal
+/// to `filter` (both are `None` only for `Appear`, the instant set-only case):
+/// the writer plays a positional `<p:anim>` when this is `Some`, a
+/// `<p:animEffect>` when `filter` is `Some`, and a bare `<p:set>` otherwise.
+pub fn VisualEffect::fly_direction(self : VisualEffect) -> AnimDirection? {
+  match self {
+    FlyIn(d) => Some(d)
+    _ => None
   }
 }
 
@@ -318,12 +342,16 @@ pub(all) enum AnimStart {
 ///|
 /// One step of a slide's animation timeline: an `effect` applied to the shape
 /// with id `target_shape_id` (see `Shape::id`), starting per `start`, lasting
-/// `duration_ms` milliseconds.
+/// `duration_ms` milliseconds. When `paragraph` is `Some(i)` the effect targets
+/// the shape's `i`-th text paragraph (0-based) rather than the whole shape — the
+/// shape is then built by paragraph (`<p:bldP build="p">`), so a multi-bullet
+/// body can reveal one line per click.
 pub(all) struct AnimStep {
   effect : AnimEffect
   target_shape_id : Int
   start : AnimStart
   duration_ms : Int
+  paragraph : Int?
 } derive(Eq, Debug)
 
 ///|
@@ -361,45 +389,50 @@ fn Timeline::add(
   target_shape_id : Int,
   start : AnimStart,
   duration_ms : Int,
+  paragraph : Int?,
 ) -> Timeline {
   let steps = self.steps.copy()
-  steps.push({ effect, target_shape_id, start, duration_ms })
+  steps.push({ effect, target_shape_id, start, duration_ms, paragraph })
   { steps, }
 }
 
 ///|
-/// Add an effect that plays on the next mouse click (a new click group).
+/// Add an effect that plays on the next mouse click (a new click group). Pass
+/// `paragraph` to target one text paragraph of the shape (a by-paragraph build).
 pub fn Timeline::on_click(
   self : Timeline,
   effect : AnimEffect,
   target_shape_id : Int,
+  paragraph? : Int,
   duration_ms? : Int = anim_default_duration_ms,
 ) -> Timeline {
-  self.add(effect, target_shape_id, OnClick, duration_ms)
+  self.add(effect, target_shape_id, OnClick, duration_ms, paragraph)
 }
 
 ///|
 /// Add an effect that plays together with the previous one. If it is the first
-/// step it behaves like `on_click`.
+/// step it behaves like `on_click`. Pass `paragraph` for a by-paragraph build.
 pub fn Timeline::with_previous(
   self : Timeline,
   effect : AnimEffect,
   target_shape_id : Int,
+  paragraph? : Int,
   duration_ms? : Int = anim_default_duration_ms,
 ) -> Timeline {
-  self.add(effect, target_shape_id, WithPrevious, duration_ms)
+  self.add(effect, target_shape_id, WithPrevious, duration_ms, paragraph)
 }
 
 ///|
 /// Add an effect that plays automatically after the previous one finishes (a
-/// new auto-advancing group).
+/// new auto-advancing group). Pass `paragraph` for a by-paragraph build.
 pub fn Timeline::after_previous(
   self : Timeline,
   effect : AnimEffect,
   target_shape_id : Int,
+  paragraph? : Int,
   duration_ms? : Int = anim_default_duration_ms,
 ) -> Timeline {
-  self.add(effect, target_shape_id, AfterPrevious, duration_ms)
+  self.add(effect, target_shape_id, AfterPrevious, duration_ms, paragraph)
 }
 
 // --- Slide builders (immutable, ADR-003) ---
