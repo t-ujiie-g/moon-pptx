@@ -26,6 +26,8 @@ pub(all) suberror PptxError {
   /// An extended-chart part (`/ppt/charts/chartExN.xml`) failed to
   /// parse.
   ChartExFailure(String)
+  /// A SmartArt diagram part (`/ppt/diagrams/…`) failed to generate.
+  SmartArtFailure(String)
   /// Façade-level invariant violated — e.g. the package has no
   /// `presentation.xml` part, or the required main-document
   /// relationship is missing.
@@ -72,6 +74,11 @@ pub impl Show for PptxError with fn output(self, logger) {
     }
     ChartExFailure(s) => {
       logger.write_string("ChartExFailure(")
+      logger.write_object(s)
+      logger.write_string(")")
+    }
+    SmartArtFailure(s) => {
+      logger.write_string("SmartArtFailure(")
       logger.write_object(s)
       logger.write_string(")")
     }

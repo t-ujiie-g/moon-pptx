@@ -1,0 +1,52 @@
+// SmartArt model (roadmap D1).
+//
+// A `SmartArt` is a typed description of a diagram: a `SmartArtKind` (which
+// built-in layout family it maps to) plus a list of top-level `Node`s. From
+// it we synthesise the five DiagramML parts PowerPoint needs — data / layout /
+// quickStyle / colors + a cached `<dsp:drawing>` (the laid-out shapes, so the
+// diagram renders without a layout engine). See `parts.mbt`.
+//
+// Slice 1 (this version) ships the two linear families — `List` (a vertical
+// stack of rounded boxes) and `Process` (a left-to-right sequence) — which lay
+// out from the flat list of top-level nodes. `Node.children` is carried in the
+// model (and preserved in the data part) so the hierarchical families
+// (org-chart / hierarchy / cycle / pyramid / matrix / relationship) layer on
+// additively in later slices.
+
+///|
+/// Which built-in SmartArt layout family a diagram maps to. Slice 1 covers
+/// the two linear families; the rest are reserved for later slices.
+pub(all) enum SmartArtKind {
+  /// Vertical list of rounded boxes (built-in layout `list1`).
+  List
+  /// Left-to-right sequence of boxes (built-in layout `process1`).
+  Process
+} derive(Eq, Debug)
+
+///|
+/// One node in a SmartArt diagram: its text plus any child nodes. For the
+/// slice-1 linear families only the top-level nodes are laid out; children are
+/// preserved in the data model for round-trip + future hierarchical layouts.
+pub(all) struct Node {
+  text : String
+  children : Array[Node]
+} derive(Eq, Debug)
+
+///|
+/// A leaf node carrying just `text` (no children).
+pub fn Node::leaf(text : String) -> Node {
+  { text, children: [] }
+}
+
+///|
+/// A node with `text` and the given `children`.
+pub fn Node::new(text : String, children : Array[Node]) -> Node {
+  { text, children }
+}
+
+///|
+/// A complete SmartArt diagram — a `kind` plus its top-level `nodes`.
+pub(all) struct SmartArt {
+  kind : SmartArtKind
+  nodes : Array[Node]
+} derive(Eq, Debug)

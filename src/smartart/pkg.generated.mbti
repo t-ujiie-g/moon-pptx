@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "t-ujiie-g/moon-pptx/smartart"
+
+import {
+  "moonbitlang/core/debug",
+  "t-ujiie-g/moon-pptx/units",
+}
+
+// Values
+
+// Errors
+pub(all) suberror SmartArtError {
+  XmlFailure(String, String)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for SmartArtError
+
+// Types and methods
+pub(all) struct Node {
+  text : String
+  children : Array[Node]
+} derive(Eq, @debug.Debug)
+pub fn Node::leaf(String) -> Self
+pub fn Node::new(String, Array[Self]) -> Self
+
+pub(all) struct SmartArt {
+  kind : SmartArtKind
+  nodes : Array[Node]
+} derive(Eq, @debug.Debug)
+pub fn SmartArt::colors_xml(Self) -> FixedArray[Byte]
+pub fn SmartArt::data_xml(Self, String) -> FixedArray[Byte] raise SmartArtError
+pub fn SmartArt::drawing_xml(Self, @units.Emu, @units.Emu) -> FixedArray[Byte] raise SmartArtError
+pub fn SmartArt::layout_xml(Self) -> FixedArray[Byte]
+pub fn SmartArt::list(Array[String]) -> Self
+pub fn SmartArt::new(SmartArtKind, Array[Node]) -> Self
+pub fn SmartArt::process(Array[String]) -> Self
+pub fn SmartArt::quick_style_xml(Self) -> FixedArray[Byte]
+
+pub(all) enum SmartArtKind {
+  List
+  Process
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

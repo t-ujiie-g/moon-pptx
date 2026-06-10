@@ -37,6 +37,16 @@ pub let rt_comments : String
 
 pub let rt_core_properties : String
 
+pub let rt_diagram_colors : String
+
+pub let rt_diagram_data : String
+
+pub let rt_diagram_drawing : String
+
+pub let rt_diagram_layout : String
+
+pub let rt_diagram_quick_style : String
+
 pub let rt_extended_properties : String
 
 pub let rt_hyperlink : String

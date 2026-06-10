@@ -10,6 +10,7 @@ import {
   "t-ujiie-g/moon-pptx/opc",
   "t-ujiie-g/moon-pptx/slide",
   "t-ujiie-g/moon-pptx/slide_master",
+  "t-ujiie-g/moon-pptx/smartart",
   "t-ujiie-g/moon-pptx/theme",
   "t-ujiie-g/moon-pptx/units",
   "t-ujiie-g/moon-pptx/xml",
@@ -27,6 +28,7 @@ pub(all) suberror PptxError {
   CommentsFailure(String)
   ChartFailure(String)
   ChartExFailure(String)
+  SmartArtFailure(String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
 pub impl Show for PptxError
@@ -92,6 +94,7 @@ pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Em
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_section_header_slide_mut(Self) -> LayoutSlide[SectionHeader] raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
+pub fn Presentation::add_smartart_mut(Self, Int, @smartart.SmartArt, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_svg_picture_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_title_content_slide_mut(Self) -> LayoutSlide[TitleAndContent] raise PptxError
 pub fn Presentation::add_title_only_slide_mut(Self) -> LayoutSlide[TitleOnly] raise PptxError
