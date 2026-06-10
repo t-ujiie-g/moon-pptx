@@ -87,6 +87,7 @@ pub fn Presentation::add_audio_mut(Self, Int, FixedArray[Byte], FixedArray[Byte]
 pub fn Presentation::add_blank_typed_slide_mut(Self) -> LayoutSlide[BlankSlide] raise PptxError
 pub fn Presentation::add_chart_ex_mut(Self, Int, @chart_ex.ChartEx, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_online_video_mut(Self, Int, String, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_section_header_slide_mut(Self) -> LayoutSlide[SectionHeader] raise PptxError
@@ -96,6 +97,7 @@ pub fn Presentation::add_title_content_slide_mut(Self) -> LayoutSlide[TitleAndCo
 pub fn Presentation::add_title_only_slide_mut(Self) -> LayoutSlide[TitleOnly] raise PptxError
 pub fn Presentation::add_title_slide_mut(Self) -> LayoutSlide[TitleSlide] raise PptxError
 pub fn Presentation::add_video_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_youtube_video_mut(Self, Int, String, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
 pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
 pub fn Presentation::clone(Self) -> Self
