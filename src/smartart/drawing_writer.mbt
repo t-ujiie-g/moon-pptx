@@ -34,19 +34,24 @@ priv struct Box {
 }
 
 ///|
-/// Compute box rectangles for `n` nodes within `cx` × `cy`, per `kind`.
+/// Compute one box rectangle per flat node within `cx` × `cy`, per `kind`.
+/// Boxes are returned in `gidx` order (so `boxes[f.gidx]` is `f`'s rectangle).
+/// The flat families ignore the (depth-1) tree and lay out by index; the
+/// hierarchical families place parents centred above their children.
 fn layout_boxes(
   kind : SmartArtKind,
-  n : Int,
+  flat : Array[FlatNode],
   cx : Int64,
   cy : Int64,
 ) -> Array[Box] {
   let boxes = []
+  let n = flat.length()
   if n <= 0 {
     return boxes
   }
   let nl = n.to_int64()
   match kind {
+    OrgChart | Hierarchy => return tree_layout(flat, cx, cy)
     List => {
       let slot = cy / nl
       let gap = slot / 10L
@@ -111,6 +116,63 @@ fn layout_boxes(
 }
 
 ///|
+/// A tidy top-down tree layout: leaves get successive horizontal slots
+/// (left-to-right), each parent is centred over the average of its children's
+/// slots, and depth maps to the vertical level. Returns one box per flat node
+/// in `gidx` order.
+fn tree_layout(flat : Array[FlatNode], cx : Int64, cy : Int64) -> Array[Box] {
+  let n = flat.length()
+  let slot = Array::make(n, 0.0)
+  // Leaves, in pre-order (= left-to-right), take successive slots.
+  let mut leaf_count = 0
+  for f in flat {
+    if f.is_leaf() {
+      slot[f.gidx] = leaf_count.to_double()
+      leaf_count = leaf_count + 1
+    }
+  }
+  if leaf_count == 0 {
+    leaf_count = 1
+  }
+  // Internal nodes (reverse gidx → all descendants resolved first) sit at the
+  // average of their children's slots.
+  for k = n - 1; k >= 0; k = k - 1 {
+    let f = flat[k]
+    if !f.is_leaf() {
+      let mut sum = 0.0
+      for c in f.children_gidx {
+        sum = sum + slot[c]
+      }
+      slot[k] = sum / f.children_gidx.length().to_double()
+    }
+  }
+  let mut max_depth = 0
+  for f in flat {
+    if f.depth > max_depth {
+      max_depth = f.depth
+    }
+  }
+  let cxf = cx.to_double()
+  let cyf = cy.to_double()
+  let level_h = cyf / (max_depth + 1).to_double()
+  let col_w = cxf / leaf_count.to_double()
+  let boxw = col_w * 0.85
+  let boxh = level_h * 0.6
+  let boxes = []
+  for f in flat {
+    let x_center = (slot[f.gidx] + 0.5) * col_w
+    let y_top = f.depth.to_double() * level_h + (level_h - boxh) / 2.0
+    boxes.push({
+      x: (x_center - boxw / 2.0).to_int64(),
+      y: y_top.to_int64(),
+      w: boxw.to_int64(),
+      h: boxh.to_int64(),
+    })
+  }
+  boxes
+}
+
+///|
 /// 2π and π/2 in radians — for the cycle ring layout.
 let two_pi : Double = 6.283185307179586
 
@@ -125,7 +187,8 @@ fn SmartArt::serialize_drawing_xml(
 ) -> String raise @xml.XmlError {
   let @units.Emu(cxv) = cx
   let @units.Emu(cyv) = cy
-  let boxes = layout_boxes(self.kind, self.nodes.length(), cxv, cyv)
+  let flat = flatten(self.nodes)
+  let boxes = layout_boxes(self.kind, flat, cxv, cyv)
   let w = @xml.XmlWriter::new()
   w.bind_namespace("dsp", @oxml.diagram_drawing_ns)
   w.bind_namespace("a", @oxml.drawing_ns)
@@ -147,9 +210,9 @@ fn SmartArt::serialize_drawing_xml(
   w.end_element() // nvGrpSpPr
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "grpSpPr"))
   w.end_element()
-  // One <dsp:sp> per node.
-  for i, node in self.nodes {
-    write_dsp_sp(w, node_id(i), node.text, boxes[i])
+  // One <dsp:sp> per node (every node in the forest, in gidx order).
+  for f in flat {
+    write_dsp_sp(w, node_id(f.gidx), f.text, boxes[f.gidx])
   }
   w.end_element() // spTree
   w.end_element() // drawing

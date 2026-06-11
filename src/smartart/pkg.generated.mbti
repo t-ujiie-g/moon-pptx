@@ -31,9 +31,11 @@ pub fn SmartArt::colors_xml(Self) -> FixedArray[Byte]
 pub fn SmartArt::cycle(Array[String]) -> Self
 pub fn SmartArt::data_xml(Self, String) -> FixedArray[Byte] raise SmartArtError
 pub fn SmartArt::drawing_xml(Self, @units.Emu, @units.Emu) -> FixedArray[Byte] raise SmartArtError
+pub fn SmartArt::hierarchy(Array[Node]) -> Self
 pub fn SmartArt::layout_xml(Self) -> FixedArray[Byte]
 pub fn SmartArt::list(Array[String]) -> Self
 pub fn SmartArt::new(SmartArtKind, Array[Node]) -> Self
+pub fn SmartArt::org_chart(Node) -> Self
 pub fn SmartArt::process(Array[String]) -> Self
 pub fn SmartArt::pyramid(Array[String]) -> Self
 pub fn SmartArt::quick_style_xml(Self) -> FixedArray[Byte]
@@ -43,6 +45,8 @@ pub(all) enum SmartArtKind {
   Process
   Cycle
   Pyramid
+  OrgChart
+  Hierarchy
 } derive(Eq, @debug.Debug)
 
 // Type aliases

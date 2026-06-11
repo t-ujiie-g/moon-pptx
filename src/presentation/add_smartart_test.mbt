@@ -220,6 +220,37 @@ test "add_smartart_mut: cycle + pyramid wire end-to-end and reopen" {
 }
 
 ///|
+test "add_smartart_mut: org_chart with nested children wires + reopens" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let root = @smartart.Node::new("CEO", [
+    @smartart.Node::leaf("Eng"),
+    @smartart.Node::new("Ops", [@smartart.Node::leaf("Support")]),
+  ])
+  prs.add_smartart_mut(
+    0,
+    @smartart.SmartArt::org_chart(root),
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(8_000_000L),
+    @units.Emu(5_000_000L),
+  )
+  // The cached drawing draws all four nodes.
+  let drawing = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/ppt/drawings/drawing1.xml").unwrap().bytes,
+  )
+  let mut sp = 0
+  let mut rest = drawing
+  while rest.find("<dsp:sp ") is Some(off) {
+    sp = sp + 1
+    rest = rest.view(start_offset=off + 8).to_owned()
+  }
+  assert_eq(sp, 4)
+  let prs2 = @presentation.Presentation::open(prs.save())
+  assert_eq(prs2.slides()[0].shapes.length(), 1)
+}
+
+///|
 test "add_smartart_mut: empty diagram raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)

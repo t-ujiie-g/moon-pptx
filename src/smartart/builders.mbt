@@ -35,8 +35,30 @@ pub fn SmartArt::pyramid(items : Array[String]) -> SmartArt {
 }
 
 ///|
-/// General constructor from explicit `Node`s (for callers that want to carry
-/// child nodes through the data model ahead of the hierarchical layouts).
+/// Build an **organisation chart** from a single root node and its (nested)
+/// `children` — a top-down tree.
+///
+/// ```
+/// let ceo = @smartart.Node::new("CEO", [
+///   @smartart.Node::leaf("CTO"),
+///   @smartart.Node::leaf("CFO"),
+/// ])
+/// let art = @smartart.SmartArt::org_chart(ceo)
+/// ```
+pub fn SmartArt::org_chart(root : Node) -> SmartArt {
+  { kind: OrgChart, nodes: [root] }
+}
+
+///|
+/// Build a **hierarchy** from one or more root nodes (a forest), each with
+/// nested `children` — a layered top-down tree allowing several roots.
+pub fn SmartArt::hierarchy(nodes : Array[Node]) -> SmartArt {
+  { kind: Hierarchy, nodes }
+}
+
+///|
+/// General constructor from explicit `Node`s (carries nested children for the
+/// hierarchical families).
 pub fn SmartArt::new(kind : SmartArtKind, nodes : Array[Node]) -> SmartArt {
   { kind, nodes }
 }

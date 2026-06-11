@@ -26,6 +26,10 @@ pub(all) enum SmartArtKind {
   Cycle
   /// Stacked levels widening toward the base (built-in layout `pyramid1`).
   Pyramid
+  /// Top-down organisation chart from a single root (built-in `orgChart1`).
+  OrgChart
+  /// Layered hierarchy from one or more roots (built-in `hierarchy1`).
+  Hierarchy
 } derive(Eq, Debug)
 
 ///|

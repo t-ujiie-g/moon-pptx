@@ -33,6 +33,10 @@ fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
     Process => (prefix + "process1", "process", lin("fromL"))
     Cycle => (prefix + "cycle1", "cycle", "<dgm:alg type=\"cycle\"/>")
     Pyramid => (prefix + "pyramid1", "pyramid", "<dgm:alg type=\"pyra\"/>")
+    OrgChart =>
+      (prefix + "orgChart1", "hierarchy", "<dgm:alg type=\"hierRoot\"/>")
+    Hierarchy =>
+      (prefix + "hierarchy1", "hierarchy", "<dgm:alg type=\"hierRoot\"/>")
   }
 }
 

@@ -22,6 +22,8 @@ fn doc_prset_ids(kind : SmartArtKind) -> (String, String) {
     Process => (prefix + "process1", "process")
     Cycle => (prefix + "cycle1", "cycle")
     Pyramid => (prefix + "pyramid1", "pyramid")
+    OrgChart => (prefix + "orgChart1", "hierarchy")
+    Hierarchy => (prefix + "hierarchy1", "hierarchy")
   }
 }
 
@@ -56,20 +58,25 @@ fn SmartArt::serialize_data_xml(
   w.namespace_attr("r", @oxml.office_relationships_ns)
   w.namespace_attr("dsp", @oxml.diagram_drawing_ns)
 
+  // Flatten the forest: every node (not just top-level) becomes a point, and
+  // every node's incoming edge (from its parent, or the doc root) a parOf
+  // connection. Flat families are a depth-1 tree → byte-equivalent output.
+  let flat = flatten(self.nodes)
+
   // --- <dgm:ptLst> ---
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "ptLst"))
   write_doc_pt(w, self.kind)
-  for i, node in self.nodes {
-    write_node_pt(w, node_id(i), node.text)
-    write_trans_pt(w, par_trans_id(i), "parTrans", cxn_id(i))
-    write_trans_pt(w, sib_trans_id(i), "sibTrans", cxn_id(i))
+  for f in flat {
+    write_node_pt(w, node_id(f.gidx), f.text)
+    write_trans_pt(w, par_trans_id(f.gidx), "parTrans", cxn_id(f.gidx))
+    write_trans_pt(w, sib_trans_id(f.gidx), "sibTrans", cxn_id(f.gidx))
   }
   w.end_element() // ptLst
 
   // --- <dgm:cxnLst> ---
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "cxnLst"))
-  for i, _ in self.nodes {
-    write_cxn(w, i)
+  for f in flat {
+    write_cxn(w, f)
   }
   w.end_element() // cxnLst
 
@@ -161,17 +168,22 @@ fn write_trans_pt(
 }
 
 ///|
-/// `<dgm:cxn type="parOf">` joining the doc point to the i-th node, carrying
-/// the node's parTrans / sibTrans ids.
-fn write_cxn(w : @xml.XmlWriter, i : Int) -> Unit raise @xml.XmlError {
+/// `<dgm:cxn type="parOf">` joining a node to its source — the document root
+/// for a top-level node, or its parent node otherwise — carrying the node's
+/// parTrans / sibTrans ids.
+fn write_cxn(w : @xml.XmlWriter, f : FlatNode) -> Unit raise @xml.XmlError {
+  let src_id = match f.parent_gidx {
+    None => doc_id
+    Some(p) => node_id(p)
+  }
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "cxn"))
-  w.attribute(@xml.QName::unqualified("modelId"), cxn_id(i))
-  w.attribute(@xml.QName::unqualified("srcId"), doc_id)
-  w.attribute(@xml.QName::unqualified("destId"), node_id(i))
-  w.attribute(@xml.QName::unqualified("srcOrd"), i.to_string())
+  w.attribute(@xml.QName::unqualified("modelId"), cxn_id(f.gidx))
+  w.attribute(@xml.QName::unqualified("srcId"), src_id)
+  w.attribute(@xml.QName::unqualified("destId"), node_id(f.gidx))
+  w.attribute(@xml.QName::unqualified("srcOrd"), f.sib_ord.to_string())
   w.attribute(@xml.QName::unqualified("destOrd"), "0")
-  w.attribute(@xml.QName::unqualified("parTransId"), par_trans_id(i))
-  w.attribute(@xml.QName::unqualified("sibTransId"), sib_trans_id(i))
+  w.attribute(@xml.QName::unqualified("parTransId"), par_trans_id(f.gidx))
+  w.attribute(@xml.QName::unqualified("sibTransId"), sib_trans_id(f.gidx))
   w.end_element()
 }
 

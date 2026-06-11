@@ -93,6 +93,51 @@ test "cycle / pyramid builders + layout algorithms" {
 }
 
 ///|
+test "org_chart data model: parent/child connections + all nodes drawn" {
+  // CEO over CTO + CFO (CFO has one report) → 4 nodes total.
+  let ceo = @smartart.Node::new("CEO", [
+    @smartart.Node::leaf("CTO"),
+    @smartart.Node::new("CFO", [@smartart.Node::leaf("Controller")]),
+  ])
+  let art = @smartart.SmartArt::org_chart(ceo)
+  assert_true(art.kind == OrgChart)
+  let data = @oxml.bytes_to_string(art.data_xml("rId1"))
+  // One connection per node (every node has an incoming edge).
+  assert_eq(count_occurrences(data, "<dgm:cxn "), 4)
+  // Exactly one edge originates at the document root (the single CEO root);
+  // the other three originate at a node (parent → child).
+  assert_eq(count_occurrences(data, "srcId=\"0\""), 1)
+  // Every node's text is present, including the nested ones.
+  for label in ["CEO", "CTO", "CFO", "Controller"] {
+    assert_true(data.find("<a:t>" + label + "</a:t>") is Some(_))
+  }
+  // The cached drawing lays out every node (not just the root).
+  let drawing = @oxml.bytes_to_string(
+    art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(5_000_000L)),
+  )
+  assert_eq(count_occurrences(drawing, "<dsp:sp "), 4)
+  assert_well_formed(data)
+  assert_well_formed(drawing)
+  assert_well_formed(@oxml.bytes_to_string(art.layout_xml()))
+}
+
+///|
+test "hierarchy forest: two roots both connect to the document" {
+  let art = @smartart.SmartArt::hierarchy([
+    @smartart.Node::new("A", [@smartart.Node::leaf("A1")]),
+    @smartart.Node::new("B", [@smartart.Node::leaf("B1")]),
+  ])
+  assert_true(art.kind == Hierarchy)
+  let data = @oxml.bytes_to_string(art.data_xml("rId1"))
+  assert_eq(count_occurrences(data, "<dgm:cxn "), 4)
+  // Two roots → two edges from the document root.
+  assert_eq(count_occurrences(data, "srcId=\"0\""), 2)
+  assert_true(
+    @oxml.bytes_to_string(art.layout_xml()).find("hierarchy1") is Some(_),
+  )
+}
+
+///|
 test "cycle / pyramid drawings lay out one box per node" {
   let c = @smartart.SmartArt::cycle(["A", "B", "C", "D"])
   let cxml = @oxml.bytes_to_string(
