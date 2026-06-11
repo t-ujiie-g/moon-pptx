@@ -16,10 +16,12 @@
 /// the actual definitions live in our own layout / quickStyle / colors parts).
 fn doc_prset_ids(kind : SmartArtKind) -> (String, String) {
   // (loTypeId, loCatId)
+  let prefix = "urn:microsoft.com/office/officeart/2005/8/layout/"
   match kind {
-    List => ("urn:microsoft.com/office/officeart/2005/8/layout/list1", "list")
-    Process =>
-      ("urn:microsoft.com/office/officeart/2005/8/layout/process1", "process")
+    List => (prefix + "list1", "list")
+    Process => (prefix + "process1", "process")
+    Cycle => (prefix + "cycle1", "cycle")
+    Pyramid => (prefix + "pyramid1", "pyramid")
   }
 }
 

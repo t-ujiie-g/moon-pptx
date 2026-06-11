@@ -71,9 +71,51 @@ fn layout_boxes(
         })
       }
     }
+    Cycle => {
+      // Evenly spaced around a ring centred in the frame, starting at the top.
+      let cxf = cx.to_double()
+      let cyf = cy.to_double()
+      let cx0 = cxf / 2.0
+      let cy0 = cyf / 2.0
+      let minside = if cxf < cyf { cxf } else { cyf }
+      let radius = minside * 0.34
+      let bsize = minside * 0.28
+      for i in 0..<n {
+        let ang = two_pi * i.to_double() / nl.to_double() - half_pi
+        let bxc = cx0 + radius * @math.cos(ang)
+        let byc = cy0 + radius * @math.sin(ang)
+        boxes.push({
+          x: (bxc - bsize / 2.0).to_int64(),
+          y: (byc - bsize / 2.0).to_int64(),
+          w: bsize.to_int64(),
+          h: bsize.to_int64(),
+        })
+      }
+    }
+    Pyramid => {
+      // Stacked centred bands, widening toward the base (apex first).
+      let band = cy / nl
+      let gap = band / 20L
+      for i in 0..<n {
+        let width = cx * (i.to_int64() + 1L) / nl
+        boxes.push({
+          x: (cx - width) / 2L,
+          y: i.to_int64() * band,
+          w: width,
+          h: band - gap,
+        })
+      }
+    }
   }
   boxes
 }
+
+///|
+/// 2π and π/2 in radians — for the cycle ring layout.
+let two_pi : Double = 6.283185307179586
+
+///|
+let half_pi : Double = 1.5707963267948966
 
 ///|
 fn SmartArt::serialize_drawing_xml(

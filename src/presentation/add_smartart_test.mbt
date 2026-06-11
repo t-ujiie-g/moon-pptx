@@ -196,6 +196,30 @@ test "add_smartart_mut: second diagram gets index 2 across all parts" {
 }
 
 ///|
+test "add_smartart_mut: cycle + pyramid wire end-to-end and reopen" {
+  for
+    art in [
+      @smartart.SmartArt::cycle(["A", "B", "C"]),
+      @smartart.SmartArt::pyramid(["Top", "Mid", "Base"]),
+    ] {
+    let prs = @presentation.Presentation::new()
+    let _ = prs.add_slide_mut(0)
+    prs.add_smartart_mut(
+      0,
+      art,
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(5_000_000L),
+      @units.Emu(3_000_000L),
+    )
+    let prs2 = @presentation.Presentation::open(prs.save())
+    assert_true(prs2.pkg.part_by_name("/ppt/diagrams/data1.xml") is Some(_))
+    assert_true(prs2.pkg.part_by_name("/ppt/drawings/drawing1.xml") is Some(_))
+    assert_eq(prs2.slides()[0].shapes.length(), 1)
+  }
+}
+
+///|
 test "add_smartart_mut: empty diagram raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)

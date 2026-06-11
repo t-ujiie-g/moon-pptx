@@ -16,14 +16,30 @@
 let xml_decl : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 
 ///|
-/// `<dgm:layoutDef>` for `kind`. The only difference between List and Process
-/// is the linear direction (`fromT` vs `fromL`).
-pub fn SmartArt::layout_xml(self : SmartArt) -> FixedArray[Byte] {
-  let (unique_id, lin_dir) = match self.kind {
-    List => ("urn:microsoft.com/office/officeart/2005/8/layout/list1", "fromT")
-    Process =>
-      ("urn:microsoft.com/office/officeart/2005/8/layout/process1", "fromL")
+/// Per-kind layout metadata: the built-in `uniqueId`, the category type, and
+/// the root `<dgm:alg>` element. The flat families differ only in the
+/// algorithm (linear top/left vs cycle vs pyramid); the cached `<dsp:drawing>`
+/// is what actually renders, so the algorithm matters only on edit-time
+/// re-layout.
+fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
+  let prefix = "urn:microsoft.com/office/officeart/2005/8/layout/"
+  let lin = fn(dir) {
+    "<dgm:alg type=\"lin\"><dgm:param type=\"linDir\" val=\"" +
+    dir +
+    "\"/></dgm:alg>"
   }
+  match kind {
+    List => (prefix + "list1", "list", lin("fromT"))
+    Process => (prefix + "process1", "process", lin("fromL"))
+    Cycle => (prefix + "cycle1", "cycle", "<dgm:alg type=\"cycle\"/>")
+    Pyramid => (prefix + "pyramid1", "pyramid", "<dgm:alg type=\"pyra\"/>")
+  }
+}
+
+///|
+/// `<dgm:layoutDef>` for `kind`.
+pub fn SmartArt::layout_xml(self : SmartArt) -> FixedArray[Byte] {
+  let (unique_id, category, alg_xml) = layout_meta(self.kind)
   let xml = xml_decl +
     "<dgm:layoutDef xmlns:dgm=\"" +
     @oxml.diagram_ns +
@@ -34,16 +50,11 @@ pub fn SmartArt::layout_xml(self : SmartArt) -> FixedArray[Byte] {
     "\">" +
     "<dgm:title val=\"\"/><dgm:desc val=\"\"/>" +
     "<dgm:catLst><dgm:cat type=\"" +
-    (match self.kind {
-      List => "list"
-      Process => "process"
-    }) +
+    category +
     "\" pri=\"1000\"/></dgm:catLst>" +
     "<dgm:layoutNode name=\"diagram\">" +
     "<dgm:varLst><dgm:dir val=\"norm\"/></dgm:varLst>" +
-    "<dgm:alg type=\"lin\"><dgm:param type=\"linDir\" val=\"" +
-    lin_dir +
-    "\"/></dgm:alg>" +
+    alg_xml +
     "<dgm:shape><dgm:adjLst/></dgm:shape>" +
     "<dgm:presOf/><dgm:constrLst/><dgm:ruleLst/>" +
     "<dgm:forEach name=\"nodesForEach\" axis=\"ch\" ptType=\"node\">" +

@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/math",
   "t-ujiie-g/moon-pptx/units",
   "t-ujiie-g/moon-pptx/xml",
   "t-ujiie-g/moon-pptx/oxml",

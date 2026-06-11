@@ -77,6 +77,41 @@ test "layout_xml direction differs List vs Process" {
 }
 
 ///|
+test "cycle / pyramid builders + layout algorithms" {
+  let c = @smartart.SmartArt::cycle(["A", "B", "C", "D"])
+  assert_true(c.kind == Cycle)
+  assert_eq(c.nodes.length(), 4)
+  let p = @smartart.SmartArt::pyramid(["Top", "Mid", "Base"])
+  assert_true(p.kind == Pyramid)
+  // Layout defs carry the right algorithm type.
+  assert_true(
+    @oxml.bytes_to_string(c.layout_xml()).find("type=\"cycle\"") is Some(_),
+  )
+  assert_true(
+    @oxml.bytes_to_string(p.layout_xml()).find("type=\"pyra\"") is Some(_),
+  )
+}
+
+///|
+test "cycle / pyramid drawings lay out one box per node" {
+  let c = @smartart.SmartArt::cycle(["A", "B", "C", "D"])
+  let cxml = @oxml.bytes_to_string(
+    c.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
+  )
+  assert_eq(count_occurrences(cxml, "<dsp:sp "), 4)
+  let p = @smartart.SmartArt::pyramid(["Top", "Mid", "Base"])
+  let pxml = @oxml.bytes_to_string(
+    p.drawing_xml(@units.Emu(5_000_000L), @units.Emu(3_000_000L)),
+  )
+  assert_eq(count_occurrences(pxml, "<dsp:sp "), 3)
+  // All generated parts well-formed for the new families too.
+  assert_well_formed(cxml)
+  assert_well_formed(pxml)
+  assert_well_formed(@oxml.bytes_to_string(c.data_xml("rId1")))
+  assert_well_formed(@oxml.bytes_to_string(p.layout_xml()))
+}
+
+///|
 test "colors + quickStyle parts are well-formed roots" {
   let art = @smartart.SmartArt::list(["A"])
   let colors = @oxml.bytes_to_string(art.colors_xml())

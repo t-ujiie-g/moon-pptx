@@ -22,6 +22,19 @@ pub fn SmartArt::process(items : Array[String]) -> SmartArt {
 }
 
 ///|
+/// Build a **cycle** diagram — boxes arranged evenly around a ring.
+pub fn SmartArt::cycle(items : Array[String]) -> SmartArt {
+  { kind: Cycle, nodes: items.map(Node::leaf) }
+}
+
+///|
+/// Build a **pyramid** diagram — one level per string, widening toward the
+/// base (first item is the apex).
+pub fn SmartArt::pyramid(items : Array[String]) -> SmartArt {
+  { kind: Pyramid, nodes: items.map(Node::leaf) }
+}
+
+///|
 /// General constructor from explicit `Node`s (for callers that want to carry
 /// child nodes through the data model ahead of the hierarchical layouts).
 pub fn SmartArt::new(kind : SmartArtKind, nodes : Array[Node]) -> SmartArt {

@@ -6,21 +6,26 @@
 // quickStyle / colors + a cached `<dsp:drawing>` (the laid-out shapes, so the
 // diagram renders without a layout engine). See `parts.mbt`.
 //
-// Slice 1 (this version) ships the two linear families — `List` (a vertical
-// stack of rounded boxes) and `Process` (a left-to-right sequence) — which lay
-// out from the flat list of top-level nodes. `Node.children` is carried in the
-// model (and preserved in the data part) so the hierarchical families
-// (org-chart / hierarchy / cycle / pyramid / matrix / relationship) layer on
-// additively in later slices.
+// Ships the four *flat* families — `List` (vertical stack), `Process`
+// (left-to-right), `Cycle` (radial ring), and `Pyramid` (stacked levels) —
+// which lay out from the flat list of top-level nodes. `Node.children` is
+// carried in the model (and preserved in the data part) so the hierarchical
+// families (org-chart / hierarchy / matrix / relationship) layer on additively
+// in later slices.
 
 ///|
-/// Which built-in SmartArt layout family a diagram maps to. Slice 1 covers
-/// the two linear families; the rest are reserved for later slices.
+/// Which built-in SmartArt layout family a diagram maps to. The flat families
+/// (no parent/child nesting) are shipped; the hierarchical ones are reserved
+/// for later slices.
 pub(all) enum SmartArtKind {
   /// Vertical list of rounded boxes (built-in layout `list1`).
   List
   /// Left-to-right sequence of boxes (built-in layout `process1`).
   Process
+  /// Boxes arranged evenly around a ring (built-in layout `cycle1`).
+  Cycle
+  /// Stacked levels widening toward the base (built-in layout `pyramid1`).
+  Pyramid
 } derive(Eq, Debug)
 
 ///|
