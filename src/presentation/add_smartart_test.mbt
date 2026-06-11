@@ -251,6 +251,32 @@ test "add_smartart_mut: org_chart with nested children wires + reopens" {
 }
 
 ///|
+test "add_smartart_mut: matrix + relationship wire end-to-end and reopen" {
+  for
+    art in [
+      @smartart.SmartArt::matrix(["Q1", "Q2", "Q3", "Q4"]),
+      @smartart.SmartArt::relationship(@smartart.Node::leaf("Hub"), [
+        @smartart.Node::leaf("A"),
+        @smartart.Node::leaf("B"),
+      ]),
+    ] {
+    let prs = @presentation.Presentation::new()
+    let _ = prs.add_slide_mut(0)
+    prs.add_smartart_mut(
+      0,
+      art,
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(5_000_000L),
+      @units.Emu(5_000_000L),
+    )
+    let prs2 = @presentation.Presentation::open(prs.save())
+    assert_true(prs2.pkg.part_by_name("/ppt/diagrams/data1.xml") is Some(_))
+    assert_eq(prs2.slides()[0].shapes.length(), 1)
+  }
+}
+
+///|
 test "add_smartart_mut: empty diagram raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)

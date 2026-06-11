@@ -34,11 +34,13 @@ pub fn SmartArt::drawing_xml(Self, @units.Emu, @units.Emu) -> FixedArray[Byte] r
 pub fn SmartArt::hierarchy(Array[Node]) -> Self
 pub fn SmartArt::layout_xml(Self) -> FixedArray[Byte]
 pub fn SmartArt::list(Array[String]) -> Self
+pub fn SmartArt::matrix(Array[String]) -> Self
 pub fn SmartArt::new(SmartArtKind, Array[Node]) -> Self
 pub fn SmartArt::org_chart(Node) -> Self
 pub fn SmartArt::process(Array[String]) -> Self
 pub fn SmartArt::pyramid(Array[String]) -> Self
 pub fn SmartArt::quick_style_xml(Self) -> FixedArray[Byte]
+pub fn SmartArt::relationship(Node, Array[Node]) -> Self
 
 pub(all) enum SmartArtKind {
   List
@@ -47,6 +49,8 @@ pub(all) enum SmartArtKind {
   Pyramid
   OrgChart
   Hierarchy
+  Matrix
+  Relationship
 } derive(Eq, @debug.Debug)
 
 // Type aliases

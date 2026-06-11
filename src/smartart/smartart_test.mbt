@@ -138,6 +138,38 @@ test "hierarchy forest: two roots both connect to the document" {
 }
 
 ///|
+test "matrix grid + relationship hub layouts" {
+  // Matrix: four items → 2×2 grid, four boxes.
+  let m = @smartart.SmartArt::matrix(["Q1", "Q2", "Q3", "Q4"])
+  assert_true(m.kind == Matrix)
+  let mxml = @oxml.bytes_to_string(
+    m.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
+  )
+  assert_eq(count_occurrences(mxml, "<dsp:sp "), 4)
+  assert_true(@oxml.bytes_to_string(m.layout_xml()).find("matrix1") is Some(_))
+  // Relationship: hub + 3 spokes → 4 nodes; the spokes connect to the hub.
+  let r = @smartart.SmartArt::relationship(@smartart.Node::leaf("Core"), [
+    @smartart.Node::leaf("People"),
+    @smartart.Node::leaf("Process"),
+    @smartart.Node::leaf("Tools"),
+  ])
+  assert_true(r.kind == Relationship)
+  let rdata = @oxml.bytes_to_string(r.data_xml("rId1"))
+  assert_eq(count_occurrences(rdata, "<dgm:cxn "), 4)
+  // One edge from the doc (the hub), three from the hub node (the spokes).
+  assert_eq(count_occurrences(rdata, "srcId=\"0\""), 1)
+  let rxml = @oxml.bytes_to_string(
+    r.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
+  )
+  assert_eq(count_occurrences(rxml, "<dsp:sp "), 4)
+  // All parts well-formed for both families.
+  assert_well_formed(mxml)
+  assert_well_formed(rdata)
+  assert_well_formed(rxml)
+  assert_well_formed(@oxml.bytes_to_string(r.layout_xml()))
+}
+
+///|
 test "cycle / pyramid drawings lay out one box per node" {
   let c = @smartart.SmartArt::cycle(["A", "B", "C", "D"])
   let cxml = @oxml.bytes_to_string(

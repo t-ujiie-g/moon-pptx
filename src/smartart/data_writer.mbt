@@ -24,6 +24,8 @@ fn doc_prset_ids(kind : SmartArtKind) -> (String, String) {
     Pyramid => (prefix + "pyramid1", "pyramid")
     OrgChart => (prefix + "orgChart1", "hierarchy")
     Hierarchy => (prefix + "hierarchy1", "hierarchy")
+    Matrix => (prefix + "matrix1", "matrix")
+    Relationship => (prefix + "radial1", "relationship")
   }
 }
 

@@ -52,6 +52,29 @@ fn layout_boxes(
   let nl = n.to_int64()
   match kind {
     OrgChart | Hierarchy => return tree_layout(flat, cx, cy)
+    Relationship => return radial_layout(flat, cx, cy)
+    Matrix => {
+      // Roughly-square grid: smallest `cols` with cols² ≥ n.
+      let mut cols = 1
+      while cols * cols < n {
+        cols = cols + 1
+      }
+      let rows = (n + cols - 1) / cols
+      let cell_w = cx / cols.to_int64()
+      let cell_h = cy / rows.to_int64()
+      let gap_x = cell_w / 20L
+      let gap_y = cell_h / 20L
+      for i in 0..<n {
+        let col = (i % cols).to_int64()
+        let row = (i / cols).to_int64()
+        boxes.push({
+          x: col * cell_w + gap_x / 2L,
+          y: row * cell_h + gap_y / 2L,
+          w: cell_w - gap_x,
+          h: cell_h - gap_y,
+        })
+      }
+    }
     List => {
       let slot = cy / nl
       let gap = slot / 10L
@@ -168,6 +191,47 @@ fn tree_layout(flat : Array[FlatNode], cx : Int64, cy : Int64) -> Array[Box] {
       w: boxw.to_int64(),
       h: boxh.to_int64(),
     })
+  }
+  boxes
+}
+
+///|
+/// Hub-and-spoke layout: the first node (gidx 0, the hub) sits at the frame
+/// centre; every other node is spread evenly around it on a ring. Returns one
+/// box per flat node in `gidx` order.
+fn radial_layout(flat : Array[FlatNode], cx : Int64, cy : Int64) -> Array[Box] {
+  let n = flat.length()
+  let cxf = cx.to_double()
+  let cyf = cy.to_double()
+  let cx0 = cxf / 2.0
+  let cy0 = cyf / 2.0
+  let minside = if cxf < cyf { cxf } else { cyf }
+  let hub = minside * 0.30
+  let spoke = minside * 0.24
+  let radius = minside * 0.36
+  let spokes = n - 1
+  let boxes = []
+  for f in flat {
+    if f.gidx == 0 {
+      // The hub, centred.
+      boxes.push({
+        x: (cx0 - hub / 2.0).to_int64(),
+        y: (cy0 - hub / 2.0).to_int64(),
+        w: hub.to_int64(),
+        h: hub.to_int64(),
+      })
+    } else {
+      let k = (f.gidx - 1).to_double()
+      let ang = two_pi * k / spokes.to_double() - half_pi
+      let bxc = cx0 + radius * @math.cos(ang)
+      let byc = cy0 + radius * @math.sin(ang)
+      boxes.push({
+        x: (bxc - spoke / 2.0).to_int64(),
+        y: (byc - spoke / 2.0).to_int64(),
+        w: spoke.to_int64(),
+        h: spoke.to_int64(),
+      })
+    }
   }
   boxes
 }

@@ -37,6 +37,9 @@ fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
       (prefix + "orgChart1", "hierarchy", "<dgm:alg type=\"hierRoot\"/>")
     Hierarchy =>
       (prefix + "hierarchy1", "hierarchy", "<dgm:alg type=\"hierRoot\"/>")
+    Matrix => (prefix + "matrix1", "matrix", "<dgm:alg type=\"snake\"/>")
+    Relationship =>
+      (prefix + "radial1", "relationship", "<dgm:alg type=\"cycle\"/>")
   }
 }
 

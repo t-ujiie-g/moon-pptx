@@ -30,6 +30,10 @@ pub(all) enum SmartArtKind {
   OrgChart
   /// Layered hierarchy from one or more roots (built-in `hierarchy1`).
   Hierarchy
+  /// Items arranged in a roughly-square grid (built-in `matrix1`).
+  Matrix
+  /// A central hub with related items around it (built-in `radial1`).
+  Relationship
 } derive(Eq, Debug)
 
 ///|
