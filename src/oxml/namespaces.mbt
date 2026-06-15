@@ -56,3 +56,23 @@ pub let powerpoint_2010_ns : String = "http://schemas.microsoft.com/office/power
 /// The `<p:ext>` URI keying the `<p14:media>` embed extension inside a
 /// media picture's `<p:nvPr><p:extLst>`. Fixed by Office.
 pub let media_ext_uri : String = "{DAA4B4D4-668B-4A5B-A93E-BE16DBB66F30}"
+
+///|
+/// DrawingML diagram (SmartArt) namespace — `dgm:` prefix. Home of
+/// `<dgm:dataModel>` (data part), `<dgm:layoutDef>`, `<dgm:colorsDef>`,
+/// `<dgm:styleDef>`, and the `<dgm:relIds>` reference inside a SmartArt
+/// `<a:graphicData>`. Numerically equal to `graphic_data_diagram_uri`.
+/// Roadmap D1.
+pub let diagram_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/diagram"
+
+///|
+/// Microsoft diagram-drawing namespace — `dsp:` prefix. Home of the cached
+/// `<dsp:drawing>` (laid-out shapes) referenced from a SmartArt data part so
+/// the diagram renders without re-running the layout engine. Roadmap D1.
+pub let diagram_drawing_ns : String = "http://schemas.microsoft.com/office/drawing/2008/diagram"
+
+///|
+/// The `<a:ext>` URI keying the `<dsp:dataModelExt>` extension inside a
+/// SmartArt data model's `<dgm:extLst>` — points the data part at its cached
+/// `<dsp:drawing>`. Fixed by Office. Roadmap D1.
+pub let diagram_data_model_ext_uri : String = "{74C2E1F8-2D9B-489B-A2DD-C0C0D5F4E0E0}"

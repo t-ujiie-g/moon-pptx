@@ -293,6 +293,14 @@ fn write_slide_xml(
     Some(t) => write_transition(w, ctx, t)
     None => ()
   }
+  // <p:timing> after <p:transition>, per CT_Slide ordering (roadmap D2). The
+  // typed timeline is build-only and mutually exclusive with a captured
+  // `<p:timing>` (`with_animations` strips it from `extension`), so the replay
+  // below never double-emits it.
+  match s.timing {
+    Some(t) => write_timing(w, ctx, t)
+    None => ()
+  }
   // sld-level extensions (timing / custDataLst / extLst / foreign-namespace).
   for ext in s.extension {
     if classify_ext(ext) is ExtSld {

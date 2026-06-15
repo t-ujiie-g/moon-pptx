@@ -6,7 +6,7 @@ moon-pptx:
 | Where | What | When to use |
 |---|---|---|
 | [`README.md`](README.md) (this file) | Cookbook of focused recipes, one feature per section | Quick reference / copy-paste templates |
-| [`sample-deck/`](sample-deck/) | Standalone MoonBit module — a 12-slide deck built end-to-end | "Show me a real consumer project" / regenerate `sample.pptx` for verification |
+| [`sample-deck/`](sample-deck/) | Standalone MoonBit module — a 23-slide deck built end-to-end (every feature through v0.5) | "Show me a real consumer project" / regenerate `sample.pptx` for verification |
 
 `sample-deck/` is its own MoonBit module (`moon.mod.json`) and depends
 on `t-ujiie-g/moon-pptx` exactly the way a downstream consumer would.
@@ -400,6 +400,115 @@ let chart = @chart.Chart::of_bar(data.validate())   // raises Malformed on a mis
 
 Use the non-raising `data.is_consistent()` for a boolean check.
 `ScatterData` and `BubbleData` have matching `validate` / `is_consistent`.
+
+---
+
+## 14. Animations (entrance / emphasis / exit / motion)
+
+Build a `Timeline` of steps that target shapes by id, then attach it to
+the slide. `save()` emits the full canonical `<p:timing>` tree.
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+// A shape to animate (shape id 2).
+let box = @slide.AutoShape::textbox(
+  2, "Box",
+  prs.pct_w(10.0), prs.pct_h(30.0), prs.pct_w(40.0), prs.pct_h(20.0),
+  "Fly in!",
+)
+let slide = prs.slides()[0].with_shape(@slide.AutoShape(box))
+
+// First click: fly in from the left. Second click: spin 360° for emphasis.
+let timeline = @slide.Timeline::new()
+  .on_click(Entrance(FlyIn(Left)), 2)
+  .on_click(Emphasis(Spin(360)), 2)
+prs.update_slide_mut(0, slide.with_animations(timeline))
+```
+
+`AnimEffect` covers `Entrance` / `Exit` (over a shared `VisualEffect`:
+`Appear` / `Fade` / `FlyIn(dir)` / `Wipe(dir)` / `Blinds` / `Wheel(n)` /
+…), `Emphasis` (`Spin` / `GrowShrink` / `ChangeFillColor`), and
+`Motion(MotionPath)` for a custom path. Start each step with
+`on_click` / `with_previous` / `after_previous`, and pass `paragraph=N`
+to build a text body one paragraph at a time.
+
+---
+
+## 15. SmartArt diagrams
+
+`add_smartart_mut` synthesises the full five-part DiagramML graphic
+(data / layout / quickStyle / colors + a cached drawing) and drops it on
+the slide.
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+let art = @smartart.SmartArt::process(["Plan", "Build", "Ship"])
+prs.add_smartart_mut(
+  0, art,
+  prs.pct_w(10.0), prs.pct_h(15.0), prs.pct_w(80.0), prs.pct_h(70.0),
+)
+```
+
+All eight families build: the flat `SmartArt::list` / `process` /
+`cycle` / `pyramid` / `matrix(items)`, the tree `org_chart(root)` /
+`hierarchy(nodes)`, and `relationship(center, related)` (hub-and-spoke).
+
+> **Rendering note.** PowerPoint lays SmartArt out from the layout
+> definition on open, so the **flat** families (list / process / cycle /
+> pyramid / matrix — every node is one level deep) render fully. The
+> **nesting** families (org_chart / hierarchy / relationship) build and
+> are recognised as SmartArt with the correct data model, but currently
+> render their top level only; a recursive layout definition is a
+> follow-up (see `TODO.md` D1).
+
+---
+
+## 16. YouTube / online video
+
+Embed a streaming video by URL — no media bytes in the deck, just the
+external relationship plus a caller-supplied preview frame.
+
+```moonbit nocheck
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+// Read a poster image via whatever I/O your backend supports.
+let poster : FixedArray[Byte] = read_my_image_file()
+
+// Any YouTube share/watch/embed/shorts URL is normalised to the embed form.
+prs.add_youtube_video_mut(
+  0, "https://youtu.be/dQw4w9WgXcQ", poster,
+  prs.pct_w(10.0), prs.pct_h(10.0), prs.pct_w(80.0), prs.pct_h(80.0),
+)
+```
+
+For any other streaming URL, use the general
+`add_online_video_mut(slide_idx, video_url, poster, x, y, cx, cy)`.
+
+---
+
+## 17. Plot-type-aware chart validation
+
+Beyond the data-shape check in §13, `Chart::validate()` rejects data-label
+positions a chart's plot family doesn't allow — catching a repair-banner
+trigger before PowerPoint sees the file.
+
+```moonbit
+let data = @chart.ChartData::new()
+  .with_category("Q1").with_category("Q2")
+  .with_series("Revenue", [10.0, 20.0])
+
+// `outEnd` labels are valid on a bar chart…
+let _ = @chart.Chart::of_bar(data).with_options([DataLabels(DLblOutEnd)]).validate()
+
+// …but invalid on a line chart (line labels allow only ctr / l / r / t / b).
+let line = @chart.Chart::of_line(data).with_options([DataLabels(DLblOutEnd)])
+assert_eq(line.is_consistent(), false)   // and `line.validate()` raises Malformed
+```
 
 ---
 

@@ -86,6 +86,89 @@ test "ScatterData::validate: matching X/Y passes, mismatch raises" {
   }
 }
 
+// --- Chart (plot-type-aware data-label position) — roadmap v0.5 D8 ---
+
+///|
+fn d8_data() -> @chart.ChartData {
+  @chart.ChartData::new()
+  .with_category("Q1")
+  .with_category("Q2")
+  .with_series("Revenue", [100.0, 200.0])
+}
+
+///|
+test "Chart::validate: outEnd on a bar (clustered) chart is allowed" {
+  let chart = @chart.Chart::of_bar(d8_data()).with_options([
+    DataLabels(DLblOutEnd),
+  ])
+  assert_eq(chart.is_consistent(), true)
+  assert_true(chart.validate() == chart)
+}
+
+///|
+test "Chart::validate: outEnd on a line chart raises Malformed naming the plot" {
+  let chart = @chart.Chart::of_line(d8_data()).with_options([
+    DataLabels(DLblOutEnd),
+  ])
+  assert_eq(chart.is_consistent(), false)
+  try chart.validate() |> ignore catch {
+    @chart.ChartError::Malformed(msg) => {
+      // names the plot family and the offending position.
+      assert_true(index_of(msg, "lineChart") >= 0)
+      assert_true(index_of(msg, "outEnd") >= 0)
+    }
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected validate to raise")
+  }
+}
+
+///|
+test "Chart::validate: ctr on a line chart is allowed" {
+  let chart = @chart.Chart::of_line(d8_data()).with_options([
+    DataLabels(DLblCenter),
+  ])
+  assert_eq(chart.is_consistent(), true)
+}
+
+///|
+test "Chart::validate: outEnd on a pie chart is allowed, inBase is not" {
+  let ok = @chart.Chart::of_pie(d8_data()).with_options([DataLabels(DLblOutEnd)])
+  assert_eq(ok.is_consistent(), true)
+  let bad = @chart.Chart::of_pie(d8_data()).with_options([
+    DataLabels(DLblInBase),
+  ])
+  assert_eq(bad.is_consistent(), false)
+}
+
+///|
+test "Chart::validate: stacked bar forbids outEnd (clustered allows it)" {
+  let stacked = @chart.Chart::of_bar(d8_data(), grouping=Stacked).with_options([
+    DataLabels(DLblOutEnd),
+  ])
+  assert_eq(stacked.is_consistent(), false)
+  let clustered = @chart.Chart::of_bar(d8_data(), grouping=Clustered).with_options([
+      DataLabels(DLblOutEnd),
+    ],
+  )
+  assert_eq(clustered.is_consistent(), true)
+}
+
+///|
+test "Chart::validate: area chart permits no explicit position" {
+  let chart = @chart.Chart::of_area(d8_data()).with_options([
+    DataLabels(DLblCenter),
+  ])
+  assert_eq(chart.is_consistent(), false)
+}
+
+///|
+test "Chart::validate: a chart with no data labels is consistent" {
+  let chart = @chart.Chart::of_line(d8_data())
+  assert_eq(chart.is_consistent(), true)
+  assert_true(chart.validate() == chart)
+}
+
 // --- BubbleData ---
 
 ///|

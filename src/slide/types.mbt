@@ -122,6 +122,12 @@ pub(all) struct Slide {
   /// means the slide has no transition effect (the common case). Lifted out
   /// of `extension` into a typed field; see `transition.mbt`.
   transition : Transition?
+  /// `<p:timing>` — the slide's animation timeline (roadmap D2). `None` means
+  /// the slide has no animations (the common case). **Build-only**: set by
+  /// `with_animations` and emitted by the writer; on *parse* an existing
+  /// `<p:timing>` round-trips through `extension` (ADR-004) and this stays
+  /// `None`. See `animation.mbt` / `animation_writer.mbt`.
+  timing : Timeline?
   /// Lossless preservation (ADR-004): unmodelled `<p:sld>` children
   /// (`<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
   /// unmodelled `<p:cSld>` children (`<p:controls>`, …; `<p:bg>` is now

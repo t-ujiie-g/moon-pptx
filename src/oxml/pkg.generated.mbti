@@ -30,6 +30,16 @@ pub let ct_comments : String
 
 pub let ct_core_properties : String
 
+pub let ct_diagram_colors : String
+
+pub let ct_diagram_data : String
+
+pub let ct_diagram_drawing : String
+
+pub let ct_diagram_layout : String
+
+pub let ct_diagram_style : String
+
 pub let ct_extended_properties : String
 
 pub let ct_notes_master : String
@@ -59,6 +69,12 @@ pub fn detect_image_dimensions(FixedArray[Byte]) -> ImageDimensions?
 pub fn detect_image_format(FixedArray[Byte]) -> ImageFormat?
 
 pub fn detect_media_format(FixedArray[Byte]) -> MediaFormat?
+
+pub let diagram_data_model_ext_uri : String
+
+pub let diagram_drawing_ns : String
+
+pub let diagram_ns : String
 
 pub let drawing_ns : String
 

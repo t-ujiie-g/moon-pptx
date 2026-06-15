@@ -8,8 +8,8 @@
 // is on mooncakes). The library proper (in `src/`) is the published
 // artefact and contains no demo / sample code.
 //
-// 12 slides covering every typed feature delivered through v0.2 plus
-// every chart family carried over from v0.1:
+// 23 slides covering every typed feature through v0.5 plus every chart
+// family from v0.1:
 //
 //   1.  Title — widescreen sizing, styled run, hyperlink, speaker notes.
 //   2.  Table of contents — internal hyperlinks jumping to later slides.
@@ -19,14 +19,19 @@
 //   6.  Picture — synthesized 16×16 BMP fed through add_picture_auto_mut
 //       (image-size auto-detection + crop fluent builder).
 //   7.  Tables — merged header + per-edge custom borders.
-//   8.  Charts I — bar / line / pie grid.
-//   9.  Charts II — area / radar / doughnut grid.
-//   10. Charts III — scatter + bubble (two value-axis families).
-//   11. Charts IV — 3-D bar + stock + ofPie.
-//   12. Closing — hyperlink back to slide 1.
+//   8–11. Charts — bar/line/pie, area/radar/doughnut, scatter/bubble,
+//       3-D bar/stock/ofPie.
+//   12. Slide background.            13. Combo + secondary-axis chart.
+//   14. SVG image.                   15. In-place shape editing (map_shapes).
+//   16. Embedded video + audio.      17. SmartArt org chart (v0.5 D1).
+//   18. Animations (v0.5 D2).        19. YouTube / online video (v0.5 C5).
+//   20. Master / template slide (footer / date / slide number).
+//   21–22. Typed layout slides (v0.4 M1 compile-time placeholder schema).
+//   23. Closing — hyperlink back to slide 1.
 //
-// Every position is expressed through `prs.pct_w` / `prs.pct_h` so
-// switching slide sizes is a one-line change.
+// Plus: a slide transition on every slide (v0.4 D3). Every position is
+// expressed through `prs.pct_w` / `prs.pct_h` so switching slide sizes
+// is a one-line change.
 //
 // Generate the `.pptx` artefact from the project root with:
 //
@@ -60,6 +65,9 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
     sample_svg_slide,
     sample_edit_slide,
     sample_media_slide,
+    sample_smartart_slide,
+    sample_animation_slide,
+    sample_online_video_slide,
   ]
   for _ in 0..<builders.length() {
     let _ = prs.add_slide_mut(0)
@@ -209,6 +217,9 @@ pub fn build_sample_isolated(
     12 => sample_svg_slide(prs, 1)
     13 => sample_edit_slide(prs, 1)
     14 => sample_media_slide(prs, 1)
+    15 => sample_smartart_slide(prs, 1)
+    16 => sample_animation_slide(prs, 1)
+    17 => sample_online_video_slide(prs, 1)
     _ => sample_closing_slide(prs, 1)
   }
   prs.save()

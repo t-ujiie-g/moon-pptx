@@ -349,3 +349,113 @@ test "example 13: chart-data validation" {
     _ => fail("expected validate to raise on a mismatched series")
   }
 }
+
+///|
+test "example 14: entrance animations" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  // A shape to animate (shape id 2).
+  let box = @slide.AutoShape::textbox(
+    2,
+    "Box",
+    prs.pct_w(10.0),
+    prs.pct_h(30.0),
+    prs.pct_w(40.0),
+    prs.pct_h(20.0),
+    "Fly in!",
+  )
+  let slide = prs.slides()[0].with_shape(@slide.AutoShape(box))
+  // A click-driven timeline: the box flies in from the left, then a second
+  // click spins it for emphasis.
+  let timeline = @slide.Timeline::new()
+    .on_click(Entrance(FlyIn(Left)), 2)
+    .on_click(Emphasis(Spin(360)), 2)
+  let animated = slide.with_animations(timeline)
+  assert_true(animated.timing is Some(_))
+  prs.update_slide_mut(0, animated)
+  // `save()` emits the full canonical `<p:timing>` tree.
+  let _bytes = prs.save()
+}
+
+///|
+test "example 15: SmartArt diagram" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  // A flat family (process) renders every node in PowerPoint; the nesting
+  // families (org_chart / hierarchy / relationship) also build but currently
+  // render their top level only (see examples/README.md §15).
+  let art = @smartart.SmartArt::process(["Plan", "Build", "Ship"])
+  prs.add_smartart_mut(
+    0,
+    art,
+    prs.pct_w(10.0),
+    prs.pct_h(15.0),
+    prs.pct_w(80.0),
+    prs.pct_h(70.0),
+  )
+  // The slide gains one graphic-frame shape; the five DiagramML parts survive
+  // a save → reopen round-trip.
+  let prs2 = @presentation.Presentation::open(prs.save())
+  assert_eq(prs2.slides()[0].shapes.length(), 1)
+}
+
+///|
+test "example 16: YouTube / online video" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  // `add_youtube_video_mut` normalises the URL to the embeddable form and
+  // wires the external video relationships; the caller supplies the preview
+  // frame (here a tiny synthetic PNG stands in for a real poster image).
+  prs.add_youtube_video_mut(
+    0,
+    "https://youtu.be/dQw4w9WgXcQ",
+    minimal_png(),
+    prs.pct_w(10.0),
+    prs.pct_h(10.0),
+    prs.pct_w(80.0),
+    prs.pct_h(80.0),
+  )
+  assert_eq(prs.slides()[0].shapes.length(), 1)
+  // `add_online_video_mut(slide, url, poster, …)` is the general form for any
+  // streaming URL.
+  let _bytes = prs.save()
+}
+
+///|
+test "example 17: plot-type-aware chart validation" {
+  let data = @chart.ChartData::new()
+    .with_category("Q1")
+    .with_category("Q2")
+    .with_series("Revenue", [10.0, 20.0])
+  // `outEnd` data labels are valid on a bar chart…
+  let bar = @chart.Chart::of_bar(data).with_options([DataLabels(DLblOutEnd)])
+  let _ = bar.validate()
+  // …but invalid on a line chart — `validate` catches it before PowerPoint
+  // would run its repair pass.
+  let line = @chart.Chart::of_line(data).with_options([DataLabels(DLblOutEnd)])
+  assert_eq(line.is_consistent(), false)
+  try line.validate() |> ignore catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected validate to raise on an invalid label position")
+  }
+}
+
+///|
+/// A minimal valid PNG (signature + IHDR + IDAT + IEND) — enough for the image
+/// detector; the cookbook's video poster stands in for a real frame.
+fn minimal_png() -> FixedArray[Byte] {
+  let raw : Array[Int] = [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49,
+    0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06,
+    0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44,
+    0x41, 0x54, 0x78, 0x9C, 0x62, 0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0D,
+    0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42,
+    0x60, 0x82,
+  ]
+  let out = FixedArray::make(raw.length(), b'\x00')
+  for i in 0..<raw.length() {
+    out[i] = raw[i].to_byte()
+  }
+  out
+}

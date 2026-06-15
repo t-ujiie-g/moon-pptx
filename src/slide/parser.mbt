@@ -83,6 +83,9 @@ fn parse_slide_xml(
     shapes,
     clr_map_override,
     transition,
+    // <p:timing> stays captured in `extension` (D2 is build-only); see
+    // animation.mbt.
+    timing: None,
     extension,
   }
 }

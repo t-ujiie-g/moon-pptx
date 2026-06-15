@@ -4,12 +4,13 @@ A single PowerPoint deck built end-to-end with
 [`t-ujiie-g/moon-pptx`](https://mooncakes.io/docs/t-ujiie-g/moon-pptx),
 touring (almost) every feature: text, shapes, tables, the full chart
 gallery, pictures, slide backgrounds, SVG images, embedded audio/video,
-master slides with footer/date/slide-number, and in-place shape editing —
-plus the v0.4 additions: typed layout slides (compile-time placeholder
+master slides with footer/date/slide-number, and in-place shape editing;
+the v0.4 additions — typed layout slides (compile-time placeholder
 schema), slide transitions, ADT-driven chart options, the typed picture
-builder, and chart-data validation. Doubles as the canonical worked
-example and as a debugging helper for PowerPoint Online compatibility
-verification.
+builder, and chart-data validation; and the v0.5 additions — SmartArt
+diagrams, animations, and YouTube / online video. Doubles as the
+canonical worked example and as a debugging helper for PowerPoint Online
+compatibility verification.
 
 ## Layout
 
@@ -23,20 +24,20 @@ sample-deck/
     └── main.mbt      ← CLI entry: emits the deck bytes as hex
 ```
 
-This module is **independent of the moon-pptx library itself**. It
-has its own `moon.mod.json` and depends on the **published** library
+This module is **independent of the moon-pptx library itself**. It has
+its own `moon.mod.json` and depends on the **published** library
 version — exactly what a real consumer writes:
 
 ```json
 "deps": {
-  "t-ujiie-g/moon-pptx": "0.4.0"
+  "t-ujiie-g/moon-pptx": "0.5.0"
 }
 ```
 
 So it doubles as a worked-out example of "what a real consumer would
-write" — the import shapes (`@presentation`, `@chart`, `@slide`, …)
-are exactly what you'd use in your own project. (Run `moon update` once
-so the registry index knows the version.)
+write" — the import shapes (`@presentation`, `@chart`, `@slide`,
+`@smartart`, …) are exactly what you'd use in your own project. (Run
+`moon update` once so the registry index knows the version.)
 
 > **Developing moon-pptx itself?** To build this example against your
 > in-repo changes *before* publishing, point the dep at the repo root
@@ -102,5 +103,11 @@ elements, ofPie defaults, etc.).
 | 14 | SVG image | Vector image with a raster fallback |
 | 15 | Editing shapes | Recolour boxes already on the slide via `map_shapes` |
 | 16 | Embedded media | A movie + a sound clip (placeholder media payloads) |
-| 17 | Master / template | Defined master + footer, auto date, slide number |
-| 18 | Closing | Back-link hyperlink + speaker notes |
+| 17 | SmartArt | Org chart synthesised into the five-part DiagramML graphic (v0.5 D1) |
+| 18 | Animations | Fly-in entrance + spin emphasis on click (`with_animations` / `Timeline`, v0.5 D2) |
+| 19 | Online video | YouTube clip embedded by URL (`add_youtube_video_mut`, v0.5 C5) |
+| 20 | Master / template | Defined master + footer, auto date, slide number |
+| 21–22 | Typed layouts | Compile-time placeholder schema (`add_section_header_slide_mut` / `add_title_content_slide_mut`, v0.4 M1) |
+| 23 | Closing | Back-link hyperlink + speaker notes |
+
+Plus a slide transition on every slide (v0.4 D3).
