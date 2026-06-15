@@ -189,6 +189,97 @@ fn sample_media_slide(
 }
 
 ///|
+/// SmartArt (v0.5 D1) — a cycle diagram synthesised into the full five-part
+/// DiagramML graphic. We use a *flat* family (cycle) here because PowerPoint
+/// lays SmartArt out from the layout definition on open, and the flat families
+/// (list / process / cycle / pyramid / matrix) render every node; the nesting
+/// families (org_chart / hierarchy / relationship) build + are recognised as
+/// SmartArt but currently render their top level only (a recursive layout
+/// definition is a follow-up — see TODO.md D1).
+fn sample_smartart_slide(
+  prs : @presentation.Presentation,
+  idx : Int,
+) -> Unit raise @presentation.PptxError {
+  prs.update_slide_mut(
+    idx,
+    prs.slides()[idx].with_shape(
+      @slide.AutoShape(heading(prs, 2, "SmartArt diagrams")),
+    ),
+  )
+  let art = @smartart.SmartArt::cycle([
+    "Research", "Design", "Build", "Test", "Ship",
+  ])
+  prs.add_smartart_mut(
+    idx,
+    art,
+    prs.pct_w(8.0),
+    prs.pct_h(20.0),
+    prs.pct_w(84.0),
+    prs.pct_h(68.0),
+  )
+}
+
+///|
+/// Animations (v0.5 D2) — a box flies in from the left on the first click,
+/// then spins 360° for emphasis on the second. `save()` emits the full
+/// canonical `<p:timing>` tree.
+fn sample_animation_slide(
+  prs : @presentation.Presentation,
+  idx : Int,
+) -> Unit raise @presentation.PptxError {
+  let box = @slide.AutoShape::rect(
+    30,
+    "Animated box",
+    prs.pct_w(30.0),
+    prs.pct_h(36.0),
+    prs.pct_w(40.0),
+    prs.pct_h(28.0),
+  ).with_text_body(
+    @slide.TextBody::of_styled_text(
+      "I fly in, then spin",
+      @slide.RunProperties::default()
+      .with_font_size(@units.Pt(20.0))
+      .with_color(@units.RgbColor::new(0xFF, 0xFF, 0xFF)),
+    ),
+  )
+  let timeline = @slide.Timeline::new()
+    .on_click(Entrance(FlyIn(Left)), 30)
+    .on_click(Emphasis(Spin(360)), 30)
+  prs.update_slide_mut(
+    idx,
+    prs
+    .slides()[idx]
+    .with_shape(@slide.AutoShape(heading(prs, 2, "Animations")))
+    .with_shape(@slide.AutoShape(box))
+    .with_animations(timeline),
+  )
+}
+
+///|
+/// Online video (v0.5 C5) — embed a YouTube clip by URL. No media bytes go in
+/// the package: just the external video relationships plus a poster frame.
+fn sample_online_video_slide(
+  prs : @presentation.Presentation,
+  idx : Int,
+) -> Unit raise @presentation.PptxError {
+  prs.update_slide_mut(
+    idx,
+    prs.slides()[idx].with_shape(
+      @slide.AutoShape(heading(prs, 2, "YouTube / online video")),
+    ),
+  )
+  prs.add_youtube_video_mut(
+    idx,
+    "https://youtu.be/dQw4w9WgXcQ",
+    sample_checkerboard_bmp(),
+    prs.pct_w(20.0),
+    prs.pct_h(20.0),
+    prs.pct_w(60.0),
+    prs.pct_h(64.0),
+  )
+}
+
+///|
 /// Master slides & templates — define a reusable master (title + body
 /// placeholders, plus footer / date / slide-number placeholders), then add a
 /// slide on its layout that fills in the footer, an auto-updating date, and
