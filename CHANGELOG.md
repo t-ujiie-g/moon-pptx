@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] — 2026-06-16
+
+Patch release: typed character spacing on text runs. Additive — code written
+against 0.5.0 keeps compiling.
+
+### Added
+
+- **Character spacing on text runs** — `RunProperties::with_character_spacing(pt)`
+  and a new `RunProperties.character_spacing : @units.Pt?` field map to the
+  DrawingML `<a:rPr spc="…">` attribute (`ST_TextPoint`, 1/100 of a point; may
+  be negative to tighten). Parsed and serialised losslessly, so existing decks
+  with `spc` round-trip without loss, and run properties without spacing are
+  unchanged. (issue #7)
+
 ## [0.5.0] — 2026-06-16
 
 Animation & SmartArt release: two headline builders no other PPTX library
@@ -426,6 +440,7 @@ decks containing styled text, shapes, pictures, tables, and charts.
 
 - Native, Wasm-GC, JS, and Wasm targets all tested in CI.
 
-[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.5.0
 [0.1.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.1.0
