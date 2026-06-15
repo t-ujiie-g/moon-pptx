@@ -5,6 +5,55 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-06-16
+
+Animation & SmartArt release: two headline builders no other PPTX library
+offers — a typed animation DSL and a SmartArt (DiagramML) builder — plus
+online video and stricter chart validation. Every change is additive — code
+written against 0.4.x keeps compiling.
+
+### Added
+
+- **SmartArt builder** (⭐) — `Presentation::add_smartart_mut(slide_idx,
+  smartart, x, y, cx, cy)` synthesises the full five-part DiagramML graphic
+  (data / layout / quickStyle / colors + a cached `<dsp:drawing>`) and drops
+  it on the slide. The new `@smartart` package builds all eight families:
+  `SmartArt::list` / `process` / `cycle` / `pyramid` / `matrix(items)`,
+  `org_chart(root)` / `hierarchy(nodes)`, and
+  `relationship(center, related)`, over a typed `SmartArt` / `Node` model.
+  python-pptx can only *identify* SmartArt; PptxGenJS can't touch it at all.
+  (roadmap D1)
+- **Animation DSL** (⭐) — `Slide::with_animations(Timeline)` /
+  `without_animations()` emit a full canonical `<p:timing>` tree.
+  `Timeline::new().on_click / with_previous / after_previous(effect,
+  shape_id, paragraph?, duration_ms?)` builds an ordered step list over
+  `AnimEffect`: `Entrance` / `Exit` (a shared `VisualEffect` — `Appear` /
+  `Fade` / `FlyIn(dir)` / `Wipe(dir)` / `Blinds` / `RandomBars` / `Dissolve`
+  / `Wedge` / `Wheel(n)`), `Emphasis` (`Spin` / `GrowShrink` /
+  `ChangeFillColor`), and `Motion(MotionPath)` for a custom path, plus
+  by-paragraph text builds. (roadmap D2)
+- **YouTube / online video** — `Presentation::add_online_video_mut(slide_idx,
+  video_url, poster, x, y, cx, cy)` embeds any streaming-video URL via an
+  external relationship (no media bytes in the package); `add_youtube_video_mut`
+  normalises a `watch?v=` / `youtu.be/` / `/embed/` / `/shorts/` URL to the
+  embeddable form first. The caller supplies the preview frame. (roadmap C5)
+- **Plot-type-aware chart validation** — `Chart::validate()` (and non-raising
+  `Chart::is_consistent()`) rejects a `<c:dLblPos>` data-label position the
+  chart's plot family doesn't allow (e.g. `outEnd` on a line chart), catching
+  a PowerPoint repair-banner trigger before the file is written. Complements
+  0.4.0's data-shape `ChartData::validate`. (roadmap D8)
+
+### Known limitations
+
+- **SmartArt nesting families render top-level only in PowerPoint.**
+  PowerPoint re-lays-out SmartArt from the layout definition on open (it does
+  not use the cached drawing), and this release ships a single-level layout
+  definition. So the five **flat** families (list / process / cycle / pyramid
+  / matrix) render every node, but the three **nesting** families (org_chart /
+  hierarchy / relationship) build and are recognised as SmartArt with the
+  correct data model yet draw only their top-level node(s). A recursive
+  hierarchy layout definition is planned for a future release.
+
 ## [0.4.0] — 2026-06-07
 
 MoonBit-differentiator release: features that lean on the type system to
@@ -377,5 +426,6 @@ decks containing styled text, shapes, pictures, tables, and charts.
 
 - Native, Wasm-GC, JS, and Wasm targets all tested in CI.
 
-[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.5.0
 [0.1.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.1.0
