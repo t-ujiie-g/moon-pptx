@@ -277,6 +277,27 @@ test "add_smartart_mut: matrix + relationship wire end-to-end and reopen" {
 }
 
 ///|
+test "add_smartart_mut: out-of-range slide_idx raises Malformed" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  try
+    prs.add_smartart_mut(
+      5,
+      @smartart.SmartArt::list(["x"]),
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(100L),
+      @units.Emu(100L),
+    )
+  catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed")
+  } noraise {
+    _ => fail("expected Malformed")
+  }
+}
+
+///|
 test "add_smartart_mut: empty diagram raises Malformed" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)

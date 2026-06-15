@@ -11,25 +11,6 @@
 // `doc` point by a `parOf` connection — the structure PowerPoint itself emits.
 
 ///|
-/// Built-in layout / quick-style / colors `uniqueId`s referenced by the doc
-/// point's `<dgm:prSet>` (advisory metadata for PowerPoint's design gallery;
-/// the actual definitions live in our own layout / quickStyle / colors parts).
-fn doc_prset_ids(kind : SmartArtKind) -> (String, String) {
-  // (loTypeId, loCatId)
-  let prefix = "urn:microsoft.com/office/officeart/2005/8/layout/"
-  match kind {
-    List => (prefix + "list1", "list")
-    Process => (prefix + "process1", "process")
-    Cycle => (prefix + "cycle1", "cycle")
-    Pyramid => (prefix + "pyramid1", "pyramid")
-    OrgChart => (prefix + "orgChart1", "hierarchy")
-    Hierarchy => (prefix + "hierarchy1", "hierarchy")
-    Matrix => (prefix + "matrix1", "matrix")
-    Relationship => (prefix + "radial1", "relationship")
-  }
-}
-
-///|
 /// Generate the `dataN.xml` bytes for this diagram. `drawing_rel_id` is the
 /// relationship id (in the data part's own `.rels`) that points at the cached
 /// `<dsp:drawing>` — wired by `@presentation.Presentation::add_smartart_mut`.
@@ -109,23 +90,17 @@ fn write_doc_pt(
   w : @xml.XmlWriter,
   kind : SmartArtKind,
 ) -> Unit raise @xml.XmlError {
-  let (lo_type, lo_cat) = doc_prset_ids(kind)
+  let (lo_type, lo_cat) = kind_layout_id(kind)
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "pt"))
   w.attribute(@xml.QName::unqualified("modelId"), doc_id)
   w.attribute(@xml.QName::unqualified("type"), "doc")
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "prSet"))
   w.attribute(@xml.QName::unqualified("loTypeId"), lo_type)
   w.attribute(@xml.QName::unqualified("loCatId"), lo_cat)
-  w.attribute(
-    @xml.QName::unqualified("qsTypeId"),
-    "urn:microsoft.com/office/officeart/2005/8/quickstyle/simple1",
-  )
-  w.attribute(@xml.QName::unqualified("qsCatId"), "simple")
-  w.attribute(
-    @xml.QName::unqualified("csTypeId"),
-    "urn:microsoft.com/office/officeart/2005/8/colors/accent1_2",
-  )
-  w.attribute(@xml.QName::unqualified("csCatId"), "accent1")
+  w.attribute(@xml.QName::unqualified("qsTypeId"), quickstyle_unique_id)
+  w.attribute(@xml.QName::unqualified("qsCatId"), quickstyle_category)
+  w.attribute(@xml.QName::unqualified("csTypeId"), colors_unique_id)
+  w.attribute(@xml.QName::unqualified("csCatId"), colors_category)
   w.attribute(@xml.QName::unqualified("phldr"), "1")
   w.end_element() // prSet
   write_empty_sppr(w)
@@ -206,20 +181,7 @@ fn write_pt_text(w : @xml.XmlWriter, text : String) -> Unit raise @xml.XmlError 
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "lstStyle"))
   w.end_element()
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "p"))
-  if text == "" {
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "endParaRPr"))
-    w.attribute(@xml.QName::unqualified("lang"), "en-US")
-    w.end_element()
-  } else {
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "r"))
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "rPr"))
-    w.attribute(@xml.QName::unqualified("lang"), "en-US")
-    w.end_element()
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "t"))
-    w.text(text)
-    w.end_element()
-    w.end_element() // r
-  }
+  write_run_or_endpara(w, text)
   w.end_element() // p
   w.end_element() // t
 }

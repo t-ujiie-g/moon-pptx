@@ -22,25 +22,22 @@ let xml_decl : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"y
 /// is what actually renders, so the algorithm matters only on edit-time
 /// re-layout.
 fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
-  let prefix = "urn:microsoft.com/office/officeart/2005/8/layout/"
+  let (unique_id, category) = kind_layout_id(kind)
   let lin = fn(dir) {
     "<dgm:alg type=\"lin\"><dgm:param type=\"linDir\" val=\"" +
     dir +
     "\"/></dgm:alg>"
   }
-  match kind {
-    List => (prefix + "list1", "list", lin("fromT"))
-    Process => (prefix + "process1", "process", lin("fromL"))
-    Cycle => (prefix + "cycle1", "cycle", "<dgm:alg type=\"cycle\"/>")
-    Pyramid => (prefix + "pyramid1", "pyramid", "<dgm:alg type=\"pyra\"/>")
-    OrgChart =>
-      (prefix + "orgChart1", "hierarchy", "<dgm:alg type=\"hierRoot\"/>")
-    Hierarchy =>
-      (prefix + "hierarchy1", "hierarchy", "<dgm:alg type=\"hierRoot\"/>")
-    Matrix => (prefix + "matrix1", "matrix", "<dgm:alg type=\"snake\"/>")
-    Relationship =>
-      (prefix + "radial1", "relationship", "<dgm:alg type=\"cycle\"/>")
+  let alg = match kind {
+    List => lin("fromT")
+    Process => lin("fromL")
+    Cycle => "<dgm:alg type=\"cycle\"/>"
+    Pyramid => "<dgm:alg type=\"pyra\"/>"
+    OrgChart | Hierarchy => "<dgm:alg type=\"hierRoot\"/>"
+    Matrix => "<dgm:alg type=\"snake\"/>"
+    Relationship => "<dgm:alg type=\"cycle\"/>"
   }
+  (unique_id, category, alg)
 }
 
 ///|
@@ -96,9 +93,13 @@ pub fn SmartArt::colors_xml(self : SmartArt) -> FixedArray[Byte] {
     @oxml.diagram_ns +
     "\" xmlns:a=\"" +
     @oxml.drawing_ns +
-    "\" uniqueId=\"urn:microsoft.com/office/officeart/2005/8/colors/accent1_2\">" +
+    "\" uniqueId=\"" +
+    colors_unique_id +
+    "\">" +
     "<dgm:title val=\"\"/><dgm:desc val=\"\"/>" +
-    "<dgm:catLst><dgm:cat type=\"accent1\" pri=\"11200\"/></dgm:catLst>" +
+    "<dgm:catLst><dgm:cat type=\"" +
+    colors_category +
+    "\" pri=\"11200\"/></dgm:catLst>" +
     style_lbl_colors("node0") +
     style_lbl_colors("node1") +
     style_lbl_colors("sibTrans2D1") +
@@ -130,9 +131,13 @@ pub fn SmartArt::quick_style_xml(self : SmartArt) -> FixedArray[Byte] {
     @oxml.diagram_ns +
     "\" xmlns:a=\"" +
     @oxml.drawing_ns +
-    "\" uniqueId=\"urn:microsoft.com/office/officeart/2005/8/quickstyle/simple1\">" +
+    "\" uniqueId=\"" +
+    quickstyle_unique_id +
+    "\">" +
     "<dgm:title val=\"\"/><dgm:desc val=\"\"/>" +
-    "<dgm:catLst><dgm:cat type=\"simple\" pri=\"10100\"/></dgm:catLst>" +
+    "<dgm:catLst><dgm:cat type=\"" +
+    quickstyle_category +
+    "\" pri=\"10100\"/></dgm:catLst>" +
     "<dgm:scene3d><a:camera prst=\"orthographicFront\"/><a:lightRig rig=\"flat\" dir=\"t\"/></dgm:scene3d>" +
     style_lbl_style("node0") +
     style_lbl_style("node1") +

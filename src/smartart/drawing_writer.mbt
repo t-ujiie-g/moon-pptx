@@ -338,20 +338,7 @@ fn write_dsp_sp(
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "pPr"))
   w.attribute(@xml.QName::unqualified("algn"), "ctr")
   w.end_element()
-  if text == "" {
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "endParaRPr"))
-    w.attribute(@xml.QName::unqualified("lang"), "en-US")
-    w.end_element()
-  } else {
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "r"))
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "rPr"))
-    w.attribute(@xml.QName::unqualified("lang"), "en-US")
-    w.end_element()
-    w.start_element(@xml.QName::new(@oxml.drawing_ns, "t"))
-    w.text(text)
-    w.end_element()
-    w.end_element() // r
-  }
+  write_run_or_endpara(w, text)
   w.end_element() // p
   w.end_element() // txBody
   w.end_element() // sp
