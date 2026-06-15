@@ -359,6 +359,7 @@ fn write_field(
 fn needs_r_pr(p : RunProperties) -> Bool {
   p.lang != "" ||
   p.font_size is Some(_) ||
+  p.character_spacing is Some(_) ||
   p.bold is Some(_) ||
   p.italic is Some(_) ||
   p.underline is Some(_) ||
@@ -389,6 +390,14 @@ fn write_run_properties(
       let @units.Pt(v) = pt
       let centi = (v * 100.0).to_int()
       w.attribute(@xml.QName::unqualified("sz"), centi.to_string())
+    }
+    None => ()
+  }
+  match p.character_spacing {
+    Some(pt) => {
+      let @units.Pt(v) = pt
+      let centi = (v * 100.0).to_int()
+      w.attribute(@xml.QName::unqualified("spc"), centi.to_string())
     }
     None => ()
   }

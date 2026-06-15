@@ -116,6 +116,16 @@ pub fn RunProperties::with_font_size(
 }
 
 ///|
+/// Set the character (letter) spacing / tracking, in points — the `spc`
+/// attribute on `<a:rPr>`. May be negative to tighten (e.g. `@units.Pt(-0.5)`).
+pub fn RunProperties::with_character_spacing(
+  self : RunProperties,
+  pt : @units.Pt,
+) -> RunProperties {
+  { ..self, character_spacing: Some(pt) }
+}
+
+///|
 /// Mark the run as bold.
 pub fn RunProperties::with_bold(self : RunProperties) -> RunProperties {
   { ..self, bold: Some(true) }

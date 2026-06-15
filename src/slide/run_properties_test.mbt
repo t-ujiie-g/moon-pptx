@@ -199,3 +199,63 @@ test "rPr: unknown underline value collapses to None (graceful)" {
   let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr u=\"weirdValue\"/>"))
   assert_true(rpr_of(slide).underline is None)
 }
+
+// --- character spacing (spc) — issue #7 ---
+
+///|
+test "rPr: spc attribute converts 1/100 pt to Pt" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr spc=\"150\"/>"))
+  assert_eq(rpr_of(slide).character_spacing.unwrap(), @units.Pt(1.5))
+}
+
+///|
+test "rPr: negative spc (tightening) parses" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr spc=\"-50\"/>"))
+  assert_eq(rpr_of(slide).character_spacing.unwrap(), @units.Pt(-0.5))
+}
+
+///|
+test "rPr: absent spc is None (behaviour unchanged)" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr sz=\"2400\"/>"))
+  assert_true(rpr_of(slide).character_spacing is None)
+}
+
+///|
+test "rPr: spc survives a parse -> serialize -> parse round-trip" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr spc=\"120\"/>"))
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  assert_eq(rpr_of(reparsed).character_spacing.unwrap(), @units.Pt(1.2))
+}
+
+///|
+test "builder: with_character_spacing emits spc and round-trips" {
+  let rp = @slide.RunProperties::default().with_character_spacing(
+    @units.Pt(2.0),
+  )
+  let body = @slide.TextBody::of_styled_text("tracked", rp)
+  let shape = @slide.AutoShape::textbox(
+    2,
+    "T",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(914_400L),
+    @units.Emu(914_400L),
+    "",
+  ).with_text_body(body)
+  // An empty base slide to drop the built shape onto.
+  let base_xml = "<?xml version=\"1.0\"?>" +
+    "<p:sld xmlns:p=\"" +
+    pml_ns +
+    "\" xmlns:a=\"" +
+    dml_ns +
+    "\" xmlns:r=\"" +
+    off_rel_ns +
+    "\"><p:cSld><p:spTree>" +
+    "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
+    "</p:spTree></p:cSld></p:sld>"
+  let slide = @slide.Slide::parse(fixture_bytes(base_xml)).with_shape(
+    @slide.AutoShape(shape),
+  )
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  assert_eq(rpr_of(reparsed).character_spacing.unwrap(), @units.Pt(2.0))
+}

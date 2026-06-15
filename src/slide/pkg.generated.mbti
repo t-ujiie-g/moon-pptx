@@ -662,6 +662,7 @@ pub(all) struct Run {
 pub(all) struct RunProperties {
   lang : String
   font_size : @units.Pt?
+  character_spacing : @units.Pt?
   bold : Bool?
   italic : Bool?
   underline : UnderlineKind?
@@ -680,6 +681,7 @@ pub(all) struct RunProperties {
 } derive(Eq, @debug.Debug)
 pub fn RunProperties::default() -> Self
 pub fn RunProperties::with_bold(Self) -> Self
+pub fn RunProperties::with_character_spacing(Self, @units.Pt) -> Self
 pub fn RunProperties::with_color(Self, @units.RgbColor) -> Self
 pub fn RunProperties::with_font(Self, String) -> Self
 pub fn RunProperties::with_font_size(Self, @units.Pt) -> Self

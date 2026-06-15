@@ -75,6 +75,10 @@ pub(all) struct RunProperties {
   /// `sz` — text size. OOXML stores this in 1/100 of a point; we lift
   /// to typed `Pt` at parse time.
   font_size : @units.Pt?
+  /// `spc` — character (letter) spacing / tracking. OOXML stores this as
+  /// `ST_TextPoint` (1/100 of a point, may be negative to tighten); we lift
+  /// to typed `Pt` like `font_size`.
+  character_spacing : @units.Pt?
   /// `b` — bold.
   bold : Bool?
   /// `i` — italic.
@@ -167,6 +171,7 @@ pub fn RunProperties::default() -> RunProperties {
   {
     lang: "",
     font_size: None,
+    character_spacing: None,
     bold: None,
     italic: None,
     underline: None,
