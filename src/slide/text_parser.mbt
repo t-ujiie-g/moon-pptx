@@ -324,6 +324,7 @@ fn parse_run_properties(
 ) -> RunProperties raise SlideError {
   let lang = optional_attr(attrs, "lang")
   let font_size = parse_font_size_attr(attrs)
+  let character_spacing = parse_character_spacing_attr(attrs)
   let bold = parse_bool_attr(attrs, "b")
   let italic = parse_bool_attr(attrs, "i")
   let underline = parse_enum_attr(attrs, "u", UnderlineKind::from_xml)
@@ -383,6 +384,7 @@ fn parse_run_properties(
   {
     lang,
     font_size,
+    character_spacing,
     bold,
     italic,
     underline,
@@ -435,6 +437,22 @@ fn parse_solid_fill(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
 /// reflects "inherit".
 fn parse_font_size_attr(attrs : Array[(@xml.QName, String)]) -> @units.Pt? {
   match @oxml.optional_attr(attrs, "sz") {
+    Some(raw) =>
+      match @oxml.parse_signed_int(raw) {
+        Some(n) => Some(@units.Pt(n.to_double() / 100.0))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+/// `spc` (character spacing) is `ST_TextPoint` — 1/100 of a point, and may be
+/// negative (tightening). Same encoding as `sz`, so lift to `Pt` identically.
+fn parse_character_spacing_attr(
+  attrs : Array[(@xml.QName, String)],
+) -> @units.Pt? {
+  match @oxml.optional_attr(attrs, "spc") {
     Some(raw) =>
       match @oxml.parse_signed_int(raw) {
         Some(n) => Some(@units.Pt(n.to_double() / 100.0))
