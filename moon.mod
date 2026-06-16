@@ -3,7 +3,7 @@ name = "t-ujiie-g/moon-pptx"
 version = "0.5.1"
 
 import {
-  "hustcer/fzip@0.6.1",
+  "hustcer/fzip@0.8.2",
 }
 
 readme = "README.mbt.md"
