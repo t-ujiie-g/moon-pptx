@@ -52,18 +52,8 @@ fn write_pml_xfrm(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "xfrm"))
   write_xfrm_orientation_attrs(w, xfrm)
-  let @units.Emu(x) = xfrm.offset.x
-  let @units.Emu(y) = xfrm.offset.y
-  let @units.Emu(cx) = xfrm.extent.cx
-  let @units.Emu(cy) = xfrm.extent.cy
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
-  w.attribute(@xml.QName::unqualified("x"), x.to_string())
-  w.attribute(@xml.QName::unqualified("y"), y.to_string())
-  w.end_element()
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
-  w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
-  w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
-  w.end_element()
+  write_emu_point(w, "off", xfrm.offset)
+  write_emu_size(w, "ext", xfrm.extent)
   w.end_element()
 }
 

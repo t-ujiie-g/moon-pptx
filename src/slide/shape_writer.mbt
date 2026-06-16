@@ -352,18 +352,42 @@ fn write_sp_pr(
 fn write_xfrm(w : @xml.XmlWriter, xfrm : Transform) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
   write_xfrm_orientation_attrs(w, xfrm)
-  let @units.Emu(x) = xfrm.offset.x
-  let @units.Emu(y) = xfrm.offset.y
-  let @units.Emu(cx) = xfrm.extent.cx
-  let @units.Emu(cy) = xfrm.extent.cy
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
+  write_emu_point(w, "off", xfrm.offset)
+  write_emu_size(w, "ext", xfrm.extent)
+  w.end_element()
+}
+
+///|
+/// Emit a drawing-ns `<a:{local_name} x=… y=…/>` leaf (`<a:off>` /
+/// `<a:chOff>`) from an EMU `Point`. Shared by every `<a:xfrm>` /
+/// `<p:xfrm>` writer.
+fn write_emu_point(
+  w : @xml.XmlWriter,
+  local_name : String,
+  p : Point,
+) -> Unit raise @xml.XmlError {
+  let @units.Emu(x) = p.x
+  let @units.Emu(y) = p.y
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, local_name))
   w.attribute(@xml.QName::unqualified("x"), x.to_string())
   w.attribute(@xml.QName::unqualified("y"), y.to_string())
   w.end_element()
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
+}
+
+///|
+/// Emit a drawing-ns `<a:{local_name} cx=… cy=…/>` leaf (`<a:ext>` /
+/// `<a:chExt>`) from an EMU `Size`. Shared by every `<a:xfrm>` /
+/// `<p:xfrm>` writer.
+fn write_emu_size(
+  w : @xml.XmlWriter,
+  local_name : String,
+  s : Size,
+) -> Unit raise @xml.XmlError {
+  let @units.Emu(cx) = s.cx
+  let @units.Emu(cy) = s.cy
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, local_name))
   w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
   w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
-  w.end_element()
   w.end_element()
 }
 
@@ -711,41 +735,17 @@ fn write_group_xfrm(
   }
   match transform {
     Some(xfrm) => {
-      let @units.Emu(x) = xfrm.offset.x
-      let @units.Emu(y) = xfrm.offset.y
-      let @units.Emu(cx) = xfrm.extent.cx
-      let @units.Emu(cy) = xfrm.extent.cy
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
-      w.attribute(@xml.QName::unqualified("x"), x.to_string())
-      w.attribute(@xml.QName::unqualified("y"), y.to_string())
-      w.end_element()
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
-      w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
-      w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
-      w.end_element()
+      write_emu_point(w, "off", xfrm.offset)
+      write_emu_size(w, "ext", xfrm.extent)
     }
     None => ()
   }
   match child_offset {
-    Some(p) => {
-      let @units.Emu(x) = p.x
-      let @units.Emu(y) = p.y
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "chOff"))
-      w.attribute(@xml.QName::unqualified("x"), x.to_string())
-      w.attribute(@xml.QName::unqualified("y"), y.to_string())
-      w.end_element()
-    }
+    Some(p) => write_emu_point(w, "chOff", p)
     None => ()
   }
   match child_extent {
-    Some(s) => {
-      let @units.Emu(cx) = s.cx
-      let @units.Emu(cy) = s.cy
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "chExt"))
-      w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
-      w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
-      w.end_element()
-    }
+    Some(s) => write_emu_size(w, "chExt", s)
     None => ()
   }
   w.end_element()
