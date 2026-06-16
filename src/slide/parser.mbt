@@ -624,9 +624,7 @@ fn parse_group_xfrm(
   xfrm_attrs : Array[(@xml.QName, String)],
   parent_extension : Array[@xml.XmlElement],
 ) -> (Transform?, Point?, Size?) raise SlideError {
-  let rotation = parse_angle_attr(xfrm_attrs, "rot")
-  let flip_h = @oxml.bool_attr_opt(xfrm_attrs, "flipH").unwrap_or(false)
-  let flip_v = @oxml.bool_attr_opt(xfrm_attrs, "flipV").unwrap_or(false)
+  let (rotation, flip_h, flip_v) = parse_xfrm_orientation(xfrm_attrs)
   let mut offset : Point? = None
   let mut extent : Size? = None
   let mut child_offset : Point? = None
@@ -1118,14 +1116,27 @@ fn parse_av_lst(
 }
 
 ///|
+/// Decode the orientation attributes (`rot` / `flipH` / `flipV`) shared by
+/// every `<a:xfrm>` / `<p:xfrm>` element. Absent `rot` → `None`; absent
+/// flips → `false`. Shared by `parse_xfrm` (shapes / graphicFrame) and
+/// `parse_group_xfrm` (group shapes).
+fn parse_xfrm_orientation(
+  xfrm_attrs : Array[(@xml.QName, String)],
+) -> (@units.Angle?, Bool, Bool) {
+  (
+    parse_angle_attr(xfrm_attrs, "rot"),
+    @oxml.bool_attr_opt(xfrm_attrs, "flipH").unwrap_or(false),
+    @oxml.bool_attr_opt(xfrm_attrs, "flipV").unwrap_or(false),
+  )
+}
+
+///|
 fn parse_xfrm(
   r : @xml.XmlReader,
   xfrm_attrs : Array[(@xml.QName, String)],
   parent_extension : Array[@xml.XmlElement],
 ) -> Transform raise SlideError {
-  let rotation = parse_angle_attr(xfrm_attrs, "rot")
-  let flip_h = @oxml.bool_attr_opt(xfrm_attrs, "flipH").unwrap_or(false)
-  let flip_v = @oxml.bool_attr_opt(xfrm_attrs, "flipV").unwrap_or(false)
+  let (rotation, flip_h, flip_v) = parse_xfrm_orientation(xfrm_attrs)
   let mut offset : Point? = None
   let mut extent : Size? = None
   while true {

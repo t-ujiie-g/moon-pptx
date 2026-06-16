@@ -191,6 +191,43 @@ test "GroupShape::with_rotation + with_flip set the transform" {
 }
 
 ///|
+test "GroupShape: rotated group emits orientation and round-trips" {
+  // Exercises the group-shape writer path (`write_group_xfrm`), not just
+  // the builder — the group `<a:xfrm>` carries rot/flipH.
+  let base = @slide.Slide::parse(empty_sptree_deck())
+  let g : @slide.GroupShape = {
+    id: 5,
+    name: "G",
+    transform: Some(
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+        cx: @units.Emu(100L),
+        cy: @units.Emu(100L),
+      }),
+    ),
+    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
+    child_extent: Some({ cx: @units.Emu(100L), cy: @units.Emu(100L) }),
+    children: [],
+    extension: [],
+  }
+  let s = base.with_shape(
+    @slide.Group(g.with_rotation(@units.Angle(90.0)).with_flip(h=true)),
+  )
+  let xml = @oxml.bytes_to_string(s.serialize())
+  assert_true(char_index_of(xml, "rot=\"5400000\"") >= 0)
+  assert_true(char_index_of(xml, "flipH=\"1\"") >= 0)
+  let reparsed = @slide.Slide::parse(s.serialize())
+  match reparsed.shapes[0] {
+    Group(rg) => {
+      let xfrm = rg.transform.unwrap()
+      assert_eq(xfrm.rotation.unwrap(), @units.Angle(90.0))
+      assert_eq(xfrm.flip_h, true)
+      assert_eq(xfrm.flip_v, false)
+    }
+    _ => fail("expected GroupShape")
+  }
+}
+
+///|
 test "graphicFrame: <p:xfrm> rot/flip round-trips losslessly" {
   let gf = "<p:graphicFrame>" +
     "<p:nvGraphicFramePr><p:cNvPr id=\"7\" name=\"T\"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>" +
