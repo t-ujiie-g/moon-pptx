@@ -280,6 +280,166 @@ fn sample_online_video_slide(
 }
 
 ///|
+/// v0.5.2 — fidelity & fine-grained formatting: F1 shape rotation / flip,
+/// F3 run-level highlight / kerning / text outline / text effects, and F5
+/// shape-level hyperlinks.
+fn sample_v052_features_slide(
+  prs : @presentation.Presentation,
+  idx : Int,
+) -> Unit raise @presentation.PptxError {
+  let navy = @units.RgbColor::new(0x1F, 0x4E, 0x79)
+  let teal = @units.RgbColor::new(0x2C, 0x9C, 0x9C)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let mut s = prs.slides()[idx].with_shape(
+    @slide.AutoShape(heading(prs, 2, "v0.5.2 — fidelity & formatting")),
+  )
+
+  // F1 — a rectangle rotated 25° and a right-arrow flipped to point left.
+  let rotated = @slide.AutoShape::rect(
+      10,
+      "Rotated",
+      prs.pct_w(6.0),
+      prs.pct_h(22.0),
+      prs.pct_w(15.0),
+      prs.pct_h(14.0),
+    )
+    .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(navy)))
+    .with_rotation(@units.Angle(25.0))
+  let flipped = @slide.AutoShape::of_preset(
+      11,
+      "FlippedArrow",
+      @slide.PresetShape::RightArrow,
+      prs.pct_w(25.0),
+      prs.pct_h(22.0),
+      prs.pct_w(15.0),
+      prs.pct_h(14.0),
+    )
+    .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(teal)))
+    .with_flip(h=true)
+  s = s
+    .with_shape(@slide.AutoShape(rotated))
+    .with_shape(@slide.AutoShape(flipped))
+
+  // F3 — highlight + kerning in one run.
+  let hl_box = @slide.AutoShape::textbox(
+    12,
+    "Highlight",
+    prs.pct_w(44.0),
+    prs.pct_h(22.0),
+    prs.pct_w(52.0),
+    prs.pct_h(8.0),
+    "",
+  ).with_text_body(
+    @slide.TextBody::of_styled_text(
+      "Highlighted + kerned text",
+      @slide.RunProperties::default()
+      .with_font_size(@units.Pt(20.0))
+      .with_kerning(@units.Pt(10.0))
+      .with_highlight(@units.RgbColor::new(0xFF, 0xF1, 0x76)),
+    ),
+  )
+  // F3 — text outline (white glyphs with a navy outline).
+  let outline_stroke : @oxml.Stroke = {
+    width: Some(@units.Emu(9525L)), // 0.75 pt
+    cap: None,
+    compound: None,
+    alignment: None,
+    fill: Some(@oxml.Fill::SolidFill(@oxml.Color::srgb(navy))),
+    dash: None,
+    join: None,
+    head_end: None,
+    tail_end: None,
+    extension: [],
+  }
+  let outline_box = @slide.AutoShape::textbox(
+    13,
+    "Outlined",
+    prs.pct_w(44.0),
+    prs.pct_h(32.0),
+    prs.pct_w(52.0),
+    prs.pct_h(10.0),
+    "",
+  ).with_text_body(
+    @slide.TextBody::of_styled_text(
+      "Outlined heading",
+      @slide.RunProperties::default()
+      .with_font_size(@units.Pt(30.0))
+      .with_bold()
+      .with_color(white)
+      .with_text_outline(outline_stroke),
+    ),
+  )
+  // F3 — text effects (a soft glow).
+  let glow_fx : @oxml.EffectList = {
+    blur: None,
+    glow: Some({
+      rad: @units.Emu(63500L),
+      color: @oxml.Color::srgb(@units.RgbColor::new(0x4C, 0x8C, 0xE6)),
+    }),
+    inner_shadow: None,
+    outer_shadow: None,
+    preset_shadow: None,
+    reflection: None,
+    soft_edge: None,
+    extension: [],
+  }
+  let glow_box = @slide.AutoShape::textbox(
+    14,
+    "Glow",
+    prs.pct_w(44.0),
+    prs.pct_h(44.0),
+    prs.pct_w(52.0),
+    prs.pct_h(10.0),
+    "",
+  ).with_text_body(
+    @slide.TextBody::of_styled_text(
+      "Glowing text effect",
+      @slide.RunProperties::default()
+      .with_font_size(@units.Pt(28.0))
+      .with_bold()
+      .with_color(navy)
+      .with_text_effects(glow_fx),
+    ),
+  )
+  s = s
+    .with_shape(@slide.AutoShape(hl_box))
+    .with_shape(@slide.AutoShape(outline_box))
+    .with_shape(@slide.AutoShape(glow_box))
+
+  // F5 — clickable shapes: one opens a URL, one jumps back to the title.
+  let label_rp = @slide.RunProperties::default()
+    .with_font_size(@units.Pt(16.0))
+    .with_bold()
+    .with_color(white)
+  let docs_btn = @slide.AutoShape::round_rect(
+      15,
+      "DocsButton",
+      prs.pct_w(6.0),
+      prs.pct_h(74.0),
+      prs.pct_w(30.0),
+      prs.pct_h(12.0),
+    )
+    .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(navy)))
+    .with_text_body(@slide.TextBody::of_styled_text("Open docs ↗", label_rp))
+    .with_hyperlink(url="https://mooncakes.io/docs/t-ujiie-g/moon-pptx")
+  let back_btn = @slide.AutoShape::round_rect(
+      16,
+      "BackButton",
+      prs.pct_w(40.0),
+      prs.pct_h(74.0),
+      prs.pct_w(30.0),
+      prs.pct_h(12.0),
+    )
+    .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(teal)))
+    .with_text_body(@slide.TextBody::of_styled_text("Back to title", label_rp))
+    .with_hyperlink_to_slide(slide_idx=0)
+  s = s
+    .with_shape(@slide.AutoShape(docs_btn))
+    .with_shape(@slide.AutoShape(back_btn))
+  prs.update_slide_mut(idx, s)
+}
+
+///|
 /// Master slides & templates — define a reusable master (title + body
 /// placeholders, plus footer / date / slide-number placeholders), then add a
 /// slide on its layout that fills in the footer, an auto-updating date, and
@@ -347,10 +507,10 @@ fn sample_typed_layout_slides(
 ///|
 /// A `Transform` (offset + extent) in EMU, for master placeholder rects.
 fn tf(x : Int64, y : Int64, cx : Int64, cy : Int64) -> @slide.Transform {
-  {
-    offset: { x: @units.Emu(x), y: @units.Emu(y) },
-    extent: { cx: @units.Emu(cx), cy: @units.Emu(cy) },
-  }
+  @slide.Transform::new(
+    offset={ x: @units.Emu(x), y: @units.Emu(y) },
+    extent={ cx: @units.Emu(cx), cy: @units.Emu(cy) },
+  )
 }
 
 ///|
