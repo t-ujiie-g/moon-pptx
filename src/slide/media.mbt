@@ -49,7 +49,7 @@ pub fn Picture::of_media(
   {
     id,
     name,
-    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     geometry: Some(Preset(PresetShape::Rect, [])),
     stroke: None,
     effects: None,

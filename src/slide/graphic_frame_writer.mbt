@@ -51,6 +51,7 @@ fn write_pml_xfrm(
   xfrm : Transform,
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "xfrm"))
+  write_xfrm_orientation_attrs(w, xfrm)
   let @units.Emu(x) = xfrm.offset.x
   let @units.Emu(y) = xfrm.offset.y
   let @units.Emu(cx) = xfrm.extent.cx

@@ -351,6 +351,7 @@ fn write_sp_pr(
 ///|
 fn write_xfrm(w : @xml.XmlWriter, xfrm : Transform) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
+  write_xfrm_orientation_attrs(w, xfrm)
   let @units.Emu(x) = xfrm.offset.x
   let @units.Emu(y) = xfrm.offset.y
   let @units.Emu(cx) = xfrm.extent.cx
@@ -364,6 +365,32 @@ fn write_xfrm(w : @xml.XmlWriter, xfrm : Transform) -> Unit raise @xml.XmlError 
   w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
   w.end_element()
   w.end_element()
+}
+
+///|
+/// Emit the orientation attributes (`rot` / `flipH` / `flipV`) on an
+/// already-opened `<a:xfrm>` / `<p:xfrm>` element. Must be called right
+/// after `start_element` (before any child). Defaults are omitted so an
+/// unrotated, un-flipped transform re-serialises byte-identically.
+fn write_xfrm_orientation_attrs(
+  w : @xml.XmlWriter,
+  xfrm : Transform,
+) -> Unit raise @xml.XmlError {
+  match xfrm.rotation {
+    Some(angle) => {
+      let n = angle.to_ooxml()
+      if n != 0 {
+        w.attribute(@xml.QName::unqualified("rot"), n.to_string())
+      }
+    }
+    None => ()
+  }
+  if xfrm.flip_h {
+    w.attribute(@xml.QName::unqualified("flipH"), "1")
+  }
+  if xfrm.flip_v {
+    w.attribute(@xml.QName::unqualified("flipV"), "1")
+  }
 }
 
 ///|
@@ -678,6 +705,10 @@ fn write_group_xfrm(
     return
   }
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
+  match transform {
+    Some(xfrm) => write_xfrm_orientation_attrs(w, xfrm)
+    None => ()
+  }
   match transform {
     Some(xfrm) => {
       let @units.Emu(x) = xfrm.offset.x

@@ -33,7 +33,7 @@ fn parse_graphic_frame(r : @xml.XmlReader) -> GraphicFrame raise SlideError {
             "xfrm" =>
               // graphicFrame's xfrm is in the PML namespace but its
               // body (`<a:off>` / `<a:ext>`) is in drawing-ml.
-              transform = Some(parse_xfrm(r, extension))
+              transform = Some(parse_xfrm(r, attrs, extension))
             _ => extension.push(collect_subtree_unknown(r, child, attrs))
           }
         }

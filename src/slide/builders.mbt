@@ -218,7 +218,7 @@ pub fn AutoShape::of_preset(
     id,
     name,
     placeholder: None,
-    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     geometry: Some(Preset(preset, [])),
     fill: None,
     stroke: None,
@@ -385,6 +385,30 @@ pub fn AutoShape::with_text_body(
   { ..self, text_body: Some(body) }
 }
 
+///|
+/// Rotate the shape clockwise by `angle` about its centre (the `<a:xfrm
+/// rot>` attribute). No-op when the shape has no explicit transform (an
+/// inheriting placeholder) — give it a position first via a geometric
+/// builder.
+pub fn AutoShape::with_rotation(
+  self : AutoShape,
+  angle : @units.Angle,
+) -> AutoShape {
+  { ..self, transform: self.transform.map(t => t.with_rotation(angle)) }
+}
+
+///|
+/// Mirror the shape horizontally (`flipH`) and/or vertically (`flipV`).
+/// Both default to `false`, so `with_flip(h=true)` flips horizontally
+/// only. No-op when the shape has no explicit transform.
+pub fn AutoShape::with_flip(
+  self : AutoShape,
+  h? : Bool = false,
+  v? : Bool = false,
+) -> AutoShape {
+  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
+}
+
 // --- Picture builder -------------------------------------------------------
 
 ///|
@@ -413,7 +437,7 @@ pub fn Picture::of_image(
   {
     id,
     name,
-    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     geometry: Some(Preset(PresetShape::Rect, [])),
     stroke: None,
     effects: None,
@@ -452,7 +476,7 @@ pub fn Picture::of_svg_image(
   {
     id,
     name,
-    transform: Some({ offset: { x, y }, extent: { cx, cy } }),
+    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     geometry: Some(Preset(PresetShape::Rect, [])),
     stroke: None,
     effects: None,
@@ -478,6 +502,47 @@ pub fn Picture::with_crop(
 ) -> Picture {
   let rect : @oxml.SrcRect = { left, top, right, bottom }
   { ..self, blip_fill: { ..self.blip_fill, src_rect: Some(rect) } }
+}
+
+///|
+/// Rotate the picture clockwise by `angle` about its centre. No-op when
+/// the picture has no explicit transform.
+pub fn Picture::with_rotation(self : Picture, angle : @units.Angle) -> Picture {
+  { ..self, transform: self.transform.map(t => t.with_rotation(angle)) }
+}
+
+///|
+/// Mirror the picture horizontally (`flipH`) and/or vertically
+/// (`flipV`). No-op when the picture has no explicit transform.
+pub fn Picture::with_flip(
+  self : Picture,
+  h? : Bool = false,
+  v? : Bool = false,
+) -> Picture {
+  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
+}
+
+// --- GroupShape orientation builders ---------------------------------------
+
+///|
+/// Rotate the group (and its children, as a unit) clockwise by `angle`.
+/// No-op when the group has no explicit transform.
+pub fn GroupShape::with_rotation(
+  self : GroupShape,
+  angle : @units.Angle,
+) -> GroupShape {
+  { ..self, transform: self.transform.map(t => t.with_rotation(angle)) }
+}
+
+///|
+/// Mirror the group horizontally (`flipH`) and/or vertically (`flipV`).
+/// No-op when the group has no explicit transform.
+pub fn GroupShape::with_flip(
+  self : GroupShape,
+  h? : Bool = false,
+  v? : Bool = false,
+) -> GroupShape {
+  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
 }
 
 // --- Slide::with_shape ---

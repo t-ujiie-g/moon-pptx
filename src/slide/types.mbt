@@ -24,13 +24,60 @@ pub(all) struct Size {
 } derive(Eq, Debug)
 
 ///|
-/// Position + size, mirroring `<a:xfrm>`. `rotation` and `flip*` are
-/// not modelled yet; they round-trip through the enclosing shape's
-/// `extension` per ADR-004.
+/// Position + size + orientation, mirroring `<a:xfrm>`.
+///
+/// `rotation` is the `rot` attribute (clockwise; `None` = unrotated /
+/// inherit). `flip_h` / `flip_v` are the `flipH` / `flipV` attributes
+/// (default `false`). Build them with `Transform::new` (the optional
+/// args default to the unrotated, un-flipped case) or layer them on with
+/// `Transform::with_rotation` / `with_flip`.
 pub(all) struct Transform {
   offset : Point
   extent : Size
+  /// `rot` — clockwise rotation about the shape centre. `None` emits no
+  /// `rot` attribute (PowerPoint treats that as `0`).
+  rotation : @units.Angle?
+  /// `flipH` — mirror horizontally.
+  flip_h : Bool
+  /// `flipV` — mirror vertically.
+  flip_v : Bool
 } derive(Eq, Debug)
+
+///|
+/// Construct a `Transform` from a position + size, defaulting to no
+/// rotation and no flip. Pass `rotation~` / `flip_h~` / `flip_v~` to set
+/// the orientation inline, or chain `with_rotation` / `with_flip`.
+pub fn Transform::new(
+  offset~ : Point,
+  extent~ : Size,
+  rotation? : @units.Angle? = None,
+  flip_h? : Bool = false,
+  flip_v? : Bool = false,
+) -> Transform {
+  { offset, extent, rotation, flip_h, flip_v }
+}
+
+///|
+/// Return a copy rotated by `angle` (clockwise about the shape centre),
+/// replacing any existing rotation.
+pub fn Transform::with_rotation(
+  self : Transform,
+  angle : @units.Angle,
+) -> Transform {
+  { ..self, rotation: Some(angle) }
+}
+
+///|
+/// Return a copy with the horizontal / vertical mirror flags set.
+/// Both default to `false`, so `with_flip(h=true)` flips horizontally
+/// only and `with_flip()` clears both.
+pub fn Transform::with_flip(
+  self : Transform,
+  h? : Bool = false,
+  v? : Bool = false,
+) -> Transform {
+  { ..self, flip_h: h, flip_v: v }
+}
 
 ///|
 /// Placeholder metadata, lifted from `<p:nvPr><p:ph type="…" idx="…"/></p:nvPr>`.

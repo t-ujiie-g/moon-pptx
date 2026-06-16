@@ -600,7 +600,7 @@ fn parse_grp_sp_pr(
         if child.uri != @oxml.drawing_ns {
           parent_extension.push(collect_subtree_unknown(r, child, attrs))
         } else if child.local_name == "xfrm" {
-          let (t, co, ce) = parse_group_xfrm(r, parent_extension)
+          let (t, co, ce) = parse_group_xfrm(r, attrs, parent_extension)
           transform = t
           child_offset = co
           child_extent = ce
@@ -621,8 +621,12 @@ fn parse_grp_sp_pr(
 /// `None`.
 fn parse_group_xfrm(
   r : @xml.XmlReader,
+  xfrm_attrs : Array[(@xml.QName, String)],
   parent_extension : Array[@xml.XmlElement],
 ) -> (Transform?, Point?, Size?) raise SlideError {
+  let rotation = parse_angle_attr(xfrm_attrs, "rot")
+  let flip_h = @oxml.bool_attr_opt(xfrm_attrs, "flipH").unwrap_or(false)
+  let flip_v = @oxml.bool_attr_opt(xfrm_attrs, "flipV").unwrap_or(false)
   let mut offset : Point? = None
   let mut extent : Size? = None
   let mut child_offset : Point? = None
@@ -659,7 +663,8 @@ fn parse_group_xfrm(
     }
   }
   let transform = match (offset, extent) {
-    (Some(o), Some(e)) => Some({ offset: o, extent: e })
+    (Some(o), Some(e)) =>
+      Some({ offset: o, extent: e, rotation, flip_h, flip_v })
     _ => None
   }
   (transform, child_offset, child_extent)
@@ -1007,7 +1012,7 @@ fn parse_sp_pr(
           parent_extension.push(collect_subtree_unknown(r, child, attrs))
         } else {
           match child.local_name {
-            "xfrm" => transform = Some(parse_xfrm(r, parent_extension))
+            "xfrm" => transform = Some(parse_xfrm(r, attrs, parent_extension))
             "prstGeom" =>
               geometry = Some(parse_prst_geom(r, attrs, parent_extension))
             "custGeom" =>
@@ -1115,8 +1120,12 @@ fn parse_av_lst(
 ///|
 fn parse_xfrm(
   r : @xml.XmlReader,
+  xfrm_attrs : Array[(@xml.QName, String)],
   parent_extension : Array[@xml.XmlElement],
 ) -> Transform raise SlideError {
+  let rotation = parse_angle_attr(xfrm_attrs, "rot")
+  let flip_h = @oxml.bool_attr_opt(xfrm_attrs, "flipH").unwrap_or(false)
+  let flip_v = @oxml.bool_attr_opt(xfrm_attrs, "flipV").unwrap_or(false)
   let mut offset : Point? = None
   let mut extent : Size? = None
   while true {
@@ -1152,7 +1161,7 @@ fn parse_xfrm(
     }
   }
   match (offset, extent) {
-    (Some(o), Some(e)) => { offset: o, extent: e }
+    (Some(o), Some(e)) => { offset: o, extent: e, rotation, flip_h, flip_v }
     _ =>
       raise Malformed("<a:xfrm> on <p:sp> must have both <a:off> and <a:ext>")
   }
