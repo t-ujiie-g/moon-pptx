@@ -17,7 +17,7 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.4.0` (release prep 2026-06-07); `0.3.1` tagged |
+| Current version | `0.5.1` (released 2026-06-16); v0.5.x tagged |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -159,6 +159,8 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 |---|---|---|---|---|
 | AutoShape (preset geometry) | ✅ | ✅ | ✅ 187 `PresetShape` variants | — |
 | Custom geometry (`<a:custGeom>`) | △ XML | △ | ✅ typed AST (Phase 3h) | — |
+| Shape rotation (`rot`) / flip (`flipH`/`flipV`) | ✅ `shape.rotation` | ✅ `rotate`/`flipH/V` | △ extension-only | ⏳ v0.6 (F1) |
+| Shape-level hyperlink / click action (`<a:hlinkClick>` on `cNvPr`) | ✅ `click_action` | ✅ shape `hyperlink` | △ extension-only | ⏳ v0.6 (F5) |
 | Picture (PNG / JPEG / GIF / BMP / TIFF) | ✅ + WMF | ✅ + SVG + animated GIF | ✅ | — |
 | Picture: auto-detect EMU size from header | ✅ via PIL | ✅ | ❌ | ⏳ v0.2 (A1) |
 | Picture: cropping fluent builder | ✅ | ✅ | △ model has SrcRect | ⏳ v0.2 (A4) |
@@ -169,6 +171,12 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Run-level: bold / italic / size / color / font | ✅ | ✅ | ✅ | — |
 | Run-level: underline / strikethrough / caps / baseline | ✅ | ✅ | ✅ | — |
 | Run-level: character spacing (`spc`) | ✅ | ✅ | ✅ `with_character_spacing` (0.5.1, issue #7) | — |
+| Run-level: kerning (`kern` min size) | △ | △ | △ extension-only | ⏳ v0.6 (F3) |
+| Run-level: text highlight (`<a:highlight>`) | ❌ | ✅ `highlight` | △ extension-only | ⏳ v0.6 (F3) |
+| Run-level: text outline (`<a:ln>`) / non-solid text fill | △ | ✅ `outline` | △ extension-only (solid fill ✅) | ⏳ v0.6 (F3) |
+| Run-level: text glow / shadow effects (`<a:effectLst>`) | ❌ | ✅ `glow`/`shadow` | △ extension-only | ⏳ v0.6 (F3) |
+| Paragraph: align / indent / margin / bullets | ✅ | ✅ | ✅ typed `ParagraphProperties` | — |
+| Paragraph: line-spacing absolute (`spcPts`) + space %-form (`spcPct`) | ✅ | ✅ | △ percent line-spacing + point space only | ⏳ v0.6 (F4) |
 | Hyperlinks (run-level) | ✅ | ✅ | △ parser only | ⏳ v0.2 (A2) |
 | Bullets / numbered lists | ✅ | ✅ | ✅ 38-variant `AutoNumType` | — |
 | RTL / bidi text | △ | ✅ | ❌ | future |
@@ -224,7 +232,10 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ❌ | ⏳ v0.2 (C2) |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | ⏳ v1.0 (D5) |
 | Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
-| Document properties (creator, title, …) | ✅ | ✅ | △ fixed template | future |
+| Document properties (creator, title, subject, keywords, …) | ✅ `core_properties` | ✅ `author`/`title`/… | △ fixed template (`<dc:creator>moon-pptx</dc:creator>`) | ⏳ v0.6 (F2) |
+| Slide sections (`<p:sldSectionLst>`) | △ | ✅ `addSection` | △ extension-only | open idea (§5) |
+| WordArt / preset text warp (`<a:prstTxWarp>`) | ❌ | △ | △ extension-only | open idea (§5) |
+| 3-D shape (bevel / `<a:scene3d>` / `<a:sp3d>`) | △ | △ | △ extension-only | open idea (§5) |
 | Equation editor (`<m:oMathPara>`) | ❌ | ❌ | △ extension-only | future |
 
 ### 3.7 Where moon-pptx already wins
@@ -245,7 +256,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 Version-driven from v0.1.0 onward. Each version has a **definition of
 done (DoD)**. Status legend: 🔴 not started · 🟡 in progress · 🟢 done.
 
-### 4.1 v0.2.0 — "Daily usability" · target 2026-08-31
+### 4.1 v0.2.0 — "Daily usability"
 
 DoD: a user can build everything python-pptx supports today without
 dropping to XML, and the API ergonomics match.
@@ -304,7 +315,7 @@ review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
 
 ---
 
-### 4.2 v0.3.0 — "Multimedia + Layout" · target 2026-11-30
+### 4.2 v0.3.0 — "Multimedia + Layout"
 
 DoD: every feature PptxGenJS covers is expressible; slide masters can
 be defined programmatically end-to-end.
@@ -371,7 +382,7 @@ which 0.x SemVer permits).
 
 ---
 
-### 4.2.1 v0.3.1 — "Deck editing: arrange" · target 2026-06-30
+### 4.2.1 v0.3.1 — "Deck editing: arrange"
 
 Status (2026-06-01): **all three items landed on `main`** (E1 + E2 + E3).
 939 tests × 4 backends. **Ready to tag v0.3.1** — every change is
@@ -405,7 +416,7 @@ flow and "duplicate this template slide, then fill it" generation.
 
 ---
 
-### 4.3 v0.4.0 — "MoonBit differentiators" · target 2027-02-28
+### 4.3 v0.4.0 — "MoonBit differentiators"
 
 DoD: two headline features land that no other PPTX library — in any
 language — offers.
@@ -451,7 +462,7 @@ validation), and **M1 (compile-time placeholder schema, the ⭐ headline)**.
 
 ---
 
-### 4.4 v0.5.0 — "Animation & SmartArt" · target 2027-05-31
+### 4.4 v0.5.0 — "Animation & SmartArt"
 
 DoD: SmartArt and animation builders land; together with v0.4
 differentiators, moon-pptx becomes demonstrably the most capable
@@ -512,7 +523,49 @@ variant for D1, which 0.x SemVer permits).
 
 ---
 
-### 4.5 v1.0.0 — "Stable" · target 2027-08-31
+### 4.4.1 v0.6.0 — "Fidelity & fine-grained formatting"
+
+DoD: every common per-shape / per-run / per-deck formatting knob that
+PowerPoint exposes (and that python-pptx **or** PptxGenJS surfaces) has
+a typed builder — no dropping to XML for everyday formatting. Surfaced
+by a **2026-06-16 feature audit** (§11 changelog) against python-pptx +
+PptxGenJS, in the same spirit as the v0.5.1 character-spacing lift
+(issue #7): the items below all *round-trip losslessly today* via
+`extension` (ADR-004) but have no typed surface, so a builder consumer
+can't set them.
+
+Status (2026-06-16): **planning only — no items started.** Priority
+order F1 → F2 → F3 → F4 → F5 (F1/F2 are the most-requested and lowest
+effort: a struct-field lift each, exactly like A7 `<p:bg>` / D3
+`<p:transition>`).
+
+🔴 **F1 — Shape rotation & flip** *(highest priority)*
+  - **Gap**: `@slide.Transform` models only `offset` + `extent`; `<a:xfrm rot/flipH/flipV>` round-trips through the enclosing shape's `extension` but has **no typed field or builder** (confirmed: `Transform` has no `rotation`/`flip_*`; no `with_rotation`/`with_flip` anywhere). python-pptx exposes `shape.rotation`; PptxGenJS `rotate` / `flipH` / `flipV`.
+  - Lift to typed `Transform.rotation : @units.Angle?` + `flip_h : Bool` / `flip_v : Bool` (mirroring how A7 lifted `<p:bg>` and D3 `<p:transition>` out of `extension`). Parser reads `rot`/`flipH`/`flipV` off `<a:xfrm>`; writer emits them (omitting defaults `rot="0"` / `flipH="0"` so unmodified shapes stay byte-identical).
+  - Builders `AutoShape::with_rotation(Angle)` / `with_flip(h~, v~)`; apply equally to `Picture` / `GraphicFrame` / `GroupShape` (every shape carrying `<a:xfrm>`). Note `<a:graphicFrame>` allows `rot` but PowerPoint ignores it for charts/tables — document the no-op.
+
+🔴 **F2 — Document core + app properties**
+  - **Gap**: `docProps/core.xml` is a fixed template with a hard-coded `<dc:creator>moon-pptx</dc:creator>` (`src/presentation/template.mbt`); no API to set title / author / subject / keywords / dates. python-pptx `prs.core_properties.{title,author,subject,keywords,comments,category,last_modified_by,created,modified,revision}`; PptxGenJS `author` / `title` / `subject` / `company` / `revision`.
+  - Typed `CoreProperties { title, creator, subject, keywords, description, category, last_modified_by, created, modified, revision }` over `docProps/core.xml` (Dublin Core + cp namespace) and the `company` / `application` fields over `docProps/app.xml`.
+  - `Presentation::set_core_properties(CoreProperties)` + fluent `with_title` / `with_author` / … ; `Presentation::core_properties()` reader. Parse existing `core.xml` on open (currently passed through opaque) so editing a real deck preserves untouched fields.
+
+🔴 **F3 — Run-level rich formatting (highlight / kerning / text outline / text fill / text effects)**
+  - **Gap**: `RunProperties` covers size / bold / italic / underline / strike / caps / baseline / spc / colour(solid) / fonts / hyperlink, but these competitor-supported knobs are extension-only (the `RunProperties.extension` doc-comment lists them as unmodelled): `<a:highlight>` (PptxGenJS `highlight`), `kern` attribute (minimum kerning), `<a:ln>` text outline (PptxGenJS `outline`), non-solid text fill (gradient/pattern — `fill` is `@oxml.Color?`, narrower than the shape-level `@oxml.Fill` ADT), and `<a:effectLst>` text glow/shadow (PptxGenJS `glow` / `shadow`).
+  - Add typed fields + `with_highlight(Color)` / `with_kerning(Pt)` / `with_text_outline(Stroke)` / `with_text_effects(EffectList)`; widen `fill` toward the `@oxml.Fill` ADT (the doc-comment already flags this as "a future expansion point"). Each is a small lift in the same shape as v0.5.1's `spc` — parse one attr/child, emit it, add to `needs_r_pr`.
+
+🔴 **F4 — Paragraph spacing completeness**
+  - **Gap**: `ParagraphProperties.line_spacing` models only the **percent** form (`<a:lnSpc><a:spcPct>`); the spec's absolute form (`<a:lnSpc><a:spcPts>`) is dropped to inheritance (the field doc-comment says "we only model the percent form"). `space_before` / `space_after` model only the **points** form (`<a:spcPts>`), not the percent form (`<a:spcPct>`).
+  - Widen `line_spacing` to an ADT (`LineSpacing { Percent(Percentage) | Points(Pt) }`) and `space_before` / `space_after` likewise — so both forms round-trip and are settable. python-pptx `paragraph.line_spacing` accepts both a multiple and a Length; PptxGenJS `lineSpacing` / `lineSpacingMultiple`.
+
+🔴 **F5 — Shape-level hyperlink / click action**
+  - **Gap**: run-level hyperlinks shipped in A2, but a hyperlink/action on a **whole shape** (`<p:cNvPr><a:hlinkClick>`) is captured in the `<p:cNvPr>` body extension only — no typed builder. python-pptx `shape.click_action.hyperlink` (+ jump actions `FIRST_SLIDE` / `NEXT_SLIDE` / named-slide / run-program); PptxGenJS shape `hyperlink`.
+  - Reuse A2's `HyperlinkTarget` (External URL / InternalSlide) + the resolver that allocates the slide-rels rId at `update_slide_mut` time; add a shape-level `with_hyperlink` and the standard `ppaction://` jump actions. The writer already re-emits a captured `<a:hlinkClick>` on `<p:cNvPr>` (B4 writer-fix path), so this threads the typed target through the same emit point.
+
+**Deferred / open-ideas (logged in §5, lower demand — all round-trip losslessly today):** WordArt preset text warp (`<a:prstTxWarp>`), 3-D shape bevel (`<a:scene3d>` / `<a:sp3d>`), slide **sections** typed API (`<p:sldSectionLst>` — PptxGenJS `addSection`), table-style **preset library** (`<a:tblPr><a:tableStyleId>` — the field exists, no named presets), gradient/pattern **fill convenience constructors** (the `@oxml.Fill` ADT is buildable but verbose), and `<a:endParaRPr>` typed modelling (currently rides `Paragraph.extension`).
+
+---
+
+### 4.5 v1.0.0 — "Stable"
 
 DoD: API surface frozen; LibreOffice + Keynote verified; benchmarks
 published; xlsx cache generation as opt-in.
@@ -563,6 +616,13 @@ Not on the dated roadmap yet — tracked here so they don't get lost:
 - **HTML export** — same
 - **Trait-based shape extensibility** — `trait CustomShape`, third-party `Shape::User(...)` variants
 - **Real-world fixture library** — license-clear small `.pptx` files for regression testing
+- *(From the 2026-06-16 feature audit — deferred out of v0.6.0 F1–F5; all round-trip losslessly via `extension` today)*:
+  - **Slide sections** (`<p:sldSectionLst>` in `presentation` extLst) — typed `Section { title, slide_ids }` + `add_section`; PptxGenJS `addSection`
+  - **WordArt / preset text warp** (`<a:bodyPr><a:prstTxWarp>`) — typed warp presets
+  - **3-D shape effects** (`<a:scene3d>` camera/light + `<a:sp3d>` bevel/extrusion) — typed builder
+  - **Table-style preset library** — named `<a:tblPr><a:tableStyleId>` presets (the GUID field round-trips; no named-constant library yet)
+  - **Gradient / pattern fill convenience constructors** — the `@oxml.Fill` ADT is buildable but verbose; add `Fill::linear_gradient(...)` / `Fill::pattern(...)` ergonomic builders
+  - **`<a:endParaRPr>` typed modelling** — currently rides `Paragraph.extension`
 
 ---
 
@@ -746,6 +806,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-06-16** — **Feature audit vs python-pptx + PptxGenJS → new v0.6.0 "Fidelity & fine-grained formatting" roadmap (§4.4.1).** A full pass over the public model (`RunProperties` / `ParagraphProperties` / `Transform` / `AutoShape` / `docProps`) against both reference libraries, prompted by the v0.5.1 character-spacing gap (issue #7) — looking for more knobs that competitors expose but moon-pptx only round-trips through `extension`. **Found six actionable gaps, none previously tracked as roadmap items**, all the same shape as the `spc` lift (lossless today, no typed surface): **F1 shape rotation/flip** (`Transform` has *no* `rot`/`flipH`/`flipV` — the highest-impact gap; python-pptx `shape.rotation`, PptxGenJS `rotate`/`flipH/V`), **F2 document core/app properties** (`docProps/core.xml` is a fixed template with a hard-coded `<dc:creator>moon-pptx</dc:creator>`; no `set_core_properties`), **F3 run-level highlight / kerning / text-outline / non-solid text-fill / text-effects** (all extension-only per the `RunProperties.extension` doc-comment), **F4 paragraph line-spacing absolute form + space %-form** (only percent line-spacing + point spacing modelled today), **F5 shape-level hyperlink / click action** (run-level shipped in A2; whole-shape `<a:hlinkClick>` is extension-only). Logged as v0.6.0 F1–F5 with priority order + DoD; lower-demand finds (slide sections, WordArt text warp, 3-D shape bevel, table-style presets, gradient/pattern fill convenience builders, `<a:endParaRPr>`) added to §5 open ideas; §3 feature matrix rows added/retargeted to match. Confirmed **not** gaps (already typed): shape shadow/glow/reflection/soft-edge effects (`@oxml.EffectList`), gradient/pattern/picture *shape* fills (`@oxml.Fill`), autofit, bullets/numbering, all 25 chart families. Docs-only change; no library `.mbti` change. **Current version stays 0.5.1.**
 - **2026-06-16** — **v0.5.1: character spacing on text runs (issue #7).** `RunProperties::with_character_spacing(@units.Pt)` + a new `RunProperties.character_spacing : @units.Pt?` field map to the DrawingML `<a:rPr spc="…">` attribute (`ST_TextPoint` — 1/100 pt, may be negative to tighten). Parsed (`parse_character_spacing_attr`) and written exactly like `sz`/`font_size` (same encoding; `parse_signed_int` + the `*100` write already handle negatives), and added to `needs_r_pr`. Closes a downstream gap reported by `pptz` (a TOML→PPTX generator) whose `letter_spacing` style had no typed target. 5 new tests (parse 1/100-pt → Pt, negative tightening, absent = `None`/unchanged, parse→serialize→parse round-trip, builder emits `spc` + round-trips). Additive `.mbti` (new field + `with_character_spacing`, like prior `Slide.transition`/`background` field additions). 1067 → 1072 × 4 backends.
 - **2026-06-16** — **PowerPoint verification of the v0.5 sample deck — SmartArt hierarchical-render finding.** Opening the generated deck in PowerPoint for the web surfaced that **PowerPoint re-lays-out SmartArt from the layout definition on open and does *not* use our cached `<dsp:drawing>`** — contrary to ADR-010's "cached drawing is the render contract" assumption (which holds, at best, only for non-editing/older viewers, not PowerPoint Web). Consequence: our `layoutDef`'s `forEach axis="ch" ptType="node"` walks only the document's direct children (one level), so the **flat** families (list / process / cycle / pyramid / matrix — all nodes depth-1) render every node, but the **nesting** families (org_chart / hierarchy / relationship) collapse to their top-level node(s) — the data model is correct and recognised as SmartArt (the text pane shows the full hierarchy), but children don't render. **Corrected the over-claim**: §3.6 / §3.7 / the D1 notes now distinguish "build + render (flat)" from "build + recognised, top-level render only (nesting, pending a recursive layoutDef)". Examples switched to a flat family so the showcase renders correctly (sample-deck slide 17 → `cycle`; cookbook §15 → `process` + a rendering note). **Follow-up (logged as D1 risk)**: a recursive hierarchy `layoutDef` (`hierRoot`/`hierChild` composite with a nested `forEach`) so PowerPoint lays nesting families out — the robust fix, independent of whether the cached drawing is ever honoured. *(Online video slide 19 shows its poster image, not a player — that is PowerPoint **Web**'s media limitation, same as the embedded-media slide; the markup is the correct online-video form and plays in desktop PowerPoint.)* Examples + docs only; no library `.mbti` change.
 - **2026-06-16** — **Examples updated for the v0.5 release (cookbook + sample deck).** So every v0.5 feature is demonstrable/verifiable: (1) **Cookbook** (`examples/README.md`) gains four recipes — §14 animations (`Timeline` + `with_animations`), §15 SmartArt (`add_smartart_mut`), §16 YouTube / online video (`add_youtube_video_mut` / `add_online_video_mut`), §17 plot-type-aware chart validation (`Chart::validate`) — each mirrored by a matching test in `src/integration/examples_test.mbt` (1063 → 1067). (2) **Sample deck** (`examples/sample-deck`) grows from 20 to 23 slides with SmartArt org-chart, animation, and online-video slides (+ the split-mode isolation cases); its `moon.mod.json` dep is switched from the published `0.4.0` to a `{ "path": "../.." }` path dep so the deck builds against the unreleased v0.5 source (the in-repo dev pattern — switches back to `"0.5.0"` post-publication). Generates a valid 23-slide `.pptx` that round-trips on reopen (sample-deck tests green). README slide-count / feature references freshened. No library `.mbti` change.
