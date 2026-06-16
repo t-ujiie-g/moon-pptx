@@ -307,10 +307,10 @@ fn build_placeholder_csld(
 /// A bottom-band header/footer rectangle at horizontal offset `x` (EMU),
 /// sized like PowerPoint's default master hf placeholders.
 fn hf_rect(x : Int64) -> @slide.Transform {
-  {
-    offset: { x: @units.Emu(x), y: @units.Emu(6356350L) },
-    extent: { cx: @units.Emu(2438400L), cy: @units.Emu(365125L) },
-  }
+  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(6356350L) }, extent={
+    cx: @units.Emu(2438400L),
+    cy: @units.Emu(365125L),
+  })
 }
 
 ///|
@@ -332,6 +332,7 @@ fn master_placeholder(
     stroke: None,
     effects: None,
     text_body: body,
+    hyperlink: None,
     extension: [],
   }
 }

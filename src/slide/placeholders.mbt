@@ -206,6 +206,7 @@ pub fn Slide::with_placeholder(
     stroke: None,
     effects: None,
     text_body: body,
+    hyperlink: None,
     extension: [],
   }
   cleared.with_shape(AutoShape(sp))

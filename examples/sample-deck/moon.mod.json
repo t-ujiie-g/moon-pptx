@@ -4,7 +4,7 @@
   "description": "Runnable sample deck for moon-pptx — demonstrates every feature across several decks. Doubles as a debugging helper for PowerPoint Online compatibility verification.",
   "license": "Apache-2.0",
   "deps": {
-    "t-ujiie-g/moon-pptx": "0.5.0"
+    "t-ujiie-g/moon-pptx": "0.5.2"
   },
   "source": "main"
 }

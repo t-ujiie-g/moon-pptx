@@ -135,6 +135,7 @@ pub(all) struct AutoShape {
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   text_body : TextBody?
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn AutoShape::ellipse(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
@@ -143,8 +144,12 @@ pub fn AutoShape::rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.E
 pub fn AutoShape::round_rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn AutoShape::textbox(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 pub fn AutoShape::with_fill(Self, @oxml.Fill) -> Self
+pub fn AutoShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn AutoShape::with_hyperlink(Self, url~ : String) -> Self
+pub fn AutoShape::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 pub fn AutoShape::with_no_fill(Self) -> Self
 pub fn AutoShape::with_no_stroke(Self) -> Self
+pub fn AutoShape::with_rotation(Self, @units.Angle) -> Self
 pub fn AutoShape::with_stroke(Self, @oxml.Stroke) -> Self
 pub fn AutoShape::with_text_body(Self, TextBody) -> Self
 
@@ -281,6 +286,8 @@ pub(all) struct GroupShape {
   children : Array[Shape]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn GroupShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn GroupShape::with_rotation(Self, @units.Angle) -> Self
 
 pub(all) enum HyperlinkTarget {
   ExternalUrl(String)
@@ -403,6 +410,7 @@ pub(all) struct Picture {
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
   media : MediaInfo?
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Picture::builder(Int, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> PictureUncropped
@@ -410,6 +418,10 @@ pub fn Picture::of_image(Int, String, String, @units.Emu, @units.Emu, @units.Emu
 pub fn Picture::of_media(Int, String, MediaKind, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn Picture::of_svg_image(Int, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn Picture::with_crop(Self, left? : @units.Percentage, top? : @units.Percentage, right? : @units.Percentage, bottom? : @units.Percentage) -> Self
+pub fn Picture::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn Picture::with_hyperlink(Self, url~ : String) -> Self
+pub fn Picture::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
+pub fn Picture::with_rotation(Self, @units.Angle) -> Self
 
 pub struct PictureCropped {
   pic : Picture
@@ -663,6 +675,7 @@ pub(all) struct RunProperties {
   lang : String
   font_size : @units.Pt?
   character_spacing : @units.Pt?
+  kerning : @units.Pt?
   bold : Bool?
   italic : Bool?
   underline : UnderlineKind?
@@ -673,6 +686,9 @@ pub(all) struct RunProperties {
   east_asian : String?
   complex_script : String?
   fill : @oxml.Color?
+  outline : @oxml.Stroke?
+  text_effects : @oxml.EffectList?
+  highlight : @oxml.Color?
   hyperlink_click : String?
   hyperlink_tooltip : String?
   hyperlink_action : String?
@@ -685,9 +701,13 @@ pub fn RunProperties::with_character_spacing(Self, @units.Pt) -> Self
 pub fn RunProperties::with_color(Self, @units.RgbColor) -> Self
 pub fn RunProperties::with_font(Self, String) -> Self
 pub fn RunProperties::with_font_size(Self, @units.Pt) -> Self
+pub fn RunProperties::with_highlight(Self, @units.RgbColor) -> Self
 pub fn RunProperties::with_hyperlink(Self, String, tooltip? : String) -> Self
 pub fn RunProperties::with_hyperlink_to_slide(Self, Int, tooltip? : String) -> Self
 pub fn RunProperties::with_italic(Self) -> Self
+pub fn RunProperties::with_kerning(Self, @units.Pt) -> Self
+pub fn RunProperties::with_text_effects(Self, @oxml.EffectList) -> Self
+pub fn RunProperties::with_text_outline(Self, @oxml.Stroke) -> Self
 
 pub(all) enum Shape {
   AutoShape(AutoShape)
@@ -704,6 +724,14 @@ pub(all) struct ShapeAdjustValue {
   name : String
   fmla : String
 } derive(Eq, @debug.Debug)
+
+pub(all) struct ShapeHyperlink {
+  target : HyperlinkTarget?
+  click : String?
+  action : String?
+} derive(Eq, @debug.Debug)
+pub fn ShapeHyperlink::external(String) -> Self
+pub fn ShapeHyperlink::to_slide(Int) -> Self
 
 pub(all) struct Size {
   cx : @units.Emu
@@ -860,7 +888,13 @@ pub fn Timeline::with_previous(Self, AnimEffect, Int, paragraph? : Int, duration
 pub(all) struct Transform {
   offset : Point
   extent : Size
+  rotation : @units.Angle?
+  flip_h : Bool
+  flip_v : Bool
 } derive(Eq, @debug.Debug)
+pub fn Transform::new(offset~ : Point, extent~ : Size, rotation? : @units.Angle?, flip_h? : Bool, flip_v? : Bool) -> Self
+pub fn Transform::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn Transform::with_rotation(Self, @units.Angle) -> Self
 
 pub(all) struct Transition {
   kind : TransitionKind

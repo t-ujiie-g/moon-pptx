@@ -2,10 +2,10 @@
 
 ///|
 fn rect(x : Int64, y : Int64, cx : Int64, cy : Int64) -> @slide.Transform {
-  {
-    offset: { x: @units.Emu(x), y: @units.Emu(y) },
-    extent: { cx: @units.Emu(cx), cy: @units.Emu(cy) },
-  }
+  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(y) }, extent={
+    cx: @units.Emu(cx),
+    cy: @units.Emu(cy),
+  })
 }
 
 ///|

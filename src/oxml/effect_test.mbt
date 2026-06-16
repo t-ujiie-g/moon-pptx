@@ -57,12 +57,20 @@ test "EffectList: blur with rad + grow" {
 }
 
 ///|
-test "EffectList: blur missing rad raises" {
-  try parse_effect_list_inner("<a:blur/>") catch {
-    _ => ()
-  } noraise {
-    _ => fail("expected an error")
-  }
+test "EffectList: blur missing rad defaults to 0 (ECMA-376 default)" {
+  let fx = parse_effect_list_inner("<a:blur/>")
+  assert_eq(fx.blur.unwrap().rad, @units.Emu(0L))
+}
+
+///|
+test "EffectList: minimal outerShdw (blurRad only) parses with dist/dir = 0" {
+  let fx = parse_effect_list_inner(
+    "<a:outerShdw blurRad=\"40000\"><a:srgbClr val=\"000000\"/></a:outerShdw>",
+  )
+  let s = fx.outer_shadow.unwrap()
+  assert_eq(s.blur_rad, @units.Emu(40000L))
+  assert_eq(s.dist, @units.Emu(0L))
+  assert_eq(s.dir, @units.Angle(0.0))
 }
 
 // --- glow ---

@@ -76,3 +76,29 @@ pub let diagram_drawing_ns : String = "http://schemas.microsoft.com/office/drawi
 /// SmartArt data model's `<dgm:extLst>` — points the data part at its cached
 /// `<dsp:drawing>`. Fixed by Office. Roadmap D1.
 pub let diagram_data_model_ext_uri : String = "{74C2E1F8-2D9B-489B-A2DD-C0C0D5F4E0E0}"
+
+///|
+/// OPC core-properties namespace — `cp:` prefix. Home of
+/// `<cp:coreProperties>` and its `<cp:keywords>` / `<cp:lastModifiedBy>` /
+/// `<cp:revision>` / `<cp:category>` / `<cp:contentStatus>` /
+/// `<cp:lastPrinted>` / `<cp:version>` children in `docProps/core.xml`.
+/// Roadmap F2.
+pub let core_properties_ns : String = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+
+///|
+/// Dublin Core element namespace — `dc:` prefix. Home of `<dc:title>` /
+/// `<dc:creator>` / `<dc:subject>` / `<dc:description>` / `<dc:identifier>`
+/// / `<dc:language>` in `docProps/core.xml`. Roadmap F2.
+pub let dublin_core_ns : String = "http://purl.org/dc/elements/1.1/"
+
+///|
+/// Dublin Core terms namespace — `dcterms:` prefix. Home of the W3CDTF
+/// date elements `<dcterms:created>` / `<dcterms:modified>` in
+/// `docProps/core.xml`. Roadmap F2.
+pub let dublin_core_terms_ns : String = "http://purl.org/dc/terms/"
+
+///|
+/// XML Schema instance namespace — `xsi:` prefix. Used in
+/// `docProps/core.xml` only for the `xsi:type="dcterms:W3CDTF"` attribute
+/// the date elements carry. Roadmap F2.
+pub let xml_schema_instance_ns : String = "http://www.w3.org/2001/XMLSchema-instance"

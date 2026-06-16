@@ -3,13 +3,16 @@
 //
 // This module is **separate from the moon-pptx library itself**: it
 // has its own `moon.mod.json` and depends on `t-ujiie-g/moon-pptx`
-// just like any user would (currently via a path dep on `../..` for
-// dev convenience; switch to `"version": "0.2.0"` once that version
-// is on mooncakes). The library proper (in `src/`) is the published
-// artefact and contains no demo / sample code.
+// just like any user would. It currently uses a path dep on `../..`
+// so the deck can exercise the unreleased v0.5.2 features; switch back
+// to a published `"version": "0.5.2"` dep once that version is on
+// mooncakes. The library proper (in `src/`) is the published artefact
+// and contains no demo / sample code.
 //
-// 23 slides covering every typed feature through v0.5 plus every chart
-// family from v0.1:
+// 24 slides covering every typed feature through v0.5.2 plus every chart
+// family from v0.1. The deck also sets document core properties
+// (v0.5.2 F2 — title / author / subject / keywords, visible in
+// PowerPoint's File ▸ Info):
 //
 //   1.  Title — widescreen sizing, styled run, hyperlink, speaker notes.
 //   2.  Table of contents — internal hyperlinks jumping to later slides.
@@ -25,9 +28,11 @@
 //   14. SVG image.                   15. In-place shape editing (map_shapes).
 //   16. Embedded video + audio.      17. SmartArt org chart (v0.5 D1).
 //   18. Animations (v0.5 D2).        19. YouTube / online video (v0.5 C5).
-//   20. Master / template slide (footer / date / slide number).
-//   21–22. Typed layout slides (v0.4 M1 compile-time placeholder schema).
-//   23. Closing — hyperlink back to slide 1.
+//   20. v0.5.2 fidelity — shape rotation/flip (F1), run highlight / kerning /
+//       text outline / text effects (F3), shape hyperlinks (F5).
+//   21. Master / template slide (footer / date / slide number).
+//   22–23. Typed layout slides (v0.4 M1 compile-time placeholder schema).
+//   24. Closing — hyperlink back to slide 1.
 //
 // Plus: a slide transition on every slide (v0.4 D3). Every position is
 // expressed through `prs.pct_w` / `prs.pct_h` so switching slide sizes
@@ -45,6 +50,16 @@
 pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
   let prs = @presentation.Presentation::new()
   prs.set_slide_size_mut(Widescreen)
+  // v0.5.2 F2 — document core properties (shown in PowerPoint's File ▸ Info).
+  prs.set_core_properties_mut(
+    @presentation.CoreProperties::new()
+    .with_title("moon-pptx feature sample deck")
+    .with_author("moon-pptx")
+    .with_subject("Library feature showcase")
+    .with_keywords("pptx, moonbit, ooxml, sample")
+    .with_category("Demo")
+    .with_revision("2"),
+  )
   // The layout-0 feature slides, in order. They are *all pre-added* before
   // any are filled, so the table-of-contents slide's forward "jump to
   // section" hyperlinks resolve against slides that already exist.
@@ -68,6 +83,7 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
     sample_smartart_slide,
     sample_animation_slide,
     sample_online_video_slide,
+    sample_v052_features_slide,
   ]
   for _ in 0..<builders.length() {
     let _ = prs.add_slide_mut(0)
@@ -487,10 +503,12 @@ fn sample_shapes_slide(
   let connector : @slide.Connector = {
     id: 6,
     name: "FlowArrow",
-    transform: Some({
-      offset: { x: prs.pct_w(27.0), y: prs.pct_h(28.0) },
-      extent: { cx: prs.pct_w(13.0), cy: @units.Emu(0L) },
-    }),
+    transform: Some(
+      @slide.Transform::new(
+        offset={ x: prs.pct_w(27.0), y: prs.pct_h(28.0) },
+        extent={ cx: prs.pct_w(13.0), cy: @units.Emu(0L) },
+      ),
+    ),
     geometry: Some(
       @slide.Geometry::Preset(@slide.PresetShape::StraightConnector1, []),
     ),
@@ -509,10 +527,12 @@ fn sample_shapes_slide(
     id: 21,
     name: "GroupedRect1",
     placeholder: None,
-    transform: Some({
-      offset: { x: @units.Emu(0L), y: @units.Emu(0L) },
-      extent: { cx: @units.Emu(4000L), cy: @units.Emu(10000L) },
-    }),
+    transform: Some(
+      @slide.Transform::new(
+        offset={ x: @units.Emu(0L), y: @units.Emu(0L) },
+        extent={ cx: @units.Emu(4000L), cy: @units.Emu(10000L) },
+      ),
+    ),
     geometry: Some(@slide.Geometry::Preset(@slide.PresetShape::Rect, [])),
     fill: Some(
       @oxml.Fill::SolidFill(
@@ -522,16 +542,19 @@ fn sample_shapes_slide(
     stroke: None,
     effects: None,
     text_body: None,
+    hyperlink: None,
     extension: [],
   }
   let child_rect_2 : @slide.AutoShape = {
     id: 22,
     name: "GroupedRect2",
     placeholder: None,
-    transform: Some({
-      offset: { x: @units.Emu(6000L), y: @units.Emu(0L) },
-      extent: { cx: @units.Emu(4000L), cy: @units.Emu(10000L) },
-    }),
+    transform: Some(
+      @slide.Transform::new(
+        offset={ x: @units.Emu(6000L), y: @units.Emu(0L) },
+        extent={ cx: @units.Emu(4000L), cy: @units.Emu(10000L) },
+      ),
+    ),
     geometry: Some(@slide.Geometry::Preset(@slide.PresetShape::Rect, [])),
     fill: Some(
       @oxml.Fill::SolidFill(
@@ -541,16 +564,19 @@ fn sample_shapes_slide(
     stroke: None,
     effects: None,
     text_body: None,
+    hyperlink: None,
     extension: [],
   }
   let child_ellipse : @slide.AutoShape = {
     id: 23,
     name: "GroupedEllipse",
     placeholder: None,
-    transform: Some({
-      offset: { x: @units.Emu(2500L), y: @units.Emu(2500L) },
-      extent: { cx: @units.Emu(5000L), cy: @units.Emu(5000L) },
-    }),
+    transform: Some(
+      @slide.Transform::new(
+        offset={ x: @units.Emu(2500L), y: @units.Emu(2500L) },
+        extent={ cx: @units.Emu(5000L), cy: @units.Emu(5000L) },
+      ),
+    ),
     geometry: Some(@slide.Geometry::Preset(@slide.PresetShape::Ellipse, [])),
     fill: Some(
       @oxml.Fill::SolidFill(
@@ -560,15 +586,18 @@ fn sample_shapes_slide(
     stroke: None,
     effects: None,
     text_body: None,
+    hyperlink: None,
     extension: [],
   }
   let group : @slide.GroupShape = {
     id: 30,
     name: "DemoGroup",
-    transform: Some({
-      offset: { x: prs.pct_w(30.0), y: prs.pct_h(55.0) },
-      extent: { cx: group_w, cy: group_h },
-    }),
+    transform: Some(
+      @slide.Transform::new(
+        offset={ x: prs.pct_w(30.0), y: prs.pct_h(55.0) },
+        extent={ cx: group_w, cy: group_h },
+      ),
+    ),
     child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
     child_extent: Some({ cx: @units.Emu(10000L), cy: @units.Emu(10000L) }),
     children: [
@@ -662,10 +691,12 @@ fn sample_custom_geom_slide(
     id: 3,
     name: "Star",
     placeholder: None,
-    transform: Some({
-      offset: { x: prs.pct_w(33.0), y: prs.pct_h(20.0) },
-      extent: { cx: prs.pct_w(34.0), cy: prs.pct_h(70.0) },
-    }),
+    transform: Some(
+      @slide.Transform::new(
+        offset={ x: prs.pct_w(33.0), y: prs.pct_h(20.0) },
+        extent={ cx: prs.pct_w(34.0), cy: prs.pct_h(70.0) },
+      ),
+    ),
     geometry: Some(@slide.Geometry::Custom(star_geom)),
     fill: Some(
       @oxml.Fill::SolidFill(
@@ -675,6 +706,7 @@ fn sample_custom_geom_slide(
     stroke: None,
     effects: None,
     text_body: None,
+    hyperlink: None,
     extension: [],
   }
   let s = prs.slides()[idx]

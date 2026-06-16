@@ -17,7 +17,7 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.4.0` (release prep 2026-06-07); `0.3.1` tagged |
+| Current version | `0.5.2` (release prep 2026-06-17); `0.5.1` tagged |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -159,6 +159,8 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 |---|---|---|---|---|
 | AutoShape (preset geometry) | ✅ | ✅ | ✅ 187 `PresetShape` variants | — |
 | Custom geometry (`<a:custGeom>`) | △ XML | △ | ✅ typed AST (Phase 3h) | — |
+| Shape rotation (`rot`) / flip (`flipH`/`flipV`) | ✅ `shape.rotation` | ✅ `rotate`/`flipH/V` | ✅ typed `Transform.rotation`/`flip_h`/`flip_v` + `with_rotation`/`with_flip` (0.6 F1) | — |
+| Shape-level hyperlink / click action (`<a:hlinkClick>` on `cNvPr`) | ✅ `click_action` | ✅ shape `hyperlink` | ✅ `with_hyperlink`/`with_hyperlink_to_slide` (AutoShape + Picture, 0.6 F5) | — |
 | Picture (PNG / JPEG / GIF / BMP / TIFF) | ✅ + WMF | ✅ + SVG + animated GIF | ✅ | — |
 | Picture: auto-detect EMU size from header | ✅ via PIL | ✅ | ❌ | ⏳ v0.2 (A1) |
 | Picture: cropping fluent builder | ✅ | ✅ | △ model has SrcRect | ⏳ v0.2 (A4) |
@@ -169,6 +171,13 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Run-level: bold / italic / size / color / font | ✅ | ✅ | ✅ | — |
 | Run-level: underline / strikethrough / caps / baseline | ✅ | ✅ | ✅ | — |
 | Run-level: character spacing (`spc`) | ✅ | ✅ | ✅ `with_character_spacing` (0.5.1, issue #7) | — |
+| Run-level: kerning (`kern` min size) | △ | △ | ✅ `with_kerning` (0.6 F3) | — |
+| Run-level: text highlight (`<a:highlight>`) | ❌ | ✅ `highlight` | ✅ `with_highlight` (0.6 F3) | — |
+| Run-level: text outline (`<a:ln>`) | △ | ✅ `outline` | ✅ `with_text_outline` (0.6 F3) | — |
+| Run-level: text glow / shadow effects (`<a:effectLst>`) | ❌ | ✅ `glow`/`shadow` | ✅ `with_text_effects` (0.6 F3) | — |
+| Run-level: non-solid text fill (gradient/pattern) | △ | △ | △ extension-only (solid fill ✅) | ⏳ v0.6 (F3 follow-up) |
+| Paragraph: align / indent / margin / bullets | ✅ | ✅ | ✅ typed `ParagraphProperties` | — |
+| Paragraph: line-spacing absolute (`spcPts`) + space %-form (`spcPct`) | ✅ | ✅ | △ percent line-spacing + point space only | ⏳ v0.6 (F4) |
 | Hyperlinks (run-level) | ✅ | ✅ | △ parser only | ⏳ v0.2 (A2) |
 | Bullets / numbered lists | ✅ | ✅ | ✅ 38-variant `AutoNumType` | — |
 | RTL / bidi text | △ | ✅ | ❌ | future |
@@ -224,7 +233,10 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ❌ | ⏳ v0.2 (C2) |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | ⏳ v1.0 (D5) |
 | Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
-| Document properties (creator, title, …) | ✅ | ✅ | △ fixed template | future |
+| Document properties (creator, title, subject, keywords, …) | ✅ `core_properties` | ✅ `author`/`title`/… | ✅ typed `CoreProperties` (15-field closed core.xml) + `set_core_properties_mut`/`core_properties` (0.6 F2); app.xml `company`/`application` ⏳ follow-up | — |
+| Slide sections (`<p:sldSectionLst>`) | △ | ✅ `addSection` | △ extension-only | open idea (§5) |
+| WordArt / preset text warp (`<a:prstTxWarp>`) | ❌ | △ | △ extension-only | open idea (§5) |
+| 3-D shape (bevel / `<a:scene3d>` / `<a:sp3d>`) | △ | △ | △ extension-only | open idea (§5) |
 | Equation editor (`<m:oMathPara>`) | ❌ | ❌ | △ extension-only | future |
 
 ### 3.7 Where moon-pptx already wins
@@ -245,7 +257,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 Version-driven from v0.1.0 onward. Each version has a **definition of
 done (DoD)**. Status legend: 🔴 not started · 🟡 in progress · 🟢 done.
 
-### 4.1 v0.2.0 — "Daily usability" · target 2026-08-31
+### 4.1 v0.2.0 — "Daily usability"
 
 DoD: a user can build everything python-pptx supports today without
 dropping to XML, and the API ergonomics match.
@@ -304,7 +316,7 @@ review (§4.5 v1.0 item, advanced) confirms no breaking changes vs
 
 ---
 
-### 4.2 v0.3.0 — "Multimedia + Layout" · target 2026-11-30
+### 4.2 v0.3.0 — "Multimedia + Layout"
 
 DoD: every feature PptxGenJS covers is expressible; slide masters can
 be defined programmatically end-to-end.
@@ -371,7 +383,7 @@ which 0.x SemVer permits).
 
 ---
 
-### 4.2.1 v0.3.1 — "Deck editing: arrange" · target 2026-06-30
+### 4.2.1 v0.3.1 — "Deck editing: arrange"
 
 Status (2026-06-01): **all three items landed on `main`** (E1 + E2 + E3).
 939 tests × 4 backends. **Ready to tag v0.3.1** — every change is
@@ -405,7 +417,7 @@ flow and "duplicate this template slide, then fill it" generation.
 
 ---
 
-### 4.3 v0.4.0 — "MoonBit differentiators" · target 2027-02-28
+### 4.3 v0.4.0 — "MoonBit differentiators"
 
 DoD: two headline features land that no other PPTX library — in any
 language — offers.
@@ -451,7 +463,7 @@ validation), and **M1 (compile-time placeholder schema, the ⭐ headline)**.
 
 ---
 
-### 4.4 v0.5.0 — "Animation & SmartArt" · target 2027-05-31
+### 4.4 v0.5.0 — "Animation & SmartArt"
 
 DoD: SmartArt and animation builders land; together with v0.4
 differentiators, moon-pptx becomes demonstrably the most capable
@@ -512,7 +524,59 @@ variant for D1, which 0.x SemVer permits).
 
 ---
 
-### 4.5 v1.0.0 — "Stable" · target 2027-08-31
+### 4.4.1 v0.6.0 — "Fidelity & fine-grained formatting"
+
+DoD: every common per-shape / per-run / per-deck formatting knob that
+PowerPoint exposes (and that python-pptx **or** PptxGenJS surfaces) has
+a typed builder — no dropping to XML for everyday formatting. Surfaced
+by a **2026-06-16 feature audit** (§11 changelog) against python-pptx +
+PptxGenJS, in the same spirit as the v0.5.1 character-spacing lift
+(issue #7): the items below all *round-trip losslessly today* via
+`extension` (ADR-004) but have no typed surface, so a builder consumer
+can't set them.
+
+Status (2026-06-17): **Shipping as `0.5.2`** — F1 (rotation/flip), F2 (core
+properties), F3 kerning + highlight + outline + effects, and F5 (shape
+hyperlinks, AutoShape + Picture) all landed and are being released together
+as **v0.5.2** (the work was scoped under "v0.6.0" but ships as a 0.5.x
+feature release — every change was additive `.mbti`). **Remaining (carry
+forward):** F3 non-solid text fill + F4 paragraph spacing — both *breaking*
+ADT-widenings, batched into a deliberate pre-1.0 pass (§5); plus the F2
+app.xml + F5 Group/GraphicFrame/Connector additive follow-ups (§5).
+Priority order F1 → F2 → F3 → F4 → F5.
+
+🟢 **F1 — Shape rotation & flip** *(landed 2026-06-16)*
+  - **Gap (was)**: `@slide.Transform` modelled only `offset` + `extent`; worse than the audit assumed — `<a:xfrm>`'s own `rot`/`flipH`/`flipV` attributes were **silently dropped** on parse (the `<a:xfrm>` start-element attrs were never read), not even round-tripped via `extension`. python-pptx `shape.rotation`; PptxGenJS `rotate` / `flipH` / `flipV`.
+  - **Shipped**: lifted to typed `Transform.rotation : @units.Angle?` + `flip_h : Bool` / `flip_v : Bool` (mirroring A7's `<p:bg>` / D3's `<p:transition>` lifts). `Transform::new(offset~, extent~, rotation?, flip_h?, flip_v?)` constructor (the existing struct-literal sites migrated to it) + `Transform::with_rotation` / `with_flip`. Parser reads `rot`/`flipH`/`flipV` off **all three** xfrm paths — `<p:sp>` (`parse_xfrm`), `<p:grpSp>` (`parse_group_xfrm`), and the graphicFrame `<p:xfrm>` (reuses `parse_xfrm`). Writer emits them via a shared `write_xfrm_orientation_attrs`, **omitting defaults** (`rot="0"` / unset flips) so unmodified shapes stay byte-identical.
+  - Shape-level builders `AutoShape::with_rotation(Angle)` / `with_flip(h~, v~)` + the same on `Picture` and `GroupShape` (each maps over its `transform` Option — a no-op on an inheriting placeholder with no explicit xfrm). GraphicFrame parses/writes the attrs for losslessness but gets no convenience builder (PowerPoint ignores `rot` on chart/table frames — documented).
+  - 8 new tests (parse rot/flipH/flipV; absent → unrotated/un-flipped; `Transform::new` + builder unit; AutoShape emit-attrs + default-omission + round-trip; Picture round-trip; GroupShape builder; graphicFrame `<p:xfrm>` lossless round-trip). Additive `.mbti` (+ the three `Transform` fields, like A7's `background` / D3's `transition`). 1072 → 1080 × 4 backends.
+
+🟢 **F2 — Document core properties** *(landed 2026-06-16; app.xml company/application deferred)*
+  - **Gap (was)**: `docProps/core.xml` was a fixed template with a hard-coded `<dc:creator>moon-pptx</dc:creator>`; no API to set title / author / subject / keywords / dates. python-pptx `prs.core_properties.{…}`; PptxGenJS `author` / `title` / `subject` / `company` / `revision`.
+  - **Shipped**: typed `CoreProperties` over `docProps/core.xml` — the **full closed CT_CoreProperties set** (15 fields: `title` / `creator` / `subject` / `keywords` / `description` / `category` / `content_status` / `created` / `modified` / `last_printed` / `last_modified_by` / `revision` / `identifier` / `language` / `version`), all `String?`. Because CT_CoreProperties is an `<xsd:all>` of a fixed element set with **no extension wildcard**, modelling every field makes it lossless with no `extension` escape hatch. Fluent `with_*` builders (+ `with_author` alias for `creator`); `to_xml()` emits only `Some` fields with the `cp`/`dc`/`dcterms`/`xsi` prefixes (dates carry `xsi:type="dcterms:W3CDTF"`). `Presentation::core_properties()` reader (parses the part, empty if absent) + `set_core_properties_mut` (mutating, **replaces** the whole set) + `with_core_properties` (immutable, ADR-003). Read→edit→write (`prs.core_properties().with_title(…)`) preserves untouched fields. New `@oxml` namespace constants (`core_properties_ns` / `dublin_core_ns` / `dublin_core_terms_ns` / `xml_schema_instance_ns`). `src/presentation/core_properties.mbt`.
+  - **Deviation from the sketch (documented like A6/C4)**: scoped to **core.xml**. `docProps/app.xml` `company` / `application` are **deferred to a follow-up** — app.xml is `CT_Properties`, an *ordered sequence* with many fields we don't model (Slides count, TitlesOfParts, …); a lossless edit of two fields needs an order-preserving, default-namespace-aware DOM round-trip (our `write_xml_element` re-prefixes the default namespace), a separate lift. core.xml alone is full python-pptx `core_properties` parity. The `_mut` naming matches the established setter convention (`set_notes_mut` / `set_slide_size_mut`), not the sketch's bare `set_core_properties`.
+  - 9 new tests (blank-template read; set→read all-15 round-trip; read→edit→write preserves untouched + survives save→open; immutable `with_core_properties`; `with_author` alias; `to_xml` prefixes/`xsi:type`/None-omission; empty `new()`; XML-escaping round-trip). Additive `.mbti`. 1081 → 1089 × 4 backends.
+
+🟡 **F3 — Run-level rich formatting (highlight / kerning / text outline / text fill / text effects)**
+  - **Gap**: `RunProperties` covers size / bold / italic / underline / strike / caps / baseline / spc / colour(solid) / fonts / hyperlink, but these competitor-supported knobs are extension-only: `<a:highlight>` (PptxGenJS `highlight`), `kern` attribute (minimum kerning), `<a:ln>` text outline (PptxGenJS `outline`), non-solid text fill (gradient/pattern — `fill` is `@oxml.Color?`, narrower than the shape-level `@oxml.Fill` ADT), and `<a:effectLst>` text glow/shadow (PptxGenJS `glow` / `shadow`).
+  - 🟢 **Slice 1 — kerning + highlight** *(landed 2026-06-16)*: typed `RunProperties.kerning : @units.Pt?` (the `kern` attribute, 1/100 pt non-negative, encoded exactly like `sz`/`spc`) + `RunProperties.highlight : @oxml.Color?` (`<a:highlight>`, reusing `parse_solid_fill` + `write_color` — the same lenient mechanism as the existing run `solidFill`). Builders `with_kerning(Pt)` / `with_highlight(RgbColor)`; writer emits `kern` among the attributes and `<a:highlight>` after the fill child per the CT_TextCharacterProperties sequence; both added to `needs_r_pr`. 6 new tests, additive `.mbti`. 1089 → 1095 × 4 backends.
+  - 🟢 **Slice 2 — text outline (`<a:ln>`) + text effects (`<a:effectLst>`)** *(landed 2026-06-16)*: typed `RunProperties.outline : @oxml.Stroke?` (`<a:ln>`, reusing `@oxml.parse_stroke`/`write_stroke`) + `text_effects : @oxml.EffectList?` (`<a:effectLst>`, reusing `@oxml.parse_effect_list`/`write_effect_list`). Builders `with_text_outline(Stroke)` / `with_text_effects(EffectList)`; writer emits `<a:ln>` before the fill child and `<a:effectLst>` after it (sequence order). **Unblocked by making the `@oxml` shadow parsers lift-safe**: `parse_blur`/`parse_glow`/`parse_inner_shadow`/`parse_outer_shadow`/`parse_preset_shadow` now default the ECMA-376-optional coordinates (`blurRad`/`dist`/`rad`) and `dir` to 0 (new `emu_attr_or_zero` / `angle_attr_or_zero` helpers) instead of raising `require_*` — so a minimal `<a:outerShdw blurRad="…"/>` parses rather than failing the whole slide. Byte-identical for shapes that already carried the attrs (the writer always emits them); strictly enables previously-unparseable minimal forms. `parse_stroke` was already lenient; the shadow color child stays required (ECMA `EG_ColorChoice minOccurs=1`, as the shape path already enforced). 7 new tests (run outline/effects parse + round-trip; minimal-shadow lift-safety), 1 effect test updated (blur missing rad → 0), 2 ADR-004 tests updated for the lift. Additive `.mbti` (the two run fields); the `@oxml` change is internal. 1095 → 1100 × 4 backends.
+  - 🔴 **Follow-up — non-solid text fill**: widen `fill : @oxml.Color?` toward the `@oxml.Fill` ADT (gradient/pattern), the breaking field-type change the doc-comment already flags as "a future expansion point".
+
+🔴 **F4 — Paragraph spacing completeness**
+  - **Gap**: `ParagraphProperties.line_spacing` models only the **percent** form (`<a:lnSpc><a:spcPct>`); the spec's absolute form (`<a:lnSpc><a:spcPts>`) is dropped to inheritance (the field doc-comment says "we only model the percent form"). `space_before` / `space_after` model only the **points** form (`<a:spcPts>`), not the percent form (`<a:spcPct>`).
+  - Widen `line_spacing` to an ADT (`LineSpacing { Percent(Percentage) | Points(Pt) }`) and `space_before` / `space_after` likewise — so both forms round-trip and are settable. python-pptx `paragraph.line_spacing` accepts both a multiple and a Length; PptxGenJS `lineSpacing` / `lineSpacingMultiple`.
+
+🟢 **F5 — Shape-level hyperlink / click action** *(landed 2026-06-17; AutoShape + Picture)*
+  - **Gap (was)**: run-level hyperlinks shipped in A2, but a hyperlink/action on a **whole shape** (`<p:cNvPr><a:hlinkClick>`) was captured in the `<p:cNvPr>` extension only — no typed builder. python-pptx `shape.click_action.hyperlink`; PptxGenJS shape `hyperlink`.
+  - **Shipped**: new typed `@slide.ShapeHyperlink { target, click, action }` (reuses A2's `HyperlinkTarget` — `ExternalUrl` / `InternalSlide`) on a build-only `hyperlink : ShapeHyperlink?` field added to `AutoShape` + `Picture`. Builders `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)` on both. **Resolution reuses A2's pipeline**: the `update_slide_mut` resolver (`resolve_hyperlinks.mbt`) now shares one `allocate_hyperlink(target) -> (rId, action)` between run and shape hyperlinks, walks each shape's own `hyperlink`, allocates the slide-rels rId (`rt_hyperlink` External URL / `rt_slide` + `action="ppaction://hlinksldjump"` jump), and clears the target. The writer threads the resolved `ShapeHyperlink` through `write_nv_wrapper` → `write_cnvpr`, which injects the `<a:hlinkClick>` as the first `<p:cNvPr>` child (CT_NonVisualDrawingProps order), replacing any captured one. **Build-only** (like A6 media): a parsed shape's `<a:hlinkClick>` still round-trips losslessly via the captured `<p:cNvPr>` in `extension` (ADR-004), so the parser leaves `hyperlink = None` — no parser change.
+  - **Scope (documented)**: ships `AutoShape` + `Picture` (the shapes users hyperlink — buttons + clickable images). `GroupShape` / `GraphicFrame` / `Connector` hyperlinks pass `None` to the writer and still round-trip their parsed `<a:hlinkClick>` via `extension`; a typed builder for them is an additive follow-up. 6 new tests (external URL rel + `<a:hlinkClick>` rId on cNvPr; slide-jump `rt_slide` + ppaction; Picture hyperlink; save→reopen; no-hyperlink negative). Additive `.mbti` (`ShapeHyperlink` + the two fields + four builders). 1100 → 1105 × 4 backends.
+
+**Deferred / open-ideas (logged in §5, lower demand — all round-trip losslessly today):** WordArt preset text warp (`<a:prstTxWarp>`), 3-D shape bevel (`<a:scene3d>` / `<a:sp3d>`), slide **sections** typed API (`<p:sldSectionLst>` — PptxGenJS `addSection`), table-style **preset library** (`<a:tblPr><a:tableStyleId>` — the field exists, no named presets), gradient/pattern **fill convenience constructors** (the `@oxml.Fill` ADT is buildable but verbose), and `<a:endParaRPr>` typed modelling (currently rides `Paragraph.extension`).
+
+---
+
+### 4.5 v1.0.0 — "Stable"
 
 DoD: API surface frozen; LibreOffice + Keynote verified; benchmarks
 published; xlsx cache generation as opt-in.
@@ -563,6 +627,17 @@ Not on the dated roadmap yet — tracked here so they don't get lost:
 - **HTML export** — same
 - **Trait-based shape extensibility** — `trait CustomShape`, third-party `Shape::User(...)` variants
 - **Real-world fixture library** — license-clear small `.pptx` files for regression testing
+- *(From the 2026-06-16 feature audit — deferred out of v0.6.0 F1–F5; all round-trip losslessly via `extension` today)*:
+  - **Document app properties** (`docProps/app.xml` `company` / `application`) — the F2 follow-up. Needs an order-preserving, default-namespace-aware DOM round-trip of `CT_Properties` (a sequence with many unmodelled fields: Slides count, TitlesOfParts, HeadingPairs, …) so the two fields can be set without disturbing the rest; `write_xml_element` re-prefixes the default namespace, so a small dedicated app.xml editor is needed
+  - **Run-level non-solid text fill** (the F3 follow-up) — widen `RunProperties.fill : @oxml.Color?` toward the `@oxml.Fill` ADT (gradient/pattern). **Breaking** field-type change (the project's first), so batch it with F4 into a deliberate pre-1.0 ADT-widening pass
+  - **Paragraph spacing completeness** (F4) — `line_spacing` percent→ADT + absolute `<a:spcPts>`, `space_before`/`space_after` add the percent form. Same breaking ADT-widening nature as the F3 fill lift → batch the two together
+  - **Shape hyperlinks on Group / GraphicFrame / Connector** (the F5 follow-up) — `with_hyperlink` for the remaining shape kinds (F5 shipped AutoShape + Picture). Their parsed `<a:hlinkClick>` already round-trips via `extension`; the typed field + writer threading extends additively
+  - **Slide sections** (`<p:sldSectionLst>` in `presentation` extLst) — typed `Section { title, slide_ids }` + `add_section`; PptxGenJS `addSection`
+  - **WordArt / preset text warp** (`<a:bodyPr><a:prstTxWarp>`) — typed warp presets
+  - **3-D shape effects** (`<a:scene3d>` camera/light + `<a:sp3d>` bevel/extrusion) — typed builder
+  - **Table-style preset library** — named `<a:tblPr><a:tableStyleId>` presets (the GUID field round-trips; no named-constant library yet)
+  - **Gradient / pattern fill convenience constructors** — the `@oxml.Fill` ADT is buildable but verbose; add `Fill::linear_gradient(...)` / `Fill::pattern(...)` ergonomic builders
+  - **`<a:endParaRPr>` typed modelling** — currently rides `Paragraph.extension`
 
 ---
 
@@ -596,8 +671,8 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Date**: 2026-05-10
 - **Status**: Accepted
 - **Context**: PPTX is a ZIP container. We need pure-MoonBit ZIP read/write.
-- **Decision**: Depend on `hustcer/fzip` v0.6.1 (released 2026-05-09). Pure MoonBit, fflate-derived, 220+ tests, actively maintained, security-hardened.
-- **Consequences**: Saves 1–3 months of self-implementing DEFLATE. Bound to fzip's API and maintenance cadence — acceptable since fzip is shipping multiple releases per week and the API surface we use is small.
+- **Decision**: Depend on `hustcer/fzip`. Pure MoonBit, fflate-derived, 220+ tests, actively maintained, security-hardened. **Pinned at `0.8.2`** (bumped from the original `0.6.1` on 2026-06-16 — see §11).
+- **Consequences**: Saves 1–3 months of self-implementing DEFLATE. Bound to fzip's API and maintenance cadence — acceptable since fzip is shipping multiple releases per week and the API surface we use is small (`zip_sync` / `unzip_sync` / `str_to_u8` / `str_from_u8` / `FzipError`). The narrow surface kept the 0.6→0.8 bump non-breaking (every new parameter is optional).
 
 ### ADR-002: Native primary; Wasm-GC + JS verified in CI; LLVM and legacy Wasm excluded
 - **Date**: 2026-05-10
@@ -746,6 +821,15 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-06-17** — **v0.6 F5 landed: shape-level hyperlinks (AutoShape + Picture).** A hyperlink / click action on a whole shape (`<p:cNvPr><a:hlinkClick>`), the run-level A2 builder's shape-level counterpart. New typed `@slide.ShapeHyperlink { target, click, action }` (reuses A2's `HyperlinkTarget`) on a build-only `hyperlink` field on `AutoShape` + `Picture`; builders `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)`. Resolution **shares A2's pipeline**: the `update_slide_mut` resolver extracts one `allocate_hyperlink(target) -> (rId, action)` used by both run and shape hyperlinks, walks each shape's own hyperlink, and registers the slide-rels rel (`rt_hyperlink` External / `rt_slide` + `ppaction://hlinksldjump` jump). The writer threads the resolved hyperlink through `write_nv_wrapper` → `write_cnvpr`, injecting `<a:hlinkClick>` as the first `<p:cNvPr>` child (replacing any captured one). Build-only (parsed shape hyperlinks round-trip via the captured `<p:cNvPr>` in `extension`, ADR-004 — no parser change). **Scoped to AutoShape + Picture**; Group/GraphicFrame/Connector still round-trip via `extension` (typed builder is an additive §5 follow-up). 6 new tests, additive `.mbti` (`ShapeHyperlink` + 2 fields + 4 builders). 1100 → 1105 × 4 backends. §3.3 row → ✅; §4.4.1 F5 → 🟢. **Closes the v0.5.2 feature set.**
+- **2026-06-16** — **Dependency bump: `hustcer/fzip` 0.6.1 → 0.8.2.** The only runtime dependency, three minor versions stale (0.6.1 → 0.6.3 → 0.7.0 → 0.8.2). Despite the 0.x minor bumps (which SemVer permits to break), the upgrade was **non-breaking** for us: the entire API surface we use is `zip_sync` / `unzip_sync` / `str_to_u8` / `str_from_u8` / `FzipError`, and every new parameter 0.8.2 added (`opts?` / `latin1?` / `offset?` / `len?`) is optional, so our one-positional-arg call sites are unchanged. Verified by `moon check --deny-warn` + `moon test --target all` (1100 × 4 backends, all green — including the backend-sensitive zip/unzip round-trips). Updated `moon.mod` pin + ADR-001's version reference. (`examples/sample-deck` keeps the published-version dep until the next library publish.) No source or `.mbti` change.
+- **2026-06-16** — **v0.6 F3 slice 2 landed: run-level text outline + text effects (+ lift-safe shadow parsers).** Two more typed `RunProperties` fields: `outline : @oxml.Stroke?` (`<a:ln>`, reusing `@oxml.parse_stroke`/`write_stroke`) and `text_effects : @oxml.EffectList?` (`<a:effectLst>`, reusing `@oxml.parse_effect_list`/`write_effect_list`), with builders `with_text_outline` / `with_text_effects`. The writer emits `<a:ln>` before the fill child and `<a:effectLst>` after it (CT_TextCharacterProperties order). **Unblocker**: the slice-1 deferral was that the shape-level shadow parsers `require_*` `blurRad`/`dist`/`dir` (raising when absent) though ECMA-376 defaults them to 0 — so a run's minimal `<a:outerShdw blurRad="…"/>` (which previously round-tripped via `extension`) would fail the whole slide once routed through the typed parser. Fixed by making `parse_blur`/`parse_glow`/`parse_inner_shadow`/`parse_outer_shadow`/`parse_preset_shadow` default those optional coordinates/angle to 0 (`emu_attr_or_zero`/`angle_attr_or_zero`) instead of raising; byte-identical for shapes that already carry the attrs (the writer always emits them), strictly enabling previously-unparseable minimal forms. The shadow **color** child stays required (ECMA `EG_ColorChoice minOccurs=1`, matching the existing shape path). 7 new run tests + 1 effect lift-safety test; 1 effect test + 2 ADR-004 tests updated for the lift. Additive `.mbti` (two run fields); `@oxml` change is internal. 1095 → 1100 × 4 backends. §3.3 outline/effects rows → ✅; only non-solid text fill remains in F3.
+- **2026-06-16** — **v0.6 F3 slice 1 landed: run-level kerning + highlight.** Two new typed `RunProperties` fields lifted out of `extension`: `kerning : @units.Pt?` (the `kern` attribute — minimum kerning size, 1/100 pt, encoded exactly like `sz`/`spc`) and `highlight : @oxml.Color?` (`<a:highlight>`, reusing the run `solidFill` path `parse_solid_fill`/`write_color`). Builders `with_kerning` / `with_highlight`; the writer emits `kern` among the rPr attributes and `<a:highlight>` after the fill child (CT_TextCharacterProperties sequence order); both added to `needs_r_pr`. **Scoped to the two clean lifts**: text outline (`<a:ln>`) and text effects (`<a:effectLst>`) are deferred — they reuse the strict shape-level `@oxml.parse_stroke`/`parse_effect_list` (which raise when `OuterShadow`'s spec-optional `dist`/`dir`/`blurRad` are absent), so routing run effects through them would regress robustness on minimal-but-valid input that currently round-trips via `extension`; the lift waits on making those parsers default-instead-of-raise (a separate change). Non-solid text fill (the breaking `@oxml.Fill` widening) likewise deferred. 6 new tests, additive `.mbti`. 1089 → 1095 × 4 backends. §3.3 kerning/highlight rows → ✅; §4.4.1 F3 → 🟡.
+- **2026-06-16** — **v0.6 F2 landed: document core properties.** Typed `CoreProperties` over `docProps/core.xml`, replacing the fixed `<dc:creator>moon-pptx</dc:creator>` template. Models the **full closed CT_CoreProperties set** (15 `String?` fields — title/creator/subject/keywords/description/category/contentStatus/created/modified/lastPrinted/lastModifiedBy/revision/identifier/language/version); since the schema is an `<xsd:all>` with no extension wildcard, modelling every field is fully lossless. Fluent `with_*` (+ `with_author` alias), `to_xml()` (emits only `Some` fields, `xsi:type="dcterms:W3CDTF"` on dates), `Presentation::core_properties()` reader + `set_core_properties_mut` (replaces the set) + immutable `with_core_properties`; the read→edit→write idiom (`prs.core_properties().with_title(…)`) preserves untouched fields. New `@oxml` namespace constants (cp/dc/dcterms/xsi). **Scoped to core.xml** = full python-pptx `core_properties` parity; `docProps/app.xml` company/application deferred (the ordered, partly-unmodelled CT_Properties needs a default-ns-aware DOM round-trip — logged in §5). `src/presentation/core_properties.mbt`. 9 new tests, additive `.mbti`. 1081 → 1089 × 4 backends. §3.6 matrix row → ✅; §4.4.1 F2 → 🟢.
+- **2026-06-16** — **Whole-tree refactor sweep (CLAUDE.md §7).** Five-lens pass over the full source (not just the F1 area), prompted by a broad refactoring review. **One actionable finding (dedup)**: the `<a:off>` / `<a:ext>` / `<a:chOff>` / `<a:chExt>` EMU-leaf emission was copied across the three `<a:xfrm>` / `<p:xfrm>` writers (`write_xfrm`, `write_group_xfrm`, `write_pml_xfrm`) → extracted two shared `@slide` helpers `write_emu_point(w, local_name, Point)` / `write_emu_size(w, local_name, Size)`; all three writers now delegate. Byte-identical output (every golden round-trip test unchanged across 4 backends). The rest of the tree was already clean from prior sweeps: no TODO/FIXME markers, no `moon new` stub files, `--deny-warn` clean (no dead/unused code), domain constants centralised (`@units.ooxml_per_degree`, EMU factors; namespaces / content-types / rel-types named in `@oxml` / `@opc`), and the largest files (`parser.mbt` 1309 L, `chart/builders.mbt` 1197 L) are cohesive and were reviewed/left in earlier sweeps — no logical split worth the churn. Round-trip coverage is complete at every layer (1081 tests). No `.mbti` change (internal only); 1081 × 4 backends.
+- **2026-06-16** — **Post-F1 refactor + doc sweep (CLAUDE.md §7).** Five-lens pass over the rotation/flip work. (1) **Dedup**: the three-line orientation-attribute decode (`rot`/`flipH`/`flipV`) was duplicated in `parse_xfrm` and `parse_group_xfrm` → extracted a shared `parse_xfrm_orientation(attrs) -> (Angle?, Bool, Bool)`, the single source for all three xfrm paths. The six per-type builder one-liners (`with_rotation`/`with_flip` × AutoShape/Picture/GroupShape) are idiomatic immutable builders (same shape as `with_fill`/`with_stroke`) — left as-is. (2) **Test adequacy**: the group-shape *writer* orientation path (`write_group_xfrm`) was only unit-tested (the builder test didn't serialise) → added a rotated-group serialize→reparse round-trip (asserts the emitted `rot`/`flipH` and the reparsed model). (3) **Docs**: README `@slide` sub-package row now lists shape rotation / flip (`with_rotation` / `with_flip`), matching how prior sweeps kept it current. Constants lens: no action — OOXML attribute names are inlined everywhere (cf. `parse_transition`'s `spd`/`advClick`), so extracting them would be inconsistent. File-split lens: no action (`parser.mbt` 1298 L is cohesive, reviewed in prior sweeps). No `.mbti` change (internal + test + doc only); 1080 → 1081 × 4 backends.
+- **2026-06-16** — **v0.6 F1 landed: shape rotation & flip.** The first v0.6.0 fidelity item, the audit's highest-priority gap. `<a:xfrm>`'s `rot` / `flipH` / `flipV` were **silently dropped** on parse (the xfrm start-element attributes were never read — not even round-tripped via `extension`, contrary to the audit's assumption); now lifted to typed `@slide.Transform.rotation : @units.Angle?` + `flip_h` / `flip_v : Bool` (mirroring A7's `<p:bg>` / D3's `<p:transition>` lifts). New `Transform::new(offset~, extent~, rotation?, flip_h?, flip_v?)` (existing literal sites migrated to it) + `Transform::with_rotation` / `with_flip`, and shape-level `AutoShape` / `Picture` / `GroupShape` `with_rotation` / `with_flip` (each maps over its `transform` Option). Parser reads the attrs off all three xfrm paths (`<p:sp>` / `<p:grpSp>` / graphicFrame `<p:xfrm>`); writer emits via a shared `write_xfrm_orientation_attrs` that **omits defaults** so unmodified shapes stay byte-identical. GraphicFrame parses/writes for losslessness but has no convenience builder (PowerPoint ignores `rot` on chart/table frames). 8 new tests, additive `.mbti` (+ the three `Transform` fields). 1072 → 1080 × 4 backends. Matrix row §3.3 flips to ✅; §4.4.1 F1 → 🟢.
+- **2026-06-16** — **Feature audit vs python-pptx + PptxGenJS → new v0.6.0 "Fidelity & fine-grained formatting" roadmap (§4.4.1).** A full pass over the public model (`RunProperties` / `ParagraphProperties` / `Transform` / `AutoShape` / `docProps`) against both reference libraries, prompted by the v0.5.1 character-spacing gap (issue #7) — looking for more knobs that competitors expose but moon-pptx only round-trips through `extension`. **Found six actionable gaps, none previously tracked as roadmap items**, all the same shape as the `spc` lift (lossless today, no typed surface): **F1 shape rotation/flip** (`Transform` has *no* `rot`/`flipH`/`flipV` — the highest-impact gap; python-pptx `shape.rotation`, PptxGenJS `rotate`/`flipH/V`), **F2 document core/app properties** (`docProps/core.xml` is a fixed template with a hard-coded `<dc:creator>moon-pptx</dc:creator>`; no `set_core_properties`), **F3 run-level highlight / kerning / text-outline / non-solid text-fill / text-effects** (all extension-only per the `RunProperties.extension` doc-comment), **F4 paragraph line-spacing absolute form + space %-form** (only percent line-spacing + point spacing modelled today), **F5 shape-level hyperlink / click action** (run-level shipped in A2; whole-shape `<a:hlinkClick>` is extension-only). Logged as v0.6.0 F1–F5 with priority order + DoD; lower-demand finds (slide sections, WordArt text warp, 3-D shape bevel, table-style presets, gradient/pattern fill convenience builders, `<a:endParaRPr>`) added to §5 open ideas; §3 feature matrix rows added/retargeted to match. Confirmed **not** gaps (already typed): shape shadow/glow/reflection/soft-edge effects (`@oxml.EffectList`), gradient/pattern/picture *shape* fills (`@oxml.Fill`), autofit, bullets/numbering, all 25 chart families. Docs-only change; no library `.mbti` change. **Current version stays 0.5.1.**
 - **2026-06-16** — **v0.5.1: character spacing on text runs (issue #7).** `RunProperties::with_character_spacing(@units.Pt)` + a new `RunProperties.character_spacing : @units.Pt?` field map to the DrawingML `<a:rPr spc="…">` attribute (`ST_TextPoint` — 1/100 pt, may be negative to tighten). Parsed (`parse_character_spacing_attr`) and written exactly like `sz`/`font_size` (same encoding; `parse_signed_int` + the `*100` write already handle negatives), and added to `needs_r_pr`. Closes a downstream gap reported by `pptz` (a TOML→PPTX generator) whose `letter_spacing` style had no typed target. 5 new tests (parse 1/100-pt → Pt, negative tightening, absent = `None`/unchanged, parse→serialize→parse round-trip, builder emits `spc` + round-trips). Additive `.mbti` (new field + `with_character_spacing`, like prior `Slide.transition`/`background` field additions). 1067 → 1072 × 4 backends.
 - **2026-06-16** — **PowerPoint verification of the v0.5 sample deck — SmartArt hierarchical-render finding.** Opening the generated deck in PowerPoint for the web surfaced that **PowerPoint re-lays-out SmartArt from the layout definition on open and does *not* use our cached `<dsp:drawing>`** — contrary to ADR-010's "cached drawing is the render contract" assumption (which holds, at best, only for non-editing/older viewers, not PowerPoint Web). Consequence: our `layoutDef`'s `forEach axis="ch" ptType="node"` walks only the document's direct children (one level), so the **flat** families (list / process / cycle / pyramid / matrix — all nodes depth-1) render every node, but the **nesting** families (org_chart / hierarchy / relationship) collapse to their top-level node(s) — the data model is correct and recognised as SmartArt (the text pane shows the full hierarchy), but children don't render. **Corrected the over-claim**: §3.6 / §3.7 / the D1 notes now distinguish "build + render (flat)" from "build + recognised, top-level render only (nesting, pending a recursive layoutDef)". Examples switched to a flat family so the showcase renders correctly (sample-deck slide 17 → `cycle`; cookbook §15 → `process` + a rendering note). **Follow-up (logged as D1 risk)**: a recursive hierarchy `layoutDef` (`hierRoot`/`hierChild` composite with a nested `forEach`) so PowerPoint lays nesting families out — the robust fix, independent of whether the cached drawing is ever honoured. *(Online video slide 19 shows its poster image, not a player — that is PowerPoint **Web**'s media limitation, same as the embedded-media slide; the markup is the correct online-video form and plays in desktop PowerPoint.)* Examples + docs only; no library `.mbti` change.
 - **2026-06-16** — **Examples updated for the v0.5 release (cookbook + sample deck).** So every v0.5 feature is demonstrable/verifiable: (1) **Cookbook** (`examples/README.md`) gains four recipes — §14 animations (`Timeline` + `with_animations`), §15 SmartArt (`add_smartart_mut`), §16 YouTube / online video (`add_youtube_video_mut` / `add_online_video_mut`), §17 plot-type-aware chart validation (`Chart::validate`) — each mirrored by a matching test in `src/integration/examples_test.mbt` (1063 → 1067). (2) **Sample deck** (`examples/sample-deck`) grows from 20 to 23 slides with SmartArt org-chart, animation, and online-video slides (+ the split-mode isolation cases); its `moon.mod.json` dep is switched from the published `0.4.0` to a `{ "path": "../.." }` path dep so the deck builds against the unreleased v0.5 source (the in-repo dev pattern — switches back to `"0.5.0"` post-publication). Generates a valid 23-slide `.pptx` that round-trips on reopen (sample-deck tests green). README slide-count / feature references freshened. No library `.mbti` change.

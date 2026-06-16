@@ -5,10 +5,10 @@
 ///|
 test "sample deck reopens with all feature slides + a defined master" {
   let prs = @presentation.Presentation::open(build_sample_deck())
-  // 23 slides: title, toc, text, shapes, custom-geom, picture, table,
+  // 24 slides: title, toc, text, shapes, custom-geom, picture, table,
   // 4 chart slides, background, combo, svg, edit, media, smartart, animation,
-  // online-video, master, 2 typed-layout slides (M1), closing.
-  assert_eq(prs.slides().length(), 23)
+  // online-video, v0.5.2 features, master, 2 typed-layout slides (M1), closing.
+  assert_eq(prs.slides().length(), 24)
   // The deck's own master + the one added by sample_master_slide.
   assert_eq(prs.slide_masters().length(), 2)
   // Every slide carries a transition (v0.4 D3).

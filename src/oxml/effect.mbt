@@ -196,11 +196,7 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
         } else {
           match child.local_name {
             "blur" => {
-              blur = Some(
-                parse_blur(attrs) catch {
-                  e => raise MalformedEffect(e.to_string())
-                },
-              )
+              blur = Some(parse_blur(attrs))
               skip_subtree(r) catch {
                 e => raise MalformedEffect(e.to_string())
               }
@@ -253,8 +249,32 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
 // --- individual effect parsers (raise XmlReadError; lifted at call site) ---
 
 ///|
-fn parse_blur(attrs : Array[(@xml.QName, String)]) -> Blur raise XmlReadError {
-  let rad = require_emu(attrs, "rad", "blur")
+/// EMU coordinate attribute that defaults to 0 when absent. ECMA-376 marks
+/// the shadow / blur / glow coordinates (`blurRad` / `dist` / `rad`)
+/// optional with a default of 0, so a minimal `<a:outerShdw blurRad="…"/>`
+/// (or a bare `<a:blur/>`) must parse rather than raise — required for the
+/// run-level `<a:effectLst>` lift (F3) where such minimal forms appear and
+/// previously round-tripped via `extension`.
+fn emu_attr_or_zero(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Emu {
+  emu_attr_opt(attrs, name).unwrap_or(@units.Emu(0L))
+}
+
+///|
+/// Angle attribute that defaults to 0 when absent — the shadow `dir`
+/// default per ECMA-376.
+fn angle_attr_or_zero(
+  attrs : Array[(@xml.QName, String)],
+  name : String,
+) -> @units.Angle {
+  angle_attr_opt(attrs, name).unwrap_or(@units.Angle(0.0))
+}
+
+///|
+fn parse_blur(attrs : Array[(@xml.QName, String)]) -> Blur {
+  let rad = emu_attr_or_zero(attrs, "rad")
   let grow = bool_attr_opt(attrs, "grow")
   { rad, grow }
 }
@@ -264,9 +284,7 @@ fn parse_glow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> Glow raise EffectError {
-  let rad = require_emu(attrs, "rad", "glow") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
+  let rad = emu_attr_or_zero(attrs, "rad")
   let color = read_first_color(r, "glow")
   { rad, color }
 }
@@ -276,15 +294,9 @@ fn parse_inner_shadow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> InnerShadow raise EffectError {
-  let blur_rad = require_emu(attrs, "blurRad", "innerShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
-  let dist = require_emu(attrs, "dist", "innerShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
-  let dir = require_angle(attrs, "dir", "innerShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
+  let blur_rad = emu_attr_or_zero(attrs, "blurRad")
+  let dist = emu_attr_or_zero(attrs, "dist")
+  let dir = angle_attr_or_zero(attrs, "dir")
   let color = read_first_color(r, "innerShdw")
   { blur_rad, dist, dir, color }
 }
@@ -294,15 +306,9 @@ fn parse_outer_shadow(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
 ) -> OuterShadow raise EffectError {
-  let blur_rad = require_emu(attrs, "blurRad", "outerShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
-  let dist = require_emu(attrs, "dist", "outerShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
-  let dir = require_angle(attrs, "dir", "outerShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
+  let blur_rad = emu_attr_or_zero(attrs, "blurRad")
+  let dist = emu_attr_or_zero(attrs, "dist")
+  let dir = angle_attr_or_zero(attrs, "dir")
   let sx = pct_attr_opt(attrs, "sx")
   let sy = pct_attr_opt(attrs, "sy")
   let kx = angle_attr_opt(attrs, "kx")
@@ -321,12 +327,8 @@ fn parse_preset_shadow(
   let preset = require_attr(attrs, "prst", "prstShdw") catch {
     e => raise MalformedEffect(e.to_string())
   }
-  let dist = require_emu(attrs, "dist", "prstShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
-  let dir = require_angle(attrs, "dir", "prstShdw") catch {
-    e => raise MalformedEffect(e.to_string())
-  }
+  let dist = emu_attr_or_zero(attrs, "dist")
+  let dir = angle_attr_or_zero(attrs, "dir")
   let color = read_first_color(r, "prstShdw")
   { preset, dist, dir, color }
 }

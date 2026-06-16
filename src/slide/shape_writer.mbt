@@ -101,6 +101,7 @@ fn write_auto_shape(
     s.name,
     s.placeholder,
     None,
+    s.hyperlink,
     s.extension,
   )
   write_sp_pr(
@@ -154,8 +155,16 @@ fn write_cnvpr(
   id : Int,
   name : String,
   media : MediaInfo?,
+  hyperlink : ShapeHyperlink?,
   extension : Array[@xml.XmlElement],
 ) -> Unit raise @xml.XmlError {
+  // A typed, resolved shape hyperlink (roadmap F5) to inject as the first
+  // `<p:cNvPr>` child, replacing any captured one. `None` when there's no
+  // typed hyperlink or it hasn't been resolved yet.
+  let typed_hlink : @xml.XmlElement? = match hyperlink {
+    Some(h) => h.resolved_element()
+    None => None
+  }
   let mut captured : @xml.XmlElement? = None
   for ext in extension {
     if ext.name.uri == @oxml.presentation_ns && ext.name.local_name == "cNvPr" {
@@ -191,26 +200,56 @@ fn write_cnvpr(
       for a in attrs {
         final_attrs.push(a)
       }
+      // When a typed hyperlink is set, replace any captured `<a:hlinkClick>`
+      // with the resolved one (first child — `hlinkClick` leads the
+      // CT_NonVisualDrawingProps sequence). Otherwise keep children verbatim.
+      let children : Array[@xml.XmlNode] = match typed_hlink {
+        Some(el) => {
+          let kept : Array[@xml.XmlNode] = [Element(el)]
+          for c in cnvpr.children {
+            match c {
+              Element(e) =>
+                if e.name.uri == @oxml.drawing_ns &&
+                  e.name.local_name == "hlinkClick" {
+                  () // drop the captured hyperlink — typed one wins
+                } else {
+                  kept.push(c)
+                }
+              _ => kept.push(c)
+            }
+          }
+          kept
+        }
+        None => cnvpr.children
+      }
       @oxml.write_xml_element(
         w,
         ctx,
-        @xml.XmlElement::new(cnvpr.name, final_attrs, cnvpr.children),
+        @xml.XmlElement::new(cnvpr.name, final_attrs, children),
       )
     }
     None => {
       w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
       w.attribute(@xml.QName::unqualified("id"), id.to_string())
       w.attribute(@xml.QName::unqualified("name"), name)
-      // A media picture needs a `ppaction://media` hyperlink so PowerPoint
-      // treats the shape as a playable clip (roadmap A6).
-      match media {
-        Some(_) => {
-          w.start_element(@xml.QName::new(@oxml.drawing_ns, "hlinkClick"))
-          w.attribute(@xml.QName::new(@oxml.office_relationships_ns, "id"), "")
-          w.attribute(@xml.QName::unqualified("action"), "ppaction://media")
-          w.end_element()
-        }
-        None => ()
+      match typed_hlink {
+        // A typed shape hyperlink (F5) takes precedence on a built shape.
+        Some(el) => @oxml.write_xml_element(w, ctx, el)
+        None =>
+          // A media picture needs a `ppaction://media` hyperlink so PowerPoint
+          // treats the shape as a playable clip (roadmap A6).
+          match media {
+            Some(_) => {
+              w.start_element(@xml.QName::new(@oxml.drawing_ns, "hlinkClick"))
+              w.attribute(
+                @xml.QName::new(@oxml.office_relationships_ns, "id"),
+                "",
+              )
+              w.attribute(@xml.QName::unqualified("action"), "ppaction://media")
+              w.end_element()
+            }
+            None => ()
+          }
       }
       w.end_element()
     }
@@ -227,12 +266,13 @@ fn write_nv_wrapper(
   name : String,
   placeholder : Placeholder?,
   media : MediaInfo?,
+  hyperlink : ShapeHyperlink?,
   extension : Array[@xml.XmlElement],
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, wrapper_local))
   // <p:cNvPr>: emit it, with the typed id/name authoritative so edits to
-  // those fields (roadmap B4) take effect.
-  write_cnvpr(w, ctx, id, name, media, extension)
+  // those fields (roadmap B4) take effect, plus any typed shape hyperlink (F5).
+  write_cnvpr(w, ctx, id, name, media, hyperlink, extension)
   // <p:cNv*Pr>: captured if present, empty otherwise.
   let mut emitted_cnvkind = false
   for ext in extension {
@@ -351,19 +391,70 @@ fn write_sp_pr(
 ///|
 fn write_xfrm(w : @xml.XmlWriter, xfrm : Transform) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
-  let @units.Emu(x) = xfrm.offset.x
-  let @units.Emu(y) = xfrm.offset.y
-  let @units.Emu(cx) = xfrm.extent.cx
-  let @units.Emu(cy) = xfrm.extent.cy
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
+  write_xfrm_orientation_attrs(w, xfrm)
+  write_emu_point(w, "off", xfrm.offset)
+  write_emu_size(w, "ext", xfrm.extent)
+  w.end_element()
+}
+
+///|
+/// Emit a drawing-ns `<a:{local_name} x=… y=…/>` leaf (`<a:off>` /
+/// `<a:chOff>`) from an EMU `Point`. Shared by every `<a:xfrm>` /
+/// `<p:xfrm>` writer.
+fn write_emu_point(
+  w : @xml.XmlWriter,
+  local_name : String,
+  p : Point,
+) -> Unit raise @xml.XmlError {
+  let @units.Emu(x) = p.x
+  let @units.Emu(y) = p.y
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, local_name))
   w.attribute(@xml.QName::unqualified("x"), x.to_string())
   w.attribute(@xml.QName::unqualified("y"), y.to_string())
   w.end_element()
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
+}
+
+///|
+/// Emit a drawing-ns `<a:{local_name} cx=… cy=…/>` leaf (`<a:ext>` /
+/// `<a:chExt>`) from an EMU `Size`. Shared by every `<a:xfrm>` /
+/// `<p:xfrm>` writer.
+fn write_emu_size(
+  w : @xml.XmlWriter,
+  local_name : String,
+  s : Size,
+) -> Unit raise @xml.XmlError {
+  let @units.Emu(cx) = s.cx
+  let @units.Emu(cy) = s.cy
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, local_name))
   w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
   w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
   w.end_element()
-  w.end_element()
+}
+
+///|
+/// Emit the orientation attributes (`rot` / `flipH` / `flipV`) on an
+/// already-opened `<a:xfrm>` / `<p:xfrm>` element. Must be called right
+/// after `start_element` (before any child). Defaults are omitted so an
+/// unrotated, un-flipped transform re-serialises byte-identically.
+fn write_xfrm_orientation_attrs(
+  w : @xml.XmlWriter,
+  xfrm : Transform,
+) -> Unit raise @xml.XmlError {
+  match xfrm.rotation {
+    Some(angle) => {
+      let n = angle.to_ooxml()
+      if n != 0 {
+        w.attribute(@xml.QName::unqualified("rot"), n.to_string())
+      }
+    }
+    None => ()
+  }
+  if xfrm.flip_h {
+    w.attribute(@xml.QName::unqualified("flipH"), "1")
+  }
+  if xfrm.flip_v {
+    w.attribute(@xml.QName::unqualified("flipV"), "1")
+  }
 }
 
 ///|
@@ -409,6 +500,7 @@ fn write_picture(
     p.name,
     None,
     p.media,
+    p.hyperlink,
     p.extension,
   )
   // <p:blipFill> — picture's blipFill lives in the presentation
@@ -644,6 +736,9 @@ fn write_group_shape(
     g.name,
     None,
     None,
+    // Group-shape hyperlinks aren't typed yet (F5 covers AutoShape + Picture);
+    // a parsed group's `<a:hlinkClick>` still round-trips via `extension`.
+    None,
     g.extension,
   )
   // <p:grpSpPr> with group-specific xfrm.
@@ -679,42 +774,22 @@ fn write_group_xfrm(
   }
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
   match transform {
+    Some(xfrm) => write_xfrm_orientation_attrs(w, xfrm)
+    None => ()
+  }
+  match transform {
     Some(xfrm) => {
-      let @units.Emu(x) = xfrm.offset.x
-      let @units.Emu(y) = xfrm.offset.y
-      let @units.Emu(cx) = xfrm.extent.cx
-      let @units.Emu(cy) = xfrm.extent.cy
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
-      w.attribute(@xml.QName::unqualified("x"), x.to_string())
-      w.attribute(@xml.QName::unqualified("y"), y.to_string())
-      w.end_element()
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
-      w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
-      w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
-      w.end_element()
+      write_emu_point(w, "off", xfrm.offset)
+      write_emu_size(w, "ext", xfrm.extent)
     }
     None => ()
   }
   match child_offset {
-    Some(p) => {
-      let @units.Emu(x) = p.x
-      let @units.Emu(y) = p.y
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "chOff"))
-      w.attribute(@xml.QName::unqualified("x"), x.to_string())
-      w.attribute(@xml.QName::unqualified("y"), y.to_string())
-      w.end_element()
-    }
+    Some(p) => write_emu_point(w, "chOff", p)
     None => ()
   }
   match child_extent {
-    Some(s) => {
-      let @units.Emu(cx) = s.cx
-      let @units.Emu(cy) = s.cy
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "chExt"))
-      w.attribute(@xml.QName::unqualified("cx"), cx.to_string())
-      w.attribute(@xml.QName::unqualified("cy"), cy.to_string())
-      w.end_element()
-    }
+    Some(s) => write_emu_size(w, "chExt", s)
     None => ()
   }
   w.end_element()

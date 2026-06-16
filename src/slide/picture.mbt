@@ -43,6 +43,11 @@ pub(all) struct Picture {
   /// existing media references through `extension` (ADR-004); builders set
   /// it via `Picture::of_media`.
   media : MediaInfo?
+  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
+  /// picture (roadmap F5). Build-only: set by `with_hyperlink` /
+  /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
+  /// `None` for a parsed picture (round-trips via the captured `<p:cNvPr>`).
+  hyperlink : ShapeHyperlink?
   /// Lossless preservation (ADR-004): unmodelled `<p:pic>` siblings
   /// (`<p:style>`, `<p:extLst>`, …) captured verbatim.
   extension : Array[@xml.XmlElement]
