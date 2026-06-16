@@ -20,6 +20,8 @@ pub let chart_ns : String
 
 pub fn collect_subtree(@xml.XmlReader, @xml.QName, Array[(@xml.QName, String)]) -> @xml.XmlElement raise XmlReadError
 
+pub let core_properties_ns : String
+
 pub let ct_chart : String
 
 pub let ct_chart_ex : String
@@ -77,6 +79,10 @@ pub let diagram_drawing_ns : String
 pub let diagram_ns : String
 
 pub let drawing_ns : String
+
+pub let dublin_core_ns : String
+
+pub let dublin_core_terms_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
 
@@ -147,6 +153,8 @@ pub fn write_stroke(@xml.XmlWriter, WriteCtx, Stroke) -> Unit raise @xml.XmlErro
 pub fn write_stroke_with_local_name(@xml.XmlWriter, WriteCtx, Stroke, String) -> Unit raise @xml.XmlError
 
 pub fn write_xml_element(@xml.XmlWriter, WriteCtx, @xml.XmlElement) -> Unit raise @xml.XmlError
+
+pub let xml_schema_instance_ns : String
 
 // Errors
 pub(all) suberror ColorError {
