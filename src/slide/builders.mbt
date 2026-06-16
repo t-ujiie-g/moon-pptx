@@ -166,6 +166,26 @@ pub fn RunProperties::with_highlight(
 }
 
 ///|
+/// Set the text *outline* (`<a:ln>`) — the glyph border. Reuses the
+/// shape-level `@oxml.Stroke`.
+pub fn RunProperties::with_text_outline(
+  self : RunProperties,
+  outline : @oxml.Stroke,
+) -> RunProperties {
+  { ..self, outline: Some(outline) }
+}
+
+///|
+/// Set the text effects (`<a:effectLst>` — glow / shadow / reflection /
+/// soft-edge). Reuses the shape-level `@oxml.EffectList`.
+pub fn RunProperties::with_text_effects(
+  self : RunProperties,
+  effects : @oxml.EffectList,
+) -> RunProperties {
+  { ..self, text_effects: Some(effects) }
+}
+
+///|
 /// Set the Latin-script typeface (e.g. `"Calibri"`, `"Arial"`).
 pub fn RunProperties::with_font(
   self : RunProperties,

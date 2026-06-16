@@ -371,6 +371,8 @@ fn needs_r_pr(p : RunProperties) -> Bool {
   p.east_asian is Some(_) ||
   p.complex_script is Some(_) ||
   p.fill is Some(_) ||
+  p.outline is Some(_) ||
+  p.text_effects is Some(_) ||
   p.highlight is Some(_) ||
   p.hyperlink_click is Some(_) ||
   p.extension.length() > 0
@@ -439,7 +441,12 @@ fn write_run_properties(
     None => ()
   }
   // Child elements in CT_TextCharacterProperties sequence order:
-  // fill, …, highlight, …, latin/ea/cs, hlinkClick.
+  // ln, fill, effectLst, highlight, …, latin/ea/cs, hlinkClick.
+  // Outline (`<a:ln>`).
+  match p.outline {
+    Some(s) => @oxml.write_stroke(w, ctx, s)
+    None => ()
+  }
   // Solid fill child.
   match p.fill {
     Some(c) => {
@@ -447,6 +454,11 @@ fn write_run_properties(
       @oxml.write_color(w, ctx, c)
       w.end_element()
     }
+    None => ()
+  }
+  // Text effects (`<a:effectLst>`).
+  match p.text_effects {
+    Some(e) => @oxml.write_effect_list(w, ctx, e)
     None => ()
   }
   // Highlight colour (`<a:highlight>`).

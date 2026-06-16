@@ -179,20 +179,22 @@ test "rPr: missing attributes leave fields None" {
 }
 
 ///|
-test "rPr: gradFill and effectLst are skipped without raising" {
+test "rPr: gradFill skipped (no solid fill); effectLst lifts to typed field" {
   let slide = @slide.Slide::parse(
     slide_with_rpr(
       "<a:rPr>" +
       "<a:gradFill><a:gsLst><a:gs pos=\"0\"/></a:gsLst></a:gradFill>" +
-      "<a:effectLst><a:outerShdw blurRad=\"38100\"/></a:effectLst>" +
+      "<a:effectLst><a:outerShdw blurRad=\"38100\"><a:srgbClr val=\"000000\"/></a:outerShdw></a:effectLst>" +
       "</a:rPr>",
     ),
   )
   // No fill should be picked up from gradFill — run-level fills only
   // pick up solidFill; gradient + pattern + blip run-fills are an
-  // intentional expansion point. effectLst rides on `extension` (lifting
-  // it waits on lift-safe @oxml effect parsers — F3 follow-up).
+  // intentional expansion point.
   assert_true(rpr_of(slide).fill is None)
+  // The minimal effectLst (dist/dir absent) now lifts into the typed
+  // `text_effects` field (F3 follow-up; lift-safe @oxml parsers).
+  assert_true(rpr_of(slide).text_effects is Some(_))
 }
 
 ///|
@@ -336,4 +338,77 @@ test "builder: with_kerning + with_highlight emit and round-trip" {
     got.highlight.unwrap(),
     @oxml.Color::srgb(@units.RgbColor::new(0xFF, 0xCC, 0x00)),
   )
+}
+
+// --- text outline (a:ln) + text effects (a:effectLst) — F3 follow-up ---
+
+///|
+test "rPr: text outline (a:ln) parses into the typed field" {
+  let slide = @slide.Slide::parse(
+    slide_with_rpr(
+      "<a:rPr><a:ln w=\"12700\"><a:solidFill><a:srgbClr val=\"FF0000\"/></a:solidFill></a:ln></a:rPr>",
+    ),
+  )
+  assert_eq(rpr_of(slide).outline.unwrap().width.unwrap(), @units.Emu(12700L))
+}
+
+///|
+test "rPr: text effects (a:effectLst glow) parse into the typed field" {
+  let slide = @slide.Slide::parse(
+    slide_with_rpr(
+      "<a:rPr><a:effectLst><a:glow rad=\"63500\"><a:srgbClr val=\"FFC000\"/></a:glow></a:effectLst></a:rPr>",
+    ),
+  )
+  assert_eq(
+    rpr_of(slide).text_effects.unwrap().glow.unwrap().rad,
+    @units.Emu(63500L),
+  )
+}
+
+///|
+test "rPr: absent outline / effects are None" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr/>"))
+  assert_true(rpr_of(slide).outline is None)
+  assert_true(rpr_of(slide).text_effects is None)
+}
+
+///|
+test "builder: with_text_outline + with_text_effects emit and round-trip" {
+  let glow_fx : @oxml.EffectList = {
+    ..empty_effects(),
+    glow: Some({
+      rad: @units.Emu(63500L),
+      color: @oxml.Color::srgb(@units.RgbColor::parse_hex("FFC000")),
+    }),
+  }
+  let rp = @slide.RunProperties::default()
+    .with_text_outline(thin_stroke())
+    .with_text_effects(glow_fx)
+  let body = @slide.TextBody::of_styled_text("fx", rp)
+  let shape = @slide.AutoShape::textbox(
+    2,
+    "T",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(914_400L),
+    @units.Emu(914_400L),
+    "",
+  ).with_text_body(body)
+  let base_xml = "<?xml version=\"1.0\"?>" +
+    "<p:sld xmlns:p=\"" +
+    pml_ns +
+    "\" xmlns:a=\"" +
+    dml_ns +
+    "\" xmlns:r=\"" +
+    off_rel_ns +
+    "\"><p:cSld><p:spTree>" +
+    "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
+    "</p:spTree></p:cSld></p:sld>"
+  let slide = @slide.Slide::parse(fixture_bytes(base_xml)).with_shape(
+    @slide.AutoShape(shape),
+  )
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  let got = rpr_of(reparsed)
+  assert_eq(got.outline.unwrap().width.unwrap(), @units.Emu(12700L))
+  assert_eq(got.text_effects.unwrap().glow.unwrap().rad, @units.Emu(63500L))
 }

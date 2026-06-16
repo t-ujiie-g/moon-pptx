@@ -43,10 +43,10 @@ test "ADR-004: Paragraph captures endParaRPr" {
 }
 
 ///|
-test "ADR-004: RunProperties captures hlinkMouseOver and effectLst" {
+test "ADR-004: RunProperties captures hlinkMouseOver; effectLst now typed (F3)" {
   let inner = "<a:p><a:r>" +
     "<a:rPr lang=\"en-US\" b=\"1\">" +
-    "<a:effectLst><a:outerShdw blurRad=\"40000\"/></a:effectLst>" +
+    "<a:effectLst><a:outerShdw blurRad=\"40000\"><a:srgbClr val=\"000000\"/></a:outerShdw></a:effectLst>" +
     "<a:hlinkMouseOver r:id=\"rId7\" xmlns:r=\"" +
     off_rel_ns +
     "\"/>" +
@@ -58,13 +58,11 @@ test "ADR-004: RunProperties captures hlinkMouseOver and effectLst" {
   match p.content[0] {
     RunContent(r) => {
       assert_eq(r.properties.bold.unwrap(), true)
-      assert_eq(r.properties.extension.length(), 2)
-      let names = []
-      for el in r.properties.extension {
-        names.push(el.name.local_name)
-      }
-      assert_true(names.contains("effectLst"))
-      assert_true(names.contains("hlinkMouseOver"))
+      // effectLst lifts into the typed `text_effects` field (F3); only the
+      // still-unmodelled hlinkMouseOver remains in `extension`.
+      assert_true(r.properties.text_effects is Some(_))
+      assert_eq(r.properties.extension.length(), 1)
+      assert_eq(r.properties.extension[0].name.local_name, "hlinkMouseOver")
     }
     _ => fail("expected Run")
   }

@@ -107,6 +107,12 @@ pub(all) struct RunProperties {
   /// run's `extension` per ADR-004; widening to the full shape-level
   /// `@oxml.Fill` ADT is a future expansion point.
   fill : @oxml.Color?
+  /// `<a:ln>` — the text *outline* (a `CT_LineProperties`, reusing the
+  /// shape-level `@oxml.Stroke`). `None` = no outline.
+  outline : @oxml.Stroke?
+  /// `<a:effectLst>` — text effects (glow / shadow / reflection / soft-
+  /// edge), reusing the shape-level `@oxml.EffectList`. `None` = none.
+  text_effects : @oxml.EffectList?
   /// `<a:highlight>` — text highlight colour (a `CT_Color`, one colour
   /// child). `None` = no highlight.
   highlight : @oxml.Color?
@@ -134,11 +140,10 @@ pub(all) struct RunProperties {
   /// "hyperlink already resolved into `hyperlink_click`".
   hyperlink_target : HyperlinkTarget?
   /// Lossless preservation (ADR-004): unmodelled `<a:rPr>` children
-  /// (`<a:ln>`, `<a:effectLst>`, `<a:uLn>`, `<a:uFill>`, `<a:sym>`,
-  /// `<a:hlinkMouseOver>`, `<a:rtl>`, `<a:extLst>`, foreign-namespace
-  /// siblings). `<a:highlight>` is now typed (`highlight`); lifting
-  /// `<a:ln>` / `<a:effectLst>` waits on lift-safe `@oxml` parsers (F3
-  /// follow-up).
+  /// (`<a:uLn>`, `<a:uFill>`, `<a:sym>`, `<a:hlinkMouseOver>`, `<a:rtl>`,
+  /// `<a:extLst>`, foreign-namespace siblings). `<a:ln>` / `<a:effectLst>`
+  /// / `<a:highlight>` are now typed (`outline` / `text_effects` /
+  /// `highlight`).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -193,6 +198,8 @@ pub fn RunProperties::default() -> RunProperties {
     east_asian: None,
     complex_script: None,
     fill: None,
+    outline: None,
+    text_effects: None,
     highlight: None,
     hyperlink_click: None,
     hyperlink_tooltip: None,
