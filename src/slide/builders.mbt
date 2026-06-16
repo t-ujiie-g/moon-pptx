@@ -263,6 +263,7 @@ pub fn AutoShape::of_preset(
     stroke: None,
     effects: None,
     text_body: None,
+    hyperlink: None,
     extension: [],
   }
 }
@@ -448,6 +449,25 @@ pub fn AutoShape::with_flip(
   { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
 }
 
+///|
+/// Attach a whole-shape hyperlink to an external URL (`<p:cNvPr>
+/// <a:hlinkClick>`). Stored unresolved; `Presentation::update_slide_mut`
+/// allocates the slide-rels rId at serialisation time (like the run-level
+/// `RunProperties::with_hyperlink`).
+pub fn AutoShape::with_hyperlink(self : AutoShape, url~ : String) -> AutoShape {
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+}
+
+///|
+/// Attach a whole-shape click action that jumps to another slide by
+/// zero-based index (as in `Presentation::slides()`).
+pub fn AutoShape::with_hyperlink_to_slide(
+  self : AutoShape,
+  slide_idx~ : Int,
+) -> AutoShape {
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+}
+
 // --- Picture builder -------------------------------------------------------
 
 ///|
@@ -488,6 +508,7 @@ pub fn Picture::of_image(
       extension: [],
     },
     media: None,
+    hyperlink: None,
     extension: [],
   }
 }
@@ -521,6 +542,7 @@ pub fn Picture::of_svg_image(
     effects: None,
     blip_fill: @oxml.BlipFill::svg(png_embed_id, svg_embed_id),
     media: None,
+    hyperlink: None,
     extension: [],
   }
 }
@@ -559,6 +581,23 @@ pub fn Picture::with_flip(
   v? : Bool = false,
 ) -> Picture {
   { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
+}
+
+///|
+/// Attach a whole-picture hyperlink to an external URL — e.g. a clickable
+/// image. Stored unresolved; resolved by `Presentation::update_slide_mut`.
+pub fn Picture::with_hyperlink(self : Picture, url~ : String) -> Picture {
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+}
+
+///|
+/// Attach a whole-picture click action that jumps to another slide by
+/// zero-based index.
+pub fn Picture::with_hyperlink_to_slide(
+  self : Picture,
+  slide_idx~ : Int,
+) -> Picture {
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
 }
 
 // --- GroupShape orientation builders ---------------------------------------

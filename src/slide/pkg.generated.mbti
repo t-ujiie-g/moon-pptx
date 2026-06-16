@@ -135,6 +135,7 @@ pub(all) struct AutoShape {
   stroke : @oxml.Stroke?
   effects : @oxml.EffectList?
   text_body : TextBody?
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn AutoShape::ellipse(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
@@ -144,6 +145,8 @@ pub fn AutoShape::round_rect(Int, String, @units.Emu, @units.Emu, @units.Emu, @u
 pub fn AutoShape::textbox(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 pub fn AutoShape::with_fill(Self, @oxml.Fill) -> Self
 pub fn AutoShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn AutoShape::with_hyperlink(Self, url~ : String) -> Self
+pub fn AutoShape::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 pub fn AutoShape::with_no_fill(Self) -> Self
 pub fn AutoShape::with_no_stroke(Self) -> Self
 pub fn AutoShape::with_rotation(Self, @units.Angle) -> Self
@@ -407,6 +410,7 @@ pub(all) struct Picture {
   effects : @oxml.EffectList?
   blip_fill : @oxml.BlipFill
   media : MediaInfo?
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Picture::builder(Int, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> PictureUncropped
@@ -415,6 +419,8 @@ pub fn Picture::of_media(Int, String, MediaKind, String, String, String, @units.
 pub fn Picture::of_svg_image(Int, String, String, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Self
 pub fn Picture::with_crop(Self, left? : @units.Percentage, top? : @units.Percentage, right? : @units.Percentage, bottom? : @units.Percentage) -> Self
 pub fn Picture::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn Picture::with_hyperlink(Self, url~ : String) -> Self
+pub fn Picture::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 pub fn Picture::with_rotation(Self, @units.Angle) -> Self
 
 pub struct PictureCropped {
@@ -718,6 +724,14 @@ pub(all) struct ShapeAdjustValue {
   name : String
   fmla : String
 } derive(Eq, @debug.Debug)
+
+pub(all) struct ShapeHyperlink {
+  target : HyperlinkTarget?
+  click : String?
+  action : String?
+} derive(Eq, @debug.Debug)
+pub fn ShapeHyperlink::external(String) -> Self
+pub fn ShapeHyperlink::to_slide(Int) -> Self
 
 pub(all) struct Size {
   cx : @units.Emu

@@ -61,6 +61,7 @@ pub fn Picture::of_media(
       extension: [],
     },
     media: Some({ kind, link_id, embed_id: media_embed_id }),
+    hyperlink: None,
     extension: [],
   }
 }

@@ -305,6 +305,7 @@ fn build_notes_slide(text : String) -> @notes.NotesSlide {
     stroke: None,
     effects: None,
     text_body: Some(body),
+    hyperlink: None,
     extension: [],
   }
   {

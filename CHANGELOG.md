@@ -5,6 +5,46 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] — 2026-06-17
+
+Fidelity & fine-grained formatting: typed builders for everyday PowerPoint
+formatting that previously only round-tripped through the lossless-preservation
+escape hatch. Every change is additive — code written against 0.5.1 keeps
+compiling.
+
+### Added
+
+- **Shape rotation & flip** — `Transform.rotation : @units.Angle?` /
+  `flip_h` / `flip_v`, with `AutoShape` / `Picture` / `GroupShape`
+  `with_rotation(angle)` / `with_flip(h~, v~)` and a `Transform::new`
+  constructor. Reads/writes `<a:xfrm rot/flipH/flipV>` on shapes, groups,
+  and graphic frames (previously dropped on parse). (roadmap F1)
+- **Document core properties** — typed `CoreProperties` (the full closed
+  `docProps/core.xml` set: title / creator / subject / keywords /
+  description / category / contentStatus / created / modified / lastPrinted
+  / lastModifiedBy / revision / identifier / language / version) with
+  fluent `with_*` builders (`with_author` aliases `with_creator`),
+  `Presentation::core_properties()` reader + `set_core_properties_mut` +
+  immutable `with_core_properties`. Replaces the hard-coded template
+  creator. (roadmap F2)
+- **Run-level rich text formatting** — `RunProperties` gains `kerning`
+  (`with_kerning`, the `kern` attribute), `highlight` (`with_highlight`,
+  `<a:highlight>`), `outline` (`with_text_outline`, `<a:ln>`), and
+  `text_effects` (`with_text_effects`, `<a:effectLst>` — glow / shadow /
+  reflection / soft-edge). The `@oxml` shadow parsers are now lenient on
+  the ECMA-376-optional `blurRad` / `dist` / `dir` (default 0) so minimal
+  effect lists parse rather than failing. (roadmap F3)
+- **Shape-level hyperlinks** — `AutoShape` / `Picture`
+  `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)` attach a
+  click action to a whole shape (`<p:cNvPr><a:hlinkClick>`), resolved to a
+  slide-rels relationship by `update_slide_mut` (shared pipeline with
+  run-level hyperlinks). (roadmap F5)
+
+### Changed
+
+- **Dependency**: `hustcer/fzip` bumped `0.6.1` → `0.8.2` (non-breaking —
+  every new parameter is optional).
+
 ## [0.5.1] — 2026-06-16
 
 Patch release: typed character spacing on text runs. Additive — code written

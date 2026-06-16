@@ -140,6 +140,12 @@ pub(all) struct AutoShape {
   /// `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
   effects : @oxml.EffectList?
   text_body : TextBody?
+  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
+  /// shape (roadmap F5). Build-only: set by `with_hyperlink` /
+  /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
+  /// `None` for a parsed shape (its `<a:hlinkClick>` round-trips via the
+  /// captured `<p:cNvPr>` in `extension`).
+  hyperlink : ShapeHyperlink?
   /// Lossless preservation (ADR-004): unmodelled `<p:sp>` siblings
   /// (`<p:style>`, `<p:extLst>`, foreign-namespace extensions, …)
   /// captured verbatim for round-trip writers.

@@ -332,6 +332,7 @@ fn master_placeholder(
     stroke: None,
     effects: None,
     text_body: body,
+    hyperlink: None,
     extension: [],
   }
 }

@@ -75,6 +75,7 @@ fn placeholder_shape(
     stroke: None,
     effects: None,
     text_body: Some(body),
+    hyperlink: None,
     extension: [],
   }
 }

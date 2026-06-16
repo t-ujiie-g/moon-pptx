@@ -759,6 +759,9 @@ fn parse_picture(r : @xml.XmlReader) -> Picture raise SlideError {
     // Media is lifted only by builders; parsed media refs round-trip via
     // `extension` (ADR-004). See `media.mbt`.
     media: None,
+    // Hyperlink is build-only too; a parsed `<a:hlinkClick>` round-trips via
+    // the captured `<p:cNvPr>` in `extension` (ADR-004). See `shape_hyperlink.mbt`.
+    hyperlink: None,
     extension,
   }
 }
@@ -821,6 +824,9 @@ fn parse_auto_shape(
     stroke,
     effects,
     text_body,
+    // Build-only (like media): a parsed `<a:hlinkClick>` round-trips via the
+    // captured `<p:cNvPr>` in `extension` (ADR-004).
+    hyperlink: None,
     extension,
   }
 }
