@@ -79,6 +79,10 @@ pub(all) struct RunProperties {
   /// `ST_TextPoint` (1/100 of a point, may be negative to tighten); we lift
   /// to typed `Pt` like `font_size`.
   character_spacing : @units.Pt?
+  /// `kern` — the minimum font size (in points) at which character kerning
+  /// is applied. `ST_TextNonNegativePoint` (1/100 of a point, non-negative);
+  /// lifted to `Pt` like `font_size` / `spc`.
+  kerning : @units.Pt?
   /// `b` — bold.
   bold : Bool?
   /// `i` — italic.
@@ -103,6 +107,9 @@ pub(all) struct RunProperties {
   /// run's `extension` per ADR-004; widening to the full shape-level
   /// `@oxml.Fill` ADT is a future expansion point.
   fill : @oxml.Color?
+  /// `<a:highlight>` — text highlight colour (a `CT_Color`, one colour
+  /// child). `None` = no highlight.
+  highlight : @oxml.Color?
   /// `<a:hlinkClick r:id="…">` — relationship id of the click target.
   /// Carries the **already-allocated** rId for parsed runs and for
   /// runs whose hyperlink has been resolved at write time.
@@ -127,8 +134,11 @@ pub(all) struct RunProperties {
   /// "hyperlink already resolved into `hyperlink_click`".
   hyperlink_target : HyperlinkTarget?
   /// Lossless preservation (ADR-004): unmodelled `<a:rPr>` children
-  /// (`<a:ln>`, `<a:effectLst>`, `<a:highlight>`, `<a:uLn>`,
-  /// `<a:hlinkMouseOver>`, `<a:extLst>`, foreign-namespace siblings).
+  /// (`<a:ln>`, `<a:effectLst>`, `<a:uLn>`, `<a:uFill>`, `<a:sym>`,
+  /// `<a:hlinkMouseOver>`, `<a:rtl>`, `<a:extLst>`, foreign-namespace
+  /// siblings). `<a:highlight>` is now typed (`highlight`); lifting
+  /// `<a:ln>` / `<a:effectLst>` waits on lift-safe `@oxml` parsers (F3
+  /// follow-up).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -172,6 +182,7 @@ pub fn RunProperties::default() -> RunProperties {
     lang: "",
     font_size: None,
     character_spacing: None,
+    kerning: None,
     bold: None,
     italic: None,
     underline: None,
@@ -182,6 +193,7 @@ pub fn RunProperties::default() -> RunProperties {
     east_asian: None,
     complex_script: None,
     fill: None,
+    highlight: None,
     hyperlink_click: None,
     hyperlink_tooltip: None,
     hyperlink_action: None,

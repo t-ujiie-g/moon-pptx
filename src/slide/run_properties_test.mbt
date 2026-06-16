@@ -190,7 +190,8 @@ test "rPr: gradFill and effectLst are skipped without raising" {
   )
   // No fill should be picked up from gradFill — run-level fills only
   // pick up solidFill; gradient + pattern + blip run-fills are an
-  // intentional expansion point.
+  // intentional expansion point. effectLst rides on `extension` (lifting
+  // it waits on lift-safe @oxml effect parsers — F3 follow-up).
   assert_true(rpr_of(slide).fill is None)
 }
 
@@ -258,4 +259,81 @@ test "builder: with_character_spacing emits spc and round-trips" {
   )
   let reparsed = @slide.Slide::parse(slide.serialize())
   assert_eq(rpr_of(reparsed).character_spacing.unwrap(), @units.Pt(2.0))
+}
+
+// --- kerning (kern) + highlight — roadmap v0.6 F3 (slice 1) ---
+
+///|
+test "rPr: kern attribute converts 1/100 pt to Pt" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr kern=\"1200\"/>"))
+  assert_eq(rpr_of(slide).kerning.unwrap(), @units.Pt(12.0))
+}
+
+///|
+test "rPr: absent kern is None" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr sz=\"2400\"/>"))
+  assert_true(rpr_of(slide).kerning is None)
+}
+
+///|
+test "rPr: kern survives parse -> serialize -> parse" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr kern=\"800\"/>"))
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  assert_eq(rpr_of(reparsed).kerning.unwrap(), @units.Pt(8.0))
+}
+
+///|
+test "rPr: highlight colour parses into the typed field" {
+  let slide = @slide.Slide::parse(
+    slide_with_rpr(
+      "<a:rPr><a:highlight><a:srgbClr val=\"FFFF00\"/></a:highlight></a:rPr>",
+    ),
+  )
+  assert_eq(
+    rpr_of(slide).highlight.unwrap(),
+    @oxml.Color::srgb(@units.RgbColor::parse_hex("FFFF00")),
+  )
+}
+
+///|
+test "rPr: absent highlight is None" {
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr/>"))
+  assert_true(rpr_of(slide).highlight is None)
+}
+
+///|
+test "builder: with_kerning + with_highlight emit and round-trip" {
+  let rp = @slide.RunProperties::default()
+    .with_kerning(@units.Pt(10.0))
+    .with_highlight(@units.RgbColor::new(0xFF, 0xCC, 0x00))
+  let body = @slide.TextBody::of_styled_text("hi", rp)
+  let shape = @slide.AutoShape::textbox(
+    2,
+    "T",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(914_400L),
+    @units.Emu(914_400L),
+    "",
+  ).with_text_body(body)
+  let base_xml = "<?xml version=\"1.0\"?>" +
+    "<p:sld xmlns:p=\"" +
+    pml_ns +
+    "\" xmlns:a=\"" +
+    dml_ns +
+    "\" xmlns:r=\"" +
+    off_rel_ns +
+    "\"><p:cSld><p:spTree>" +
+    "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
+    "</p:spTree></p:cSld></p:sld>"
+  let slide = @slide.Slide::parse(fixture_bytes(base_xml)).with_shape(
+    @slide.AutoShape(shape),
+  )
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  let got = rpr_of(reparsed)
+  assert_eq(got.kerning.unwrap(), @units.Pt(10.0))
+  assert_eq(
+    got.highlight.unwrap(),
+    @oxml.Color::srgb(@units.RgbColor::new(0xFF, 0xCC, 0x00)),
+  )
 }

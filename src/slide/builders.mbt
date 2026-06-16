@@ -147,6 +147,25 @@ pub fn RunProperties::with_color(
 }
 
 ///|
+/// Set the minimum font size (in points) at which kerning applies — the
+/// `kern` attribute on `<a:rPr>`. Non-negative.
+pub fn RunProperties::with_kerning(
+  self : RunProperties,
+  pt : @units.Pt,
+) -> RunProperties {
+  { ..self, kerning: Some(pt) }
+}
+
+///|
+/// Set the text *highlight* colour (`<a:highlight>`) from an RGB triple.
+pub fn RunProperties::with_highlight(
+  self : RunProperties,
+  rgb : @units.RgbColor,
+) -> RunProperties {
+  { ..self, highlight: Some(@oxml.Color::srgb(rgb)) }
+}
+
+///|
 /// Set the Latin-script typeface (e.g. `"Calibri"`, `"Arial"`).
 pub fn RunProperties::with_font(
   self : RunProperties,

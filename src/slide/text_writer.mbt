@@ -360,6 +360,7 @@ fn needs_r_pr(p : RunProperties) -> Bool {
   p.lang != "" ||
   p.font_size is Some(_) ||
   p.character_spacing is Some(_) ||
+  p.kerning is Some(_) ||
   p.bold is Some(_) ||
   p.italic is Some(_) ||
   p.underline is Some(_) ||
@@ -370,6 +371,7 @@ fn needs_r_pr(p : RunProperties) -> Bool {
   p.east_asian is Some(_) ||
   p.complex_script is Some(_) ||
   p.fill is Some(_) ||
+  p.highlight is Some(_) ||
   p.hyperlink_click is Some(_) ||
   p.extension.length() > 0
 }
@@ -401,6 +403,14 @@ fn write_run_properties(
     }
     None => ()
   }
+  match p.kerning {
+    Some(pt) => {
+      let @units.Pt(v) = pt
+      let centi = (v * 100.0).to_int()
+      w.attribute(@xml.QName::unqualified("kern"), centi.to_string())
+    }
+    None => ()
+  }
   match p.bold {
     Some(b) =>
       w.attribute(@xml.QName::unqualified("b"), if b { "1" } else { "0" })
@@ -428,10 +438,21 @@ fn write_run_properties(
     Some(c) => w.attribute(@xml.QName::unqualified("cap"), caps_to_xml(c))
     None => ()
   }
+  // Child elements in CT_TextCharacterProperties sequence order:
+  // fill, …, highlight, …, latin/ea/cs, hlinkClick.
   // Solid fill child.
   match p.fill {
     Some(c) => {
       w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
+      @oxml.write_color(w, ctx, c)
+      w.end_element()
+    }
+    None => ()
+  }
+  // Highlight colour (`<a:highlight>`).
+  match p.highlight {
+    Some(c) => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "highlight"))
       @oxml.write_color(w, ctx, c)
       w.end_element()
     }

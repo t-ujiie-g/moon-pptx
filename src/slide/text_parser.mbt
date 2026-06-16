@@ -313,11 +313,12 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
 
 ///|
 /// Parse `<a:rPr>` — attributes off the start tag and a handful of
-/// children (`<a:solidFill>`, `<a:latin>`, `<a:ea>`, `<a:cs>`,
-/// `<a:hlinkClick>`). Other children (gradient/pattern fill, effects,
-/// underline fills, east-asian list) ride on the run's `extension`
-/// per ADR-004; widening to the full shape-level fill ADT is a
-/// future expansion point.
+/// children (`<a:solidFill>`, `<a:highlight>`, `<a:latin>`, `<a:ea>`,
+/// `<a:cs>`, `<a:hlinkClick>`). Other children (`<a:ln>`,
+/// `<a:effectLst>`, gradient/pattern fill, underline fills, east-asian
+/// list, `<a:rtl>`) ride on the run's `extension` per ADR-004; widening
+/// the solid-only `fill` to the full shape-level fill ADT, and lifting
+/// `<a:ln>` / `<a:effectLst>`, are future expansion points.
 fn parse_run_properties(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
@@ -325,6 +326,7 @@ fn parse_run_properties(
   let lang = optional_attr(attrs, "lang")
   let font_size = parse_font_size_attr(attrs)
   let character_spacing = parse_character_spacing_attr(attrs)
+  let kerning = parse_hundredths_pt_attr(attrs, "kern")
   let bold = parse_bool_attr(attrs, "b")
   let italic = parse_bool_attr(attrs, "i")
   let underline = parse_enum_attr(attrs, "u", UnderlineKind::from_xml)
@@ -335,6 +337,7 @@ fn parse_run_properties(
   let mut east_asian : String? = None
   let mut complex_script : String? = None
   let mut fill : @oxml.Color? = None
+  let mut highlight : @oxml.Color? = None
   let mut hyperlink_click : String? = None
   let mut hyperlink_tooltip : String? = None
   let mut hyperlink_action : String? = None
@@ -358,6 +361,7 @@ fn parse_run_properties(
               skip_subtree(r)
             }
             "solidFill" => fill = parse_solid_fill(r)
+            "highlight" => highlight = parse_solid_fill(r)
             "hlinkClick" => {
               hyperlink_click = Some(extract_rid(child_attrs))
               let t = optional_attr(child_attrs, "tooltip")
@@ -385,6 +389,7 @@ fn parse_run_properties(
     lang,
     font_size,
     character_spacing,
+    kerning,
     bold,
     italic,
     underline,
@@ -395,6 +400,7 @@ fn parse_run_properties(
     east_asian,
     complex_script,
     fill,
+    highlight,
     hyperlink_click,
     hyperlink_tooltip,
     hyperlink_action,
