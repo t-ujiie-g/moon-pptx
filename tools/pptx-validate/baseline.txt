@@ -12,13 +12,9 @@
 #       issue and be removed when that issue is closed.
 # Anything else (a real error with no plan to fix) must be fixed, not baselined.
 #
-# --- (b) KNOWN BUG, fix deferred: issue #11 ---------------------------------
-# Media <a:videoFile>/<a:audioFile> are written as a child of <p:pic> instead of
-# inside <p:nvPr> (invalid CT_Picture content). Real bug, root-caused, tracked in
-# https://github.com/t-ujiie-g/moon-pptx/issues/11 and deferred by request.
-# REMOVE both lines below when #11 is fixed so the gate re-tightens.
-invalid child element 'http://schemas.openxmlformats.org/drawingml/2006/main:videoFile'
-invalid child element 'http://schemas.openxmlformats.org/drawingml/2006/main:audioFile'
+# (Issue #11 — media <a:videoFile>/<a:audioFile> placement — was baselined here
+# under (b) and is now FIXED in source, so its entries were removed and the gate
+# re-tightened.)
 #
 # --- (a) false positives ----------------------------------------------------
 # SmartArt cached-drawing relationship: the diagram *data* part legitimately

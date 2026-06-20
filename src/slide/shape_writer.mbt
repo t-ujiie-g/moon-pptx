@@ -26,9 +26,10 @@ priv enum ShapeExtScope {
   /// `id`/`name` attrs and any `<a:hlinkClick>` child) and the
   /// per-shape-kind `<p:cNv*Pr>` wrapper.
   ShapeExtNvWrapper
-  /// Captured child of `<p:nvPr>` — `<p:custDataLst>`,
-  /// `<p:audioFile>`, `<p:videoFile>` and any foreign sibling. Goes
-  /// after the modeled `<p:ph>` inside `<p:nvPr>`.
+  /// Captured child of `<p:nvPr>` — `<p:custDataLst>`, the drawing-ml
+  /// `<a:videoFile>` / `<a:audioFile>` media reference, and the media
+  /// `<p:extLst>` carrying `<p14:media>`. Goes after the modeled
+  /// `<p:ph>` inside `<p:nvPr>` (ECMA-376 CT_ApplicationNonVisualDrawingProps).
   ShapeExtNvPrChild
   /// Lives inside the visual properties wrapper (`<p:spPr>` for sp /
   /// pic / cxnSp; `<p:grpSpPr>` for grpSp). Examples: `<a:scene3d>`,
@@ -51,19 +52,49 @@ fn classify_shape_ext(el : @xml.XmlElement, cnv_kind : String) -> ShapeExtScope 
       return ShapeExtNvWrapper
     }
     match el.name.local_name {
-      "custDataLst" | "audioFile" | "videoFile" => return ShapeExtNvPrChild
+      "custDataLst" => return ShapeExtNvPrChild
       "style" => return ShapeExtBody
+      // A picture's `<p:extLst>` is body-level (CT_Picture.extLst) *except*
+      // the media one carrying `<p14:media>`, which belongs inside `<p:nvPr>`
+      // (CT_ApplicationNonVisualDrawingProps.extLst). Distinguish by uri.
+      "extLst" => if is_media_ext_lst(el) { return ShapeExtNvPrChild }
       _ => ()
     }
   }
   if el.name.uri == @oxml.drawing_ns {
     match el.name.local_name {
+      // `<a:videoFile>` / `<a:audioFile>` are the EG_Media reference and live
+      // inside `<p:nvPr>` (issue #11: they were mis-guarded under
+      // presentation_ns, so they fell through to the shape body — invalid
+      // CT_Picture content).
+      "videoFile" | "audioFile" => return ShapeExtNvPrChild
       "scene3d" | "sp3d" | "extLst" => return ShapeExtSpPr
       _ => ()
     }
   }
   // Foreign-namespace + everything else: shape-body level.
   ShapeExtBody
+}
+
+///|
+/// True for the media `<p:extLst>` — a presentation-ml `<p:extLst>` whose
+/// `<p:ext>` carries `uri="<media_ext_uri>"` (the `<p14:media>` wrapper). Only
+/// this extLst moves into `<p:nvPr>`; a generic picture `<p:extLst>` stays at
+/// body level.
+fn is_media_ext_lst(el : @xml.XmlElement) -> Bool {
+  for child in el.children {
+    if child is Element(ext) &&
+      ext.name.uri == @oxml.presentation_ns &&
+      ext.name.local_name == "ext" {
+      for kv in ext.attributes {
+        let (q, v) = kv
+        if q.local_name == "uri" && v == @oxml.media_ext_uri {
+          return true
+        }
+      }
+    }
+  }
+  false
 }
 
 ///|
