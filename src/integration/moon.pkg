@@ -18,4 +18,5 @@ import {
   "t-ujiie-g/moon-pptx/smartart",
   "t-ujiie-g/moon-pptx/theme",
   "t-ujiie-g/moon-pptx/units",
+  "t-ujiie-g/moon-pptx/xml",
 } for "test"

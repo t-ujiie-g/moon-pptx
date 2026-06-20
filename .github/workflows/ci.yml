@@ -46,3 +46,28 @@ jobs:
         run: moon update
       - name: moon test --target ${{ matrix.target }}
         run: moon test --target ${{ matrix.target }} --deny-warn
+
+  validate:
+    name: validate / Open XML SDK (repair-free)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup MoonBit
+        uses: hustcer/setup-moonbit@v1
+      - name: moon update (refresh registry index)
+        run: moon update
+      - name: Generate showcase deck
+        run: bash tools/pptx-validate/gen-pptx.sh out
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      # Microsoft's OpenXmlValidator runs the same schema + semantic checks
+      # PowerPoint runs on open, so a clean run is a high-confidence proxy for
+      # "opens without a repair prompt". Also validates any real-world fixtures
+      # placed under test_fixtures/corpus/ (see TODO.md ADR-011, Tier 2).
+      - name: Validate generated + corpus decks
+        run: |
+          dotnet run --project tools/pptx-validate -- \
+            out test_fixtures/corpus \
+            --baseline tools/pptx-validate/baseline.txt

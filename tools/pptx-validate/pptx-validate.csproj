@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>pptx-validate</AssemblyName>
+    <RootNamespace>PptxValidate</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Target net8.0 (CI installs the 8.0 runtime) but allow running on a
+         newer major runtime if that is all the local machine has. -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Microsoft's own OOXML validator. Its schema + semantic checks are
+         the same family of constraints PowerPoint enforces on open (the
+         ones that trigger the "repair" dialog), so a clean run here is a
+         high-confidence proxy for "opens without repair". -->
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
+  </ItemGroup>
+
+</Project>
