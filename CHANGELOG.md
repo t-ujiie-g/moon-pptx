@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] — 2026-06-20
+
+Bug-fix release. Adds an automated verification pyramid (in-repo structural
+checks + an Open XML SDK validator in CI), which immediately caught a real
+media-serialisation bug — now fixed. No public API change; code written against
+0.5.2 keeps compiling.
+
+### Fixed
+
+- **Embedded media now serialises as valid OOXML.** `<a:videoFile>` /
+  `<a:audioFile>` and the `<p14:media>` `<p:extLst>` were written as direct
+  children of `<p:pic>` instead of inside `<p:nvPr>`, which violates
+  `CT_Picture` and made PowerPoint offer to repair decks containing audio,
+  video, or online video (`add_audio_mut` / `add_video_mut` /
+  `add_online_video_mut`). The shape-extension classifier only recognised the
+  media reference under the PresentationML namespace, but those elements are
+  DrawingML-namespaced, so a parsed-then-re-serialised media picture misplaced
+  them. They are now emitted inside `<p:nvPr>` in the schema-required order.
+  ([#11](https://github.com/t-ujiie-g/moon-pptx/issues/11))
+
+### Added
+
+- **Verification tooling (development / CI, not part of the published library).**
+  A three-tier "opens without a repair prompt" verification pyramid: in-repo
+  MoonBit OPC structural-integrity checks over builder output (all backends),
+  plus a `tools/pptx-validate/` .NET job running Microsoft's `OpenXmlValidator`
+  over the generated showcase deck and a license-clear real-world corpus
+  (`test_fixtures/corpus/`, Apache POI) on every PR. This is what surfaced the
+  media bug above.
+
 ## [0.5.2] — 2026-06-17
 
 Fidelity & fine-grained formatting: typed builders for everyday PowerPoint

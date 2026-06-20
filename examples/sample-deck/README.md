@@ -30,7 +30,7 @@ version — exactly what a real consumer writes:
 
 ```json
 "deps": {
-  "t-ujiie-g/moon-pptx": "0.5.2"
+  "t-ujiie-g/moon-pptx": "0.5.3"
 }
 ```
 
