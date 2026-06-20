@@ -92,3 +92,40 @@ test "A6: media XML round-trips losslessly (re-serialise is stable)" {
   assert_true(char_index_of(xml2, "ppaction://media") >= 0)
   assert_true(char_index_of(xml2, @oxml.media_ext_uri) >= 0)
 }
+
+///|
+/// Issue #11 regression: after a parse→serialise round-trip (where the media
+/// reference is captured into `extension`, not the typed `media` field), the
+/// `<a:videoFile>` and the media `<p:extLst>` must still sit *inside* `<p:nvPr>`
+/// — not as direct children of `<p:pic>`, which is invalid `CT_Picture` content
+/// and made PowerPoint repair the deck. The pre-fix code mis-classified the
+/// drawing-ml `<a:videoFile>` to the shape body. Presence-only checks (above)
+/// missed it; this asserts *placement*.
+test "issue #11: media nv-children stay inside <p:nvPr> after round-trip" {
+  let pic = @slide.Picture::of_media(
+    9,
+    "clip.mp4",
+    Video,
+    "rId3",
+    "rId4",
+    "rId2",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  let xml = @oxml.bytes_to_string(
+    @slide.Slide::parse(slide_of_picture(pic).serialize()).serialize(),
+  )
+  // A non-empty `<p:nvPr>…</p:nvPr>` (the buggy form emitted a self-closed
+  // `<p:nvPr/>`, so `<p:nvPr>` with a `>` would be absent).
+  let nvpr_open = char_index_of(xml, "<p:nvPr>")
+  let nvpr_close = char_index_of(xml, "</p:nvPr>")
+  assert_true(nvpr_open >= 0)
+  assert_true(nvpr_close > nvpr_open)
+  // Both the media reference and the p14:media extLst live between them.
+  let video = char_index_of(xml, "<a:videoFile")
+  let media_ext = char_index_of(xml, @oxml.media_ext_uri)
+  assert_true(video > nvpr_open && video < nvpr_close)
+  assert_true(media_ext > nvpr_open && media_ext < nvpr_close)
+}
