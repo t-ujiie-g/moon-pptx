@@ -8,3 +8,9 @@ _build/
 # the `out/` directory used during development should stay out of git.
 out/
 *.pptx
+# …but the curated real-world verification corpus is tracked on purpose.
+!test_fixtures/corpus/*.pptx
+
+# .NET build output for the pptx-validate tool (tools/pptx-validate/).
+tools/pptx-validate/bin/
+tools/pptx-validate/obj/

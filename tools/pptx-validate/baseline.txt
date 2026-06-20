@@ -1,0 +1,29 @@
+# pptx-validate baseline — validation-error substrings to IGNORE.
+#
+# Each non-comment line is a substring matched against an Open XML SDK
+# validation error's Description. Any error containing a listed substring is
+# treated as a known, accepted quirk and does not fail CI.
+#
+# Keep this file SHORT and every entry COMMENTED with why it is safe. Two
+# legitimate reasons:
+#   (a) a false positive on a Microsoft extension the SDK's strong-typed model
+#       predates (e.g. extended chartEx / p14 elements PowerPoint accepts); or
+#   (b) a real bug whose fix is *explicitly deferred* — MUST link a tracking
+#       issue and be removed when that issue is closed.
+# Anything else (a real error with no plan to fix) must be fixed, not baselined.
+#
+# --- (b) KNOWN BUG, fix deferred: issue #11 ---------------------------------
+# Media <a:videoFile>/<a:audioFile> are written as a child of <p:pic> instead of
+# inside <p:nvPr> (invalid CT_Picture content). Real bug, root-caused, tracked in
+# https://github.com/t-ujiie-g/moon-pptx/issues/11 and deferred by request.
+# REMOVE both lines below when #11 is fixed so the gate re-tightens.
+invalid child element 'http://schemas.openxmlformats.org/drawingml/2006/main:videoFile'
+invalid child element 'http://schemas.openxmlformats.org/drawingml/2006/main:audioFile'
+#
+# --- (a) false positives ----------------------------------------------------
+# SmartArt cached-drawing relationship: the diagram *data* part legitimately
+# references the cached *drawing* part (dsp:dataModelExt, MS-ODRAWXML). Real
+# Microsoft SmartArt files carry this and PowerPoint accepts it (our SmartArt
+# decks open + render), but the SDK's strongly-typed DiagramDataPart graph does
+# not include the drawing relationship, so it false-positives. Safe to ignore.
+cannot have a relationship that targets part 'DiagramPersistLayoutPart
