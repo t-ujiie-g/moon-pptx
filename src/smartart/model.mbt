@@ -6,17 +6,14 @@
 // quickStyle / colors + a cached `<dsp:drawing>` (the laid-out shapes, so the
 // diagram renders without a layout engine). See `parts.mbt`.
 //
-// Ships the four *flat* families — `List` (vertical stack), `Process`
-// (left-to-right), `Cycle` (radial ring), and `Pyramid` (stacked levels) —
-// which lay out from the flat list of top-level nodes. `Node.children` is
-// carried in the model (and preserved in the data part) so the hierarchical
-// families (org-chart / hierarchy / matrix / relationship) layer on additively
-// in later slices.
+// All eight families ship: the *flat* ones (`List` / `Process` / `Cycle` /
+// `Pyramid` / `Matrix`) lay out from the flat list of top-level nodes, and
+// the *nesting* ones (`OrgChart` / `Hierarchy` / `Relationship`) consume
+// `Node.children` — both in the data model and in the recursive / radial
+// layout definitions (`hier_layouts.mbt`, D1-b) PowerPoint lays out from.
 
 ///|
-/// Which built-in SmartArt layout family a diagram maps to. The flat families
-/// (no parent/child nesting) are shipped; the hierarchical ones are reserved
-/// for later slices.
+/// Which built-in SmartArt layout family a diagram maps to.
 pub(all) enum SmartArtKind {
   /// Vertical list of rounded boxes (built-in layout `list1`).
   List

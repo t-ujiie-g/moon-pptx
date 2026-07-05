@@ -235,7 +235,8 @@ test "add_smartart_mut: org_chart with nested children wires + reopens" {
     @units.Emu(8_000_000L),
     @units.Emu(5_000_000L),
   )
-  // The cached drawing draws all four nodes.
+  // The cached drawing draws all four nodes plus one connector line per
+  // parent→child edge (D1-b).
   let drawing = @oxml.bytes_to_string(
     prs.pkg.part_by_name("/ppt/drawings/drawing1.xml").unwrap().bytes,
   )
@@ -245,7 +246,7 @@ test "add_smartart_mut: org_chart with nested children wires + reopens" {
     sp = sp + 1
     rest = rest.view(start_offset=off + 8).to_owned()
   }
-  assert_eq(sp, 4)
+  assert_eq(sp, 7)
   let prs2 = @presentation.Presentation::open(prs.save())
   assert_eq(prs2.slides()[0].shapes.length(), 1)
 }

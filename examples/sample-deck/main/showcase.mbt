@@ -189,13 +189,12 @@ fn sample_media_slide(
 }
 
 ///|
-/// SmartArt (v0.5 D1) — a cycle diagram synthesised into the full five-part
-/// DiagramML graphic. We use a *flat* family (cycle) here because PowerPoint
-/// lays SmartArt out from the layout definition on open, and the flat families
-/// (list / process / cycle / pyramid / matrix) render every node; the nesting
-/// families (org_chart / hierarchy / relationship) build + are recognised as
-/// SmartArt but currently render their top level only (a recursive layout
-/// definition is a follow-up — see TODO.md D1).
+/// SmartArt (v0.5 D1 + D1-b) — an org chart synthesised into the full
+/// five-part DiagramML graphic. A *nesting* family on purpose: the D1-b
+/// recursive hierarchy layout definition (hierRoot/hierChild + a named
+/// forEach re-invoked via `ref`) makes PowerPoint lay out the whole tree,
+/// which the original single-level definition couldn't — this slide is the
+/// visual regression check for that fix.
 fn sample_smartart_slide(
   prs : @presentation.Presentation,
   idx : Int,
@@ -206,9 +205,15 @@ fn sample_smartart_slide(
       @slide.AutoShape(heading(prs, 2, "SmartArt diagrams")),
     ),
   )
-  let art = @smartart.SmartArt::cycle([
-    "Research", "Design", "Build", "Test", "Ship",
-  ])
+  let art = @smartart.SmartArt::org_chart(
+    @smartart.Node::new("CEO", [
+      @smartart.Node::new("CTO", [
+        @smartart.Node::leaf("Platform"),
+        @smartart.Node::leaf("Apps"),
+      ]),
+      @smartart.Node::new("CFO", [@smartart.Node::leaf("Controller")]),
+    ]),
+  )
   prs.add_smartart_mut(
     idx,
     art,

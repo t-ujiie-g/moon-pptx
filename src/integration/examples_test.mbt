@@ -381,9 +381,6 @@ test "example 14: entrance animations" {
 test "example 15: SmartArt diagram" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  // A flat family (process) renders every node in PowerPoint; the nesting
-  // families (org_chart / hierarchy / relationship) also build but currently
-  // render their top level only (see examples/README.md §15).
   let art = @smartart.SmartArt::process(["Plan", "Build", "Ship"])
   prs.add_smartart_mut(
     0,
@@ -393,10 +390,27 @@ test "example 15: SmartArt diagram" {
     prs.pct_w(80.0),
     prs.pct_h(70.0),
   )
-  // The slide gains one graphic-frame shape; the five DiagramML parts survive
+  // The tree families take nested Nodes; the recursive hierarchy layout
+  // definition lays the whole tree out in PowerPoint (D1-b — see
+  // examples/README.md §15).
+  let _ = prs.add_slide_mut(0)
+  let ceo = @smartart.Node::new("CEO", [
+    @smartart.Node::leaf("CTO"),
+    @smartart.Node::new("CFO", [@smartart.Node::leaf("Controller")]),
+  ])
+  prs.add_smartart_mut(
+    1,
+    @smartart.SmartArt::org_chart(ceo),
+    prs.pct_w(10.0),
+    prs.pct_h(15.0),
+    prs.pct_w(80.0),
+    prs.pct_h(70.0),
+  )
+  // Each slide gains one graphic-frame shape; the DiagramML parts survive
   // a save → reopen round-trip.
   let prs2 = @presentation.Presentation::open(prs.save())
   assert_eq(prs2.slides()[0].shapes.length(), 1)
+  assert_eq(prs2.slides()[1].shapes.length(), 1)
 }
 
 ///|

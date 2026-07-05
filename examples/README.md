@@ -453,17 +453,27 @@ prs.add_smartart_mut(
 )
 ```
 
-All eight families build: the flat `SmartArt::list` / `process` /
-`cycle` / `pyramid` / `matrix(items)`, the tree `org_chart(root)` /
-`hierarchy(nodes)`, and `relationship(center, related)` (hub-and-spoke).
+All eight families build and render: the flat `SmartArt::list` /
+`process` / `cycle` / `pyramid` / `matrix(items)`, the tree
+`org_chart(root)` / `hierarchy(nodes)`, and
+`relationship(center, related)` (hub-and-spoke). The tree families take
+nested `Node`s:
 
-> **Rendering note.** PowerPoint lays SmartArt out from the layout
-> definition on open, so the **flat** families (list / process / cycle /
-> pyramid / matrix — every node is one level deep) render fully. The
-> **nesting** families (org_chart / hierarchy / relationship) build and
-> are recognised as SmartArt with the correct data model, but currently
-> render their top level only; a recursive layout definition is a
-> follow-up (see `TODO.md` D1).
+```moonbit
+let ceo = @smartart.Node::new("CEO", [
+  @smartart.Node::leaf("CTO"),
+  @smartart.Node::new("CFO", [@smartart.Node::leaf("Controller")]),
+])
+prs.add_smartart_mut(
+  0, @smartart.SmartArt::org_chart(ceo),
+  prs.pct_w(10.0), prs.pct_h(15.0), prs.pct_w(80.0), prs.pct_h(70.0),
+)
+```
+
+PowerPoint lays SmartArt out from the layout definition on open; the
+nesting families ship a recursive `hierRoot`/`hierChild` definition (and
+`relationship` a radial one), so the whole tree lays out — children,
+connector lines and all (D1-b).
 
 ---
 
