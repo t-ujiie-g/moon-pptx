@@ -23,6 +23,4 @@ keywords = [
 
 description = "Pure-MoonBit library for reading, building, and writing PPTX (OOXML) presentations with a type-safe builder API."
 
-options(
-  source: "src",
-)
+source = "src"
