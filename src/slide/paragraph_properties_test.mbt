@@ -77,22 +77,91 @@ test "pPr: marL and indent (negative supported for hanging)" {
 }
 
 ///|
-test "pPr: line spacing in 1/1000 percent" {
+test "pPr: lnSpc percent form (spcPct, 1/1000 %)" {
   let slide = @slide.Slide::parse(
-    slide_with_ppr("<a:pPr lineSpacing=\"120000\"/>"),
+    slide_with_ppr(
+      "<a:pPr><a:lnSpc><a:spcPct val=\"120000\"/></a:lnSpc></a:pPr>",
+    ),
   )
-  // 120000 OOXML units = 120% line spacing.
-  assert_eq(ppr_of(slide).line_spacing.unwrap(), @units.Percentage(120.0))
+  // 120000 OOXML units = 120 % line spacing.
+  assert_true(
+    ppr_of(slide).line_spacing == Some(Percent(@units.Percentage(120.0))),
+  )
 }
 
 ///|
-test "pPr: space before / after in 1/100 pt" {
+test "pPr: lnSpc absolute form (spcPts, 1/100 pt) — F4" {
   let slide = @slide.Slide::parse(
-    slide_with_ppr("<a:pPr spaceBefore=\"6000\" spaceAfter=\"1200\"/>"),
+    slide_with_ppr("<a:pPr><a:lnSpc><a:spcPts val=\"1800\"/></a:lnSpc></a:pPr>"),
+  )
+  assert_true(ppr_of(slide).line_spacing == Some(Points(@units.Pt(18.0))))
+}
+
+///|
+test "pPr: spcBef points + spcAft percent forms — F4" {
+  let slide = @slide.Slide::parse(
+    slide_with_ppr(
+      "<a:pPr>" +
+      "<a:spcBef><a:spcPts val=\"6000\"/></a:spcBef>" +
+      "<a:spcAft><a:spcPct val=\"50000\"/></a:spcAft>" +
+      "</a:pPr>",
+    ),
   )
   let p = ppr_of(slide)
-  assert_eq(p.space_before.unwrap(), @units.Pt(60.0))
-  assert_eq(p.space_after.unwrap(), @units.Pt(12.0))
+  assert_true(p.space_before == Some(Points(@units.Pt(60.0))))
+  assert_true(p.space_after == Some(Percent(@units.Percentage(50.0))))
+}
+
+///|
+test "pPr: spacing round-trips (parse → serialize → parse) — F4" {
+  let xml = slide_with_ppr(
+    "<a:pPr>" +
+    "<a:lnSpc><a:spcPct val=\"150000\"/></a:lnSpc>" +
+    "<a:spcBef><a:spcPts val=\"600\"/></a:spcBef>" +
+    "<a:spcAft><a:spcPts val=\"1200\"/></a:spcAft>" +
+    "</a:pPr>",
+  )
+  let s1 = @slide.Slide::parse(xml)
+  let s2 = @slide.Slide::parse(s1.serialize())
+  assert_true(ppr_of(s2) == ppr_of(s1))
+  assert_true(ppr_of(s2).line_spacing is Some(Percent(_)))
+}
+
+///|
+test "pPr: empty lnSpc (no choice child) raises — F4" {
+  try @slide.Slide::parse(slide_with_ppr("<a:pPr><a:lnSpc/></a:pPr>")) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected an empty <a:lnSpc> to raise")
+  }
+}
+
+///|
+test "pPr: spacing builders (with_line_spacing / before / after) — F4" {
+  let para = @slide.Paragraph::of_text("hello")
+    .with_line_spacing(Percent(@units.Percentage(120.0)))
+    .with_space_before(Points(@units.Pt(6.0)))
+    .with_space_after(Percent(@units.Percentage(40.0)))
+  let body = @slide.TextBody::of_paragraphs([para])
+  let slide = @slide.Slide::parse(slide_with_ppr("<a:pPr/>")).map_shapes(s => {
+    match s {
+      AutoShape(sp) => AutoShape(sp.with_text_body(body))
+      other => other
+    }
+  })
+  let xml = @oxml.bytes_to_string(slide.serialize())
+  assert_true(
+    xml.find("<a:lnSpc><a:spcPct val=\"120000\"/></a:lnSpc>") is Some(_),
+  )
+  assert_true(
+    xml.find("<a:spcBef><a:spcPts val=\"600\"/></a:spcBef>") is Some(_),
+  )
+  assert_true(
+    xml.find("<a:spcAft><a:spcPct val=\"40000\"/></a:spcAft>") is Some(_),
+  )
+  // And the built spacing survives a reparse into the same model.
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  assert_true(ppr_of(reparsed) == para.properties)
 }
 
 // --- bullets ---

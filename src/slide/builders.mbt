@@ -63,6 +63,35 @@ pub fn Paragraph::with_alignment(
 }
 
 ///|
+/// Set the paragraph's line height (`<a:lnSpc>`, F4) — percent of the
+/// line (`Percent(Percentage(120.0))` = 120 %) or absolute points
+/// (`Points(Pt(18.0))`).
+pub fn Paragraph::with_line_spacing(
+  self : Paragraph,
+  spacing : TextSpacing,
+) -> Paragraph {
+  { ..self, properties: { ..self.properties, line_spacing: Some(spacing) } }
+}
+
+///|
+/// Set the extra space above the paragraph (`<a:spcBef>`, F4).
+pub fn Paragraph::with_space_before(
+  self : Paragraph,
+  spacing : TextSpacing,
+) -> Paragraph {
+  { ..self, properties: { ..self.properties, space_before: Some(spacing) } }
+}
+
+///|
+/// Set the extra space below the paragraph (`<a:spcAft>`, F4).
+pub fn Paragraph::with_space_after(
+  self : Paragraph,
+  spacing : TextSpacing,
+) -> Paragraph {
+  { ..self, properties: { ..self.properties, space_after: Some(spacing) } }
+}
+
+///|
 /// `TextBody` containing one paragraph of plain text plus default
 /// body properties and an empty list style. The default body
 /// properties don't carry any rotation / anchor / insets — those

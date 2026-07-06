@@ -345,7 +345,10 @@ pub fn Paragraph::of_styled_text(String, RunProperties) -> Self
 pub fn Paragraph::of_text(String) -> Self
 pub fn Paragraph::plain_text(Self) -> String
 pub fn Paragraph::with_alignment(Self, TextAlignment) -> Self
+pub fn Paragraph::with_line_spacing(Self, TextSpacing) -> Self
 pub fn Paragraph::with_properties(Self, ParagraphProperties) -> Self
+pub fn Paragraph::with_space_after(Self, TextSpacing) -> Self
+pub fn Paragraph::with_space_before(Self, TextSpacing) -> Self
 
 pub(all) enum ParagraphContent {
   RunContent(Run)
@@ -358,9 +361,9 @@ pub(all) struct ParagraphProperties {
   alignment : TextAlignment?
   margin_left : @units.Emu?
   indent : @units.Emu?
-  line_spacing : @units.Percentage?
-  space_before : @units.Pt?
-  space_after : @units.Pt?
+  line_spacing : TextSpacing?
+  space_before : TextSpacing?
+  space_after : TextSpacing?
   bullet : Bullet?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
@@ -877,6 +880,11 @@ pub fn TextBody::of_paragraphs(Array[Paragraph]) -> Self
 pub fn TextBody::of_styled_text(String, RunProperties) -> Self
 pub fn TextBody::of_text(String) -> Self
 pub fn TextBody::plain_text(Self) -> String
+
+pub(all) enum TextSpacing {
+  Percent(@units.Percentage)
+  Points(@units.Pt)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Timeline {
   steps : Array[AnimStep]

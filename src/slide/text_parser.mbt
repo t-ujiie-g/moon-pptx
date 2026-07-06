@@ -204,9 +204,9 @@ fn parse_paragraph_properties(
   let alignment = parse_enum_attr(attrs, "algn", TextAlignment::from_xml)
   let margin_left = parse_emu_attr(attrs, "marL")
   let indent = parse_emu_attr(attrs, "indent")
-  let line_spacing = parse_thousandths_pct_attr(attrs, "lineSpacing")
-  let space_before = parse_hundredths_pt_attr(attrs, "spaceBefore")
-  let space_after = parse_hundredths_pt_attr(attrs, "spaceAfter")
+  let mut line_spacing : TextSpacing? = None
+  let mut space_before : TextSpacing? = None
+  let mut space_after : TextSpacing? = None
   let mut bullet : Bullet? = None
   let extension : Array[@xml.XmlElement] = []
   while true {
@@ -217,6 +217,9 @@ fn parse_paragraph_properties(
           extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
+            "lnSpc" => line_spacing = Some(parse_text_spacing(r, "lnSpc"))
+            "spcBef" => space_before = Some(parse_text_spacing(r, "spcBef"))
+            "spcAft" => space_after = Some(parse_text_spacing(r, "spcAft"))
             "buNone" => {
               bullet = Some(BulNone)
               skip_subtree(r)
@@ -255,6 +258,48 @@ fn parse_paragraph_properties(
     space_after,
     bullet,
     extension,
+  }
+}
+
+///|
+/// Parse a `CT_TextSpacing` wrapper (`<a:lnSpc>` / `<a:spcBef>` /
+/// `<a:spcAft>`, F4): exactly one `<a:spcPct val="…"/>` (1/1000 of a
+/// percent) or `<a:spcPts val="…"/>` (1/100 of a point) choice child.
+/// Raises `Malformed` when neither is present — the spec's choice is
+/// required, matching the strict shape/fill paths.
+fn parse_text_spacing(
+  r : @xml.XmlReader,
+  wrapper : String,
+) -> TextSpacing raise SlideError {
+  let mut result : TextSpacing? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) => {
+        if child.uri == @oxml.drawing_ns && result is None {
+          match child.local_name {
+            "spcPct" =>
+              match parse_thousandths_pct_attr(child_attrs, "val") {
+                Some(p) => result = Some(Percent(p))
+                None => ()
+              }
+            "spcPts" =>
+              match parse_hundredths_pt_attr(child_attrs, "val") {
+                Some(pt) => result = Some(Points(pt))
+                None => ()
+              }
+            _ => ()
+          }
+        }
+        skip_subtree(r)
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  match result {
+    Some(t) => t
+    None => raise Malformed("a:" + wrapper + ": expected spcPct or spcPts")
   }
 }
 

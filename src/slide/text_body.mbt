@@ -424,20 +424,31 @@ pub(all) struct ParagraphProperties {
   margin_left : @units.Emu?
   /// `indent` — first-line indent in EMU; negative = hanging indent.
   indent : @units.Emu?
-  /// `lineSpacing` — line height (positive = percent, OOXML 1/1000 %).
-  /// Spec also allows an `<a:spcPts>` child for absolute spacing; for now
-  /// we only model the percent form. Widen the ADT if needed.
-  line_spacing : @units.Percentage?
-  /// `spaceBefore` — extra space above the paragraph in points.
-  space_before : @units.Pt?
-  /// `spaceAfter` — extra space below the paragraph in points.
-  space_after : @units.Pt?
+  /// `<a:lnSpc>` — line height, percent or absolute points (F4).
+  line_spacing : TextSpacing?
+  /// `<a:spcBef>` — extra space above the paragraph (F4).
+  space_before : TextSpacing?
+  /// `<a:spcAft>` — extra space below the paragraph (F4).
+  space_after : TextSpacing?
   /// Bullet specification — `None` means "inherit from list style".
   bullet : Bullet?
   /// Lossless preservation (ADR-004): unmodelled `<a:pPr>` children
   /// (`<a:defRPr>`, `<a:tabLst>`, `<a:buFont>`, `<a:buClr>`,
   /// `<a:buSzPct>`, `<a:extLst>`, foreign-namespace siblings).
   extension : Array[@xml.XmlElement]
+} derive(Eq, Debug)
+
+///|
+/// `CT_TextSpacing` — the spacing choice shared by `<a:lnSpc>` /
+/// `<a:spcBef>` / `<a:spcAft>` (F4): a percentage of the line
+/// (`<a:spcPct>`, stored as 1/1000 % in XML) or absolute points
+/// (`<a:spcPts>`, stored as 1/100 pt in XML).
+pub(all) enum TextSpacing {
+  /// `<a:spcPct val="…"/>` — e.g. `Percent(Percentage(120.0))` is
+  /// 120 % line height.
+  Percent(@units.Percentage)
+  /// `<a:spcPts val="…"/>` — absolute spacing in points.
+  Points(@units.Pt)
 } derive(Eq, Debug)
 
 ///|
