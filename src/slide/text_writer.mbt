@@ -447,13 +447,9 @@ fn write_run_properties(
     Some(s) => @oxml.write_stroke(w, ctx, s)
     None => ()
   }
-  // Solid fill child.
+  // Fill child (any of the fill-choice group — F3-b).
   match p.fill {
-    Some(c) => {
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
-      @oxml.write_color(w, ctx, c)
-      w.end_element()
-    }
+    Some(f) => @oxml.write_fill(w, ctx, f)
     None => ()
   }
   // Text effects (`<a:effectLst>`).

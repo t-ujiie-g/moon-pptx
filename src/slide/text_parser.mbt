@@ -312,13 +312,13 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
 }
 
 ///|
-/// Parse `<a:rPr>` — attributes off the start tag and a handful of
-/// children (`<a:ln>`, `<a:solidFill>`, `<a:effectLst>`,
+/// Parse `<a:rPr>` — attributes off the start tag and its typed
+/// children (`<a:ln>`, the fill-choice group — `<a:noFill>` /
+/// `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`
+/// via the shared `@oxml.parse_fill` (F3-b) — `<a:effectLst>`,
 /// `<a:highlight>`, `<a:latin>`, `<a:ea>`, `<a:cs>`, `<a:hlinkClick>`).
-/// Other children (gradient/pattern fill, underline fills, east-asian
-/// list, `<a:rtl>`) ride on the run's `extension` per ADR-004; widening
-/// the solid-only `fill` to the full shape-level fill ADT is a future
-/// expansion point.
+/// Other children (`<a:grpFill>`, underline fills, east-asian list,
+/// `<a:rtl>`) ride on the run's `extension` per ADR-004.
 fn parse_run_properties(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
@@ -336,7 +336,7 @@ fn parse_run_properties(
   let mut latin : String? = None
   let mut east_asian : String? = None
   let mut complex_script : String? = None
-  let mut fill : @oxml.Color? = None
+  let mut fill : @oxml.Fill? = None
   let mut outline : @oxml.Stroke? = None
   let mut text_effects : @oxml.EffectList? = None
   let mut highlight : @oxml.Color? = None
@@ -362,7 +362,15 @@ fn parse_run_properties(
               complex_script = Some(optional_attr(child_attrs, "typeface"))
               skip_subtree(r)
             }
-            "solidFill" => fill = parse_solid_fill(r)
+            "noFill" | "solidFill" | "gradFill" | "pattFill" | "blipFill" =>
+              fill = Some(
+                @oxml.parse_fill(r, child, child_attrs) catch {
+                  e =>
+                    raise Malformed(
+                      "a:" + child.local_name + ": " + e.to_string(),
+                    )
+                },
+              )
             "ln" =>
               outline = Some(
                 @oxml.parse_stroke(r, child_attrs) catch {

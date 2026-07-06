@@ -143,7 +143,18 @@ pub fn RunProperties::with_color(
   self : RunProperties,
   rgb : @units.RgbColor,
 ) -> RunProperties {
-  { ..self, fill: Some(@oxml.Color::srgb(rgb)) }
+  { ..self, fill: Some(SolidFill(@oxml.Color::srgb(rgb))) }
+}
+
+///|
+/// Set the run's text fill to any `@oxml.Fill` — gradient / pattern /
+/// picture text fills included (F3-b). `with_color` remains the solid
+/// shorthand.
+pub fn RunProperties::with_text_fill(
+  self : RunProperties,
+  fill : @oxml.Fill,
+) -> RunProperties {
+  { ..self, fill: Some(fill) }
 }
 
 ///|

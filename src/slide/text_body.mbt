@@ -102,11 +102,12 @@ pub(all) struct RunProperties {
   east_asian : String?
   /// `<a:cs typeface="…"/>` font for complex script.
   complex_script : String?
-  /// `<a:solidFill>` resolved to a colour. Other fill kinds
-  /// (`<a:gradFill>`, `<a:pattFill>`, `<a:blipFill>`) ride on the
-  /// run's `extension` per ADR-004; widening to the full shape-level
-  /// `@oxml.Fill` ADT is a future expansion point.
-  fill : @oxml.Color?
+  /// The text fill — the full shape-level `@oxml.Fill` ADT
+  /// (`<a:noFill>` / `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>`
+  /// / `<a:blipFill>`), so gradient / pattern text is typed (F3-b).
+  /// Only `<a:grpFill>` (not modelled by `@oxml.Fill`) still rides on
+  /// the run's `extension` per ADR-004.
+  fill : @oxml.Fill?
   /// `<a:ln>` — the text *outline* (a `CT_LineProperties`, reusing the
   /// shape-level `@oxml.Stroke`). `None` = no outline.
   outline : @oxml.Stroke?

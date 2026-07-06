@@ -685,7 +685,7 @@ pub(all) struct RunProperties {
   latin : String?
   east_asian : String?
   complex_script : String?
-  fill : @oxml.Color?
+  fill : @oxml.Fill?
   outline : @oxml.Stroke?
   text_effects : @oxml.EffectList?
   highlight : @oxml.Color?
@@ -707,6 +707,7 @@ pub fn RunProperties::with_hyperlink_to_slide(Self, Int, tooltip? : String) -> S
 pub fn RunProperties::with_italic(Self) -> Self
 pub fn RunProperties::with_kerning(Self, @units.Pt) -> Self
 pub fn RunProperties::with_text_effects(Self, @oxml.EffectList) -> Self
+pub fn RunProperties::with_text_fill(Self, @oxml.Fill) -> Self
 pub fn RunProperties::with_text_outline(Self, @oxml.Stroke) -> Self
 
 pub(all) enum Shape {
