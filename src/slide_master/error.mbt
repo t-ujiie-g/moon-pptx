@@ -20,7 +20,7 @@ pub(all) suberror SlideMasterError {
 ///|
 /// Wrap an `xml::XmlError` as a `SlideMasterError::XmlFailure`. Used at every
 /// call site that bridges the `@xml` and slide-master layers.
-pub fn wrap_xml(e : @xml.XmlError) -> SlideMasterError {
+fn wrap_xml(e : @xml.XmlError) -> SlideMasterError {
   match e {
     Malformed(msg) => XmlFailure("Malformed", msg)
     MismatchedEndTag(name) => XmlFailure("MismatchedEndTag", name)

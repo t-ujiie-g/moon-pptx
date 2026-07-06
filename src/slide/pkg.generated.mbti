@@ -10,9 +10,6 @@ import {
 }
 
 // Values
-pub let anim_default_duration_ms : Int
-
-pub fn wrap_xml(@xml.XmlError) -> SlideError
 
 // Errors
 pub(all) suberror SlideError {

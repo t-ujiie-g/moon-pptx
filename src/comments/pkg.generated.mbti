@@ -8,7 +8,6 @@ import {
 }
 
 // Values
-pub fn wrap_xml(@xml.XmlError) -> CommentsError
 
 // Errors
 pub(all) suberror CommentsError {

@@ -72,7 +72,7 @@ pub impl Show for DLbl with fn output(self, logger) {
 ///|
 /// Walk a captured `<c:dLbl>` element into a typed `DLbl`. Raises
 /// `Malformed` if the schema-required `<c:idx>` leaf is absent.
-pub fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
+fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
   let mut idx : Int? = None
   let mut delete : Bool? = None
   let mut layout : Layout? = None
@@ -152,7 +152,7 @@ pub fn parse_d_lbl(el : @xml.XmlElement) -> DLbl raise ChartError {
 /// the parser tolerates both being set or neither, and the writer
 /// emits whatever is set. Real-world files don't mix the two
 /// branches, so the produced XML is schema-conformant in practice.
-pub fn write_d_lbl(
+fn write_d_lbl(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   d : DLbl,

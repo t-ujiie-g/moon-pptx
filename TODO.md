@@ -379,23 +379,28 @@ PowerPoint.
     connectors); 1109 → 1111 × 4 backends; no `.mbti` change (template
     internals only).
 
-🟡 **API stability review — pass 1** *(audit done 2026-07-06; cuts await downstream check)*
+🟢 **API stability review — pass 1** *(landed 2026-07-06 — cuts executed after downstream check)*
   - **Audited**: all 1017 `pub` declarations across 13 packages via
     `moon ide analyze` (per-package external-usage counts). Naming
     conventions are consistent (no rename findings); `pub(all)` model
     nodes are by design.
-  - **Privatize candidates (~35 fns — internal plumbing leaked as `pub`,
-    zero usage outside their package incl. all blackbox tests)**:
-    (a) the error-wrapping helpers `wrap_xml` (× slide / theme /
-    slide_master / comments / chart / chart_ex) + `@opc.wrap_fzip`;
-    (b) `@oxml` attribute-parsing plumbing — `enum_attr_opt`,
-    `parse_percent_value`, `require_angle` / `require_emu` /
-    `require_pct`; (c) the `@chart` per-element `parse_*` / `write_*`
-    internals (axis / legend / title / dLbl(s) / layout / trendline /
-    series cores — ~20 fns used only across files *within* the chart
-    package, where `pub` isn't needed); (d) `@slide.anim_default_duration_ms`.
-    **Blocked on**: confirming no downstream consumer (pptz) uses them —
-    then cut inside the v0.6.0 breaking window.
+  - **Downstream check**: fetched **pptz 0.7.0** from mooncakes
+    (`Milky2018/pptz` — the GitHub mirror is stale) and grepped its full
+    source: it consumes **173** distinct moon-pptx symbols, and **none**
+    of the privatize candidates. Bonus findings: (a) the enum
+    `from_xml` codecs ARE used downstream (`PresetShape::from_xml`) —
+    confirming keep; (b) pptz's F3-b migration is exactly **2 sites**
+    (`pptx_writer/writer.mbt:1614/2216` set `fill: Some(color)` directly
+    → wrap in `SolidFill(…)`); F4 impact: none (pptz never touches
+    paragraph spacing).
+  - **Cut (33 declarations privatized, `.mbti` −63 lines)**: `wrap_xml`
+    (× slide / theme / slide_master / comments / chart / chart_ex) +
+    `@opc.wrap_fzip`; `@oxml.enum_attr_opt` / `require_angle` /
+    `require_emu` / `require_pct`; the 20 `@chart` per-element
+    `parse_*` / `write_*` internals (cross-file within the package —
+    `pub` was never needed); `@slide.anim_default_duration_ms`.
+    `@oxml.parse_percent_value` turned out fully dead once private →
+    **deleted**.
   - **Missing-direct-test findings (additive §7.4 debt, not blockers)**:
     deliberate API with no blackbox test — `AutoShape::of_preset` /
     `with_stroke`, `Paragraph::of_styled_text` / `with_properties`,
@@ -405,9 +410,9 @@ PowerPoint.
     `Picture::with_hyperlink_to_slide`, `MasterDefinition::with_background`,
     `SlideSizeKind::to_slide_size`, `@opc.validate_part_name`,
     `Presentation::add_chart_ex_mut` (covered only indirectly).
-  - **Keep as-is**: enum `from_xml` / `to_xml` codec pairs (uniform
-    convention, exercised in-package by the parsers), `@opc` relationship
-    / content-type constants, `Color::of`.
+  - **Keep as-is**: enum `from_xml` / `to_xml` codec pairs, `@opc`
+    relationship / content-type constants, `Color::of`,
+    `@opc.validate_part_name` (documented utility).
 
 ---
 
@@ -721,6 +726,7 @@ Run all four before committing. CI enforces them.
 ## 11. Living changelog (high-level)
 
 - **2026-07-06** — **Roadmap reorganised around a new release policy: v1.0.0 ships when MoonBit itself reaches v1.0.** The library is feature-complete for its core mission (all §1 vision goals delivered; verified against source: 1109 tests × 4 backends green, F3-b/F4/D1-b confirmed still open in code). §4 restructured: the shipped v0.2.0–v0.5.3 cycles' ~320 lines of landed-item detail are compressed into the §4.0 summary table (the full record stays in §11 + `CHANGELOG.md`); forward work is now **§4.1 v0.6.0** (the deliberate pre-1.0 *breaking* pass — F3-b non-solid text fill + F4 paragraph-spacing ADTs — plus D1-b SmartArt recursive hierarchy `layoutDef` and API-stability review pass 1), **§4.2 v0.7.x** (additive parity/ergonomics: B3 xlsx cache, F2-b app.xml, F5-b remaining shape hyperlinks, SmartArt node styling, sections, fill/table-style conveniences, Tier-1 reader-losslessness on the corpus), and **§4.3 v1.0.0** (the gate: final API review, Tier 3 verification, benchmarks, announcement). **B3 moved out of the 1.0 gate to §4.2** (a feature, not a stability item) and **D5 streaming write demoted to §5** (needs fzip upstream work, no consumer demand; benchmarks decide). Also refreshed to match reality: §0 at-a-glance (0.5.3 released; `v0.5.3` git tag noted as not yet pushed), §3 matrix (stale ⏳ v0.2 rows for A1/A2/A3/A4/A5/C2 flipped to ✅; column header → 0.5.3; B3/D5 targets retargeted), §5 trimmed (promoted/completed items removed — the real-world corpus landed 2026-06-20 with 7 Apache-POI files), **Q8/Q9 moved to resolved** (answered by D1/D2 as shipped), new **Q13** (what counts as "MoonBit v1.0"), §9 risks refreshed (v0.5-scope + M1 rows obsolete → removed; new external-1.0-gate risk). Docs-only; no library `.mbti` change.
+- **2026-07-06** — **API stability review pass 1 complete: 33 leaked internals privatized (breaking, inside the v0.6.0 window).** The downstream check unblocked the cuts: fetched **pptz 0.7.0** from mooncakes (`moon fetch Milky2018/pptz@0.7.0` — the GitHub mirror is stale) and grepped its source; it consumes 173 distinct moon-pptx symbols and **none of the candidates**, so all 33 were privatized: the `wrap_xml` error helpers (×6 packages) + `@opc.wrap_fzip`, `@oxml.enum_attr_opt`/`require_angle`/`require_emu`/`require_pct`, the 20 `@chart` per-element `parse_*`/`write_*` internals (cross-file within one package — `pub` was never needed), and `@slide.anim_default_duration_ms`; `@oxml.parse_percent_value` proved fully dead once private and was deleted. `.mbti` surface −63 lines across 8 packages. The pptz sweep also sized its 0.6 migration precisely: **two** `fill: Some(color)` sites need `SolidFill(…)` (F3-b) and F4 touches nothing. 1118 × 4 backends green; §4.1 item → 🟢 — **the v0.6.0 checklist is now complete** (D1-b / F3-b / F4 / API pass 1): ready for a v0.6.0 release pass (CHANGELOG, sample-deck dep bump, publish) when desired.
 - **2026-07-06** — **API stability review pass 1: audit complete (§4.1 item → 🟡).** All 1017 `pub` declarations across 13 packages audited with `moon ide analyze` (external-usage counts per package). No naming-convention violations found. Two findings lists recorded in §4.1: **(1) ~35 privatize candidates** — internal plumbing exported as `pub` with zero usage outside its package including all blackbox tests (`wrap_xml`/`wrap_fzip` error helpers ×7 packages, `@oxml` attribute-parsing `require_*`/`enum_attr_opt`/`parse_percent_value`, the `@chart` per-element `parse_*`/`write_*` internals ~20 fns, `anim_default_duration_ms`) — cutting them is breaking, so it waits on a downstream check (does pptz use any?) and must land inside the v0.6.0 window; **(2) missing-direct-test list** (~16 deliberate builders/utilities covered only indirectly) — additive test debt, §7.4. Enum `from_xml`/`to_xml` codec pairs and `@opc` constants confirmed keep-as-is. Docs-only; no code change.
 - **2026-07-06** — **v0.6 F4 landed: paragraph spacing completeness (breaking) — and a real parser bug fixed.** `line_spacing` / `space_before` / `space_after` widen to a shared **`TextSpacing { Percent(Percentage) | Points(Pt) }`** ADT (named for the spec's `CT_TextSpacing` — deviation from the sketch's `LineSpacing`, documented in §4.1 — since all three fields share the same `spcPct`/`spcPts` choice), with fluent `Paragraph::with_line_spacing` / `with_space_before` / `with_space_after`. **The lift exposed that the old parser was wrong**: it read spacing off fabricated `<a:pPr>` *attributes* (`lineSpacing="…"` etc.) that don't exist in OOXML — and its unit tests asserted that invented form — so real Office `<a:lnSpc>` / `<a:spcBef>` / `<a:spcAft>` children were never typed (they rode `extension`: lossless on round-trip, but setting the typed field on a parsed paragraph would have double-emitted, the same shadowing class as B4's cNvPr fix). The parser now reads the child-element form via `parse_text_spacing` (an empty wrapper with no choice child raises `Malformed`, consistent with the strict fill path); the writer emits all three through one shared `write_text_spacing`. 6 tests rewritten/added; 1114 → 1118 × 4 backends. **The §4.1 breaking budget (F3-b + F4) is now fully spent — everything from here to 1.0 should be additive-only.**
 - **2026-07-06** — **Post-D1-b/F3-b refactor + doc sweep (CLAUDE.md §7).** Five-lens pass over the two landings. (1) **Dedup**: the `<dsp:nvSpPr>` head duplicated between the box and connector `<dsp:sp>` writers → shared `write_dsp_nv_sp_pr`; the font-margin constraints + 5-pt shrink rule duplicated between the hierarchy text node and the radial ellipse node templates → shared `font_margin_constrs` / `font_shrink_rule_lst` fragments. (2) **Naming/doc**: `parse_solid_fill` (slide) served only `<a:highlight>` after F3-b routed run fills through `@oxml.parse_fill` → renamed `parse_highlight_color` with a doc that says so. (3) **Test adequacy**: gradient run fill's *write* path was untested (parse-only) → the gradFill test now asserts serialize→reparse model equality; `NoFill` round-trip added; the D1-b connector `flipH` geometry (down-left edge flips, down-right doesn't) got a direct unit test. (4) **Docs**: README `@slide` row gains the run-level rich-formatting list (spc / kern / highlight / outline / effects / `with_text_fill` — 0.5.2 + F3-b were unlisted) and the `@smartart` row notes connector lines + full-tree recursive layoutDefs. File-split / constants lenses: no further action (`hier_layouts.mbt` 270 L cohesive; `layout_meta`'s unreachable nesting arms documented, kept for match exhaustiveness). 1113 → 1114 × 4 backends; no `.mbti` change.

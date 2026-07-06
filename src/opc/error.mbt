@@ -22,7 +22,7 @@ pub(all) suberror OpcError {
 ///|
 /// Wrap a `@fzip.FzipError` as an `OpcError::ZipFailure`. Used at every call
 /// site that bridges the `@fzip` and OPC layers.
-pub fn wrap_fzip(e : @fzip.FzipError) -> OpcError {
+fn wrap_fzip(e : @fzip.FzipError) -> OpcError {
   let FzipError(code~, message~) = e
   ZipFailure(code.to_string(), message)
 }

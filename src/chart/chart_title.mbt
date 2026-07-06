@@ -57,7 +57,7 @@ pub impl Show for ChartTitle with fn output(self, logger) {
 /// Walk a captured `<c:title>` element into a typed `ChartTitle`.
 /// Used by both the chart-level title parser (`parse_chart_body` in
 /// parser.mbt) and the axis-level title parser (`parse_axis_core`).
-pub fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
+fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
   let mut tx : @xml.XmlElement? = None
   let mut layout : Layout? = None
   let mut overlay : Bool? = None
@@ -90,7 +90,7 @@ pub fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
 ///|
 /// Emit a `<c:title>` element. Child order follows the ECMA-376
 /// schema: tx → layout → overlay → spPr → txPr → extension.
-pub fn write_chart_title(
+fn write_chart_title(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   t : ChartTitle,

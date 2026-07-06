@@ -19,7 +19,7 @@ pub(all) suberror ThemeError {
 ///|
 /// Wrap an `xml::XmlError` as a `ThemeError::XmlFailure`. Used at every
 /// call site that bridges the `@xml` and theme layers.
-pub fn wrap_xml(e : @xml.XmlError) -> ThemeError {
+fn wrap_xml(e : @xml.XmlError) -> ThemeError {
   match e {
     Malformed(msg) => XmlFailure("Malformed", msg)
     MismatchedEndTag(name) => XmlFailure("MismatchedEndTag", name)

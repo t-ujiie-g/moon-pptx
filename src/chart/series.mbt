@@ -131,7 +131,7 @@ pub impl Show for BubbleSeriesCore with fn output(self, logger) {
 ///
 /// Raises `Malformed` if the required `<c:idx>` or `<c:order>` leaves
 /// are missing — both are spec-required.
-pub fn parse_chart_series_core(
+fn parse_chart_series_core(
   el : @xml.XmlElement,
 ) -> ChartSeriesCore raise ChartError {
   let mut idx : Int? = None
@@ -176,7 +176,7 @@ pub fn parse_chart_series_core(
 
 ///|
 /// Parse a captured `<c:ser>` element into a typed `ScatterSeriesCore`.
-pub fn parse_scatter_series_core(
+fn parse_scatter_series_core(
   el : @xml.XmlElement,
 ) -> ScatterSeriesCore raise ChartError {
   let mut idx : Int? = None
@@ -221,7 +221,7 @@ pub fn parse_scatter_series_core(
 
 ///|
 /// Parse a captured `<c:ser>` element into a typed `BubbleSeriesCore`.
-pub fn parse_bubble_series_core(
+fn parse_bubble_series_core(
   el : @xml.XmlElement,
 ) -> BubbleSeriesCore raise ChartError {
   let mut idx : Int? = None
@@ -282,7 +282,7 @@ pub fn parse_bubble_series_core(
 /// Emit a `<c:ser>` element from a `ChartSeriesCore`. Child order
 /// follows the ECMA-376 schema: idx → order → tx → spPr →
 /// trendline* → cat → val → extension tail.
-pub fn write_chart_series_core(
+fn write_chart_series_core(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   s : ChartSeriesCore,
@@ -318,7 +318,7 @@ pub fn write_chart_series_core(
 /// Emit a `<c:ser>` element from a `ScatterSeriesCore`. Schema
 /// order: idx → order → tx → spPr → trendline* → xVal → yVal →
 /// extension tail.
-pub fn write_scatter_series_core(
+fn write_scatter_series_core(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   s : ScatterSeriesCore,
@@ -354,7 +354,7 @@ pub fn write_scatter_series_core(
 /// Emit a `<c:ser>` element from a `BubbleSeriesCore`. Schema
 /// order: idx → order → tx → spPr → trendline* → xVal → yVal →
 /// bubbleSize → extension tail.
-pub fn write_bubble_series_core(
+fn write_bubble_series_core(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   s : BubbleSeriesCore,

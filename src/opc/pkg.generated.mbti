@@ -2,7 +2,6 @@
 package "t-ujiie-g/moon-pptx/opc"
 
 import {
-  "hustcer/fzip",
   "moonbitlang/core/debug",
 }
 
@@ -78,8 +77,6 @@ pub let rt_video : String
 pub let rt_view_props : String
 
 pub fn validate_part_name(String) -> Unit raise OpcError
-
-pub fn wrap_fzip(@fzip.FzipError) -> OpcError
 
 pub fn zip_name_to_opc(String) -> String
 

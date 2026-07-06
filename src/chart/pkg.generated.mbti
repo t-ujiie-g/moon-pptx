@@ -3,52 +3,10 @@ package "t-ujiie-g/moon-pptx/chart"
 
 import {
   "moonbitlang/core/debug",
-  "t-ujiie-g/moon-pptx/oxml",
   "t-ujiie-g/moon-pptx/xml",
 }
 
 // Values
-pub fn parse_axis_core(@xml.XmlElement) -> AxisCore raise ChartError
-
-pub fn parse_bubble_series_core(@xml.XmlElement) -> BubbleSeriesCore raise ChartError
-
-pub fn parse_chart_legend(@xml.XmlElement) -> ChartLegend raise ChartError
-
-pub fn parse_chart_series_core(@xml.XmlElement) -> ChartSeriesCore raise ChartError
-
-pub fn parse_chart_title(@xml.XmlElement) -> ChartTitle
-
-pub fn parse_d_lbl(@xml.XmlElement) -> DLbl raise ChartError
-
-pub fn parse_d_lbls(@xml.XmlElement) -> DLbls raise ChartError
-
-pub fn parse_layout(@xml.XmlElement) -> Layout
-
-pub fn parse_scatter_series_core(@xml.XmlElement) -> ScatterSeriesCore raise ChartError
-
-pub fn parse_trendline(@xml.XmlElement) -> Trendline raise ChartError
-
-pub fn wrap_xml(@xml.XmlError) -> ChartError
-
-pub fn write_axis(@xml.XmlWriter, @oxml.WriteCtx, Axis) -> Unit raise @xml.XmlError
-
-pub fn write_bubble_series_core(@xml.XmlWriter, @oxml.WriteCtx, BubbleSeriesCore) -> Unit raise @xml.XmlError
-
-pub fn write_chart_legend(@xml.XmlWriter, @oxml.WriteCtx, ChartLegend) -> Unit raise @xml.XmlError
-
-pub fn write_chart_series_core(@xml.XmlWriter, @oxml.WriteCtx, ChartSeriesCore) -> Unit raise @xml.XmlError
-
-pub fn write_chart_title(@xml.XmlWriter, @oxml.WriteCtx, ChartTitle) -> Unit raise @xml.XmlError
-
-pub fn write_d_lbl(@xml.XmlWriter, @oxml.WriteCtx, DLbl) -> Unit raise @xml.XmlError
-
-pub fn write_d_lbls(@xml.XmlWriter, @oxml.WriteCtx, DLbls) -> Unit raise @xml.XmlError
-
-pub fn write_layout(@xml.XmlWriter, @oxml.WriteCtx, Layout) -> Unit raise @xml.XmlError
-
-pub fn write_scatter_series_core(@xml.XmlWriter, @oxml.WriteCtx, ScatterSeriesCore) -> Unit raise @xml.XmlError
-
-pub fn write_trendline(@xml.XmlWriter, @oxml.WriteCtx, Trendline) -> Unit raise @xml.XmlError
 
 // Errors
 pub(all) suberror ChartError {

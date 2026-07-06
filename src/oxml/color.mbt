@@ -417,14 +417,3 @@ fn transform_from(
     _ => None
   }
 }
-
-///|
-/// Percentage parser for `<a:scrgbClr>` / `<a:hslClr>` raw strings.  Used
-/// by tests; production parsing goes through the shared `require_pct` /
-/// `pct_attr_opt` helpers in `@oxml`.
-pub fn parse_percent_value(raw : String) -> @units.Percentage? {
-  match parse_signed_int(raw) {
-    Some(n) => Some(@units.Percentage::from_ooxml(n))
-    None => None
-  }
-}
