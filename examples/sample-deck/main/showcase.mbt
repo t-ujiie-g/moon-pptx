@@ -285,6 +285,112 @@ fn sample_online_video_slide(
 }
 
 ///|
+/// v0.6 — the pre-1.0 breaking pass: F3-b non-solid *text* fills (the run
+/// fill is the full `@oxml.Fill` ADT — gradient / pattern shown here) and
+/// F4 paragraph spacing (`TextSpacing { Percent | Points }` on line height
+/// + space before/after). D1-b (recursive SmartArt layout) is on the
+/// SmartArt slide.
+fn sample_v06_features_slide(
+  prs : @presentation.Presentation,
+  idx : Int,
+) -> Unit raise @presentation.PptxError {
+  let navy = @units.RgbColor::new(0x1F, 0x4E, 0x79)
+  let teal = @units.RgbColor::new(0x2C, 0x9C, 0x9C)
+  let mut s = prs.slides()[idx].with_shape(
+    @slide.AutoShape(heading(prs, 2, "v0.6 — text fills & paragraph spacing")),
+  )
+
+  // F3-b — gradient text fill: navy → teal, top-to-bottom.
+  let gradient : @oxml.Fill = @oxml.Fill::GradientFill({
+    stops: [
+      { position: @units.Percentage(0.0), color: @oxml.Color::srgb(navy) },
+      { position: @units.Percentage(100.0), color: @oxml.Color::srgb(teal) },
+    ],
+    direction: Linear(@units.Angle(90.0), true),
+    rotate_with_shape: None,
+    flip: None,
+    extension: [],
+  })
+  let grad_box = @slide.AutoShape::textbox(
+    10,
+    "GradientText",
+    prs.pct_w(6.0),
+    prs.pct_h(20.0),
+    prs.pct_w(88.0),
+    prs.pct_h(12.0),
+    "",
+  ).with_text_body(
+    @slide.TextBody::of_styled_text(
+      "Gradient text fill (with_text_fill)",
+      @slide.RunProperties::default()
+      .with_font_size(@units.Pt(36.0))
+      .with_bold()
+      .with_text_fill(gradient),
+    ),
+  )
+
+  // F3-b — pattern text fill: light down-diagonal, navy on white.
+  let pattern : @oxml.Fill = @oxml.Fill::PatternFill({
+    preset: "ltDnDiag",
+    fg: @oxml.Color::srgb(navy),
+    bg: @oxml.Color::srgb(@units.RgbColor::new(0xFF, 0xFF, 0xFF)),
+    extension: [],
+  })
+  let patt_box = @slide.AutoShape::textbox(
+    11,
+    "PatternText",
+    prs.pct_w(6.0),
+    prs.pct_h(33.0),
+    prs.pct_w(88.0),
+    prs.pct_h(11.0),
+    "",
+  ).with_text_body(
+    @slide.TextBody::of_styled_text(
+      "Pattern text fill (ltDnDiag)",
+      @slide.RunProperties::default()
+      .with_font_size(@units.Pt(32.0))
+      .with_bold()
+      .with_text_fill(pattern),
+    ),
+  )
+  s = s
+    .with_shape(@slide.AutoShape(grad_box))
+    .with_shape(@slide.AutoShape(patt_box))
+
+  // F4 — paragraph spacing: percent + absolute line height, space-before.
+  let body_rp = @slide.RunProperties::default().with_font_size(
+    @units.Pt(16.0),
+  )
+  let spacing_paras = [
+    @slide.Paragraph::of_styled_text(
+      "Paragraph spacing (F4) — this first paragraph wraps onto several lines at 150 % line height, so the extra leading between the wrapped lines is visible.",
+      body_rp,
+    ).with_line_spacing(Percent(@units.Percentage(150.0))),
+    @slide.Paragraph::of_styled_text(
+      "This paragraph carries an 18 pt space-before (the gap above it is spacing, not an empty paragraph).",
+      body_rp,
+    ).with_space_before(Points(@units.Pt(18.0))),
+    @slide.Paragraph::of_styled_text(
+      "And this one uses an absolute 28 pt line height (spcPts) — fixed leading regardless of font size, also wrapping across lines to show it.",
+      body_rp,
+    )
+    .with_line_spacing(Points(@units.Pt(28.0)))
+    .with_space_before(Points(@units.Pt(18.0))),
+  ]
+  let spacing_box = @slide.AutoShape::textbox(
+    12,
+    "SpacingDemo",
+    prs.pct_w(6.0),
+    prs.pct_h(48.0),
+    prs.pct_w(88.0),
+    prs.pct_h(44.0),
+    "",
+  ).with_text_body(@slide.TextBody::of_paragraphs(spacing_paras))
+  s = s.with_shape(@slide.AutoShape(spacing_box))
+  prs.update_slide_mut(idx, s)
+}
+
+///|
 /// v0.5.2 — fidelity & fine-grained formatting: F1 shape rotation / flip,
 /// F3 run-level highlight / kerning / text outline / text effects, and F5
 /// shape-level hyperlinks.
