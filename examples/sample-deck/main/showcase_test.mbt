@@ -5,10 +5,11 @@
 ///|
 test "sample deck reopens with all feature slides + a defined master" {
   let prs = @presentation.Presentation::open(build_sample_deck())
-  // 24 slides: title, toc, text, shapes, custom-geom, picture, table,
+  // 25 slides: title, toc, text, shapes, custom-geom, picture, table,
   // 4 chart slides, background, combo, svg, edit, media, smartart, animation,
-  // online-video, v0.5.2 features, master, 2 typed-layout slides (M1), closing.
-  assert_eq(prs.slides().length(), 24)
+  // online-video, v0.5.2 features, v0.6 features, master, 2 typed-layout
+  // slides (M1), closing.
+  assert_eq(prs.slides().length(), 25)
   // The deck's own master + the one added by sample_master_slide.
   assert_eq(prs.slide_masters().length(), 2)
   // Every slide carries a transition (v0.4 D3).
@@ -20,7 +21,7 @@ test "sample deck reopens with all feature slides + a defined master" {
 ///|
 test "each isolated feature deck reopens cleanly" {
   // Mirrors the CLI split mode: title + one feature must round-trip.
-  for i in 0..<18 {
+  for i in 0..<21 {
     let prs = @presentation.Presentation::open(build_sample_isolated(i))
     assert_true(prs.slides().length() >= 1)
   }

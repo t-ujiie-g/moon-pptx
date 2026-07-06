@@ -204,9 +204,9 @@ fn parse_paragraph_properties(
   let alignment = parse_enum_attr(attrs, "algn", TextAlignment::from_xml)
   let margin_left = parse_emu_attr(attrs, "marL")
   let indent = parse_emu_attr(attrs, "indent")
-  let line_spacing = parse_thousandths_pct_attr(attrs, "lineSpacing")
-  let space_before = parse_hundredths_pt_attr(attrs, "spaceBefore")
-  let space_after = parse_hundredths_pt_attr(attrs, "spaceAfter")
+  let mut line_spacing : TextSpacing? = None
+  let mut space_before : TextSpacing? = None
+  let mut space_after : TextSpacing? = None
   let mut bullet : Bullet? = None
   let extension : Array[@xml.XmlElement] = []
   while true {
@@ -217,6 +217,9 @@ fn parse_paragraph_properties(
           extension.push(collect_subtree_unknown(r, child, child_attrs))
         } else {
           match child.local_name {
+            "lnSpc" => line_spacing = Some(parse_text_spacing(r, "lnSpc"))
+            "spcBef" => space_before = Some(parse_text_spacing(r, "spcBef"))
+            "spcAft" => space_after = Some(parse_text_spacing(r, "spcAft"))
             "buNone" => {
               bullet = Some(BulNone)
               skip_subtree(r)
@@ -255,6 +258,48 @@ fn parse_paragraph_properties(
     space_after,
     bullet,
     extension,
+  }
+}
+
+///|
+/// Parse a `CT_TextSpacing` wrapper (`<a:lnSpc>` / `<a:spcBef>` /
+/// `<a:spcAft>`, F4): exactly one `<a:spcPct val="…"/>` (1/1000 of a
+/// percent) or `<a:spcPts val="…"/>` (1/100 of a point) choice child.
+/// Raises `Malformed` when neither is present — the spec's choice is
+/// required, matching the strict shape/fill paths.
+fn parse_text_spacing(
+  r : @xml.XmlReader,
+  wrapper : String,
+) -> TextSpacing raise SlideError {
+  let mut result : TextSpacing? = None
+  while true {
+    let ev = next_event(r)
+    match ev {
+      StartElement(child, child_attrs) => {
+        if child.uri == @oxml.drawing_ns && result is None {
+          match child.local_name {
+            "spcPct" =>
+              match parse_thousandths_pct_attr(child_attrs, "val") {
+                Some(p) => result = Some(Percent(p))
+                None => ()
+              }
+            "spcPts" =>
+              match parse_hundredths_pt_attr(child_attrs, "val") {
+                Some(pt) => result = Some(Points(pt))
+                None => ()
+              }
+            _ => ()
+          }
+        }
+        skip_subtree(r)
+      }
+      EndElement(_) => break
+      _ => ()
+    }
+  }
+  match result {
+    Some(t) => t
+    None => raise Malformed("a:" + wrapper + ": expected spcPct or spcPts")
   }
 }
 
@@ -312,13 +357,13 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
 }
 
 ///|
-/// Parse `<a:rPr>` — attributes off the start tag and a handful of
-/// children (`<a:ln>`, `<a:solidFill>`, `<a:effectLst>`,
+/// Parse `<a:rPr>` — attributes off the start tag and its typed
+/// children (`<a:ln>`, the fill-choice group — `<a:noFill>` /
+/// `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`
+/// via the shared `@oxml.parse_fill` (F3-b) — `<a:effectLst>`,
 /// `<a:highlight>`, `<a:latin>`, `<a:ea>`, `<a:cs>`, `<a:hlinkClick>`).
-/// Other children (gradient/pattern fill, underline fills, east-asian
-/// list, `<a:rtl>`) ride on the run's `extension` per ADR-004; widening
-/// the solid-only `fill` to the full shape-level fill ADT is a future
-/// expansion point.
+/// Other children (`<a:grpFill>`, underline fills, east-asian list,
+/// `<a:rtl>`) ride on the run's `extension` per ADR-004.
 fn parse_run_properties(
   r : @xml.XmlReader,
   attrs : Array[(@xml.QName, String)],
@@ -336,7 +381,7 @@ fn parse_run_properties(
   let mut latin : String? = None
   let mut east_asian : String? = None
   let mut complex_script : String? = None
-  let mut fill : @oxml.Color? = None
+  let mut fill : @oxml.Fill? = None
   let mut outline : @oxml.Stroke? = None
   let mut text_effects : @oxml.EffectList? = None
   let mut highlight : @oxml.Color? = None
@@ -362,7 +407,15 @@ fn parse_run_properties(
               complex_script = Some(optional_attr(child_attrs, "typeface"))
               skip_subtree(r)
             }
-            "solidFill" => fill = parse_solid_fill(r)
+            "noFill" | "solidFill" | "gradFill" | "pattFill" | "blipFill" =>
+              fill = Some(
+                @oxml.parse_fill(r, child, child_attrs) catch {
+                  e =>
+                    raise Malformed(
+                      "a:" + child.local_name + ": " + e.to_string(),
+                    )
+                },
+              )
             "ln" =>
               outline = Some(
                 @oxml.parse_stroke(r, child_attrs) catch {
@@ -375,7 +428,7 @@ fn parse_run_properties(
                   e => raise Malformed("a:effectLst: " + e.to_string())
                 },
               )
-            "highlight" => highlight = parse_solid_fill(r)
+            "highlight" => highlight = parse_highlight_color(r)
             "hlinkClick" => {
               hyperlink_click = Some(extract_rid(child_attrs))
               let t = optional_attr(child_attrs, "tooltip")
@@ -426,11 +479,13 @@ fn parse_run_properties(
 }
 
 ///|
-/// Parse `<a:solidFill>` body. Delegates colour parsing to
-/// `@oxml.parse_color_element` so every colour kind (srgb / hsl / sys /
-/// scheme / prst / scrgb) and its modifiers come through one path.
-/// Returns `None` if the body has no recognised colour child.
-fn parse_solid_fill(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
+/// Parse the body of a one-colour wrapper element — used for
+/// `<a:highlight>` (the run fill now goes through `@oxml.parse_fill`,
+/// F3-b). Delegates colour parsing to `@oxml.parse_color_element` so
+/// every colour kind (srgb / hsl / sys / scheme / prst / scrgb) and its
+/// modifiers come through one path. Returns `None` if the body has no
+/// recognised colour child.
+fn parse_highlight_color(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
   let mut result : @oxml.Color? = None
   while true {
     let ev = next_event(r)

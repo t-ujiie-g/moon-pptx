@@ -148,7 +148,7 @@ pub fn DLblPos::to_xml(self : DLblPos) -> String {
 /// Walk a captured `<c:dLbls>` element into a typed `DLbls`. May
 /// raise `Malformed` via the per-point `parse_d_lbl` helper when a
 /// `<c:dLbl>` child is missing its required `<c:idx>`.
-pub fn parse_d_lbls(el : @xml.XmlElement) -> DLbls raise ChartError {
+fn parse_d_lbls(el : @xml.XmlElement) -> DLbls raise ChartError {
   let d_lbl : Array[DLbl] = []
   let mut num_fmt : NumFmt? = None
   let mut sp_pr : @xml.XmlElement? = None
@@ -226,7 +226,7 @@ fn extract_text_content(el : @xml.XmlElement) -> String {
 /// §21.2.2.49 schema order: dLbl* → numFmt → spPr → txPr → dLblPos
 /// → showLegendKey → showVal → showCatName → showSerName →
 /// showPercent → showBubbleSize → separator → extension.
-pub fn write_d_lbls(
+fn write_d_lbls(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   dl : DLbls,

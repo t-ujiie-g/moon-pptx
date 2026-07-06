@@ -190,9 +190,9 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Run-level: text highlight (`<a:highlight>`) | ❌ | ✅ `highlight` | ✅ `with_highlight` (0.6 F3) | — |
 | Run-level: text outline (`<a:ln>`) | △ | ✅ `outline` | ✅ `with_text_outline` (0.6 F3) | — |
 | Run-level: text glow / shadow effects (`<a:effectLst>`) | ❌ | ✅ `glow`/`shadow` | ✅ `with_text_effects` (0.6 F3) | — |
-| Run-level: non-solid text fill (gradient/pattern) | △ | △ | △ extension-only (solid fill ✅) | ⏳ v0.6 (F3-b, §4.1) |
+| Run-level: non-solid text fill (gradient/pattern) | △ | △ | ✅ F3-b — full `@oxml.Fill` ADT on runs (`with_text_fill`) | — |
 | Paragraph: align / indent / margin / bullets | ✅ | ✅ | ✅ typed `ParagraphProperties` | — |
-| Paragraph: line-spacing absolute (`spcPts`) + space %-form (`spcPct`) | ✅ | ✅ | △ percent line-spacing + point space only | ⏳ v0.6 (F4, §4.1) |
+| Paragraph: line-spacing absolute (`spcPts`) + space %-form (`spcPct`) | ✅ | ✅ | ✅ F4 — `TextSpacing { Percent \| Points }` on all three fields | — |
 | Hyperlinks (run-level) | ✅ | ✅ | ✅ A2 (`with_hyperlink` / `with_hyperlink_to_slide`) | — |
 | Bullets / numbered lists | ✅ | ✅ | ✅ 38-variant `AutoNumType` | — |
 | RTL / bidi text | △ | ✅ | ❌ | future |
@@ -244,7 +244,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Comments | ✅ | ❌ | ✅ read+write | — |
 | Animations | △ XML-level | ❌ | ✅ D2 entrance/exit/emphasis/motion-path/fly-in + by-paragraph text builds (`Slide::with_animations` + `Timeline`) ⭐ | — |
 | Transitions (slide-to-slide) | △ XML-level | ❌ | ✅ D3 (typed `Slide.transition`; base CT_SlideTransition — p14 extended transitions round-trip via extension) | — |
-| SmartArt build | ❌ identification only | ❌ | ✅ D1 (`add_smartart_mut` — all 8 families build; the 5 flat families render fully in PowerPoint, the 3 nesting families render top-level only pending a recursive layoutDef) ⭐ | ⏳ v0.6 (D1-b, §4.1 — recursive hierarchy layoutDef) |
+| SmartArt build | ❌ identification only | ❌ | ✅ D1 + D1-b (`add_smartart_mut` — all 8 families build and lay out fully; nesting families via recursive hierRoot/hierChild + radial layoutDefs) ⭐ | — |
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ✅ C2 (`Pct` + `pct_of_slide_w` / `pct_of_slide_h`) | — |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | open idea (§5; promoted only if v1.0 benchmarks demand it) |
 | Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
@@ -263,7 +263,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 5. **Multi-backend** — single source compiles to Native (CLI / server), Wasm-GC (browser), JS (Node), Wasm. Neither python-pptx nor PptxGenJS spans this range.
 6. **Immutable + `_mut` duality** — pure-functional transforms (`prs → prs'`) when you want them; in-place edits when you don't (ADR-003).
 7. **`derive(Eq, Show)`** — structural equality + debug printing free for every model type; round-trip property tests are `assert_eq` one-liners.
-8. **SmartArt creation** (v0.5 D1) — all eight families (list / process / cycle / pyramid / org-chart / hierarchy / matrix / relationship) build a full five-part DiagramML graphic; the five flat families render fully in PowerPoint, the three nesting families render their top level only pending a recursive layoutDef (PowerPoint re-lays-out from the layout definition rather than the cached drawing). python-pptx can only *identify* SmartArt; PptxGenJS can't touch it at all. Plus the typed animation DSL (D2) and slide transitions (D3) neither competitor exposes above the XML level.
+8. **SmartArt creation** (v0.5 D1 + D1-b) — all eight families (list / process / cycle / pyramid / org-chart / hierarchy / matrix / relationship) build a full five-part DiagramML graphic and lay out fully: the nesting families ship recursive hierRoot/hierChild (and radial) layout definitions, so PowerPoint — which re-lays-out from the layoutDef on open — renders the whole tree, connectors included. python-pptx can only *identify* SmartArt; PptxGenJS can't touch it at all. Plus the typed animation DSL (D2) and slide transitions (D3) neither competitor exposes above the XML level.
 
 ---
 
@@ -311,33 +311,111 @@ DoD: every known breaking API change has landed (so 0.6 → 1.0 is
 additive-only), and every landed feature renders correctly in current
 PowerPoint.
 
-🔴 **F3-b — Non-solid text fill** *(breaking — the project's first deliberate break)*
-  - Widen `RunProperties.fill : @oxml.Color?` toward the `@oxml.Fill`
-    ADT (gradient / pattern text fill). The field's doc-comment already
-    flags it as "a future expansion point".
+🟢 **F3-b — Non-solid text fill** *(landed 2026-07-06 — the project's first deliberate break)*
+  - **Shipped**: `RunProperties.fill` widened from `@oxml.Color?` to
+    `@oxml.Fill?` — gradient / pattern / picture / noFill text fills are
+    typed. Parser routes the whole fill-choice group (`noFill` /
+    `solidFill` / `gradFill` / `pattFill` / `blipFill`) through the shared
+    `@oxml.parse_fill` (strict, same as the shape path — a colour-less
+    `<a:solidFill/>` now raises instead of silently dropping); writer
+    delegates to `@oxml.write_fill`. Only `<a:grpFill>` still rides
+    `extension` (not modelled by `@oxml.Fill`).
+  - **API**: `with_color(rgb)` unchanged in signature (now builds
+    `SolidFill`); new `with_text_fill(@oxml.Fill)` for the non-solid
+    kinds. **Breaking**: code matching `rp.fill` as a `Color` must match
+    `SolidFill(color)` instead.
+  - 3 new tests + 3 updated; 1111 → 1113 × 4 backends; `.mbti` diff =
+    the field type + `with_text_fill`.
 
-🔴 **F4 — Paragraph spacing completeness** *(breaking — batched with F3-b)*
-  - `line_spacing : Percentage?` → ADT
-    `LineSpacing { Percent(Percentage) | Points(Pt) }` (adds the
-    absolute `<a:spcPts>` form); `space_before` / `space_after` gain the
-    percent `<a:spcPct>` form likewise.
-  - python-pptx `paragraph.line_spacing` accepts both a multiple and a
-    Length; PptxGenJS has `lineSpacing` / `lineSpacingMultiple`.
+🟢 **F4 — Paragraph spacing completeness** *(landed 2026-07-06 — breaking, batched with F3-b)*
+  - **Shipped**: one shared ADT for all three fields —
+    `TextSpacing { Percent(Percentage) | Points(Pt) }` (named after the
+    spec's `CT_TextSpacing` rather than the sketch's `LineSpacing`, since
+    `space_before` / `space_after` use the identical choice) on
+    `line_spacing` / `space_before` / `space_after`. New fluent
+    `Paragraph::with_line_spacing` / `with_space_before` /
+    `with_space_after`.
+  - **Bug found & fixed while lifting**: the parser read the spacing off
+    **fabricated `<a:pPr>` attributes** (`lineSpacing` / `spaceBefore` /
+    `spaceAfter` — not OOXML; the old unit tests asserted that invented
+    form), so real Office `<a:lnSpc>` / `<a:spcBef>` / `<a:spcAft>`
+    *children* were never typed (they rode `extension` — lossless, but a
+    consumer setting the typed field on such a paragraph would have
+    double-emitted). The parser now reads the child-element form
+    (`parse_text_spacing`; an empty wrapper with no `spcPct`/`spcPts`
+    choice raises, matching the strict fill path) and the writer emits
+    via one shared `write_text_spacing`.
+  - 6 tests rewritten/added (percent + absolute lnSpc, mixed
+    spcBef/spcAft forms, round-trip, empty-wrapper raise, builder
+    emit + reparse); 1114 → 1118 × 4 backends; `.mbti` diff = the three
+    field types + `TextSpacing` + three builders.
 
-🔴 **D1-b — SmartArt recursive hierarchy layoutDef** *(fidelity — top priority)*
-  - `hierRoot` / `hierChild` composite with a nested `forEach` so
-    PowerPoint lays out the three nesting families (org_chart /
-    hierarchy / relationship) fully — today they build and are
-    recognised, but render top-level only because PowerPoint re-lays-out
-    from our single-level `layoutDef` and ignores the cached drawing
-    (ADR-010 status update; §9 risk).
-  - Also: parent→child **connector lines** in the cached drawing (helps
-    the non-editing viewers that *do* use it).
+🟢 **D1-b — SmartArt recursive hierarchy layoutDef** *(landed 2026-07-06)*
+  - **Shipped**: `src/smartart/hier_layouts.mbt` — `OrgChart` / `Hierarchy`
+    get a recursive layoutDef mirroring the built-in `orgChart1` skeleton:
+    diagram-root `hierChild` → per-root `hierRoot` composite (text box + a
+    nested `hierChild` stack), **recursion via a named `<dgm:forEach>`
+    re-invoked with `<dgm:forEach ref="childForEach"/>`**, a `conn`
+    connector layoutNode selected by `axis="precedSib" ptType="parTrans"
+    st="-1" cnt="1"`, and the real file's constraint set (ideal box sizes,
+    `primFontSz op="equ"`, `sp`/`sibSp` 0.21, `bendDist` 0.5).
+    `Relationship` gets the `radial1` skeleton (`cycle` alg +
+    `ctrShpMap="fNode"` pinning the hub, ellipse nodes, a `conn` per
+    hub→spoke `parTrans`). Structures verified against real Office-emitted
+    `layout1.xml` parts (orgChart1 + radial1), simplified by dropping the
+    assistant / `hierBranch` machinery our builder never generates.
+    `layout_xml` dispatches per family; the flat families keep the
+    single-level template.
+  - **Connector lines in the cached drawing**: one `<dsp:sp>` `line` per
+    parent→child edge (modelId = the child's `parTrans` point), drawn under
+    the boxes — trees hang bottom-centre → top-centre, radial joins centres.
+  - **Verified**: Open XML SDK validator clean over a 3-slide deck (3-level
+    org chart / hierarchy forest / relationship) — only the long-baselined
+    data→drawing rel false positive remains. Sample deck's SmartArt slide
+    switched back to an org chart as the visual regression check; cookbook
+    §15 gains the nested-`Node` recipe. 🟢 Tier-3 verified in PowerPoint
+    Web (2026-07-06): full tree + connectors render; the one finding —
+    absent `styleLbl` drew child boxes black — fixed by labelling
+    `childNode` as `node1` explicitly.
+  - 2 new tests + 4 updated (cached-drawing shape counts now include
+    connectors); 1109 → 1111 × 4 backends; no `.mbti` change (template
+    internals only).
 
-🔴 **API stability review — pass 1**
-  - Audit every `pub` declaration *now*, while breaking is still cheap:
-    mark experimental items in doc-comments, decide keep / rename / cut.
-    The final pass at 1.0 (§4.3) then only verifies the diff is additive.
+🟢 **API stability review — pass 1** *(landed 2026-07-06 — cuts executed after downstream check)*
+  - **Audited**: all 1017 `pub` declarations across 13 packages via
+    `moon ide analyze` (per-package external-usage counts). Naming
+    conventions are consistent (no rename findings); `pub(all)` model
+    nodes are by design.
+  - **Downstream check**: fetched **pptz 0.7.0** from mooncakes
+    (`Milky2018/pptz` — the GitHub mirror is stale) and grepped its full
+    source: it consumes **173** distinct moon-pptx symbols, and **none**
+    of the privatize candidates. Bonus findings: (a) the enum
+    `from_xml` codecs ARE used downstream (`PresetShape::from_xml`) —
+    confirming keep; (b) pptz's F3-b migration is exactly **2 sites**
+    (`pptx_writer/writer.mbt:1614/2216` set `fill: Some(color)` directly
+    → wrap in `SolidFill(…)`); F4 impact: none (pptz never touches
+    paragraph spacing).
+  - **Cut (33 declarations privatized, `.mbti` −63 lines)**: `wrap_xml`
+    (× slide / theme / slide_master / comments / chart / chart_ex) +
+    `@opc.wrap_fzip`; `@oxml.enum_attr_opt` / `require_angle` /
+    `require_emu` / `require_pct`; the 20 `@chart` per-element
+    `parse_*` / `write_*` internals (cross-file within the package —
+    `pub` was never needed); `@slide.anim_default_duration_ms`.
+    `@oxml.parse_percent_value` turned out fully dead once private →
+    **deleted**.
+  - **Missing-direct-test findings — closed (2026-07-06 whole-tree
+    sweep)**: all 16 audited APIs now have direct blackbox tests —
+    `AutoShape::of_preset` / `with_stroke`, `Paragraph::of_styled_text` /
+    `with_properties`, `TableCell::empty`,
+    `TableCellProperties::with_border_*` (×4), `TableProperties::default`,
+    `BackgroundProperties::of_fill`, `ShapeHyperlink::external` /
+    `to_slide`, `Picture::with_hyperlink_to_slide`,
+    `MasterDefinition::with_background`, `SlideSizeKind::to_slide_size`,
+    `@opc.validate_part_name` (incl. the error paths),
+    `Presentation::add_chart_ex_mut` (part + content type + reopen).
+  - **Keep as-is**: enum `from_xml` / `to_xml` codec pairs, `@opc`
+    relationship / content-type constants, `Color::of`,
+    `@opc.validate_part_name` (documented utility).
 
 ---
 
@@ -553,6 +631,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Decision**: (1) **New `src/smartart/` package** (ADR-005 sub-package model) owns the typed `SmartArt` / `Node` model and emits the five part byte-blobs; the OPC orchestration (`Presentation::add_smartart_mut`) lives at the presentation layer like charts / media / SVG. (2) **Cached drawing is the render contract** — we compute box positions ourselves and emit a complete `<dsp:drawing>`, so the diagram renders even where the layout engine isn't run (PowerPoint < 2010, thumbnails); the layout/colors/quickStyle parts are minimal valid definitions consulted only on *edit*. (3) **Reuse the `OtherGraphic` round-trip path** for the graphicFrame body rather than a typed `GraphicFrameContent::DiagramContent` — a parsed SmartArt already round-trips that way (ADR-004), so building the `<dgm:relIds>` by hand needs no parser/writer change. (4) **Build-only** (like A6 media / D2 animations): a parsed `<dgm:relIds>` + diagram parts round-trip losslessly via `extension` / opaque OPC parts; the typed `SmartArt` is a deliberately lossy *build* model, not lifted on parse. (5) **Sliced delivery** — slice 1 ships the linear `List` / `Process` families; hierarchical families layer on the same model + five-part pipeline additively.
 - **Consequences**: SmartArt is creatable in moon-pptx — a feature neither competitor offers — with zero parser/writer churn and lossless round-trip preserved. Adding a family is a new `SmartArtKind` + its drawing layout + (optionally) a richer data-model shape — no new parts or relationship plumbing.
 - **Status update (2026-06-16, PowerPoint Web verification)**: decision (2)'s premise is **wrong for PowerPoint Web** — it re-lays-out SmartArt from the `layoutDef` on open and does **not** use the cached `<dsp:drawing>`. So the cached drawing is *not* a universal render contract; it helps only non-editing/older viewers. With our single-level `layoutDef forEach`, the 5 flat families render fully but the 3 nesting families render top-level only. This does **not** supersede the package/round-trip/build-only decisions — only the "render guarantee" claim. The robust fix (future ADR if adopted) is a recursive hierarchy `layoutDef`, making the `layoutDef` — not the cached drawing — the primary render path.
+- **Status update (2026-07-06, D1-b)**: the robust fix landed — `hier_layouts.mbt` ships recursive hierRoot/hierChild layoutDefs for OrgChart / Hierarchy and a radial (`cycle` + `ctrShpMap="fNode"`) one for Relationship, making the `layoutDef` the primary render path for the nesting families; the cached drawing (now including parent→child connector lines) remains the fallback for non-editing viewers. See §4.1 D1-b.
 
 ### ADR-011: Three-tier verification pyramid; automate "opens without repair"
 - **Date**: 2026-06-20
@@ -598,7 +677,7 @@ Resolved:
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| SmartArt nesting families render top-level only in PowerPoint (re-lays-out from our single-level `layoutDef`, ignores the cached drawing) | Confirmed (2026-06-16) | Medium | Flat families render fully (use them in examples); **D1-b (§4.1)** adds the recursive hierarchy `layoutDef` so org_chart / hierarchy / relationship lay out — until then they build + are recognised but draw only the top level |
+| SmartArt nesting families render top-level only in PowerPoint | **Resolved** (D1-b; Tier-3 verified in PowerPoint Web 2026-07-06 — full tree + connectors render; the styleLbl black-box finding from that pass is fixed) | — | Row kept one cycle for visibility; drop at the v0.6.0 release notes |
 | MoonBit v1.0 timing is external — our 1.0 gate could sit open for a long time | Unknown | Low | Spend the breaking budget now (v0.6.0, §4.1) and keep every later release additive-only, so 1.0 is a tag whenever the toolchain lands; keep shipping features as 0.7.x meanwhile |
 | MoonBit compiler / toolchain breaking changes pre-1.0 (e.g. the 2026-06 `moon.mod` TOML manifest migration) | Medium | Medium | Pin moon version in CI; track changelogs via the `moonbit-orientation` skill; absorb migrations promptly on `main` |
 | fzip breaking changes | Low | Low | Pin minor version (`0.8.2`); smoke test catches regressions early |
@@ -650,6 +729,15 @@ Run all four before committing. CI enforces them.
 ## 11. Living changelog (high-level)
 
 - **2026-07-06** — **Roadmap reorganised around a new release policy: v1.0.0 ships when MoonBit itself reaches v1.0.** The library is feature-complete for its core mission (all §1 vision goals delivered; verified against source: 1109 tests × 4 backends green, F3-b/F4/D1-b confirmed still open in code). §4 restructured: the shipped v0.2.0–v0.5.3 cycles' ~320 lines of landed-item detail are compressed into the §4.0 summary table (the full record stays in §11 + `CHANGELOG.md`); forward work is now **§4.1 v0.6.0** (the deliberate pre-1.0 *breaking* pass — F3-b non-solid text fill + F4 paragraph-spacing ADTs — plus D1-b SmartArt recursive hierarchy `layoutDef` and API-stability review pass 1), **§4.2 v0.7.x** (additive parity/ergonomics: B3 xlsx cache, F2-b app.xml, F5-b remaining shape hyperlinks, SmartArt node styling, sections, fill/table-style conveniences, Tier-1 reader-losslessness on the corpus), and **§4.3 v1.0.0** (the gate: final API review, Tier 3 verification, benchmarks, announcement). **B3 moved out of the 1.0 gate to §4.2** (a feature, not a stability item) and **D5 streaming write demoted to §5** (needs fzip upstream work, no consumer demand; benchmarks decide). Also refreshed to match reality: §0 at-a-glance (0.5.3 released; `v0.5.3` git tag noted as not yet pushed), §3 matrix (stale ⏳ v0.2 rows for A1/A2/A3/A4/A5/C2 flipped to ✅; column header → 0.5.3; B3/D5 targets retargeted), §5 trimmed (promoted/completed items removed — the real-world corpus landed 2026-06-20 with 7 Apache-POI files), **Q8/Q9 moved to resolved** (answered by D1/D2 as shipped), new **Q13** (what counts as "MoonBit v1.0"), §9 risks refreshed (v0.5-scope + M1 rows obsolete → removed; new external-1.0-gate risk). Docs-only; no library `.mbti` change.
+- **2026-07-06** — **Whole-tree refactor sweep (CLAUDE.md §7) ahead of the v0.6 PR.** Five-lens pass over the full source. **Test adequacy (the actionable lens)**: the API audit's 16-item missing-direct-test list is fully closed — 13 new blackbox tests across `builders_test` (`of_preset`, `with_stroke` incl. ADR-003 immutability, `of_styled_text` + `with_properties`), `table_properties_test` (the four `with_border_*` singly, `TableProperties::default` all-inherit, `TableCell::empty`), `background_test` (`of_fill` defaults), `shape_hyperlink_test` (`ShapeHyperlink::external`/`to_slide` constructors + a `Picture::with_hyperlink_to_slide` end-to-end jump: `ppaction://hlinksldjump` + the `rt_slide` rel), `define_master_test` (`with_background` renders the `<p:bg>` fill into the synthesised master), `slide_size_test` (`to_slide_size` mirrors `dimensions` + `size_type` incl. `Custom`), `add_chart_test` (first *direct* `add_chart_ex_mut` test: chartEx part + content-type override + slide reference + save→reopen), `package_test` (`validate_part_name` accepts canonical names, raises `MalformedPackage` on empty / no-leading-slash / trailing-slash). One test correction along the way: `AutoShape::rect` deliberately ships a default 1 pt outline (documented), so the `with_stroke` immutability check bases on `of_preset` (no default stroke). **Other lenses — no action with rationale**: constants (per-package test fixture helpers are the blackbox-test convention; inline OOXML attribute values match the 2026-06-16 precedent), duplicate/dead code (deny-warn clean; the API pass already removed the leaked surface), file splitting (`parser.mbt` 1315 L / `chart/builders.mbt` 1197 L unchanged since the prior sweep's keep decision), docs (README.mbt.md carries no stale counts; cookbook + deck README refreshed earlier today). 1118 → 1131 × 4 backends; no `.mbti` change.
+- **2026-07-06** — **D1-b Tier-3 verified in PowerPoint Web — and its one finding fixed (child boxes rendered black).** Opening the regenerated deck in PowerPoint Web confirmed the recursive layoutDef works: the org chart lays out **all three levels with connector lines** (the D1-b goal). One defect: every non-root box drew **black with invisible text** — PowerPoint Web resolves an *absent* `styleLbl` to black rather than a usable default, and only the root (`node0`) was labelled. Fix: `childNode` now names `styleLbl="node1"` explicitly (the accent-1 label our colors/quickStyle parts define; the radial spokes already carried it). `hier_text_node` takes a required label; layout test asserts both labels. The v0.6 features slide verified fully correct on the same pass (gradient + pattern text fills, 150 % / space-before / absolute-28 pt spacing). 1118 × 4 backends; validator clean.
+- **2026-07-06** — **Sample deck updated for v0.6 verification (24 → 25 slides).** New slide 21 "v0.6 features": gradient + pattern **text fills** via `with_text_fill` (F3-b) and paragraph spacing — a 150 % line-height paragraph, an 18 pt space-before, and an absolute 28 pt `spcPts` line height (F4). The SmartArt slide (17) already carries the D1-b org chart. The deck builds against the repo source via a **local, uncommitted** `{ "path": "../.." }` dep flip (the committed `moon.mod.json` stays on the published version per release policy — CI's `gen-pptx.sh` does the same flip transiently); the isolated split-mode map was realigned (the master early-return at feature 15 had shadowed the smartArt match arm, and `main.mbt`'s names list was stale at 15/16 — features 16–19 are now smartart / animation / online-video / v06-features with truthful file names, `names` 17 → 21 entries). Deck README slide table refreshed (the v0.5.2 row was missing; dev-mode path-dep tip notes the v0.6 slides need it until 0.6.0 ships). Generated deck validates clean through the Open XML SDK (1 baselined known false positive). Sample-deck tests updated (25 slides, isolated 0..<21); library suite untouched at 1118 × 4.
+- **2026-07-06** — **API stability review pass 1 complete: 33 leaked internals privatized (breaking, inside the v0.6.0 window).** The downstream check unblocked the cuts: fetched **pptz 0.7.0** from mooncakes (`moon fetch Milky2018/pptz@0.7.0` — the GitHub mirror is stale) and grepped its source; it consumes 173 distinct moon-pptx symbols and **none of the candidates**, so all 33 were privatized: the `wrap_xml` error helpers (×6 packages) + `@opc.wrap_fzip`, `@oxml.enum_attr_opt`/`require_angle`/`require_emu`/`require_pct`, the 20 `@chart` per-element `parse_*`/`write_*` internals (cross-file within one package — `pub` was never needed), and `@slide.anim_default_duration_ms`; `@oxml.parse_percent_value` proved fully dead once private and was deleted. `.mbti` surface −63 lines across 8 packages. The pptz sweep also sized its 0.6 migration precisely: **two** `fill: Some(color)` sites need `SolidFill(…)` (F3-b) and F4 touches nothing. 1118 × 4 backends green; §4.1 item → 🟢 — **the v0.6.0 checklist is now complete** (D1-b / F3-b / F4 / API pass 1): ready for a v0.6.0 release pass (CHANGELOG, sample-deck dep bump, publish) when desired.
+- **2026-07-06** — **API stability review pass 1: audit complete (§4.1 item → 🟡).** All 1017 `pub` declarations across 13 packages audited with `moon ide analyze` (external-usage counts per package). No naming-convention violations found. Two findings lists recorded in §4.1: **(1) ~35 privatize candidates** — internal plumbing exported as `pub` with zero usage outside its package including all blackbox tests (`wrap_xml`/`wrap_fzip` error helpers ×7 packages, `@oxml` attribute-parsing `require_*`/`enum_attr_opt`/`parse_percent_value`, the `@chart` per-element `parse_*`/`write_*` internals ~20 fns, `anim_default_duration_ms`) — cutting them is breaking, so it waits on a downstream check (does pptz use any?) and must land inside the v0.6.0 window; **(2) missing-direct-test list** (~16 deliberate builders/utilities covered only indirectly) — additive test debt, §7.4. Enum `from_xml`/`to_xml` codec pairs and `@opc` constants confirmed keep-as-is. Docs-only; no code change.
+- **2026-07-06** — **v0.6 F4 landed: paragraph spacing completeness (breaking) — and a real parser bug fixed.** `line_spacing` / `space_before` / `space_after` widen to a shared **`TextSpacing { Percent(Percentage) | Points(Pt) }`** ADT (named for the spec's `CT_TextSpacing` — deviation from the sketch's `LineSpacing`, documented in §4.1 — since all three fields share the same `spcPct`/`spcPts` choice), with fluent `Paragraph::with_line_spacing` / `with_space_before` / `with_space_after`. **The lift exposed that the old parser was wrong**: it read spacing off fabricated `<a:pPr>` *attributes* (`lineSpacing="…"` etc.) that don't exist in OOXML — and its unit tests asserted that invented form — so real Office `<a:lnSpc>` / `<a:spcBef>` / `<a:spcAft>` children were never typed (they rode `extension`: lossless on round-trip, but setting the typed field on a parsed paragraph would have double-emitted, the same shadowing class as B4's cNvPr fix). The parser now reads the child-element form via `parse_text_spacing` (an empty wrapper with no choice child raises `Malformed`, consistent with the strict fill path); the writer emits all three through one shared `write_text_spacing`. 6 tests rewritten/added; 1114 → 1118 × 4 backends. **The §4.1 breaking budget (F3-b + F4) is now fully spent — everything from here to 1.0 should be additive-only.**
+- **2026-07-06** — **Post-D1-b/F3-b refactor + doc sweep (CLAUDE.md §7).** Five-lens pass over the two landings. (1) **Dedup**: the `<dsp:nvSpPr>` head duplicated between the box and connector `<dsp:sp>` writers → shared `write_dsp_nv_sp_pr`; the font-margin constraints + 5-pt shrink rule duplicated between the hierarchy text node and the radial ellipse node templates → shared `font_margin_constrs` / `font_shrink_rule_lst` fragments. (2) **Naming/doc**: `parse_solid_fill` (slide) served only `<a:highlight>` after F3-b routed run fills through `@oxml.parse_fill` → renamed `parse_highlight_color` with a doc that says so. (3) **Test adequacy**: gradient run fill's *write* path was untested (parse-only) → the gradFill test now asserts serialize→reparse model equality; `NoFill` round-trip added; the D1-b connector `flipH` geometry (down-left edge flips, down-right doesn't) got a direct unit test. (4) **Docs**: README `@slide` row gains the run-level rich-formatting list (spc / kern / highlight / outline / effects / `with_text_fill` — 0.5.2 + F3-b were unlisted) and the `@smartart` row notes connector lines + full-tree recursive layoutDefs. File-split / constants lenses: no further action (`hier_layouts.mbt` 270 L cohesive; `layout_meta`'s unreachable nesting arms documented, kept for match exhaustiveness). 1113 → 1114 × 4 backends; no `.mbti` change.
+- **2026-07-06** — **v0.6 F3-b landed: non-solid text fill — the project's first deliberate breaking change.** `RunProperties.fill` widened from `@oxml.Color?` to the full `@oxml.Fill?` ADT, so gradient / pattern / picture / noFill *text* fills are typed instead of riding `extension`. The parser now routes the run-level fill-choice group (`<a:noFill>` / `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`) through the shared `@oxml.parse_fill` — the same strict path the shape parser uses, so a schema-invalid colour-less `<a:solidFill/>` now raises (`<a:grpFill>`, not modelled by `@oxml.Fill`, still rides `extension` per ADR-004); the writer delegates to `@oxml.write_fill` in the same CT_TextCharacterProperties slot. `with_color(rgb)` keeps its signature (now building `SolidFill`); new **`with_text_fill(@oxml.Fill)`** covers the non-solid kinds. **Breaking**: consumers matching `rp.fill` as a `Color` must now match `SolidFill(color)` — the §4.1 pre-1.0 breaking pass spends this budget deliberately (F4 batched next). 3 new tests + 3 updated (gradFill test rewritten from "skipped to extension" to "lifts + round-trips"); 1111 → 1113 × 4 backends; `.mbti` diff = the field type + `with_text_fill`.
+- **2026-07-06** — **v0.6 D1-b landed: SmartArt recursive hierarchy layoutDef + cached-drawing connector lines — the nesting families now lay out fully.** The top fidelity item of the v0.6.0 cycle (§4.1), closing the 2026-06-16 PowerPoint-Web finding (nesting families rendered top-level only because the single-level `layoutDef forEach` never descended and PowerPoint ignores the cached drawing). New `src/smartart/hier_layouts.mbt`: **OrgChart / Hierarchy** get a recursive layoutDef distilled from a real Office-emitted `orgChart1` `layout1.xml` (fetched as ground truth) — diagram-root `hierChild` → per-top-level-node `hierRoot` (text box + nested `hierChild` stack), recursion via the named `childForEach` re-invoked with `<dgm:forEach ref=…/>`, a `conn` connector layoutNode per child selected by `axis="precedSib" ptType="parTrans" st="-1" cnt="1"`, and the real constraint set (ideal sizes ×10, `primFontSz op="equ"`, `sp`/`sibSp` 0.21×node width, `bendDist` 0.5) — minus the assistant / `hierBranch` machinery our builder never generates (`<dgm:orgChart val="1"/>` kept for OrgChart). **Relationship** gets the real `radial1` skeleton: `cycle` alg + `ctrShpMap="fNode"` pins the hub, ellipse hub/spoke nodes, one `conn` per hub→spoke `parTrans`. **Cached drawing** now also emits one `<dsp:sp>` `line` per parent→child edge (modelId = the child's `parTrans` point, drawn under the boxes; trees bottom-centre→top-centre, radial centre→centre) so non-editing viewers show connectors too. **Verified**: full suite green (1109 → 1111 × 4 backends after 2 new + 4 updated tests); Open XML SDK validator **clean** over a purpose-built 3-slide deck (3-level org chart / 2-root hierarchy / 4-spoke relationship) — only the long-baselined data→drawing rel false positive. Sample-deck SmartArt slide switched from `cycle` back to an **org chart** as the standing visual regression check; cookbook §15 + `examples_test` gain the nested-`Node` recipe. ADR-010 status updated (layoutDef is now the primary render path); §9 risk row downgraded to "Tier-3 visual confirmation pending". No `.mbti` change.
 - **2026-06-20** — **BUG-MEDIA fixed ([issue #11](https://github.com/t-ujiie-g/moon-pptx/issues/11)): media reference elements now serialise inside `<p:nvPr>`.** The first real bug the new validator caught (see the entry below). `classify_shape_ext` (`src/slide/shape_writer.mbt`) only recognised `videoFile`/`audioFile` under the `presentation_ns` guard, but `<a:videoFile>`/`<a:audioFile>` are **drawingml**-namespaced, so a parsed-then-re-serialised media picture (media is build-only, captured into `extension` on parse) emitted them — and the `<p14:media>` `<p:extLst>` — as direct children of `<p:pic>`, which `CT_Picture` forbids. Fix: classify drawing-ml `videoFile`/`audioFile` as `ShapeExtNvPrChild`, and route *only* the media `<p:extLst>` (detected by `media_ext_uri` via new `is_media_ext_lst`) into `<p:nvPr>` while a generic picture `<p:extLst>` stays body-level. New **placement** regression test in `media_test.mbt` (asserts `<a:videoFile>` + the media extLst sit between `<p:nvPr>`…`</p:nvPr>` after a parse→serialise round-trip — the pre-existing test only checked *presence*, which is why the bug slipped through); verified it fails without the fix. The media `baseline.txt` entries are removed so the Tier-2 gate re-tightens, and `examples/sample-deck`'s dep is switched to the `{ "path": "../.." }` path dep (README's in-repo-dev pattern) so CI validates the **repo source** rather than published `0.5.2` (which still carries the bug until the next release) — flip back to a version string at publish. 1108 → 1109 × 4 backends; no `.mbti` change. Validator now reports only the 1 documented SmartArt false positive on the showcase deck; corpus stays clean.
 - **2026-06-20** — **Verification pyramid landed (ADR-011): automate "opens without repair".** Until now the core "no PowerPoint repair prompt" promise was only checked by a human opening a deck — and several bugs (define_master id collisions, dangling-`rId` from namespace-prefix scoping, invalid chart `dLblPos`) were caught that way, late. Now automated in two tiers. **Tier 1 (in-repo, all backends)**: `src/integration/integrity_test.mbt` — a structural-integrity checker over assembled packages asserting the OPC repair-trigger invariants (content-type coverage, every Internal relationship target resolves to a real part, every `r:`-namespaced attribute `r:id`/`r:embed`/`r:link`/`r:dm` resolves to a declared relationship), run over the library's **builder/save output** (minimal deck, a picture+chart deck where real `r:embed`/chart rels live, and an open→save→reopen round-trip). It is a test-only helper, **not** a public `Presentation::validate()` (keeps library scope narrow — validation/templating stays downstream, e.g. `pptz`). Writing it immediately surfaced that the synthetic `build_pptx` fixtures intentionally omit per-part `.rels` (so they're parser scaffolds, not valid OPC packages) — hence the tests assert on builder output, not fixtures. **Tier 2 (CI job)**: new `tools/pptx-validate/` — a small .NET project running Microsoft's `OpenXmlValidator` (the same schema+semantic checks PowerPoint runs on open) over the generated showcase deck + any files in `test_fixtures/corpus/`, with a commented `baseline.txt` for documented false positives; wired as a `validate` job in `.github/workflows/ci.yml` (generate deck → setup .NET → validate). `test_fixtures/corpus/` ships sourcing+licensing docs (Apache POI Apache-2.0 lead) for incremental real-world-file curation. **Tier 3** (real PowerPoint/LibreOffice/Keynote) stays the manual v1.0 release gate. 3 new MoonBit tests (1105 → 1108 × 4 backends); no library `.mbti` change (test-only + out-of-tree tooling). §4.5 verification matrix updated (Tier 1 🟢 / Tier 2 🟡 / Tier 3 🔴); §5 gains the corpus-infra note + a reader-losslessness follow-up. **Validated end-to-end against the local .NET 10 SDK (runtime roll-forward from the net8.0 build), which immediately earned its keep — see the BUG-MEDIA finding below.**
 - **2026-06-20 — BUG (FIXED — see the entry above; [issue #11](https://github.com/t-ujiie-g/moon-pptx/issues/11), found by the new validator): media `<a:videoFile>`/`<a:audioFile>` emitted as a direct child of `<p:pic>` instead of inside `<p:nvPr>`.** The Open XML SDK validator flagged `Sch_InvalidElementContentExpectingComplex` on every media slide of the showcase deck (slide16 audio+video, slide19 online video). Confirmed real (not a false positive) on freshly-generated output: `<p:nvPr/>` is emitted empty and `<a:videoFile r:link>` + the `<p:extLst><p14:media>` sit as siblings of `<p:pic>`, which `CT_Picture` does not permit (the media `EG_Media` group belongs in `CT_ApplicationNonVisualDrawingProps` = `<p:nvPr>`). **Root cause**: `Picture::of_media` sets a typed `media: Some` that *would* serialise correctly inside `<p:nvPr>`, but the build pipeline round-trips the slide through the parser, which captures `<a:videoFile>` into `extension` (media is build-only, not lifted on parse); on re-serialise `classify_shape_ext` (`src/slide/shape_writer.mbt:54`) matches `"audioFile"|"videoFile"` only under the `presentation_ns` guard, but those tags are in the **drawingml** namespace (`<a:videoFile>`), so they fall through to `ShapeExtBody` and are written as `<p:pic>` children. The previous "media reopens" regression test only checked our own parser round-trip, never schema validity — exactly the gap this validator closes. **Fix sketch**: classify drawingml-ns `videoFile`/`audioFile` as `ShapeExtNvPrChild`, and route the media `<p:extLst>` (the one carrying `<p14:media>`) into `<p:nvPr>` too (a plain body-level `<p:extLst>` must stay body-level, so distinguish by the `media_ext_uri`). Affects audio / video / online-video. One SDK false positive is separately baselined (SmartArt `DiagramDataPart→DiagramPersistLayoutPart` cached-drawing relationship — legitimate per MS-ODRAWXML).

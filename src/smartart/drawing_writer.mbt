@@ -274,6 +274,29 @@ fn SmartArt::serialize_drawing_xml(
   w.end_element() // nvGrpSpPr
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "grpSpPr"))
   w.end_element()
+  // Parent→child connector lines first, so the boxes draw over them. Each
+  // connector's modelId is the child's parTrans point (the data-model point
+  // that *is* the incoming edge). Trees hang the line from the parent box's
+  // bottom centre to the child's top centre; the radial family (and any
+  // other parented layout) joins the box centres.
+  for f in flat {
+    if f.parent_gidx is Some(p) {
+      let pb = boxes[p]
+      let cb = boxes[f.gidx]
+      let (x1, y1, x2, y2) = match self.kind {
+        OrgChart | Hierarchy =>
+          (pb.x + pb.w / 2L, pb.y + pb.h, cb.x + cb.w / 2L, cb.y)
+        _ =>
+          (
+            pb.x + pb.w / 2L,
+            pb.y + pb.h / 2L,
+            cb.x + cb.w / 2L,
+            cb.y + cb.h / 2L,
+          )
+      }
+      write_dsp_connector(w, par_trans_id(f.gidx), x1, y1, x2, y2)
+    }
+  }
   // One <dsp:sp> per node (every node in the forest, in gidx order).
   for f in flat {
     write_dsp_sp(w, node_id(f.gidx), f.text, boxes[f.gidx])
@@ -281,6 +304,55 @@ fn SmartArt::serialize_drawing_xml(
   w.end_element() // spTree
   w.end_element() // drawing
   w.to_string()
+}
+
+///|
+/// One `<dsp:sp>` straight-line connector from `(x1, y1)` to `(x2, y2)`.
+/// The `line` preset draws its bounding box's top-left→bottom-right
+/// diagonal, so the box spans the two endpoints and `flipH` reorients the
+/// diagonal when the segment runs the other way.
+fn write_dsp_connector(
+  w : @xml.XmlWriter,
+  model_id : String,
+  x1 : Int64,
+  y1 : Int64,
+  x2 : Int64,
+  y2 : Int64,
+) -> Unit raise @xml.XmlError {
+  let ox = if x1 < x2 { x1 } else { x2 }
+  let oy = if y1 < y2 { y1 } else { y2 }
+  let wl = if x1 < x2 { x2 - x1 } else { x1 - x2 }
+  let hl = if y1 < y2 { y2 - y1 } else { y1 - y2 }
+  let flip_h = (x2 - x1) * (y2 - y1) < 0L
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "sp"))
+  w.attribute(@xml.QName::unqualified("modelId"), model_id)
+  write_dsp_nv_sp_pr(w)
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "spPr"))
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
+  if flip_h {
+    w.attribute(@xml.QName::unqualified("flipH"), "1")
+  }
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "off"))
+  w.attribute(@xml.QName::unqualified("x"), ox.to_string())
+  w.attribute(@xml.QName::unqualified("y"), oy.to_string())
+  w.end_element()
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "ext"))
+  w.attribute(@xml.QName::unqualified("cx"), wl.to_string())
+  w.attribute(@xml.QName::unqualified("cy"), hl.to_string())
+  w.end_element()
+  w.end_element() // xfrm
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "prstGeom"))
+  w.attribute(@xml.QName::unqualified("prst"), "line")
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "avLst"))
+  w.end_element()
+  w.end_element() // prstGeom
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "ln"))
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
+  write_scheme_clr(w, "accent1")
+  w.end_element()
+  w.end_element() // ln
+  w.end_element() // spPr
+  w.end_element() // sp
 }
 
 ///|
@@ -293,15 +365,7 @@ fn write_dsp_sp(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "sp"))
   w.attribute(@xml.QName::unqualified("modelId"), model_id)
-  // nvSpPr
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "nvSpPr"))
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvPr"))
-  w.attribute(@xml.QName::unqualified("id"), "0")
-  w.attribute(@xml.QName::unqualified("name"), "")
-  w.end_element()
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvSpPr"))
-  w.end_element()
-  w.end_element() // nvSpPr
+  write_dsp_nv_sp_pr(w)
   // spPr: xfrm + geometry + fill + line
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "spPr"))
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
@@ -342,6 +406,20 @@ fn write_dsp_sp(
   w.end_element() // p
   w.end_element() // txBody
   w.end_element() // sp
+}
+
+///|
+/// The `<dsp:nvSpPr>` head every `<dsp:sp>` carries (box or connector):
+/// an anonymous `<dsp:cNvPr id="0" name=""/>` + empty `<dsp:cNvSpPr/>`.
+fn write_dsp_nv_sp_pr(w : @xml.XmlWriter) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "nvSpPr"))
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvPr"))
+  w.attribute(@xml.QName::unqualified("id"), "0")
+  w.attribute(@xml.QName::unqualified("name"), "")
+  w.end_element()
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvSpPr"))
+  w.end_element()
+  w.end_element() // nvSpPr
 }
 
 ///|

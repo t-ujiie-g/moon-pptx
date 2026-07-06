@@ -41,7 +41,8 @@ write" — the import shapes (`@presentation`, `@chart`, `@slide`,
 
 > **Developing moon-pptx itself?** To build this example against your
 > in-repo changes *before* publishing, point the dep at the repo root
-> instead: `"t-ujiie-g/moon-pptx": { "path": "../.." }`.
+> instead: `"t-ujiie-g/moon-pptx": { "path": "../.." }`. The v0.6
+> feature slides need this until 0.6.0 is published.
 
 ## Generate `sample.pptx`
 
@@ -103,11 +104,13 @@ elements, ofPie defaults, etc.).
 | 14 | SVG image | Vector image with a raster fallback |
 | 15 | Editing shapes | Recolour boxes already on the slide via `map_shapes` |
 | 16 | Embedded media | A movie + a sound clip (placeholder media payloads) |
-| 17 | SmartArt | Org chart synthesised into the five-part DiagramML graphic (v0.5 D1) |
+| 17 | SmartArt | Org chart synthesised into the five-part DiagramML graphic; the whole tree lays out via the recursive layoutDef (v0.5 D1 + v0.6 D1-b) |
 | 18 | Animations | Fly-in entrance + spin emphasis on click (`with_animations` / `Timeline`, v0.5 D2) |
 | 19 | Online video | YouTube clip embedded by URL (`add_youtube_video_mut`, v0.5 C5) |
-| 20 | Master / template | Defined master + footer, auto date, slide number |
-| 21–22 | Typed layouts | Compile-time placeholder schema (`add_section_header_slide_mut` / `add_title_content_slide_mut`, v0.4 M1) |
-| 23 | Closing | Back-link hyperlink + speaker notes |
+| 20 | v0.5.2 features | Shape rotation / flip, run highlight + kerning + outline + glow, shape-level hyperlinks |
+| 21 | v0.6 features | Gradient + pattern **text fills** (`with_text_fill`, F3-b) and paragraph spacing — 150 % / absolute 28 pt line height, 18 pt space-before (`TextSpacing`, F4) |
+| 22 | Master / template | Defined master + footer, auto date, slide number |
+| 23–24 | Typed layouts | Compile-time placeholder schema (`add_section_header_slide_mut` / `add_title_content_slide_mut`, v0.4 M1) |
+| 25 | Closing | Back-link hyperlink + speaker notes |
 
 Plus a slide transition on every slide (v0.4 D3).

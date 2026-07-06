@@ -372,7 +372,7 @@ pub(all) struct Timeline {
 
 ///|
 /// The default effect duration PowerPoint uses for most animations (0.5 s).
-pub let anim_default_duration_ms : Int = 500
+let anim_default_duration_ms : Int = 500
 
 ///|
 /// An empty timeline. Add steps with `on_click` / `with_previous` /

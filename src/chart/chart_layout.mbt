@@ -158,7 +158,7 @@ pub fn LayoutMode::to_xml(self : LayoutMode) -> String {
 
 ///|
 /// Walk a captured `<c:layout>` element into a typed `Layout`.
-pub fn parse_layout(el : @xml.XmlElement) -> Layout {
+fn parse_layout(el : @xml.XmlElement) -> Layout {
   let mut manual_layout : ManualLayout? = None
   let extension : Array[@xml.XmlElement] = []
   for node in el.children {
@@ -221,7 +221,7 @@ fn parse_manual_layout(el : @xml.XmlElement) -> ManualLayout {
 ///|
 /// Emit a `<c:layout>` element. Child order follows ECMA-376
 /// §21.2.2.96: manualLayout → extension.
-pub fn write_layout(
+fn write_layout(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   l : Layout,

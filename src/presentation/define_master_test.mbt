@@ -182,3 +182,21 @@ test "define_master: new master id clears existing layout ids (no collision)" {
   // trips PowerPoint's repair). The first free id is 2147483650.
   assert_true(pres.sld_master_ids[1].id >= 2147483650L)
 }
+
+///|
+test "MasterDefinition::with_background: master cSld carries the fill" {
+  let prs = @presentation.Presentation::new()
+  let fill = @oxml.Fill::SolidFill(
+    @oxml.Color::srgb(@units.RgbColor::new(0x0A, 0x1B, 0x2C)),
+  )
+  let def = @presentation.MasterDefinition::new("Tinted").with_background(
+    @slide.Background::Properties(@slide.BackgroundProperties::of_fill(fill)),
+  )
+  let idx = prs.define_master(def)
+  assert_eq(idx, 1) // second master, after the template's own
+  let xml = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/ppt/slideMasters/slideMaster2.xml").unwrap().bytes,
+  )
+  assert_true(xml.find("<p:bg>") is Some(_))
+  assert_true(xml.find("0A1B2C") is Some(_))
+}

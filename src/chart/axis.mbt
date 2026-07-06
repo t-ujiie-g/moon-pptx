@@ -374,7 +374,7 @@ pub impl Show for NumFmt with fn output(self, logger) {
 /// the spec-required leaves (`<c:scaling>`, `<c:axPos>`,
 /// `<c:crossAx>`) are stored optional so leniently-built fixtures
 /// round-trip cleanly.
-pub fn parse_axis_core(el : @xml.XmlElement) -> AxisCore raise ChartError {
+fn parse_axis_core(el : @xml.XmlElement) -> AxisCore raise ChartError {
   let mut ax_id : Int? = None
   let mut scaling : Scaling? = None
   let mut delete : Bool? = None
@@ -506,7 +506,7 @@ fn parse_num_fmt(el : @xml.XmlElement) -> NumFmt {
 ///   axId → scaling → delete → axPos → majorGridlines → minorGridlines
 ///   → title → numFmt → majorTickMark → minorTickMark → tickLblPos
 ///   → spPr → txPr → crossAx → crosses → crossesAt → extension.
-pub fn write_axis(
+fn write_axis(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   axis : Axis,

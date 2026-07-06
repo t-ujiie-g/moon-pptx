@@ -18,8 +18,6 @@ pub fn parse_clr_map_attrs(Array[(@xml.QName, String)]) -> ColorMapping raise Sl
 
 pub fn resolve_slide_color(@units.ThemeColor, SlideMaster, SlideLayout, @theme.ColorScheme) -> @oxml.Color?
 
-pub fn wrap_xml(@xml.XmlError) -> SlideMasterError
-
 pub fn write_clr_map_override(@xml.XmlWriter, ClrMapOverride) -> Unit raise @xml.XmlError
 
 // Errors

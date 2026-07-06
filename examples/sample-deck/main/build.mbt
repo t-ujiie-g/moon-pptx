@@ -84,6 +84,7 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
     sample_animation_slide,
     sample_online_video_slide,
     sample_v052_features_slide,
+    sample_v06_features_slide,
   ]
   for _ in 0..<builders.length() {
     let _ = prs.add_slide_mut(0)
@@ -233,9 +234,12 @@ pub fn build_sample_isolated(
     12 => sample_svg_slide(prs, 1)
     13 => sample_edit_slide(prs, 1)
     14 => sample_media_slide(prs, 1)
-    15 => sample_smartart_slide(prs, 1)
-    16 => sample_animation_slide(prs, 1)
-    17 => sample_online_video_slide(prs, 1)
+    // 15 is the master/template feature — handled by the early return
+    // above (it adds its own slide on a defined layout).
+    16 => sample_smartart_slide(prs, 1)
+    17 => sample_animation_slide(prs, 1)
+    18 => sample_online_video_slide(prs, 1)
+    19 => sample_v06_features_slide(prs, 1)
     _ => sample_closing_slide(prs, 1)
   }
   prs.save()

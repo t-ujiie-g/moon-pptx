@@ -51,7 +51,8 @@ fn emit_split() -> Unit {
     "00-title-only", "01-text", "02-shapes", "03-custom-geom", "04-picture", "05-table",
     "06-charts-bar-line-pie", "07-charts-area-radar-doughnut", "08-charts-scatter-bubble",
     "09-charts-3d-stock-ofpie", "10-background", "11-combo-chart", "12-svg-image",
-    "13-edit-shapes", "14-media", "15-master-template", "16-closing",
+    "13-edit-shapes", "14-media", "15-master-template", "16-smartart", "17-animation",
+    "18-online-video", "19-v06-features", "20-closing",
   ]
   for i in 0..<names.length() {
     let bytes = build_sample_isolated(i) catch {

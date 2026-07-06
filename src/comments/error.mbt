@@ -12,7 +12,7 @@ pub(all) suberror CommentsError {
 
 ///|
 /// Lift an XML reader/writer error into a `CommentsError::XmlFailure`.
-pub fn wrap_xml(e : @xml.XmlError) -> CommentsError {
+fn wrap_xml(e : @xml.XmlError) -> CommentsError {
   match e {
     Malformed(msg) => XmlFailure("Malformed", msg)
     MismatchedEndTag(name) => XmlFailure("MismatchedEndTag", name)

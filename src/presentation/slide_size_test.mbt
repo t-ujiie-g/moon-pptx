@@ -78,3 +78,19 @@ test "set_slide_size_mut: Custom EMU pair survives save → reopen" {
   // Custom dimensions omit the `type` attribute (PowerPoint convention).
   assert_eq(sz.size_type, "")
 }
+
+///|
+test "SlideSizeKind::to_slide_size mirrors dimensions + size_type" {
+  for
+    kind in [
+      @presentation.SlideSizeKind::ScreenFourByThree,
+      @presentation.SlideSizeKind::Widescreen,
+      @presentation.SlideSizeKind::Custom(@units.Emu(123L), @units.Emu(456L)),
+    ] {
+    let size = kind.to_slide_size()
+    let (cx, cy) = kind.dimensions()
+    assert_eq(size.cx, cx)
+    assert_eq(size.cy, cy)
+    assert_eq(size.size_type, kind.size_type())
+  }
+}

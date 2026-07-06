@@ -226,21 +226,15 @@ fn write_paragraph_props_with_wrapper(
   }
   // Body content: lnSpc, spcBef, spcAft, bullet.
   match p.line_spacing {
-    Some(pct) => {
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "lnSpc"))
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "spcPct"))
-      w.attribute(@xml.QName::unqualified("val"), pct.to_ooxml().to_string())
-      w.end_element()
-      w.end_element()
-    }
+    Some(ts) => write_text_spacing(w, "lnSpc", ts)
     None => ()
   }
   match p.space_before {
-    Some(pt) => write_spc_pts(w, "spcBef", pt)
+    Some(ts) => write_text_spacing(w, "spcBef", ts)
     None => ()
   }
   match p.space_after {
-    Some(pt) => write_spc_pts(w, "spcAft", pt)
+    Some(ts) => write_text_spacing(w, "spcAft", ts)
     None => ()
   }
   match p.bullet {
@@ -254,19 +248,29 @@ fn write_paragraph_props_with_wrapper(
 }
 
 ///|
-/// Emit `<a:spcBef>` / `<a:spcAft>` with the `<a:spcPts val="…"/>` child.
-/// Pt is multiplied by 100 to match the OOXML encoding (1/100-point).
-fn write_spc_pts(
+/// Emit a `CT_TextSpacing` wrapper (`<a:lnSpc>` / `<a:spcBef>` /
+/// `<a:spcAft>`) with its choice child: `<a:spcPct>` in 1/1000 of a
+/// percent or `<a:spcPts>` in 1/100 of a point (F4).
+fn write_text_spacing(
   w : @xml.XmlWriter,
   wrapper_local : String,
-  pt : @units.Pt,
+  ts : TextSpacing,
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.drawing_ns, wrapper_local))
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "spcPts"))
-  let @units.Pt(v) = pt
-  let centi = (v * 100.0).to_int()
-  w.attribute(@xml.QName::unqualified("val"), centi.to_string())
-  w.end_element()
+  match ts {
+    Percent(pct) => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "spcPct"))
+      w.attribute(@xml.QName::unqualified("val"), pct.to_ooxml().to_string())
+      w.end_element()
+    }
+    Points(pt) => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "spcPts"))
+      let @units.Pt(v) = pt
+      let centi = (v * 100.0).to_int()
+      w.attribute(@xml.QName::unqualified("val"), centi.to_string())
+      w.end_element()
+    }
+  }
   w.end_element()
 }
 
@@ -447,13 +451,9 @@ fn write_run_properties(
     Some(s) => @oxml.write_stroke(w, ctx, s)
     None => ()
   }
-  // Solid fill child.
+  // Fill child (any of the fill-choice group — F3-b).
   match p.fill {
-    Some(c) => {
-      w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
-      @oxml.write_color(w, ctx, c)
-      w.end_element()
-    }
+    Some(f) => @oxml.write_fill(w, ctx, f)
     None => ()
   }
   // Text effects (`<a:effectLst>`).

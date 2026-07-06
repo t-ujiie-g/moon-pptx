@@ -111,14 +111,86 @@ test "org_chart data model: parent/child connections + all nodes drawn" {
   for label in ["CEO", "CTO", "CFO", "Controller"] {
     assert_true(data.find("<a:t>" + label + "</a:t>") is Some(_))
   }
-  // The cached drawing lays out every node (not just the root).
+  // The cached drawing lays out every node (not just the root) plus one
+  // connector line per parent→child edge (D1-b).
   let drawing = @oxml.bytes_to_string(
     art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(5_000_000L)),
   )
-  assert_eq(count_occurrences(drawing, "<dsp:sp "), 4)
+  assert_eq(count_occurrences(drawing, "<dsp:sp "), 7)
+  assert_eq(count_occurrences(drawing, "prst=\"line\""), 3)
+  assert_eq(count_occurrences(drawing, "prst=\"roundRect\""), 4)
   assert_well_formed(data)
   assert_well_formed(drawing)
   assert_well_formed(@oxml.bytes_to_string(art.layout_xml()))
+}
+
+///|
+test "hier layoutDef recurses + wires connectors (D1-b)" {
+  let xml = @oxml.bytes_to_string(
+    @smartart.SmartArt::org_chart(@smartart.Node::leaf("CEO")).layout_xml(),
+  )
+  // The recursive skeleton: hierRoot/hierChild composites and the named
+  // forEach re-invoked by reference — the piece the single-level template
+  // lacked (nesting families rendered top-level only).
+  assert_eq(count_occurrences(xml, "type=\"hierRoot\""), 2)
+  assert_true(xml.find("<dgm:forEach name=\"childForEach\"") is Some(_))
+  assert_true(
+    xml.find("<dgm:forEach name=\"recurseForEach\" ref=\"childForEach\"/>")
+    is Some(_),
+  )
+  // Parent→child connectors ride the parTrans points.
+  assert_true(xml.find("type=\"conn\"") is Some(_))
+  assert_true(xml.find("ptType=\"parTrans\"") is Some(_))
+  // Every text node names its styleLbl explicitly — PowerPoint Web
+  // renders an absent styleLbl as black boxes (2026-07-06 finding).
+  assert_true(xml.find("name=\"rootNode\" styleLbl=\"node0\"") is Some(_))
+  assert_true(xml.find("name=\"childNode\" styleLbl=\"node1\"") is Some(_))
+  // Org-chart identity + the org-chart UI variable.
+  assert_true(xml.find("orgChart1") is Some(_))
+  assert_true(xml.find("<dgm:orgChart val=\"1\"/>") is Some(_))
+  assert_well_formed(xml)
+  // Hierarchy shares the skeleton without the org-chart variable.
+  let hxml = @oxml.bytes_to_string(
+    @smartart.SmartArt::hierarchy([@smartart.Node::leaf("A")]).layout_xml(),
+  )
+  assert_true(hxml.find("hierarchy1") is Some(_))
+  assert_true(hxml.find("<dgm:orgChart") is None)
+  assert_true(hxml.find("ref=\"childForEach\"") is Some(_))
+  assert_well_formed(hxml)
+}
+
+///|
+test "drawing connector geometry: bounding box + flipH (D1-b)" {
+  // Root centred over two children in a wide frame: the left child's
+  // connector runs down-left (flipH), the right child's down-right (no
+  // flip). Both span from the parent box's bottom centre to the child's
+  // top centre, so their exts are equal and non-degenerate.
+  let art = @smartart.SmartArt::org_chart(
+    @smartart.Node::new("Root", [
+      @smartart.Node::leaf("L"),
+      @smartart.Node::leaf("R"),
+    ]),
+  )
+  let xml = @oxml.bytes_to_string(
+    art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(4_000_000L)),
+  )
+  assert_eq(count_occurrences(xml, "prst=\"line\""), 2)
+  assert_eq(count_occurrences(xml, "flipH=\"1\""), 1)
+}
+
+///|
+test "radial layoutDef pins the hub and rings the spokes (D1-b)" {
+  let xml = @oxml.bytes_to_string(
+    @smartart.SmartArt::relationship(@smartart.Node::leaf("Core"), [
+      @smartart.Node::leaf("A"),
+    ]).layout_xml(),
+  )
+  // cycle + ctrShpMap="fNode" = hub-and-spoke; conn lines per parTrans.
+  assert_true(xml.find("type=\"cycle\"") is Some(_))
+  assert_true(xml.find("val=\"fNode\"") is Some(_))
+  assert_true(xml.find("type=\"conn\"") is Some(_))
+  assert_true(xml.find("radial1") is Some(_))
+  assert_well_formed(xml)
 }
 
 ///|
@@ -161,7 +233,9 @@ test "matrix grid + relationship hub layouts" {
   let rxml = @oxml.bytes_to_string(
     r.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
   )
-  assert_eq(count_occurrences(rxml, "<dsp:sp "), 4)
+  // Four boxes + three hub→spoke connector lines (D1-b).
+  assert_eq(count_occurrences(rxml, "<dsp:sp "), 7)
+  assert_eq(count_occurrences(rxml, "prst=\"line\""), 3)
   // All parts well-formed for both families.
   assert_well_formed(mxml)
   assert_well_formed(rdata)

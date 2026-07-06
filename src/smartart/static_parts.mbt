@@ -2,13 +2,15 @@
 //
 // Unlike the data + drawing parts, these three are independent of the node
 // content, so we emit them as template strings (same approach as the blank
-// deck in `@presentation`'s `template.mbt`). The cached `<dsp:drawing>`
-// renders the diagram; these definitions are consulted when the user *edits*
-// the SmartArt in PowerPoint (re-layout / recolour / restyle).
+// deck in `@presentation`'s `template.mbt`). PowerPoint re-lays-out the
+// diagram from the layout definition on open (the cached `<dsp:drawing>`
+// serves non-editing / older viewers), so the layoutDef is the primary
+// render path.
 //
-// - layout  (`<dgm:layoutDef>`)  : a linear (`lin`) algorithm laying child
-//   nodes top-to-bottom (List) or left-to-right (Process), one rounded box per
-//   node — the canonical `list1` / `process1` skeleton.
+// - layout  (`<dgm:layoutDef>`)  : per family — the flat families use the
+//   single-level template below (linear / cycle / pyramid / snake, one
+//   rounded box per top-level node); the nesting families use the recursive
+//   hierarchy / radial definitions in `hier_layouts.mbt` (D1-b).
 // - colors  (`<dgm:colorsDef>`)  : accent-1 fills with light text.
 // - quickStyle (`<dgm:styleDef>`): the "simple" 3-D-free style references.
 
@@ -16,11 +18,12 @@
 let xml_decl : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 
 ///|
-/// Per-kind layout metadata: the built-in `uniqueId`, the category type, and
-/// the root `<dgm:alg>` element. The flat families differ only in the
-/// algorithm (linear top/left vs cycle vs pyramid); the cached `<dsp:drawing>`
-/// is what actually renders, so the algorithm matters only on edit-time
-/// re-layout.
+/// Per-kind layout metadata for the **flat** families: the built-in
+/// `uniqueId`, the category type, and the root `<dgm:alg>` element. The flat
+/// families differ only in the algorithm (linear top/left vs cycle vs pyramid
+/// vs snake); the nesting families (`OrgChart` / `Hierarchy` /
+/// `Relationship`) use the dedicated recursive / radial definitions in
+/// `hier_layouts.mbt` and never reach this table.
 fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
   let (unique_id, category) = kind_layout_id(kind)
   let lin = fn(dir) {
@@ -33,16 +36,26 @@ fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
     Process => lin("fromL")
     Cycle => "<dgm:alg type=\"cycle\"/>"
     Pyramid => "<dgm:alg type=\"pyra\"/>"
-    OrgChart | Hierarchy => "<dgm:alg type=\"hierRoot\"/>"
     Matrix => "<dgm:alg type=\"snake\"/>"
+    // Unreachable: layout_xml routes these to hier_layouts.mbt.
+    OrgChart | Hierarchy => "<dgm:alg type=\"hierRoot\"/>"
     Relationship => "<dgm:alg type=\"cycle\"/>"
   }
   (unique_id, category, alg)
 }
 
 ///|
-/// `<dgm:layoutDef>` for `kind`.
+/// `<dgm:layoutDef>` for `kind`. The nesting families get the recursive
+/// hierarchy / radial definitions (so PowerPoint's layout engine renders the
+/// full tree — D1-b); the flat families keep the single-level linear /
+/// cycle / pyramid / snake template below.
 pub fn SmartArt::layout_xml(self : SmartArt) -> FixedArray[Byte] {
+  match self.kind {
+    OrgChart | Hierarchy =>
+      return @oxml.string_to_bytes(hier_layout_xml(self.kind))
+    Relationship => return @oxml.string_to_bytes(radial_layout_xml())
+    List | Process | Cycle | Pyramid | Matrix => ()
+  }
   let (unique_id, category, alg_xml) = layout_meta(self.kind)
   let xml = xml_decl +
     "<dgm:layoutDef xmlns:dgm=\"" +

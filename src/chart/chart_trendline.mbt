@@ -135,7 +135,7 @@ pub fn TrendlineType::to_xml(self : TrendlineType) -> String {
 /// Walk a captured `<c:trendline>` element into a typed `Trendline`.
 /// Raises `Malformed` when the required `<c:trendlineType>` leaf is
 /// absent or carries an unknown `val=`.
-pub fn parse_trendline(el : @xml.XmlElement) -> Trendline raise ChartError {
+fn parse_trendline(el : @xml.XmlElement) -> Trendline raise ChartError {
   let mut name : String? = None
   let mut sp_pr : @xml.XmlElement? = None
   let mut trendline_type : TrendlineType? = None
@@ -201,7 +201,7 @@ pub fn parse_trendline(el : @xml.XmlElement) -> Trendline raise ChartError {
 /// §21.2.2.211: name → spPr → trendlineType → order → period →
 /// forward → backward → intercept → dispRSqr → dispEq →
 /// trendlineLbl → extension.
-pub fn write_trendline(
+fn write_trendline(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   t : Trendline,

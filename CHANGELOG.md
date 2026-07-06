@@ -5,6 +5,80 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] — 2026-07-06
+
+The **pre-1.0 breaking pass**. This release deliberately spends the
+project's breaking-change budget in one batch (see TODO.md §4.1): the
+run-fill and paragraph-spacing models widen to their full ADTs, and 33
+accidentally-public internals leave the API surface. Every release from
+here to 1.0 is intended to be **additive-only** — v1.0.0 itself ships
+when the MoonBit toolchain reaches v1.0. Also in this release: SmartArt
+tree families now lay out **fully** in PowerPoint (children,
+grandchildren and connector lines), verified visually in PowerPoint Web.
+
+### Breaking
+
+- **`RunProperties.fill` widens from `@oxml.Color?` to `@oxml.Fill?`.**
+  Gradient / pattern / picture / noFill *text* fills are now typed
+  instead of riding the lossless-preservation escape hatch.
+  `with_color(rgb)` keeps its signature (it now builds a `SolidFill`).
+  *Migration*: code that matched or set `fill` as a colour wraps it —
+  `fill: Some(color)` → `fill: Some(SolidFill(color))`.
+- **Paragraph spacing widens to a shared `TextSpacing` ADT.**
+  `ParagraphProperties.line_spacing` / `space_before` / `space_after`
+  are now `TextSpacing? { Percent(Percentage) | Points(Pt) }`
+  (the spec's `CT_TextSpacing` choice), so both the percent and the
+  absolute-points forms round-trip and are settable.
+  *Migration*: `line_spacing: Some(pct)` → `Some(Percent(pct))`;
+  `space_before: Some(pt)` → `Some(Points(pt))`.
+- **33 internal helpers removed from the public API** (verified unused
+  by the downstream consumer pptz 0.7.0): the per-package `wrap_xml`
+  error helpers + `@opc.wrap_fzip`, `@oxml.enum_attr_opt` /
+  `require_angle` / `require_emu` / `require_pct`, the 20 `@chart`
+  per-element `parse_*` / `write_*` internals, and
+  `@slide.anim_default_duration_ms`; `@oxml.parse_percent_value` was
+  dead and is deleted.
+
+### Added
+
+- **`RunProperties::with_text_fill(@oxml.Fill)`** — gradient / pattern /
+  picture text fills as a one-call builder (`with_color` remains the
+  solid shorthand).
+- **`Paragraph::with_line_spacing` / `with_space_before` /
+  `with_space_after`** — fluent paragraph-spacing builders over the new
+  `TextSpacing` ADT.
+
+### Fixed
+
+- **SmartArt tree families (`org_chart` / `hierarchy` / `relationship`)
+  now lay out fully in PowerPoint.** PowerPoint re-lays-out SmartArt
+  from the layout definition on open, and the old single-level
+  definition drew only the top level. The tree families now ship a
+  recursive `hierRoot`/`hierChild` layout definition (with parent→child
+  connectors) distilled from a real Office-emitted `orgChart1` part, and
+  `relationship` a `radial1`-style hub-and-spoke one; the cached drawing
+  also gains connector lines for non-editing viewers. Node style labels
+  are named explicitly — PowerPoint Web rendered unlabelled boxes black.
+  Verified in PowerPoint Web: all three levels + connectors render.
+- **Paragraph spacing was never parsed from real files.** The parser
+  read spacing off `<a:pPr>` *attributes* that don't exist in OOXML, so
+  Office's `<a:lnSpc>` / `<a:spcBef>` / `<a:spcAft>` children were never
+  typed (they round-tripped losslessly, but setting the typed field on a
+  parsed paragraph could double-emit). The child-element form is now
+  parsed; a spacing wrapper with no `spcPct`/`spcPts` choice raises.
+- **A colour-less `<a:solidFill/>` on a run now raises** instead of
+  being silently dropped, matching the strict shape-fill path (the
+  colour child is required by ECMA-376).
+
+### Development
+
+- API stability review pass 1 complete: all 1017 public declarations
+  audited; every deliberately-public API now has a direct blackbox test.
+  1131 tests × 4 backends (Native / Wasm-GC / JS / Wasm).
+- Sample deck grows to 25 slides with a v0.6 features slide (gradient /
+  pattern text fills + paragraph spacing); the SmartArt slide is an org
+  chart again and doubles as the rendering regression check.
+
 ## [0.5.3] — 2026-06-20
 
 Bug-fix release. Adds an automated verification pyramid (in-repo structural

@@ -7,7 +7,6 @@ import {
 }
 
 // Values
-pub fn wrap_xml(@xml.XmlError) -> ChartExError
 
 // Errors
 pub(all) suberror ChartExError {

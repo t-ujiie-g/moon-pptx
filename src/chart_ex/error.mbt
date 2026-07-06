@@ -13,7 +13,7 @@ pub(all) suberror ChartExError {
 
 ///|
 /// Lift an XML reader/writer error into a `ChartExError::XmlFailure`.
-pub fn wrap_xml(e : @xml.XmlError) -> ChartExError {
+fn wrap_xml(e : @xml.XmlError) -> ChartExError {
   match e {
     Malformed(msg) => XmlFailure("Malformed", msg)
     MismatchedEndTag(name) => XmlFailure("MismatchedEndTag", name)

@@ -142,7 +142,7 @@ pub impl Show for LegendEntry with fn output(self, logger) {
 
 ///|
 /// Walk a captured `<c:legend>` element into a typed `ChartLegend`.
-pub fn parse_chart_legend(el : @xml.XmlElement) -> ChartLegend raise ChartError {
+fn parse_chart_legend(el : @xml.XmlElement) -> ChartLegend raise ChartError {
   let mut legend_pos : LegendPos? = None
   let legend_entries : Array[LegendEntry] = []
   let mut layout : Layout? = None
@@ -207,7 +207,7 @@ fn parse_legend_entry(el : @xml.XmlElement) -> LegendEntry raise ChartError {
 /// Emit a `<c:legend>` element. Child order follows ECMA-376
 /// §21.2.2.93: legendPos → legendEntry* → layout → overlay → spPr →
 /// txPr → extension.
-pub fn write_chart_legend(
+fn write_chart_legend(
   w : @xml.XmlWriter,
   ctx : @oxml.WriteCtx,
   lg : ChartLegend,

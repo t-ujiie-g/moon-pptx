@@ -216,7 +216,7 @@ pub fn bool_attr_opt(
 ///|
 /// Enum attribute lookup via a caller-supplied `from_xml` parser.
 /// Unknown values map to `None`.
-pub fn[T] enum_attr_opt(
+fn[T] enum_attr_opt(
   attrs : Array[(@xml.QName, String)],
   name : String,
   from_xml : (String) -> T?,
@@ -246,7 +246,7 @@ pub fn require_attr(
 
 ///|
 /// Required EMU attribute. Raises if absent or unparseable.
-pub fn require_emu(
+fn require_emu(
   attrs : Array[(@xml.QName, String)],
   name : String,
   on : String,
@@ -263,7 +263,7 @@ pub fn require_emu(
 
 ///|
 /// Required Angle attribute (1/60_000 degree).
-pub fn require_angle(
+fn require_angle(
   attrs : Array[(@xml.QName, String)],
   name : String,
   on : String,
@@ -280,7 +280,7 @@ pub fn require_angle(
 
 ///|
 /// Required Percentage attribute (1/1000 percent).
-pub fn require_pct(
+fn require_pct(
   attrs : Array[(@xml.QName, String)],
   name : String,
   on : String,

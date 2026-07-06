@@ -131,9 +131,9 @@ test "rPr: solidFill with srgbClr" {
       "<a:rPr><a:solidFill><a:srgbClr val=\"FF0000\"/></a:solidFill></a:rPr>",
     ),
   )
-  match rpr_of(slide).fill.unwrap().base {
-    Srgb(c) => assert_eq(c.to_hex(), "FF0000")
-    _ => fail("expected Srgb base")
+  match rpr_of(slide).fill.unwrap() {
+    SolidFill({ base: Srgb(c), .. }) => assert_eq(c.to_hex(), "FF0000")
+    _ => fail("expected solid Srgb fill")
   }
 }
 
@@ -144,9 +144,10 @@ test "rPr: solidFill with schemeClr" {
       "<a:rPr><a:solidFill><a:schemeClr val=\"accent2\"/></a:solidFill></a:rPr>",
     ),
   )
-  match rpr_of(slide).fill.unwrap().base {
-    Scheme(t) => assert_true(t is @units.ThemeColor::Accent2)
-    _ => fail("expected Scheme base")
+  match rpr_of(slide).fill.unwrap() {
+    SolidFill({ base: Scheme(t), .. }) =>
+      assert_true(t is @units.ThemeColor::Accent2)
+    _ => fail("expected solid Scheme fill")
   }
 }
 
@@ -179,22 +180,77 @@ test "rPr: missing attributes leave fields None" {
 }
 
 ///|
-test "rPr: gradFill skipped (no solid fill); effectLst lifts to typed field" {
+test "rPr: gradFill lifts to the typed fill (F3-b); effectLst to typed field" {
   let slide = @slide.Slide::parse(
     slide_with_rpr(
       "<a:rPr>" +
-      "<a:gradFill><a:gsLst><a:gs pos=\"0\"/></a:gsLst></a:gradFill>" +
+      "<a:gradFill><a:gsLst>" +
+      "<a:gs pos=\"0\"><a:srgbClr val=\"FF0000\"/></a:gs>" +
+      "<a:gs pos=\"100000\"><a:srgbClr val=\"0000FF\"/></a:gs>" +
+      "</a:gsLst><a:lin ang=\"5400000\" scaled=\"1\"/></a:gradFill>" +
       "<a:effectLst><a:outerShdw blurRad=\"38100\"><a:srgbClr val=\"000000\"/></a:outerShdw></a:effectLst>" +
       "</a:rPr>",
     ),
   )
-  // No fill should be picked up from gradFill — run-level fills only
-  // pick up solidFill; gradient + pattern + blip run-fills are an
-  // intentional expansion point.
-  assert_true(rpr_of(slide).fill is None)
-  // The minimal effectLst (dist/dir absent) now lifts into the typed
-  // `text_effects` field (F3 follow-up; lift-safe @oxml parsers).
+  // The run fill is the full @oxml.Fill ADT — a gradient text fill is
+  // typed, not an extension escape hatch (F3-b).
+  assert_true(rpr_of(slide).fill is Some(GradientFill(_)))
+  // The minimal effectLst (dist/dir absent) lifts into the typed
+  // `text_effects` field (F3 slice 2; lift-safe @oxml parsers).
   assert_true(rpr_of(slide).text_effects is Some(_))
+  // And the writer emits it back: serialize → reparse is model-equal.
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  assert_true(rpr_of(reparsed) == rpr_of(slide))
+}
+
+///|
+test "rPr: noFill + pattFill round-trip through the typed fill (F3-b)" {
+  // noFill (invisible text) is a distinct typed state, not "inherit" —
+  // and it survives a serialize → reparse round-trip.
+  let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr><a:noFill/></a:rPr>"))
+  assert_true(rpr_of(slide).fill is Some(NoFill))
+  assert_true(
+    rpr_of(@slide.Slide::parse(slide.serialize())).fill is Some(NoFill),
+  )
+  // A pattern text fill parses, serialises, and re-parses to the same
+  // model (parse → write → parse).
+  let patt = slide_with_rpr(
+    "<a:rPr><a:pattFill prst=\"ltDnDiag\">" +
+    "<a:fgClr><a:srgbClr val=\"FF0000\"/></a:fgClr>" +
+    "<a:bgClr><a:srgbClr val=\"FFFFFF\"/></a:bgClr>" +
+    "</a:pattFill></a:rPr>",
+  )
+  let s1 = @slide.Slide::parse(patt)
+  assert_true(rpr_of(s1).fill is Some(PatternFill(_)))
+  let s2 = @slide.Slide::parse(s1.serialize())
+  assert_true(rpr_of(s2) == rpr_of(s1))
+}
+
+///|
+test "rPr: with_text_fill / with_color builders set the Fill ADT (F3-b)" {
+  let grad = @oxml.Fill::GradientFill({
+    stops: [
+      {
+        position: @units.Percentage(0.0),
+        color: @oxml.Color::srgb(@units.RgbColor::new(0xFF, 0x00, 0x00)),
+      },
+      {
+        position: @units.Percentage(100.0),
+        color: @oxml.Color::srgb(@units.RgbColor::new(0x00, 0x00, 0xFF)),
+      },
+    ],
+    direction: Linear(@units.Angle(90.0), true),
+    rotate_with_shape: None,
+    flip: None,
+    extension: [],
+  })
+  let p = @slide.RunProperties::default().with_text_fill(grad)
+  assert_true(p.fill == Some(grad))
+  // with_color stays the solid shorthand on the widened field.
+  let solid = @slide.RunProperties::default().with_color(
+    @units.RgbColor::new(0x10, 0x20, 0x30),
+  )
+  assert_true(solid.fill is Some(SolidFill(_)))
 }
 
 ///|
