@@ -282,3 +282,47 @@ test "TableCellProperties::with_borders: None args leave existing borders alone"
   assert_true(p.border_top is Some(_))
   assert_true(p.border_bottom is Some(_))
 }
+
+///|
+test "TableCellProperties::with_border_left/right/top/bottom set one edge each" {
+  let s = minimal_stroke()
+  let l = @slide.TableCellProperties::default().with_border_left(s)
+  assert_true(l.border_left is Some(_))
+  assert_true(
+    l.border_right is None && l.border_top is None && l.border_bottom is None,
+  )
+  let r = @slide.TableCellProperties::default().with_border_right(s)
+  assert_true(r.border_right is Some(_))
+  assert_true(r.border_left is None)
+  let t = @slide.TableCellProperties::default().with_border_top(s)
+  assert_true(t.border_top is Some(_))
+  assert_true(t.border_bottom is None)
+  let b = @slide.TableCellProperties::default().with_border_bottom(s)
+  assert_true(b.border_bottom is Some(_))
+  assert_true(b.border_top is None)
+}
+
+///|
+test "TableProperties::default: every field is the inherit sentinel" {
+  let p = @slide.TableProperties::default()
+  assert_true(p.first_row is None)
+  assert_true(p.first_col is None)
+  assert_true(p.last_row is None)
+  assert_true(p.last_col is None)
+  assert_true(p.band_row is None)
+  assert_true(p.band_col is None)
+  assert_true(p.rtl is None)
+  assert_true(p.fill is None)
+  assert_true(p.table_style_id is None)
+  assert_eq(p.extension.length(), 0)
+}
+
+///|
+test "TableCell::empty: an of_text(\"\") cell with no spans or merges" {
+  let c = @slide.TableCell::empty()
+  assert_true(c == @slide.TableCell::of_text(""))
+  assert_eq(c.grid_span, 1)
+  assert_eq(c.row_span, 1)
+  assert_eq(c.h_merge, false)
+  assert_eq(c.v_merge, false)
+}

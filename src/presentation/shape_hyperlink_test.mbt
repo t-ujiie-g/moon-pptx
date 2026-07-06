@@ -115,3 +115,53 @@ test "shape without hyperlink: no hyperlink rel, no hlinkClick" {
   assert_eq(rels.by_type(@opc.rt_hyperlink).length(), 0)
   assert_eq(has_substring(slide_xml_of(prs, slide_name), "hlinkClick"), false)
 }
+
+///|
+test "ShapeHyperlink::external / to_slide constructors carry the target" {
+  let ext = @slide.ShapeHyperlink::external("https://example.com")
+  assert_true(ext.target == Some(ExternalUrl("https://example.com")))
+  assert_true(ext.click is None && ext.action is None)
+  let jump = @slide.ShapeHyperlink::to_slide(3)
+  assert_true(jump.target == Some(InternalSlide(3)))
+  assert_true(jump.click is None && jump.action is None)
+}
+
+///|
+test "picture with_hyperlink_to_slide: rt_slide rel + ppaction jump" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let _ = prs.add_slide_mut(0)
+  // A 1×1 BMP is enough for add_picture_mut; then rebuild the picture
+  // with the jump hyperlink via update.
+  let bmp : FixedArray[Byte] = [
+    b'B', b'M', 58, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0, 40, 0, 0, 0, 1, 0, 0, 0, 1,
+    0, 0, 0, 1, 0, 24, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 255, 255, 255, 0,
+  ]
+  prs.add_picture_mut(
+    0,
+    bmp,
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+  )
+  prs.update_slide_mut(
+    0,
+    prs.slides()[0].map_shapes(s => {
+      match s {
+        Picture(p) => Picture(p.with_hyperlink_to_slide(slide_idx=1))
+        other => other
+      }
+    }),
+  )
+  let xml = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/ppt/slides/slide1.xml").unwrap().bytes,
+  )
+  assert_true(xml.find("ppaction://hlinksldjump") is Some(_))
+  // The slide rels carry an rt_slide relationship at slide2.
+  let rels = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/ppt/slides/_rels/slide1.xml.rels").unwrap().bytes,
+  )
+  assert_true(rels.find("slide2.xml") is Some(_))
+}

@@ -188,3 +188,19 @@ test "regenerate_content_types_part replaces in-place" {
   let p = pkg2.require_part("/a.xml")
   assert_eq(p.content_type, "application/custom+xml")
 }
+
+///|
+test "validate_part_name: accepts canonical names, rejects malformed" {
+  // Valid OPC part names pass silently.
+  @opc.validate_part_name("/ppt/slides/slide1.xml")
+  @opc.validate_part_name("/[Content_Types].xml")
+  // Empty, missing leading slash, and trailing slash all raise.
+  for bad in ["", "ppt/slides/slide1.xml", "/ppt/slides/"] {
+    try @opc.validate_part_name(bad) catch {
+      @opc.OpcError::MalformedPackage(_) => ()
+      _ => fail("expected MalformedPackage for " + bad)
+    } noraise {
+      _ => fail("expected " + bad + " to raise")
+    }
+  }
+}

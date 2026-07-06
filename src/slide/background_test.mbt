@@ -190,3 +190,15 @@ test "background: with_background_ref / without_background" {
   // Clearing yields no background.
   assert_true(ref_slide.without_background().background is None)
 }
+
+///|
+test "BackgroundProperties::of_fill wraps the fill with defaults" {
+  let fill = @oxml.Fill::SolidFill(
+    @oxml.Color::srgb(@units.RgbColor::new(0x10, 0x20, 0x30)),
+  )
+  let p = @slide.BackgroundProperties::of_fill(fill)
+  assert_true(p.fill == Some(fill))
+  assert_eq(p.shade_to_title, false)
+  assert_true(p.effects is None)
+  assert_eq(p.extension.length(), 0)
+}

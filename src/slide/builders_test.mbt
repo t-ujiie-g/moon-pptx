@@ -350,3 +350,80 @@ test "Picture::with_crop: idempotent — second call replaces, not merges" {
   assert_eq(rect.right, @units.Percentage(0.0))
   assert_eq(rect.bottom, @units.Percentage(0.0))
 }
+
+///|
+test "AutoShape::of_preset: carries the chosen preset geometry" {
+  let s = @slide.AutoShape::of_preset(
+    7,
+    "Star",
+    @slide.PresetShape::Star5,
+    @units.Emu(10L),
+    @units.Emu(20L),
+    @units.Emu(30L),
+    @units.Emu(40L),
+  )
+  assert_eq(s.id, 7)
+  assert_eq(s.name, "Star")
+  let xfrm = s.transform.unwrap()
+  assert_eq(xfrm.offset.x, @units.Emu(10L))
+  assert_eq(xfrm.extent.cy, @units.Emu(40L))
+  match s.geometry.unwrap() {
+    Preset(p, adj) => {
+      assert_true(p == @slide.PresetShape::Star5)
+      assert_eq(adj.length(), 0)
+    }
+    _ => fail("expected Preset geometry")
+  }
+}
+
+///|
+test "AutoShape::with_stroke sets the outline; other fields untouched" {
+  let stroke : @oxml.Stroke = {
+    width: Some(@units.Emu(12700L)),
+    cap: None,
+    compound: None,
+    alignment: None,
+    fill: Some(
+      @oxml.Fill::SolidFill(
+        @oxml.Color::srgb(@units.RgbColor::new(0x11, 0x22, 0x33)),
+      ),
+    ),
+    dash: None,
+    join: None,
+    head_end: None,
+    tail_end: None,
+    extension: [],
+  }
+  // of_preset (unlike rect/ellipse) starts with no fill/stroke.
+  let base = @slide.AutoShape::of_preset(
+    1,
+    "R",
+    @slide.PresetShape::Rect,
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(10L),
+    @units.Emu(10L),
+  )
+  let styled = base.with_stroke(stroke)
+  assert_true(styled.stroke == Some(stroke))
+  assert_true(base.stroke is None) // immutable builder (ADR-003)
+  assert_eq(styled.id, base.id)
+}
+
+///|
+test "Paragraph::of_styled_text + with_properties" {
+  let rp = @slide.RunProperties::default().with_bold()
+  let para = @slide.Paragraph::of_styled_text("hi", rp)
+  match para.content[0] {
+    RunContent(r) => {
+      assert_eq(r.text, "hi")
+      assert_eq(r.properties.bold.unwrap(), true)
+    }
+    _ => fail("expected a run")
+  }
+  // with_properties replaces the paragraph-level properties wholesale.
+  let props = { ..@slide.ParagraphProperties::default(), level: 2 }
+  let levelled = para.with_properties(props)
+  assert_eq(levelled.properties.level, 2)
+  assert_eq(para.properties.level, 0) // original unchanged
+}

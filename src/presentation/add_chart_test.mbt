@@ -127,3 +127,51 @@ test "add_chart_mut: rejects out-of-range slide index" {
     _ => fail("expected Malformed")
   }
 }
+
+///|
+/// Minimal spec-shaped `<cx:chartSpace>` (a waterfall) for the
+/// `add_chart_ex_mut` direct test — mirrors the chart_ex parser fixture.
+fn waterfall_chart_ex() -> @chart_ex.ChartEx raise {
+  let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+    "<cx:chartSpace xmlns:cx=\"http://schemas.microsoft.com/office/drawing/2014/chartex\">" +
+    "<cx:chartData><cx:data id=\"0\">" +
+    "<cx:strDim type=\"cat\"><cx:lvl ptCount=\"2\"><cx:pt idx=\"0\">A</cx:pt><cx:pt idx=\"1\">B</cx:pt></cx:lvl></cx:strDim>" +
+    "<cx:numDim type=\"val\"><cx:lvl ptCount=\"2\" formatCode=\"General\"><cx:pt idx=\"0\">10</cx:pt><cx:pt idx=\"1\">20</cx:pt></cx:lvl></cx:numDim>" +
+    "</cx:data></cx:chartData>" +
+    "<cx:chart><cx:plotArea><cx:plotAreaRegion>" +
+    "<cx:plotSurface/>" +
+    "<cx:series layoutId=\"waterfall\" formatIdx=\"0\"><cx:dataId val=\"0\"/></cx:series>" +
+    "</cx:plotAreaRegion></cx:plotArea></cx:chart>" +
+    "</cx:chartSpace>"
+  @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml))
+}
+
+///|
+test "add_chart_ex_mut: chartEx part + rels + content type + reopen" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_chart_ex_mut(
+    0,
+    waterfall_chart_ex(),
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(5_000_000L),
+    @units.Emu(3_000_000L),
+  )
+  // The chartEx part exists with its content-type override.
+  assert_true(prs.pkg.part_by_name("/ppt/charts/chartEx1.xml") is Some(_))
+  let ct = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/[Content_Types].xml").unwrap().bytes,
+  )
+  assert_true(ct.find("chartex") is Some(_))
+  // The slide references it and the deck survives save → reopen.
+  let slide_xml = @oxml.bytes_to_string(
+    prs.pkg.part_by_name("/ppt/slides/slide1.xml").unwrap().bytes,
+  )
+  assert_true(
+    slide_xml.find("chartEx") is Some(_) ||
+    slide_xml.find("graphicFrame") is Some(_),
+  )
+  let prs2 = @presentation.Presentation::open(prs.save())
+  assert_eq(prs2.slides()[0].shapes.length(), 1)
+}
