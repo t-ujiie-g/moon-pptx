@@ -23,17 +23,14 @@
 ///|
 /// The repeated text-box layoutNode of the hierarchy layout — `name` must be
 /// unique per definition; `style_lbl` colours the top-level roots (`node0`)
-/// differently from deeper nodes (default).
-fn hier_text_node(name : String, style_lbl : String?) -> String {
-  let lbl = match style_lbl {
-    Some(l) => " styleLbl=\"" + l + "\""
-    None => ""
-  }
+/// differently from deeper nodes (`node1`). Always named explicitly:
+/// PowerPoint Web renders an absent styleLbl as black boxes.
+fn hier_text_node(name : String, style_lbl : String) -> String {
   "<dgm:layoutNode name=\"" +
   name +
-  "\"" +
-  lbl +
-  ">" +
+  "\" styleLbl=\"" +
+  style_lbl +
+  "\">" +
   "<dgm:alg type=\"tx\"/>" +
   "<dgm:shape type=\"roundRect\"><dgm:adjLst/></dgm:shape>" +
   "<dgm:presOf axis=\"self\" ptType=\"node\" cnt=\"1\"/>" +
@@ -136,7 +133,7 @@ fn hier_layout_xml(kind : SmartArtKind) -> String {
   "<dgm:presOf/>" +
   "<dgm:constrLst><dgm:constr type=\"bendDist\" for=\"des\" ptType=\"parTrans\" refType=\"sp\" fact=\"0.5\"/></dgm:constrLst>" +
   "<dgm:ruleLst/>" +
-  hier_text_node("rootNode", Some("node0")) +
+  hier_text_node("rootNode", "node0") +
   "<dgm:layoutNode name=\"rootStack\">" +
   "<dgm:alg type=\"hierChild\"/>" +
   "<dgm:shape><dgm:adjLst/></dgm:shape>" +
@@ -155,7 +152,11 @@ fn hier_layout_xml(kind : SmartArtKind) -> String {
   "<dgm:presOf/>" +
   "<dgm:constrLst><dgm:constr type=\"bendDist\" for=\"des\" ptType=\"parTrans\" refType=\"sp\" fact=\"0.5\"/></dgm:constrLst>" +
   "<dgm:ruleLst/>" +
-  hier_text_node("childNode", None) +
+  // PowerPoint Web resolves an *absent* styleLbl to black boxes rather
+  // than a usable default, so child nodes name `node1` explicitly (the
+  // accent-1 label our colors/quickStyle parts define). Verified against
+  // a real render: only the node0-labelled roots drew coloured without it.
+  hier_text_node("childNode", "node1") +
   "<dgm:layoutNode name=\"childStack\">" +
   "<dgm:alg type=\"hierChild\"/>" +
   "<dgm:shape><dgm:adjLst/></dgm:shape>" +

@@ -141,6 +141,10 @@ test "hier layoutDef recurses + wires connectors (D1-b)" {
   // Parent→child connectors ride the parTrans points.
   assert_true(xml.find("type=\"conn\"") is Some(_))
   assert_true(xml.find("ptType=\"parTrans\"") is Some(_))
+  // Every text node names its styleLbl explicitly — PowerPoint Web
+  // renders an absent styleLbl as black boxes (2026-07-06 finding).
+  assert_true(xml.find("name=\"rootNode\" styleLbl=\"node0\"") is Some(_))
+  assert_true(xml.find("name=\"childNode\" styleLbl=\"node1\"") is Some(_))
   // Org-chart identity + the org-chart UI variable.
   assert_true(xml.find("orgChart1") is Some(_))
   assert_true(xml.find("<dgm:orgChart val=\"1\"/>") is Some(_))
