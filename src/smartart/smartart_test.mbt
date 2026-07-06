@@ -156,6 +156,25 @@ test "hier layoutDef recurses + wires connectors (D1-b)" {
 }
 
 ///|
+test "drawing connector geometry: bounding box + flipH (D1-b)" {
+  // Root centred over two children in a wide frame: the left child's
+  // connector runs down-left (flipH), the right child's down-right (no
+  // flip). Both span from the parent box's bottom centre to the child's
+  // top centre, so their exts are equal and non-degenerate.
+  let art = @smartart.SmartArt::org_chart(
+    @smartart.Node::new("Root", [
+      @smartart.Node::leaf("L"),
+      @smartart.Node::leaf("R"),
+    ]),
+  )
+  let xml = @oxml.bytes_to_string(
+    art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(4_000_000L)),
+  )
+  assert_eq(count_occurrences(xml, "prst=\"line\""), 2)
+  assert_eq(count_occurrences(xml, "flipH=\"1\""), 1)
+}
+
+///|
 test "radial layoutDef pins the hub and rings the spokes (D1-b)" {
   let xml = @oxml.bytes_to_string(
     @smartart.SmartArt::relationship(@smartart.Node::leaf("Core"), [

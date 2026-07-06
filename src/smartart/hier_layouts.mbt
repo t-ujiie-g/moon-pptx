@@ -39,14 +39,24 @@ fn hier_text_node(name : String, style_lbl : String?) -> String {
   "<dgm:presOf axis=\"self\" ptType=\"node\" cnt=\"1\"/>" +
   "<dgm:constrLst>" +
   "<dgm:constr type=\"primFontSz\" val=\"65\"/>" +
-  "<dgm:constr type=\"lMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
-  "<dgm:constr type=\"rMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
-  "<dgm:constr type=\"tMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
-  "<dgm:constr type=\"bMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
+  font_margin_constrs +
   "</dgm:constrLst>" +
-  "<dgm:ruleLst><dgm:rule type=\"primFontSz\" val=\"5\" fact=\"NaN\" max=\"NaN\"/></dgm:ruleLst>" +
+  font_shrink_rule_lst +
   "</dgm:layoutNode>"
 }
+
+///|
+/// Text margins proportional to the font size — the four `?Marg`
+/// constraints every text layoutNode carries (shared by the hierarchy
+/// boxes and the radial ellipses).
+let font_margin_constrs : String = "<dgm:constr type=\"lMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
+  "<dgm:constr type=\"rMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
+  "<dgm:constr type=\"tMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
+  "<dgm:constr type=\"bMarg\" refType=\"primFontSz\" fact=\"0.05\"/>"
+
+///|
+/// The standard "font may shrink to 5 pt" rule list on text layoutNodes.
+let font_shrink_rule_lst : String = "<dgm:ruleLst><dgm:rule type=\"primFontSz\" val=\"5\" fact=\"NaN\" max=\"NaN\"/></dgm:ruleLst>"
 
 ///|
 /// The parent→child connector layoutNode (`alg type="conn"`), selected by the
@@ -242,11 +252,8 @@ fn radial_shape_node(name : String, style_lbl : String) -> String {
   "<dgm:presOf axis=\"self\" ptType=\"node\" cnt=\"1\"/>" +
   "<dgm:constrLst>" +
   "<dgm:constr type=\"h\" refType=\"w\"/>" +
-  "<dgm:constr type=\"lMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
-  "<dgm:constr type=\"rMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
-  "<dgm:constr type=\"tMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
-  "<dgm:constr type=\"bMarg\" refType=\"primFontSz\" fact=\"0.05\"/>" +
+  font_margin_constrs +
   "</dgm:constrLst>" +
-  "<dgm:ruleLst><dgm:rule type=\"primFontSz\" val=\"5\" fact=\"NaN\" max=\"NaN\"/></dgm:ruleLst>" +
+  font_shrink_rule_lst +
   "</dgm:layoutNode>"
 }

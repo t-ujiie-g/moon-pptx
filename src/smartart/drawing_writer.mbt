@@ -326,14 +326,7 @@ fn write_dsp_connector(
   let flip_h = (x2 - x1) * (y2 - y1) < 0L
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "sp"))
   w.attribute(@xml.QName::unqualified("modelId"), model_id)
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "nvSpPr"))
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvPr"))
-  w.attribute(@xml.QName::unqualified("id"), "0")
-  w.attribute(@xml.QName::unqualified("name"), "")
-  w.end_element()
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvSpPr"))
-  w.end_element()
-  w.end_element() // nvSpPr
+  write_dsp_nv_sp_pr(w)
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "spPr"))
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
   if flip_h {
@@ -372,15 +365,7 @@ fn write_dsp_sp(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "sp"))
   w.attribute(@xml.QName::unqualified("modelId"), model_id)
-  // nvSpPr
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "nvSpPr"))
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvPr"))
-  w.attribute(@xml.QName::unqualified("id"), "0")
-  w.attribute(@xml.QName::unqualified("name"), "")
-  w.end_element()
-  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvSpPr"))
-  w.end_element()
-  w.end_element() // nvSpPr
+  write_dsp_nv_sp_pr(w)
   // spPr: xfrm + geometry + fill + line
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "spPr"))
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "xfrm"))
@@ -421,6 +406,20 @@ fn write_dsp_sp(
   w.end_element() // p
   w.end_element() // txBody
   w.end_element() // sp
+}
+
+///|
+/// The `<dsp:nvSpPr>` head every `<dsp:sp>` carries (box or connector):
+/// an anonymous `<dsp:cNvPr id="0" name=""/>` + empty `<dsp:cNvSpPr/>`.
+fn write_dsp_nv_sp_pr(w : @xml.XmlWriter) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "nvSpPr"))
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvPr"))
+  w.attribute(@xml.QName::unqualified("id"), "0")
+  w.attribute(@xml.QName::unqualified("name"), "")
+  w.end_element()
+  w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "cNvSpPr"))
+  w.end_element()
+  w.end_element() // nvSpPr
 }
 
 ///|

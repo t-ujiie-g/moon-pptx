@@ -198,13 +198,20 @@ test "rPr: gradFill lifts to the typed fill (F3-b); effectLst to typed field" {
   // The minimal effectLst (dist/dir absent) lifts into the typed
   // `text_effects` field (F3 slice 2; lift-safe @oxml parsers).
   assert_true(rpr_of(slide).text_effects is Some(_))
+  // And the writer emits it back: serialize → reparse is model-equal.
+  let reparsed = @slide.Slide::parse(slide.serialize())
+  assert_true(rpr_of(reparsed) == rpr_of(slide))
 }
 
 ///|
 test "rPr: noFill + pattFill round-trip through the typed fill (F3-b)" {
-  // noFill (invisible text) is a distinct typed state, not "inherit".
+  // noFill (invisible text) is a distinct typed state, not "inherit" —
+  // and it survives a serialize → reparse round-trip.
   let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr><a:noFill/></a:rPr>"))
   assert_true(rpr_of(slide).fill is Some(NoFill))
+  assert_true(
+    rpr_of(@slide.Slide::parse(slide.serialize())).fill is Some(NoFill),
+  )
   // A pattern text fill parses, serialises, and re-parses to the same
   // model (parse → write → parse).
   let patt = slide_with_rpr(

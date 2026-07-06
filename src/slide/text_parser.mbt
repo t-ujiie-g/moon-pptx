@@ -383,7 +383,7 @@ fn parse_run_properties(
                   e => raise Malformed("a:effectLst: " + e.to_string())
                 },
               )
-            "highlight" => highlight = parse_solid_fill(r)
+            "highlight" => highlight = parse_highlight_color(r)
             "hlinkClick" => {
               hyperlink_click = Some(extract_rid(child_attrs))
               let t = optional_attr(child_attrs, "tooltip")
@@ -434,11 +434,13 @@ fn parse_run_properties(
 }
 
 ///|
-/// Parse `<a:solidFill>` body. Delegates colour parsing to
-/// `@oxml.parse_color_element` so every colour kind (srgb / hsl / sys /
-/// scheme / prst / scrgb) and its modifiers come through one path.
-/// Returns `None` if the body has no recognised colour child.
-fn parse_solid_fill(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
+/// Parse the body of a one-colour wrapper element — used for
+/// `<a:highlight>` (the run fill now goes through `@oxml.parse_fill`,
+/// F3-b). Delegates colour parsing to `@oxml.parse_color_element` so
+/// every colour kind (srgb / hsl / sys / scheme / prst / scrgb) and its
+/// modifiers come through one path. Returns `None` if the body has no
+/// recognised colour child.
+fn parse_highlight_color(r : @xml.XmlReader) -> @oxml.Color? raise SlideError {
   let mut result : @oxml.Color? = None
   while true {
     let ev = next_event(r)
