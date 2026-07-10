@@ -19,7 +19,7 @@ status touches this file.
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1141 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1145 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -36,7 +36,7 @@ status touches this file.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
 ### Where we are now (2026-07-10)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1141 tests × 4
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1145 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
@@ -459,9 +459,16 @@ consumers ask.
 🔴 **Slide sections typed API** (`<p:sldSectionLst>` — typed
   `Section { title, slide_ids }` + `add_section`; PptxGenJS `addSection`)
 
-🔴 **Gradient / pattern fill convenience constructors**
-  (`Fill::linear_gradient(...)` / `Fill::pattern(...)` — the ADT is
-  buildable but verbose)
+🟢 **Gradient / pattern fill convenience constructors** *(landed 2026-07-10)*
+  - **Shipped**: `Fill::linear_gradient(from, to, via?, angle?)` — both
+    endpoints required so the spec's ≥ 2-stops rule is enforced by the
+    signature; `via` colours space evenly; default 90° top→bottom scaled
+    (what PowerPoint emits). `Fill::pattern(preset, fg~, bg~)` with the
+    `ST_PresetPatternVal` name passed through verbatim. Plus
+    `Fill::solid(rgb)` for the most common construction. Path gradients /
+    theme colours / tile modes stay direct-ADT territory.
+  - 4 new tests (spacing, defaults, write→parse round-trips);
+    1141 → 1145 × 4 backends; `.mbti` diff = 3 constructors (additive).
 
 🔴 **Table-style preset library** (named `<a:tblPr><a:tableStyleId>`
   constants — the GUID field round-trips; no named presets yet)
@@ -750,6 +757,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-10** — **v0.7 fill convenience constructors landed (§4.2): `Fill::solid` / `Fill::linear_gradient` / `Fill::pattern`.** The `@oxml.Fill` ADT stays the full-control surface; these cover the common cases that were verbose to hand-build (a two-colour gradient was ~15 lines of stops/direction/extension). `linear_gradient(from, to, via?, angle?)` requires both endpoints — the spec's "at least two stops" rule enforced by the signature, no runtime error path — spaces `via` colours evenly, and defaults to the 90° top→bottom scaled form PowerPoint itself emits; `pattern(preset, fg~, bg~)` passes the `ST_PresetPatternVal` name through verbatim (unknown names reach the file unchanged, consistent with the round-trip-friendly `String` field); `solid(rgb)` shortens the ubiquitous `SolidFill(Color::srgb(rgb))`. Deliberately *not* covered (direct ADT construction remains): path gradients, theme-colour stops, per-stop transforms, tile modes. Test-side `roundtrip_fill` refactored to expose `reparse_fill` so builder-constructed fills get the same write→parse equality check as parsed ones. 4 new tests; 1141 → 1145 × 4 backends; `.mbti` diff = the 3 constructors (additive).
 - **2026-07-10** — **Comment-hygiene sweep (new CLAUDE.md §7.6 lens) — all roadmap/phase codes purged from code comments.** New standing refactor lens added to CLAUDE.md §7 (validation loop renumbered to §7.7): code comments must make sense without ever having read TODO.md — no roadmap item codes (`F5`, `D1-b`, `v0.6`, `Phase 3h`, `slice N`), no `TODO.md §` pointers; ADR-nnn / ECMA-376 § / issue #N stay (stable, findable records); provenance framing goes to git + §11, and comments the code already states get deleted. Swept the whole tree: ~150 sites across 100 files — mechanical removal of `(roadmap …)` / bare-code parentheticals on comment lines and test names, plus ~30 hand-rewritten sentences where the code was load-bearing ("Deviation from the roadmap sketch…" → the design statement itself; "kept alive by E1's reference-counted deletion" → names `remove_slide_mut`; stale SmartArt "land in later slices" note corrected to present reality). Kept as-is: spec-value strings that merely look like codes (`ISO A4`, JPEG `FF D8`, spreadsheet `Cell A1`). The corpus embed generator's header template updated + embeds regenerated. Comments-only: 1141 × 4 backends unchanged; no `.mbti` change.
 - **2026-07-10** — **v0.7 F5-b landed: shape-level hyperlinks on Connector / Group / GraphicFrame — all five shape kinds are now clickable.** Completes F5 (v0.5.2, AutoShape + Picture) additively: each of the three remaining kinds gains the build-only `hyperlink : ShapeHyperlink?` field plus `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)` builders, resolved through the same `allocate_hyperlink` pipeline in `update_slide_mut` (a Group resolves its own hyperlink *and* recurses into children; the unresolved-precheck covers the new kinds so no rels round-trip happens on hyperlink-free slides). Writer threading: Group / GraphicFrame simply pass the field into `write_nv_wrapper`; the **Connector writer's bespoke verbatim-cNvPr emission was consolidated onto the shared `write_cnvpr`** — byte-identical for parsed connectors (typed id/name were read off that element), and connectors gain B4 id/name edit authority as a side benefit. Parse stays untouched per ADR-004 (a parsed `<a:hlinkClick>` rides the captured `<p:cNvPr>`; the typed field is build-only, like media). 5 new tests: per-kind e2e (external rel + `<a:hlinkClick>` for connector, `rt_slide` + `ppaction://hlinksldjump` for group, clickable table incl. save→reopen for graphicFrame) + direct builder coverage of all 6 fns with ADR-003 immutability checks. 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields + 6 builders (additive). §3.3 matrix row now reads "all five shape kinds".
 - **2026-07-10** — **v0.7 Tier-1 reader-losslessness landed: `moon test` now proves the reader drops nothing on real Office files, on every backend (ADR-011 follow-up, §4.2).** The Tier-2 SDK validator shows the corpus is schema-valid but says nothing about *our* preservation — this closes that gap without file I/O (the library is FFI-free; JS/Wasm can't read the filesystem). New `tools/embed-corpus/gen.py` (stdlib-only Python, run only to regenerate — committed output, never in CI) emits `src/integration/corpus_*_embed_test.mbt` with each file's bytes as fixed-width base64 chunks + a length/sha header; `corpus_test.mbt` adds a ~30-line base64 decoder (none in core, verified via `moon ide doc`) with a decoded-length abort so a corrupted embed can't masquerade as a parser finding, and a shared `assert_reader_lossless` invariant: open → `parse_everything` floor → re-serialise every parser-bearing part through its package-level writer → save → reopen → re-parse → **assert model equality per part**. Embedded trio (~110 KB binary → ~150 KB source, fmt-stable): `testPPT.pptx` (theme + master + 11 layouts + 3 slides), `table_test.pptx` (real 3×6 Office table, spot-checked lifting to the typed `Table`), `with_japanese.pptx` (CJK 「ゾルゲと尾崎、淡々と最期」 + astral-plane Gothic `𐌲𐌿𐍄𐌹𐍃𐌺` — surrogate-pair stress across the UTF-8↔UTF-16 XML boundary, asserted to survive serialize→reparse). **All three passed the losslessness invariant first-try** — the ADR-004 extension mechanism holds on real Office output. Corpus README's "why not embedded" section rewritten to point at the generator. 6 new tests; 1131 → 1137 × 4 backends; no `.mbti` change. Also refreshed §0 to post-0.6.0 reality (version row, test count, §4.0 gains the v0.6.0 row — tags `v0.5.3`/`v0.6.0` confirmed pushed).
