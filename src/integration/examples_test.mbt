@@ -478,6 +478,29 @@ test "example 17: plot-type-aware chart validation" {
 }
 
 ///|
+test "example 18: slide sections" {
+  let prs = @presentation.Presentation::new()
+  for _ in 0..<4 {
+    let _ = prs.add_slide_mut(0)
+  }
+  prs.set_sections_mut([
+    { title: "Introduction", start: 0 },
+    { title: "Content", start: 1 },
+    { title: "Conclusion", start: 3 },
+  ])
+  prs.add_section_mut(title="Details", start=2)
+  // Sections partition the deck in slide order and survive save → reopen.
+  let reopened = @presentation.Presentation::open(prs.save())
+  let sections = reopened.sections()
+  assert_eq(sections.length(), 4)
+  assert_true(sections[1] == { title: "Content", start: 1 })
+  assert_true(sections[2] == { title: "Details", start: 2 })
+  // Removal:
+  prs.set_sections_mut([])
+  assert_eq(prs.sections().length(), 0)
+}
+
+///|
 /// A minimal valid PNG (signature + IHDR + IDAT + IEND) — enough for the image
 /// detector; the cookbook's video poster stands in for a real frame.
 fn minimal_png() -> FixedArray[Byte] {

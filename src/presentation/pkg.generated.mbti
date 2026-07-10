@@ -129,6 +129,7 @@ pub fn Presentation::add_online_video_mut(Self, Int, String, FixedArray[Byte], @
 pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_section_header_slide_mut(Self) -> LayoutSlide[SectionHeader] raise PptxError
+pub fn Presentation::add_section_mut(Self, title~ : String, start~ : Int) -> Unit raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::add_smartart_mut(Self, Int, @smartart.SmartArt, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_svg_picture_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
@@ -155,8 +156,10 @@ pub fn Presentation::pct_w(Self, Double) -> @units.Emu
 pub fn Presentation::presentation_part(Self) -> PresentationPart? raise PptxError
 pub fn Presentation::remove_slide_mut(Self, Int) -> Unit raise PptxError
 pub fn Presentation::save(Self) -> FixedArray[Byte]
+pub fn Presentation::sections(Self) -> Array[Section] raise PptxError
 pub fn Presentation::set_core_properties_mut(Self, CoreProperties) -> Unit raise PptxError
 pub fn Presentation::set_notes_mut(Self, Int, String) -> Unit raise PptxError
+pub fn Presentation::set_sections_mut(Self, Array[Section]) -> Unit raise PptxError
 pub fn Presentation::set_slide_size_mut(Self, SlideSizeKind) -> Unit raise PptxError
 pub fn Presentation::slide_h(Self) -> @units.Emu
 pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] raise PptxError
@@ -169,6 +172,7 @@ pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise Ppt
 pub fn Presentation::with_added_slide(Self, layout_index~ : Int) -> (Self, String) raise PptxError
 pub fn Presentation::with_core_properties(Self, CoreProperties) -> Self raise PptxError
 pub fn Presentation::with_duplicated_slide(Self, Int) -> (Self, String) raise PptxError
+pub fn Presentation::with_sections(Self, Array[Section]) -> Self raise PptxError
 pub fn Presentation::with_slide_moved(Self, Int, Int) -> Self raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError
 pub fn Presentation::without_slide(Self, Int) -> Self raise PptxError
@@ -184,6 +188,11 @@ pub(all) struct PresentationPart {
 } derive(Eq, @debug.Debug)
 pub fn PresentationPart::parse(FixedArray[Byte]) -> Self raise PptxError
 pub fn PresentationPart::serialize(Self) -> FixedArray[Byte] raise PptxError
+
+pub(all) struct Section {
+  title : String
+  start : Int
+} derive(Eq, @debug.Debug)
 
 pub struct SectionHeader {
 }

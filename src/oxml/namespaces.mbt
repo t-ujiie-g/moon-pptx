@@ -58,6 +58,12 @@ pub let powerpoint_2010_ns : String = "http://schemas.microsoft.com/office/power
 pub let media_ext_uri : String = "{DAA4B4D4-668B-4A5B-A93E-BE16DBB66F30}"
 
 ///|
+/// The `<p:ext>` URI keying the `<p14:sectionLst>` slide-section
+/// extension inside `presentation.xml`'s `<p:extLst>` ([MS-PPTX]
+/// §2.3.1.25). Fixed by Office.
+pub let section_list_ext_uri : String = "{521415D9-36F7-43E2-AB2F-B90AF26B5E84}"
+
+///|
 /// DrawingML diagram (SmartArt) namespace — `dgm:` prefix. Home of
 /// `<dgm:dataModel>` (data part), `<dgm:layoutDef>`, `<dgm:colorsDef>`,
 /// `<dgm:styleDef>`, and the `<dgm:relIds>` reference inside a SmartArt

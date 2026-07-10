@@ -550,6 +550,39 @@ assert_eq(line.is_consistent(), false)   // and `line.validate()` raises Malform
 
 ---
 
+## 18. Slide sections
+
+Sections group slides in PowerPoint's slide panel. Each `Section`
+names where it starts; it runs to the next section's start, the last
+to the end of the deck — so the list partitions every slide, which is
+what PowerPoint expects.
+
+```moonbit
+let prs = @presentation.Presentation::new()
+for _ in 0..<4 {
+  let _ = prs.add_slide_mut(0)
+}
+prs.set_sections_mut([
+  { title: "Introduction", start: 0 },
+  { title: "Content", start: 1 },
+  { title: "Conclusion", start: 3 },
+])
+
+// Or grow them one at a time (kept in slide order automatically):
+prs.add_section_mut(title="Details", start=2)
+
+// Read back / remove:
+let sections = prs.sections()      // -> Array[Section]
+prs.set_sections_mut([])           // removes all sections
+```
+
+The first section must start at slide 0 and starts must be
+non-decreasing (two equal starts make the earlier section empty —
+PowerPoint allows slide-less sections). `with_sections` is the
+immutable counterpart.
+
+---
+
 ## Where to next?
 
 - [TODO.md](../TODO.md) — full feature comparison vs python-pptx + PptxGenJS and the v0.3 / v0.4 / v0.5 roadmap.

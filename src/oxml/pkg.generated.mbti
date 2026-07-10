@@ -124,6 +124,8 @@ pub let presentation_ns : String
 
 pub fn require_attr(Array[(@xml.QName, String)], String, String) -> String raise XmlReadError
 
+pub let section_list_ext_uri : String
+
 pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
 pub fn string_to_bytes(String) -> FixedArray[Byte]
