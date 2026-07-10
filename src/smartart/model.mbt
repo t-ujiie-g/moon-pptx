@@ -34,24 +34,74 @@ pub(all) enum SmartArtKind {
 } derive(Eq, Debug)
 
 ///|
+/// Per-node colour overrides on top of the diagram's quick style. Absent
+/// fields keep the styleLbl defaults (accent-1 boxes, light outlines). The
+/// overrides go into both the data model (the point's `<dgm:spPr>` /
+/// `<dgm:t>` run properties, which PowerPoint's layout engine applies on
+/// re-layout) and the cached drawing (for viewers that don't re-lay-out).
+pub(all) struct NodeStyle {
+  /// Box fill colour.
+  fill : @units.RgbColor?
+  /// Box outline colour.
+  line : @units.RgbColor?
+  /// Text colour.
+  text_color : @units.RgbColor?
+} derive(Eq, Debug)
+
+///|
+/// A style overriding only the given aspects (omitted ones keep the
+/// diagram's quick-style defaults).
+pub fn NodeStyle::new(
+  fill? : @units.RgbColor,
+  line? : @units.RgbColor,
+  text_color? : @units.RgbColor,
+) -> NodeStyle {
+  { fill, line, text_color }
+}
+
+///|
 /// One node in a SmartArt diagram: its text plus any child nodes. For the
 /// slice-1 linear families only the top-level nodes are laid out; children are
 /// preserved in the data model for round-trip + future hierarchical layouts.
 pub(all) struct Node {
   text : String
   children : Array[Node]
+  /// Colour overrides for this node's box, or `None` for the quick-style
+  /// defaults.
+  style : NodeStyle?
 } derive(Eq, Debug)
 
 ///|
 /// A leaf node carrying just `text` (no children).
 pub fn Node::leaf(text : String) -> Node {
-  { text, children: [] }
+  { text, children: [], style: None }
 }
 
 ///|
 /// A node with `text` and the given `children`.
 pub fn Node::new(text : String, children : Array[Node]) -> Node {
-  { text, children }
+  { text, children, style: None }
+}
+
+///|
+/// This node with its box filled `rgb` (other style aspects unchanged).
+pub fn Node::with_fill(self : Node, rgb : @units.RgbColor) -> Node {
+  let s = self.style.unwrap_or(NodeStyle::new())
+  { ..self, style: Some({ ..s, fill: Some(rgb) }) }
+}
+
+///|
+/// This node with its box outlined `rgb` (other style aspects unchanged).
+pub fn Node::with_line(self : Node, rgb : @units.RgbColor) -> Node {
+  let s = self.style.unwrap_or(NodeStyle::new())
+  { ..self, style: Some({ ..s, line: Some(rgb) }) }
+}
+
+///|
+/// This node with its text coloured `rgb` (other style aspects unchanged).
+pub fn Node::with_text_color(self : Node, rgb : @units.RgbColor) -> Node {
+  let s = self.style.unwrap_or(NodeStyle::new())
+  { ..self, style: Some({ ..s, text_color: Some(rgb) }) }
 }
 
 ///|

@@ -291,3 +291,73 @@ test "all generated parts are well-formed XML" {
   assert_well_formed(@oxml.bytes_to_string(art.colors_xml()))
   assert_well_formed(@oxml.bytes_to_string(art.quick_style_xml()))
 }
+
+///|
+test "Node style builders merge aspects on one style" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let n = @smartart.Node::leaf("Hot").with_fill(red).with_text_color(white)
+  match n.style {
+    Some(s) => {
+      assert_true(s.fill == Some(red))
+      assert_true(s.text_color == Some(white))
+      assert_true(s.line == None)
+    }
+    None => fail("expected a style")
+  }
+  // Styling doesn't disturb the rest of the node.
+  assert_eq(n.text, "Hot")
+  assert_eq(n.children.length(), 0)
+  let s = @smartart.NodeStyle::new(line=red)
+  assert_true(s.line == Some(red))
+  assert_true(s.fill == None && s.text_color == None)
+}
+
+///|
+test "data_xml carries per-node colour overrides" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let blue = @units.RgbColor::new(0x00, 0x00, 0xFF)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let art = @smartart.SmartArt::new(List, [
+    @smartart.Node::leaf("Hot")
+    .with_fill(red)
+    .with_line(blue)
+    .with_text_color(white),
+    @smartart.Node::leaf("Plain"),
+  ])
+  let xml = @oxml.bytes_to_string(art.data_xml("rId1"))
+  // Fill + line ride the styled point's <dgm:spPr>.
+  assert_true(xml.find("<a:srgbClr val=\"FF0000\"") is Some(_))
+  assert_true(
+    xml.find("<a:ln><a:solidFill><a:srgbClr val=\"0000FF\"") is Some(_),
+  )
+  // The text colour rides the run properties, flagged as a manual
+  // customisation — and only on the styled node.
+  assert_true(
+    xml.find("<a:rPr lang=\"en-US\"><a:solidFill><a:srgbClr val=\"FFFFFF\"")
+    is Some(_),
+  )
+  assert_eq(count_occurrences(xml, "custT=\"1\""), 1)
+  // The unstyled node keeps an empty <dgm:spPr>.
+  assert_true(count_occurrences(xml, "<dgm:spPr/>") >= 1)
+}
+
+///|
+test "drawing_xml overrides the styled box, keeps quick-style defaults elsewhere" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let art = @smartart.SmartArt::new(List, [
+    @smartart.Node::leaf("Hot").with_fill(red).with_text_color(white),
+    @smartart.Node::leaf("Plain"),
+  ])
+  let xml = @oxml.bytes_to_string(
+    art.drawing_xml(@units.Emu(6_000_000L), @units.Emu(3_000_000L)),
+  )
+  // The styled box fills FF0000; the unstyled one keeps accent1.
+  assert_true(xml.find("<a:srgbClr val=\"FF0000\"") is Some(_))
+  assert_eq(count_occurrences(xml, "schemeClr val=\"accent1\""), 1)
+  // Its text run carries the white override.
+  assert_true(xml.find("<a:srgbClr val=\"FFFFFF\"") is Some(_))
+  // The outline wasn't overridden, so both boxes keep the lt1 default.
+  assert_eq(count_occurrences(xml, "schemeClr val=\"lt1\""), 2)
+}

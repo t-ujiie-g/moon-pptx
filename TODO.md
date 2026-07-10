@@ -19,7 +19,7 @@ status touches this file.
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1145 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1148 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -35,8 +35,8 @@ status touches this file.
 - Generated decks open in PowerPoint Online without repair prompts; the bundled blank template emits every part ECMA-376 marks as required.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
-### Where we are now (2026-07-10)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1145 tests × 4
+### Where we are now (2026-07-11)
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1148 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
@@ -245,7 +245,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Comments | ✅ | ❌ | ✅ read+write | — |
 | Animations | △ XML-level | ❌ | ✅ D2 entrance/exit/emphasis/motion-path/fly-in + by-paragraph text builds (`Slide::with_animations` + `Timeline`) ⭐ | — |
 | Transitions (slide-to-slide) | △ XML-level | ❌ | ✅ D3 (typed `Slide.transition`; base CT_SlideTransition — p14 extended transitions round-trip via extension) | — |
-| SmartArt build | ❌ identification only | ❌ | ✅ D1 + D1-b (`add_smartart_mut` — all 8 families build and lay out fully; nesting families via recursive hierRoot/hierChild + radial layoutDefs) ⭐ | — |
+| SmartArt build | ❌ identification only | ❌ | ✅ D1 + D1-b (`add_smartart_mut` — all 8 families build and lay out fully; nesting families via recursive hierRoot/hierChild + radial layoutDefs; per-node colour overrides) ⭐ | — |
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ✅ C2 (`Pct` + `pct_of_slide_w` / `pct_of_slide_h`) | — |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | open idea (§5; promoted only if v1.0 benchmarks demand it) |
 | Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
@@ -453,8 +453,20 @@ consumers ask.
     coverage); 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields +
     6 builders (additive).
 
-🔴 **SmartArt per-node styling** (`Node.style` — the field exists,
-  unused by the writers)
+🟢 **SmartArt per-node styling** *(landed 2026-07-11)*
+  - The item's original premise ("the field exists, unused by the
+    writers") was stale — `Node` had no `style` field; this added it.
+  - **Shipped**: `NodeStyle { fill / line / text_color : RgbColor? }` +
+    `Node.style : NodeStyle?` + merging builders `with_fill` /
+    `with_line` / `with_text_color`. Overrides are written to **both**
+    channels: the data model's point (`<dgm:spPr>` fill/ln; text colour
+    in the `<dgm:t>` run properties with `custT="1"` so the layout
+    engine keeps it as a manual customisation) and the cached
+    `<dsp:drawing>` (srgbClr replacing the accent1 / lt1 quick-style
+    defaults), so colours hold in re-layout *and* non-editing viewers.
+  - 3 new tests + example-15 recipe extended (styled node verified
+    through save → reopen to the data part); 1145 → 1148 × 4 backends;
+    `.mbti` diff = `NodeStyle` + 1 field + 4 fns (additive).
 
 🔴 **Slide sections typed API** (`<p:sldSectionLst>` — typed
   `Section { title, slide_ids }` + `add_section`; PptxGenJS `addSection`)
@@ -757,6 +769,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-11** — **v0.7 SmartArt per-node styling landed (§4.2): `Node.style` colour overrides.** New `NodeStyle { fill / line / text_color : RgbColor? }` on every `Node` (the §4.2 item's premise "the field exists" was stale — it didn't; now it does), set via merging builders `Node::with_fill` / `with_line` / `with_text_color` (each overrides one aspect, preserves the others — ADR-003 immutable). The overrides are emitted to **both rendering channels**: the diagram data model — fill/line in the point's `<dgm:spPr>`, text colour in the `<dgm:t>` run properties flagged `custT="1"` so PowerPoint's layout engine treats it as a manual customisation and keeps it on re-layout — and the cached `<dsp:drawing>`, where `srgbClr` replaces the accent1 fill / lt1 outline quick-style defaults, covering non-editing viewers. Unstyled nodes stay byte-identical to before. Example-15 cookbook recipe extended with a styled node, verified through save → reopen down to the data part. 3 new tests; 1145 → 1148 × 4 backends; `.mbti` diff = `NodeStyle` + `Node.style` + 4 fns (additive). Also confirmed the downstream ecosystem the additive policy protects: mooncakes registry shows exactly one published dependent, `Milky2018/pptz` (active — 0.7.1 released 2026-07-10 — still pinned to moon-pptx 0.5.1).
 - **2026-07-10** — **v0.7 fill convenience constructors landed (§4.2): `Fill::solid` / `Fill::linear_gradient` / `Fill::pattern`.** The `@oxml.Fill` ADT stays the full-control surface; these cover the common cases that were verbose to hand-build (a two-colour gradient was ~15 lines of stops/direction/extension). `linear_gradient(from, to, via?, angle?)` requires both endpoints — the spec's "at least two stops" rule enforced by the signature, no runtime error path — spaces `via` colours evenly, and defaults to the 90° top→bottom scaled form PowerPoint itself emits; `pattern(preset, fg~, bg~)` passes the `ST_PresetPatternVal` name through verbatim (unknown names reach the file unchanged, consistent with the round-trip-friendly `String` field); `solid(rgb)` shortens the ubiquitous `SolidFill(Color::srgb(rgb))`. Deliberately *not* covered (direct ADT construction remains): path gradients, theme-colour stops, per-stop transforms, tile modes. Test-side `roundtrip_fill` refactored to expose `reparse_fill` so builder-constructed fills get the same write→parse equality check as parsed ones. 4 new tests; 1141 → 1145 × 4 backends; `.mbti` diff = the 3 constructors (additive).
 - **2026-07-10** — **Comment-hygiene sweep (new CLAUDE.md §7.6 lens) — all roadmap/phase codes purged from code comments.** New standing refactor lens added to CLAUDE.md §7 (validation loop renumbered to §7.7): code comments must make sense without ever having read TODO.md — no roadmap item codes (`F5`, `D1-b`, `v0.6`, `Phase 3h`, `slice N`), no `TODO.md §` pointers; ADR-nnn / ECMA-376 § / issue #N stay (stable, findable records); provenance framing goes to git + §11, and comments the code already states get deleted. Swept the whole tree: ~150 sites across 100 files — mechanical removal of `(roadmap …)` / bare-code parentheticals on comment lines and test names, plus ~30 hand-rewritten sentences where the code was load-bearing ("Deviation from the roadmap sketch…" → the design statement itself; "kept alive by E1's reference-counted deletion" → names `remove_slide_mut`; stale SmartArt "land in later slices" note corrected to present reality). Kept as-is: spec-value strings that merely look like codes (`ISO A4`, JPEG `FF D8`, spreadsheet `Cell A1`). The corpus embed generator's header template updated + embeds regenerated. Comments-only: 1141 × 4 backends unchanged; no `.mbti` change.
 - **2026-07-10** — **v0.7 F5-b landed: shape-level hyperlinks on Connector / Group / GraphicFrame — all five shape kinds are now clickable.** Completes F5 (v0.5.2, AutoShape + Picture) additively: each of the three remaining kinds gains the build-only `hyperlink : ShapeHyperlink?` field plus `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)` builders, resolved through the same `allocate_hyperlink` pipeline in `update_slide_mut` (a Group resolves its own hyperlink *and* recurses into children; the unresolved-precheck covers the new kinds so no rels round-trip happens on hyperlink-free slides). Writer threading: Group / GraphicFrame simply pass the field into `write_nv_wrapper`; the **Connector writer's bespoke verbatim-cNvPr emission was consolidated onto the shared `write_cnvpr`** — byte-identical for parsed connectors (typed id/name were read off that element), and connectors gain B4 id/name edit authority as a side benefit. Parse stays untouched per ADR-004 (a parsed `<a:hlinkClick>` rides the captured `<p:cNvPr>`; the typed field is build-only, like media). 5 new tests: per-kind e2e (external rel + `<a:hlinkClick>` for connector, `rt_slide` + `ppaction://hlinksldjump` for group, clickable table incl. save→reopen for graphicFrame) + direct builder coverage of all 6 fns with ADR-003 immutability checks. 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields + 6 builders (additive). §3.3 matrix row now reads "all five shape kinds".

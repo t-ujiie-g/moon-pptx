@@ -50,10 +50,12 @@ fn kind_layout_id(kind : SmartArtKind) -> (String, String) {
 ///|
 /// Emit a text run for `text` inside an already-open `<a:p>` — `<a:r>` with the
 /// text when non-empty, or a bare `<a:endParaRPr>` for the empty paragraph.
-/// Shared by the data model's `<dgm:t>` and the drawing's `<dsp:txBody>`.
+/// `color` overrides the run's text colour. Shared by the data model's
+/// `<dgm:t>` and the drawing's `<dsp:txBody>`.
 fn write_run_or_endpara(
   w : @xml.XmlWriter,
   text : String,
+  color? : @units.RgbColor,
 ) -> Unit raise @xml.XmlError {
   if text == "" {
     w.start_element(@xml.QName::new(@oxml.drawing_ns, "endParaRPr"))
@@ -63,10 +65,27 @@ fn write_run_or_endpara(
     w.start_element(@xml.QName::new(@oxml.drawing_ns, "r"))
     w.start_element(@xml.QName::new(@oxml.drawing_ns, "rPr"))
     w.attribute(@xml.QName::unqualified("lang"), default_lang)
+    match color {
+      Some(rgb) => write_srgb_fill(w, rgb)
+      None => ()
+    }
     w.end_element()
     w.start_element(@xml.QName::new(@oxml.drawing_ns, "t"))
     w.text(text)
     w.end_element()
     w.end_element() // r
   }
+}
+
+///|
+/// `<a:solidFill><a:srgbClr val="RRGGBB"/></a:solidFill>`.
+fn write_srgb_fill(
+  w : @xml.XmlWriter,
+  rgb : @units.RgbColor,
+) -> Unit raise @xml.XmlError {
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
+  w.start_element(@xml.QName::new(@oxml.drawing_ns, "srgbClr"))
+  w.attribute(@xml.QName::unqualified("val"), rgb.to_hex())
+  w.end_element()
+  w.end_element()
 }

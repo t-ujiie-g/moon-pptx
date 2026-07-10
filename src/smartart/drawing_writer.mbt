@@ -298,7 +298,7 @@ fn SmartArt::serialize_drawing_xml(
   }
   // One <dsp:sp> per node (every node in the forest, in gidx order).
   for f in flat {
-    write_dsp_sp(w, node_id(f.gidx), f.text, boxes[f.gidx])
+    write_dsp_sp(w, node_id(f.gidx), f.text, boxes[f.gidx], f.style)
   }
   w.end_element() // spTree
   w.end_element() // drawing
@@ -356,11 +356,13 @@ fn write_dsp_connector(
 
 ///|
 /// One laid-out `<dsp:sp>` (rounded box) with `text` at rectangle `b`.
+/// `style` overrides the quick-style colours (accent-1 fill, lt1 outline).
 fn write_dsp_sp(
   w : @xml.XmlWriter,
   model_id : String,
   text : String,
   b : Box,
+  style : NodeStyle?,
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.diagram_drawing_ns, "sp"))
   w.attribute(@xml.QName::unqualified("modelId"), model_id)
@@ -382,13 +384,27 @@ fn write_dsp_sp(
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "avLst"))
   w.end_element()
   w.end_element() // prstGeom
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
-  write_scheme_clr(w, "accent1")
-  w.end_element()
+  let (fill, line, text_color) = match style {
+    Some(s) => (s.fill, s.line, s.text_color)
+    None => (None, None, None)
+  }
+  match fill {
+    Some(rgb) => write_srgb_fill(w, rgb)
+    None => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
+      write_scheme_clr(w, "accent1")
+      w.end_element()
+    }
+  }
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "ln"))
-  w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
-  write_scheme_clr(w, "lt1")
-  w.end_element()
+  match line {
+    Some(rgb) => write_srgb_fill(w, rgb)
+    None => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "solidFill"))
+      write_scheme_clr(w, "lt1")
+      w.end_element()
+    }
+  }
   w.end_element() // ln
   w.end_element() // spPr
   // txBody
@@ -401,7 +417,7 @@ fn write_dsp_sp(
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "pPr"))
   w.attribute(@xml.QName::unqualified("algn"), "ctr")
   w.end_element()
-  write_run_or_endpara(w, text)
+  write_run_or_endpara(w, text, color?=text_color)
   w.end_element() // p
   w.end_element() // txBody
   w.end_element() // sp

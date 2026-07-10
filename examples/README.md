@@ -473,7 +473,25 @@ prs.add_smartart_mut(
 PowerPoint lays SmartArt out from the layout definition on open; the
 nesting families ship a recursive `hierRoot`/`hierChild` definition (and
 `relationship` a radial one), so the whole tree lays out — children,
-connector lines and all (D1-b).
+connector lines and all.
+
+Individual nodes take colour overrides on top of the diagram's quick
+style — box fill, outline, and text colour, each optional:
+
+```moonbit
+let hot = @smartart.Node::leaf("Ship")
+  .with_fill(@units.RgbColor::new(0xC0, 0x00, 0x00))
+  .with_text_color(@units.RgbColor::new(0xFF, 0xFF, 0xFF))
+let art = @smartart.SmartArt::new(Process, [
+  @smartart.Node::leaf("Plan"),
+  @smartart.Node::leaf("Build"),
+  hot,
+])
+```
+
+The overrides land in both the diagram data model (what PowerPoint's
+layout engine applies) and the cached drawing (what non-editing viewers
+show), so the colours hold everywhere.
 
 ---
 

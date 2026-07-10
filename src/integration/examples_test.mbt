@@ -381,7 +381,15 @@ test "example 14: entrance animations" {
 test "example 15: SmartArt diagram" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let art = @smartart.SmartArt::process(["Plan", "Build", "Ship"])
+  // Per-node colour overrides ride on top of the diagram's quick style.
+  let hot = @smartart.Node::leaf("Ship")
+    .with_fill(@units.RgbColor::new(0xC0, 0x00, 0x00))
+    .with_text_color(@units.RgbColor::new(0xFF, 0xFF, 0xFF))
+  let art = @smartart.SmartArt::new(Process, [
+    @smartart.Node::leaf("Plan"),
+    @smartart.Node::leaf("Build"),
+    hot,
+  ])
   prs.add_smartart_mut(
     0,
     art,
@@ -408,9 +416,15 @@ test "example 15: SmartArt diagram" {
   )
   // Each slide gains one graphic-frame shape; the DiagramML parts survive
   // a save → reopen round-trip.
-  let prs2 = @presentation.Presentation::open(prs.save())
+  let saved = prs.save()
+  let prs2 = @presentation.Presentation::open(saved)
   assert_eq(prs2.slides()[0].shapes.length(), 1)
   assert_eq(prs2.slides()[1].shapes.length(), 1)
+  // The node's colour overrides reach the saved diagram data part.
+  let data = @oxml.bytes_to_string(
+    @opc.Package::open(saved).require_part("/ppt/diagrams/data1.xml").bytes,
+  )
+  assert_true(data.contains("<a:srgbClr val=\"C00000\""))
 }
 
 ///|

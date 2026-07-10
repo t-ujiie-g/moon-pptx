@@ -19,9 +19,20 @@ pub impl Show for SmartArtError
 pub(all) struct Node {
   text : String
   children : Array[Node]
+  style : NodeStyle?
 } derive(Eq, @debug.Debug)
 pub fn Node::leaf(String) -> Self
 pub fn Node::new(String, Array[Self]) -> Self
+pub fn Node::with_fill(Self, @units.RgbColor) -> Self
+pub fn Node::with_line(Self, @units.RgbColor) -> Self
+pub fn Node::with_text_color(Self, @units.RgbColor) -> Self
+
+pub(all) struct NodeStyle {
+  fill : @units.RgbColor?
+  line : @units.RgbColor?
+  text_color : @units.RgbColor?
+} derive(Eq, @debug.Debug)
+pub fn NodeStyle::new(fill? : @units.RgbColor, line? : @units.RgbColor, text_color? : @units.RgbColor) -> Self
 
 pub(all) struct SmartArt {
   kind : SmartArtKind
