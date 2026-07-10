@@ -209,8 +209,18 @@ let gf = @slide.GraphicFrame::of_table(
 prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
 ```
 
-`with_borders` is the v0.2 fluent helper — pass `None` (default) for
-any edge you want to leave untouched.
+`with_borders` is a fluent helper — pass `None` (default) for any edge
+you want to leave untouched.
+
+To restyle the whole table, apply one of PowerPoint's 74 built-in
+gallery styles by name instead of hand-styling cells —
+`Table::with_style` sets the style reference plus the header-emphasis
+and row-banding flags (both default on, as PowerPoint does):
+
+```moonbit
+let styled = t.with_style(MediumStyle2Accent1) // the insert-table default
+let plain = t.with_style(LightStyle1, first_row=false, band_row=false)
+```
 
 ---
 

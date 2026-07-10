@@ -135,6 +135,8 @@ test "example 6: tables with merged cells and styled borders" {
     @units.Emu(2_286_000L),
     @units.Emu(2_286_000L),
   ])
+  // A built-in gallery style restyles the whole table by reference.
+  let t = t.with_style(MediumStyle2Accent1)
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let gf = @slide.GraphicFrame::of_table(
@@ -147,11 +149,17 @@ test "example 6: tables with merged cells and styled borders" {
     t,
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
-  // The shape landed and the table has 2 rows.
+  // The shape landed, the table has 2 rows, and the gallery style stuck.
   match prs.slides()[0].shapes[0] {
     GraphicFrame(g) =>
       match g.content {
-        TableContent(t) => assert_eq(t.rows.length(), 2)
+        TableContent(t) => {
+          assert_eq(t.rows.length(), 2)
+          assert_eq(
+            t.properties.unwrap().table_style_id.unwrap(),
+            @slide.TableStylePreset::MediumStyle2Accent1.guid(),
+          )
+        }
         _ => fail("expected TableContent")
       }
     _ => fail("expected GraphicFrame")
