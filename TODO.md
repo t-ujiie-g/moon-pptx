@@ -17,9 +17,9 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.5.3` (released 2026-06-20 — ADR-011 verification pyramid + media `<p:nvPr>` fix #11; ⚠ git tag `v0.5.3` not yet pushed) |
+| Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1109 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1137 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -35,13 +35,14 @@ status touches this file.
 - Generated decks open in PowerPoint Online without repair prompts; the bundled blank template emits every part ECMA-376 marks as required.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
-### Where we are now (2026-07-06)
-- v0.2.0 → v0.5.3 all shipped (summary table in §4.0); 1109 tests × 4
+### Where we are now (2026-07-10)
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1137 tests × 4
   backends; 100 % public-API doc coverage.
-- **Feature-complete for the core mission** — the §1 vision goals are
-  delivered. Remaining work: the pre-1.0 breaking pass + SmartArt render
-  fidelity (§4.1), additive parity/ergonomics (§4.2), and the v1.0 gate
-  (§4.3) — which fires when the MoonBit toolchain reaches v1.0.
+- **Feature-complete for the core mission, breaking budget spent** —
+  the §1 vision goals are delivered and the v0.6.0 breaking pass has
+  landed, so everything from here to 1.0 is additive-only. Remaining
+  work: additive parity/ergonomics (§4.2) and the v1.0 gate (§4.3) —
+  which fires when the MoonBit toolchain reaches v1.0.
 
 ### What it does not yet do
 See **§3** (feature comparison vs python-pptx + PptxGenJS) and **§4**
@@ -302,6 +303,7 @@ at `v0.5.2` although `0.5.3` is released in `moon.mod` / CHANGELOG.)*
 | v0.5.1 (2026-06-16) | Fix | run character spacing (issue #7) |
 | v0.5.2 (2026-06-17) | Fidelity & formatting | F1 rotation/flip · F2 core properties · F3 kerning + highlight + text outline + text effects · F5 shape hyperlinks (AutoShape + Picture) · fzip 0.6.1→0.8.2 |
 | v0.5.3 (2026-06-20) | Verification | ADR-011 three-tier pyramid (Tier 1 in-repo + Tier 2 Open XML SDK CI job + real-world corpus) · media `<p:nvPr>` fix (issue #11) |
+| v0.6.0 (2026-07-06) | Pre-1.0 breaking pass | F3-b non-solid text fill · F4 paragraph-spacing `TextSpacing` ADT (+ real parser bug fixed) · D1-b SmartArt recursive hierarchy layoutDef + connectors ⭐ · API pass 1 (33 internals privatized) — breaking budget fully spent |
 
 ---
 
@@ -454,13 +456,23 @@ consumers ask.
 🔴 **Table-style preset library** (named `<a:tblPr><a:tableStyleId>`
   constants — the GUID field round-trips; no named presets yet)
 
-🔴 **Tier-1 reader-losslessness on real corpus input** (ADR-011 follow-up)
-  - Embed a few `test_fixtures/corpus/` files' bytes as generated `.mbt`
-    so `moon test` (all backends) asserts parse → serialise → parse
-    model-equality on real Office output — proving the *reader* drops
-    nothing (the external validator only proves schema-validity, not
-    that *we* preserved it). Needs a tiny binary→`.mbt` embed generator.
-    The corpus itself landed 2026-06-20, so this is now unblocked.
+🟢 **Tier-1 reader-losslessness on real corpus input** *(landed 2026-07-10)*
+  - **Shipped**: `tools/embed-corpus/gen.py` (stdlib-only Python,
+    run-on-regen only — CI never needs it) embeds corpus files as
+    base64-chunk `corpus_*_embed_test.mbt` sources;
+    `src/integration/corpus_test.mbt` decodes them (small in-test
+    base64 decoder — core has none) and drives each through
+    parse → serialise (package-level writers) → save → reopen →
+    re-parse, asserting **model equality per part** (theme / master /
+    layout / slide / notes / comments dispatched by content type).
+  - **Embedded trio** (~110 KB binary → ~150 KB generated source):
+    `testPPT.pptx` (baseline: theme + master + 11 layouts + 3 slides),
+    `table_test.pptx` (real Office 3×6 table, lifts to the typed
+    model), `with_japanese.pptx` (CJK + astral-plane Gothic-script
+    runs — surrogate-pair stress for the UTF-8↔UTF-16 XML boundary).
+    All three pass the invariant **first-try** — no parser fix needed.
+    More files are a one-line `FILES` addition + regen.
+  - 6 new tests; 1131 → 1137 × 4 backends; no `.mbti` change.
 
 ---
 
@@ -728,6 +740,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-10** — **v0.7 Tier-1 reader-losslessness landed: `moon test` now proves the reader drops nothing on real Office files, on every backend (ADR-011 follow-up, §4.2).** The Tier-2 SDK validator shows the corpus is schema-valid but says nothing about *our* preservation — this closes that gap without file I/O (the library is FFI-free; JS/Wasm can't read the filesystem). New `tools/embed-corpus/gen.py` (stdlib-only Python, run only to regenerate — committed output, never in CI) emits `src/integration/corpus_*_embed_test.mbt` with each file's bytes as fixed-width base64 chunks + a length/sha header; `corpus_test.mbt` adds a ~30-line base64 decoder (none in core, verified via `moon ide doc`) with a decoded-length abort so a corrupted embed can't masquerade as a parser finding, and a shared `assert_reader_lossless` invariant: open → `parse_everything` floor → re-serialise every parser-bearing part through its package-level writer → save → reopen → re-parse → **assert model equality per part**. Embedded trio (~110 KB binary → ~150 KB source, fmt-stable): `testPPT.pptx` (theme + master + 11 layouts + 3 slides), `table_test.pptx` (real 3×6 Office table, spot-checked lifting to the typed `Table`), `with_japanese.pptx` (CJK 「ゾルゲと尾崎、淡々と最期」 + astral-plane Gothic `𐌲𐌿𐍄𐌹𐍃𐌺` — surrogate-pair stress across the UTF-8↔UTF-16 XML boundary, asserted to survive serialize→reparse). **All three passed the losslessness invariant first-try** — the ADR-004 extension mechanism holds on real Office output. Corpus README's "why not embedded" section rewritten to point at the generator. 6 new tests; 1131 → 1137 × 4 backends; no `.mbti` change. Also refreshed §0 to post-0.6.0 reality (version row, test count, §4.0 gains the v0.6.0 row — tags `v0.5.3`/`v0.6.0` confirmed pushed).
 - **2026-07-06** — **Roadmap reorganised around a new release policy: v1.0.0 ships when MoonBit itself reaches v1.0.** The library is feature-complete for its core mission (all §1 vision goals delivered; verified against source: 1109 tests × 4 backends green, F3-b/F4/D1-b confirmed still open in code). §4 restructured: the shipped v0.2.0–v0.5.3 cycles' ~320 lines of landed-item detail are compressed into the §4.0 summary table (the full record stays in §11 + `CHANGELOG.md`); forward work is now **§4.1 v0.6.0** (the deliberate pre-1.0 *breaking* pass — F3-b non-solid text fill + F4 paragraph-spacing ADTs — plus D1-b SmartArt recursive hierarchy `layoutDef` and API-stability review pass 1), **§4.2 v0.7.x** (additive parity/ergonomics: B3 xlsx cache, F2-b app.xml, F5-b remaining shape hyperlinks, SmartArt node styling, sections, fill/table-style conveniences, Tier-1 reader-losslessness on the corpus), and **§4.3 v1.0.0** (the gate: final API review, Tier 3 verification, benchmarks, announcement). **B3 moved out of the 1.0 gate to §4.2** (a feature, not a stability item) and **D5 streaming write demoted to §5** (needs fzip upstream work, no consumer demand; benchmarks decide). Also refreshed to match reality: §0 at-a-glance (0.5.3 released; `v0.5.3` git tag noted as not yet pushed), §3 matrix (stale ⏳ v0.2 rows for A1/A2/A3/A4/A5/C2 flipped to ✅; column header → 0.5.3; B3/D5 targets retargeted), §5 trimmed (promoted/completed items removed — the real-world corpus landed 2026-06-20 with 7 Apache-POI files), **Q8/Q9 moved to resolved** (answered by D1/D2 as shipped), new **Q13** (what counts as "MoonBit v1.0"), §9 risks refreshed (v0.5-scope + M1 rows obsolete → removed; new external-1.0-gate risk). Docs-only; no library `.mbti` change.
 - **2026-07-06** — **Whole-tree refactor sweep (CLAUDE.md §7) ahead of the v0.6 PR.** Five-lens pass over the full source. **Test adequacy (the actionable lens)**: the API audit's 16-item missing-direct-test list is fully closed — 13 new blackbox tests across `builders_test` (`of_preset`, `with_stroke` incl. ADR-003 immutability, `of_styled_text` + `with_properties`), `table_properties_test` (the four `with_border_*` singly, `TableProperties::default` all-inherit, `TableCell::empty`), `background_test` (`of_fill` defaults), `shape_hyperlink_test` (`ShapeHyperlink::external`/`to_slide` constructors + a `Picture::with_hyperlink_to_slide` end-to-end jump: `ppaction://hlinksldjump` + the `rt_slide` rel), `define_master_test` (`with_background` renders the `<p:bg>` fill into the synthesised master), `slide_size_test` (`to_slide_size` mirrors `dimensions` + `size_type` incl. `Custom`), `add_chart_test` (first *direct* `add_chart_ex_mut` test: chartEx part + content-type override + slide reference + save→reopen), `package_test` (`validate_part_name` accepts canonical names, raises `MalformedPackage` on empty / no-leading-slash / trailing-slash). One test correction along the way: `AutoShape::rect` deliberately ships a default 1 pt outline (documented), so the `with_stroke` immutability check bases on `of_preset` (no default stroke). **Other lenses — no action with rationale**: constants (per-package test fixture helpers are the blackbox-test convention; inline OOXML attribute values match the 2026-06-16 precedent), duplicate/dead code (deny-warn clean; the API pass already removed the leaked surface), file splitting (`parser.mbt` 1315 L / `chart/builders.mbt` 1197 L unchanged since the prior sweep's keep decision), docs (README.mbt.md carries no stale counts; cookbook + deck README refreshed earlier today). 1118 → 1131 × 4 backends; no `.mbti` change.
 - **2026-07-06** — **D1-b Tier-3 verified in PowerPoint Web — and its one finding fixed (child boxes rendered black).** Opening the regenerated deck in PowerPoint Web confirmed the recursive layoutDef works: the org chart lays out **all three levels with connector lines** (the D1-b goal). One defect: every non-root box drew **black with invisible text** — PowerPoint Web resolves an *absent* `styleLbl` to black rather than a usable default, and only the root (`node0`) was labelled. Fix: `childNode` now names `styleLbl="node1"` explicitly (the accent-1 label our colors/quickStyle parts define; the radial spokes already carried it). `hier_text_node` takes a required label; layout test asserts both labels. The v0.6 features slide verified fully correct on the same pass (gradient + pattern text fills, 150 % / space-before / absolute-28 pt spacing). 1118 × 4 backends; validator clean.

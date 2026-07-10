@@ -26,12 +26,16 @@ Do **not** commit decks of unknown provenance. Good sources:
 Record each file's origin + license in `SOURCES.md` (create it alongside the
 files) so provenance stays auditable.
 
-## Why files are not embedded as MoonBit tests
+## Tier-1 embeds: some files also run inside `moon test`
 
-Reading these binaries from `moon test` is awkward: the library is FFI-free and
-runs on four backends (JS / Wasm can't read the filesystem), so a real-file
-round-trip test would have to embed each file's bytes in generated `.mbt`. That
-is a worthwhile follow-up (it would prove the *reader* loses nothing on real
-input — see TODO.md ADR-011), but the external validator already covers "these
-real files validate," so the corpus lives here and is exercised through the
-CI tool rather than the MoonBit test runner.
+The library is FFI-free and runs on four backends (JS / Wasm can't read the
+filesystem), so `moon test` can't open these binaries directly. Instead, a few
+of them are **embedded as generated MoonBit sources** — run
+`python3 tools/embed-corpus/gen.py` (stdlib only) to regenerate
+`src/integration/corpus_*_embed_test.mbt` from the `FILES` list in that
+script. `src/integration/corpus_test.mbt` decodes the embeds and asserts
+parse → serialise → re-parse **model equality** on every backend, proving the
+*reader* loses nothing on real Office input (the SDK validator above only
+proves the files are schema-valid). To embed another corpus file, add it to
+`FILES`, regenerate, and commit the new `.mbt` — each entry costs ~1.4× its
+size in committed source, so keep the embedded set small and diverse.
