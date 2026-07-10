@@ -1,7 +1,7 @@
 // Streaming, event-based XML reader.
 //
 // `XmlReader::next()` returns one event at a time, lazily walking the input.
-// We chose events over a DOM (see ADR-008 in TODO.md) because:
+// We chose events over a DOM (ADR-008) because:
 //   * OOXML files are large; a DOM holds the whole tree in memory.
 //   * Most readers care about a small subset of element kinds and benefit
 //     from skipping the rest cheaply.

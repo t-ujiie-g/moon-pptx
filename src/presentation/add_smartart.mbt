@@ -1,4 +1,4 @@
-// SmartArt-insertion API (roadmap D1).
+// SmartArt-insertion API.
 //
 // `add_smartart_mut(slide_idx, smartart, x, y, cx, cy)` attaches a built
 // SmartArt diagram to a slide. A diagram is five OPC parts:
@@ -14,7 +14,7 @@
 // references the cached drawing via a relationship in *its own* `.rels`
 // (recorded inside the data model as `<dsp:dataModelExt relId=…>`). The cached
 // drawing carries the laid-out boxes so the diagram renders without a layout
-// engine (roadmap: "cached graphic-frame fallback rendering").
+// engine.
 
 ///|
 /// Insert a built `SmartArt` diagram as a `<p:graphicFrame>` on the slide at

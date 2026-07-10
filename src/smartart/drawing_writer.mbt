@@ -1,11 +1,10 @@
-// Cached drawing writer (roadmap D1).
+// Cached drawing writer.
 //
 // Emits `/ppt/drawings/drawingN.xml` — `<dsp:drawing>` (Microsoft 2008
 // diagram-drawing extension): the *laid-out* shapes for the diagram, so
 // PowerPoint (and viewers that don't run the layout engine, incl. < 2010)
-// render the SmartArt directly. This is the "cached graphic-frame fallback"
-// the roadmap calls for — and the piece fully under our control, so we compute
-// box positions ourselves from the frame extent.
+// render the SmartArt directly. The cached drawing is the piece fully under
+// our control, so we compute box positions ourselves from the frame extent.
 //
 // Coordinates are relative to the host `<p:graphicFrame>`'s origin (0,0) with
 // its `cx` × `cy` extent. List stacks boxes top-to-bottom; Process places them

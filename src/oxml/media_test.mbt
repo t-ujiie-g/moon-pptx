@@ -1,4 +1,4 @@
-// @oxml media-format detection tests (roadmap v0.3 A6).
+// @oxml media-format detection tests.
 // Reuses `bytes_of` from image_test.mbt (same blackbox package).
 
 ///|

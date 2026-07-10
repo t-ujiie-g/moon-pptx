@@ -1,4 +1,4 @@
-// Placeholder named accessors (roadmap v0.3 B1).
+// Placeholder named accessors.
 //
 // The parsed `Placeholder` keeps `ph_type` as the raw `ST_PlaceholderType`
 // attribute string for lossless round-trip (ADR-004) — a body/content
@@ -170,7 +170,7 @@ pub fn Slide::body(self : Slide) -> Shape? {
 /// size inherit from the matching placeholder on the slide's layout (the OOXML
 /// cascade) — it renders only when the layout declares a placeholder of that
 /// kind+idx. Generalises `with_footer` / `with_date` / `with_slide_number`,
-/// and is the building block for the typed layout handles (roadmap M1).
+/// and is the building block for the typed layout handles.
 pub fn Slide::with_placeholder(
   self : Slide,
   kind : PlaceholderType,

@@ -1,4 +1,4 @@
-// Chart-data validation (roadmap v0.4 D7).
+// Chart-data validation.
 //
 // The `with_series` builders are deliberately lenient — a series whose value
 // count differs from the category count is zero-padded (or truncated) at emit
@@ -11,16 +11,15 @@
 // `validate` (raises) and `is_consistent` (returns Bool) consume, so the two
 // can never disagree on what "consistent" means.
 //
-// Deviation from the roadmap sketch: validation is a separate `validate()`
-// method rather than baked into `with_series`. Making `with_series` raise
-// would (1) force categories to be added strictly before series and (2) break
-// the infallible fluent chains used throughout the cookbook
+// Validation is a separate `validate()` method rather than baked into
+// `with_series`. Making `with_series` raise would (1) force categories to be
+// added strictly before series and (2) break the infallible fluent chains
+// used throughout the cookbook
 // (`ChartData::new().with_category(...).with_series(...)`). A standalone gate
 // is order-independent and non-breaking: `Chart::of_bar(data.validate())`
 // validates exactly at the build boundary, while lenient building stays the
-// default. The phantom-type-parameter lift to *compile-time* validation
-// remains deferred until MoonBit's const-generics-like features stabilise
-// (per the roadmap).
+// default. A phantom-type-parameter lift to *compile-time* validation
+// remains deferred until MoonBit's const-generics-like features stabilise.
 
 // --- ChartData ---
 
@@ -147,9 +146,9 @@ pub fn BubbleData::is_consistent(self : BubbleData) -> Bool {
   self.first_misaligned_series() is None
 }
 
-// --- Chart (plot-type-aware data-label position) — roadmap v0.5 D8 ---
+// --- Chart (plot-type-aware data-label position) ---
 //
-// `Chart::with_options(DataLabels(pos))` (M2) and the lower-level `DLbls`
+// `Chart::with_options(DataLabels(pos))` and the lower-level `DLbls`
 // builders faithfully emit *any* `ST_DLblPos` the caller supplies, matching the
 // lenient philosophy of `with_series`. But `<c:dLblPos>` is constrained per
 // plot family (ECMA-376 + MS-OI29500): `outEnd` is valid on a `barChart` /
@@ -158,15 +157,14 @@ pub fn BubbleData::is_consistent(self : BubbleData) -> Bool {
 // `surface*`) permit no explicit position at all. PowerPoint refuses to load a
 // file with an out-of-range position and runs its repair pass.
 //
-// `Chart::validate` is the opt-in gate (pairing with D7's `ChartData::validate`)
+// `Chart::validate` is the opt-in gate (pairing with `ChartData::validate`)
 // that catches the mismatch before it reaches PowerPoint, naming the offending
 // plot family and position. The plot-vs-position table lives in one place
 // (`valid_d_lbl_positions`), exhaustive over `Plot` — adding a new plot family
 // without classifying it is a compile error.
 //
-// The *compile-time* lift sketched in the roadmap (per-family `DataLabelPosition`
-// so an invalid combo is a type error) is deferred; this slice ships the runtime
-// gate that the roadmap says ships regardless.
+// A *compile-time* lift (per-family `DataLabelPosition` so an invalid combo
+// is a type error) stays deferred; this is the runtime gate.
 
 ///|
 /// The data-label positions ECMA-376 + MS-OI29500 permit for a plot family.

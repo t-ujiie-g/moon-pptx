@@ -134,7 +134,7 @@ pub fn Presentation::add_picture_auto_mut(
 
 ///|
 /// Insert an SVG image as a new `Picture` shape on the slide at
-/// `slide_idx`, with a raster fallback (roadmap C4). `svg_bytes` is the
+/// `slide_idx`, with a raster fallback. `svg_bytes` is the
 /// SVG part; `fallback_bytes` is a PNG / JPEG / GIF / BMP / TIFF rendering
 /// shown by viewers that don't understand SVG (PowerPoint < 2016,
 /// thumbnails). The picture's `<a:blip>` embeds the fallback and carries an

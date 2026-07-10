@@ -1,4 +1,4 @@
-// Unit tests for the `smartart` package (roadmap D1).
+// Unit tests for the `smartart` package.
 
 ///|
 /// Count non-overlapping occurrences of `needle` in `s`.
@@ -112,7 +112,7 @@ test "org_chart data model: parent/child connections + all nodes drawn" {
     assert_true(data.find("<a:t>" + label + "</a:t>") is Some(_))
   }
   // The cached drawing lays out every node (not just the root) plus one
-  // connector line per parent→child edge (D1-b).
+  // connector line per parent→child edge.
   let drawing = @oxml.bytes_to_string(
     art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(5_000_000L)),
   )
@@ -125,7 +125,7 @@ test "org_chart data model: parent/child connections + all nodes drawn" {
 }
 
 ///|
-test "hier layoutDef recurses + wires connectors (D1-b)" {
+test "hier layoutDef recurses + wires connectors" {
   let xml = @oxml.bytes_to_string(
     @smartart.SmartArt::org_chart(@smartart.Node::leaf("CEO")).layout_xml(),
   )
@@ -160,7 +160,7 @@ test "hier layoutDef recurses + wires connectors (D1-b)" {
 }
 
 ///|
-test "drawing connector geometry: bounding box + flipH (D1-b)" {
+test "drawing connector geometry: bounding box + flipH" {
   // Root centred over two children in a wide frame: the left child's
   // connector runs down-left (flipH), the right child's down-right (no
   // flip). Both span from the parent box's bottom centre to the child's
@@ -179,7 +179,7 @@ test "drawing connector geometry: bounding box + flipH (D1-b)" {
 }
 
 ///|
-test "radial layoutDef pins the hub and rings the spokes (D1-b)" {
+test "radial layoutDef pins the hub and rings the spokes" {
   let xml = @oxml.bytes_to_string(
     @smartart.SmartArt::relationship(@smartart.Node::leaf("Core"), [
       @smartart.Node::leaf("A"),
@@ -233,7 +233,7 @@ test "matrix grid + relationship hub layouts" {
   let rxml = @oxml.bytes_to_string(
     r.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
   )
-  // Four boxes + three hub→spoke connector lines (D1-b).
+  // Four boxes + three hub→spoke connector lines.
   assert_eq(count_occurrences(rxml, "<dsp:sp "), 7)
   assert_eq(count_occurrences(rxml, "prst=\"line\""), 3)
   // All parts well-formed for both families.

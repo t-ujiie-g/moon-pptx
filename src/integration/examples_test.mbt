@@ -391,7 +391,7 @@ test "example 15: SmartArt diagram" {
     prs.pct_h(70.0),
   )
   // The tree families take nested Nodes; the recursive hierarchy layout
-  // definition lays the whole tree out in PowerPoint (D1-b — see
+  // definition lays the whole tree out in PowerPoint (see
   // examples/README.md §15).
   let _ = prs.add_slide_mut(0)
   let ceo = @smartart.Node::new("CEO", [

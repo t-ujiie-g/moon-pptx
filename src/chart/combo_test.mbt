@@ -1,4 +1,4 @@
-// Tests for combo charts (roadmap v0.3 C3).
+// Tests for combo charts.
 
 ///|
 fn revenue() -> @chart.ChartData {

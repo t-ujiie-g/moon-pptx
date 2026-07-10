@@ -23,8 +23,8 @@ priv enum ExtScope {
 /// `<p:nvGrpSpPr>` / `<p:grpSpPr>` belong inside `<p:spTree>`;
 /// `<p:controls>` belongs inside `<p:cSld>`; everything else
 /// (`<p:timing>` / `<p:custDataLst>` / `<p:extLst>` + foreign-namespace
-/// siblings) attaches at the sld level. `<p:bg>` (roadmap A7) and
-/// `<p:transition>` (roadmap D3) are no longer captured here — they are the
+/// siblings) attaches at the sld level. `<p:bg>` and
+/// `<p:transition>` are no longer captured here — they are the
 /// typed `Slide.background` / `Slide.transition` fields. Same applies for
 /// `<p:notes>` since they share the content model.
 fn classify_ext(el : @xml.XmlElement) -> ExtScope {
@@ -78,8 +78,8 @@ fn write_bg(
 }
 
 ///|
-/// Emit `<p:transition>` (CT_SlideTransition) — the typed slide transition
-/// (roadmap D3). Default-valued attributes (`spd="fast"`, `advClick="1"`) are
+/// Emit `<p:transition>` (CT_SlideTransition) — the typed slide
+/// transition. Default-valued attributes (`spd="fast"`, `advClick="1"`) are
 /// omitted; they re-parse to the same model. The single effect child precedes
 /// the preserved `<p:sndAc>` / `<p:extLst>` extensions.
 fn write_transition(
@@ -215,7 +215,7 @@ fn write_slide_xml(
   if s.name != "" {
     w.attribute(@xml.QName::unqualified("name"), s.name)
   }
-  // <p:bg> first per CT_CommonSlideData ordering (roadmap A7).
+  // <p:bg> first per CT_CommonSlideData ordering.
   match s.background {
     Some(bg) => write_bg(w, ctx, bg)
     None => ()
@@ -287,13 +287,13 @@ fn write_slide_xml(
   // <p:clrMapOvr> — shared writer in @slide_master.
   @slide_master.write_clr_map_override(w, s.clr_map_override)
   // <p:transition> after <p:clrMapOvr>, before <p:timing>, per CT_Slide
-  // ordering (roadmap D3). Lifted out of `extension`, so the sld-level replay
+  // ordering. Lifted out of `extension`, so the sld-level replay
   // below no longer carries it.
   match s.transition {
     Some(t) => write_transition(w, ctx, t)
     None => ()
   }
-  // <p:timing> after <p:transition>, per CT_Slide ordering (roadmap D2). The
+  // <p:timing> after <p:transition>, per CT_Slide ordering. The
   // typed timeline is build-only and mutually exclusive with a captured
   // `<p:timing>` (`with_animations` strips it from `extension`), so the replay
   // below never double-emits it.

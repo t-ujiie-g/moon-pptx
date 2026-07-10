@@ -63,7 +63,7 @@ pub fn Paragraph::with_alignment(
 }
 
 ///|
-/// Set the paragraph's line height (`<a:lnSpc>`, F4) — percent of the
+/// Set the paragraph's line height (`<a:lnSpc>`) — percent of the
 /// line (`Percent(Percentage(120.0))` = 120 %) or absolute points
 /// (`Points(Pt(18.0))`).
 pub fn Paragraph::with_line_spacing(
@@ -74,7 +74,7 @@ pub fn Paragraph::with_line_spacing(
 }
 
 ///|
-/// Set the extra space above the paragraph (`<a:spcBef>`, F4).
+/// Set the extra space above the paragraph (`<a:spcBef>`).
 pub fn Paragraph::with_space_before(
   self : Paragraph,
   spacing : TextSpacing,
@@ -83,7 +83,7 @@ pub fn Paragraph::with_space_before(
 }
 
 ///|
-/// Set the extra space below the paragraph (`<a:spcAft>`, F4).
+/// Set the extra space below the paragraph (`<a:spcAft>`).
 pub fn Paragraph::with_space_after(
   self : Paragraph,
   spacing : TextSpacing,
@@ -177,7 +177,7 @@ pub fn RunProperties::with_color(
 
 ///|
 /// Set the run's text fill to any `@oxml.Fill` — gradient / pattern /
-/// picture text fills included (F3-b). `with_color` remains the solid
+/// picture text fills included. `with_color` remains the solid
 /// shorthand.
 pub fn RunProperties::with_text_fill(
   self : RunProperties,
@@ -561,7 +561,7 @@ pub fn Picture::of_image(
 /// `@presentation.Presentation::add_svg_picture_mut` runs the full pipeline.
 ///
 /// The blip embeds the raster fallback and carries an `<asvg:svgBlip>`
-/// extension pointing at the SVG (roadmap C4); otherwise identical to
+/// extension pointing at the SVG; otherwise identical to
 /// `Picture::of_image` (stretched fit inside a `prst="rect"` boundary).
 pub fn Picture::of_svg_image(
   id : Int,
@@ -663,7 +663,7 @@ pub fn GroupShape::with_flip(
   { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
 }
 
-// --- shape-level hyperlinks on the remaining kinds (F5-b) ------------------
+// --- shape-level hyperlinks on the remaining kinds ------------------
 
 ///|
 /// Attach a whole-group hyperlink to an external URL (`<p:cNvPr>

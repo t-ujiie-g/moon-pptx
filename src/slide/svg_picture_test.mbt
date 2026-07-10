@@ -1,4 +1,4 @@
-// Tests for SVG picture support (roadmap v0.3 C4).
+// Tests for SVG picture support.
 
 ///|
 /// Build a one-shape slide holding `pic`, so we can serialise it and check
@@ -17,7 +17,7 @@ fn slide_of_picture(pic : @slide.Picture) -> @slide.Slide {
 }
 
 ///|
-test "C4: Picture::of_svg_image wires fallback embed + svgBlip extension" {
+test "Picture::of_svg_image wires fallback embed + svgBlip extension" {
   let pic = @slide.Picture::of_svg_image(
     5,
     "Logo",
@@ -54,7 +54,7 @@ test "C4: Picture::of_svg_image wires fallback embed + svgBlip extension" {
 }
 
 ///|
-test "C4: SVG blip serialises with the svg namespace and round-trips" {
+test "SVG blip serialises with the svg namespace and round-trips" {
   let pic = @slide.Picture::of_svg_image(
     7,
     "Logo",

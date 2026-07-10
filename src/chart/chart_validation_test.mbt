@@ -1,4 +1,4 @@
-// Tests for chart-data validation (roadmap v0.4 D7).
+// Tests for chart-data validation.
 
 // --- ChartData ---
 
@@ -86,7 +86,7 @@ test "ScatterData::validate: matching X/Y passes, mismatch raises" {
   }
 }
 
-// --- Chart (plot-type-aware data-label position) — roadmap v0.5 D8 ---
+// --- Chart (plot-type-aware data-label position) ---
 
 ///|
 fn d8_data() -> @chart.ChartData {

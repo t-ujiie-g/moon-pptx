@@ -1,4 +1,4 @@
-// Slide reordering tests (roadmap v0.3.1 E2).
+// Slide reordering tests.
 
 ///|
 /// Stamp a slide with a one-textbox marker so reorder/duplicate tests

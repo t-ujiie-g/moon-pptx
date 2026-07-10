@@ -1,4 +1,4 @@
-// Tests for shape rotation & flip on `Transform` (roadmap v0.6 F1).
+// Tests for shape rotation & flip on `Transform`.
 //
 // Covers the `<a:xfrm rot/flipH/flipV>` lift: parse, write (with default
 // omission), the `Transform` / `AutoShape` / `Picture` / `GroupShape`

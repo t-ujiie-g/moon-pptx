@@ -263,7 +263,7 @@ fn parse_paragraph_properties(
 
 ///|
 /// Parse a `CT_TextSpacing` wrapper (`<a:lnSpc>` / `<a:spcBef>` /
-/// `<a:spcAft>`, F4): exactly one `<a:spcPct val="…"/>` (1/1000 of a
+/// `<a:spcAft>`): exactly one `<a:spcPct val="…"/>` (1/1000 of a
 /// percent) or `<a:spcPts val="…"/>` (1/100 of a point) choice child.
 /// Raises `Malformed` when neither is present — the spec's choice is
 /// required, matching the strict shape/fill paths.
@@ -360,7 +360,7 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
 /// Parse `<a:rPr>` — attributes off the start tag and its typed
 /// children (`<a:ln>`, the fill-choice group — `<a:noFill>` /
 /// `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`
-/// via the shared `@oxml.parse_fill` (F3-b) — `<a:effectLst>`,
+/// via the shared `@oxml.parse_fill` — `<a:effectLst>`,
 /// `<a:highlight>`, `<a:latin>`, `<a:ea>`, `<a:cs>`, `<a:hlinkClick>`).
 /// Other children (`<a:grpFill>`, underline fills, east-asian list,
 /// `<a:rtl>`) ride on the run's `extension` per ADR-004.
@@ -481,7 +481,7 @@ fn parse_run_properties(
 ///|
 /// Parse the body of a one-colour wrapper element — used for
 /// `<a:highlight>` (the run fill now goes through `@oxml.parse_fill`,
-/// F3-b). Delegates colour parsing to `@oxml.parse_color_element` so
+/// run fills). Delegates colour parsing to `@oxml.parse_color_element` so
 /// every colour kind (srgb / hsl / sys / scheme / prst / scrgb) and its
 /// modifiers come through one path. Returns `None` if the body has no
 /// recognised colour child.

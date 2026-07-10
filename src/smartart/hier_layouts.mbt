@@ -1,4 +1,4 @@
-// Recursive hierarchy + radial layout definitions (roadmap D1-b).
+// Recursive hierarchy + radial layout definitions.
 //
 // PowerPoint re-lays-out SmartArt from the `<dgm:layoutDef>` on open (it does
 // not honour the cached `<dsp:drawing>` — the 2026-06-16 verification finding,

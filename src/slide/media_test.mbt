@@ -1,4 +1,4 @@
-// Tests for media pictures (roadmap v0.3 A6).
+// Tests for media pictures.
 // Reuses `slide_of_picture` (svg_picture_test.mbt) and `char_index_of`
 // (background_test.mbt) from this blackbox test package.
 
@@ -29,7 +29,7 @@ test "Picture::of_media: builds a video reference + poster blip" {
 }
 
 ///|
-test "A6: media picture serialises videoFile + p14:media + media action" {
+test "media picture serialises videoFile + p14:media + media action" {
   let pic = @slide.Picture::of_media(
     7,
     "clip.mp4",
@@ -51,7 +51,7 @@ test "A6: media picture serialises videoFile + p14:media + media action" {
 }
 
 ///|
-test "A6: audio media emits audioFile" {
+test "audio media emits audioFile" {
   let pic = @slide.Picture::of_media(
     8,
     "clip.mp3",
@@ -69,7 +69,7 @@ test "A6: audio media emits audioFile" {
 }
 
 ///|
-test "A6: media XML round-trips losslessly (re-serialise is stable)" {
+test "media XML round-trips losslessly (re-serialise is stable)" {
   let pic = @slide.Picture::of_media(
     9,
     "clip.mp4",

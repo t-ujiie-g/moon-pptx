@@ -1,4 +1,4 @@
-// Tests for online / URL video embedding (roadmap v0.5 C5).
+// Tests for online / URL video embedding.
 //
 // `fake_png` is shared from `add_picture_test.mbt` (same blackbox test package).
 

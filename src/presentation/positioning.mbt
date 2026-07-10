@@ -1,4 +1,4 @@
-// Percentage / relative positioning helpers (v0.2 C2).
+// Percentage / relative positioning helpers.
 //
 // PptxGenJS lets users say `x: "5%"` meaning "5% of slide width";
 // the equivalent in moon-pptx is `prs.pct_w(5.0)`. Returning an

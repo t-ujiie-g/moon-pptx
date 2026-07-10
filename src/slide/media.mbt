@@ -1,4 +1,4 @@
-// Audio / video media on a picture shape (roadmap v0.3 A6).
+// Audio / video media on a picture shape.
 //
 // In OOXML an embedded media clip is a `<p:pic>` whose `<p:nvPr>` carries an
 // `<a:videoFile>` / `<a:audioFile>` (`r:link` to the media part) plus a
@@ -16,7 +16,7 @@ pub(all) enum MediaKind {
 } derive(Eq, Debug)
 
 ///|
-/// The media references attached to a media `<p:pic>` (roadmap A6).
+/// The media references attached to a media `<p:pic>`.
 pub(all) struct MediaInfo {
   kind : MediaKind
   /// `r:link` on `<a:videoFile>` / `<a:audioFile>` — the media part via the
@@ -28,7 +28,7 @@ pub(all) struct MediaInfo {
 } derive(Eq, Debug)
 
 ///|
-/// Construct a media `Picture` (roadmap A6). `link_id` is the `r:link` of the
+/// Construct a media `Picture`. `link_id` is the `r:link` of the
 /// `<a:videoFile>` / `<a:audioFile>`, `media_embed_id` the `r:embed` of the
 /// `<p14:media>` extension (both pointing at the media part), and
 /// `poster_embed_id` the `r:embed` of the poster-frame image in `blipFill`.

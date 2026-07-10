@@ -1,11 +1,11 @@
-// Slide reordering API (roadmap v0.3.1 E2).
+// Slide reordering API.
 //
 // PowerPoint keys on-screen slide order off `presentation.xml`'s
 // `<p:sldIdLst>`, *not* off slide part names — `slide3.xml` can appear
 // first if its `<p:sldId>` comes first. So reordering is a pure permute
 // of the `sld_ids` array + re-serialise: no part renaming, no rels
-// churn, no content-type touch. This pairs with E1 (delete) and E3
-// (duplicate) to give full programmatic deck arrangement.
+// churn, no content-type touch. This pairs with slide deletion and
+// duplication to give full programmatic deck arrangement.
 
 ///|
 /// Move the slide at `from` to position `to` (both in `<p:sldIdLst>` /

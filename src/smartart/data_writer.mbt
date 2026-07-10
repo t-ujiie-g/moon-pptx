@@ -1,4 +1,4 @@
-// DiagramML data-model writer (roadmap D1).
+// DiagramML data-model writer.
 //
 // Emits `/ppt/diagrams/dataN.xml` — `<dgm:dataModel>` (ECMA-376 §21.4.2.13,
 // CT_DataModel): the point list (`<dgm:ptLst>`), connection list

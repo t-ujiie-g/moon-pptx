@@ -1,4 +1,4 @@
-// Audio / video embedding (roadmap v0.3 A6).
+// Audio / video embedding.
 //
 // An embedded media clip is a `<p:pic>` that references the media part three
 // ways: an `<a:videoFile>` / `<a:audioFile>` (`r:link`, the video/audio

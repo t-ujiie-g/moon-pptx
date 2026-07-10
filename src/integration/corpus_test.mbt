@@ -1,5 +1,4 @@
-// Tier-1 reader-losslessness on real Office output (ADR-011 follow-up,
-// TODO.md §4.2).
+// Tier-1 reader-losslessness on real Office output (ADR-011).
 //
 // The Tier-2 Open XML SDK validator proves the corpus files are
 // schema-valid, but not that *our reader* preserves them. These tests

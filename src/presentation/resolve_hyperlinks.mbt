@@ -240,7 +240,7 @@ fn resolve_run_properties(
 ///|
 /// Allocate a slide-rels relationship for `target`, register it, and return
 /// the new `(rId, action)`. Shared by run-level (`RunProperties`) and
-/// shape-level (`ShapeHyperlink`, F5) hyperlink resolution. Mutates
+/// shape-level (`ShapeHyperlink`) hyperlink resolution. Mutates
 /// `ctx.rels` / `ctx.changed`.
 fn allocate_hyperlink(
   ctx : HyperlinkCtx,
@@ -291,7 +291,7 @@ fn allocate_hyperlink(
 }
 
 ///|
-/// Resolve a shape-level hyperlink (F5): allocate its rId + action and clear
+/// Resolve a shape-level hyperlink: allocate its rId + action and clear
 /// the unresolved target. A `None`-target hyperlink (already resolved or
 /// absent) is returned unchanged.
 fn resolve_shape_hyperlink(

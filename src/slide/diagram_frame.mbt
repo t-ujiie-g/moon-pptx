@@ -1,4 +1,4 @@
-// SmartArt graphic-frame builder (roadmap D1).
+// SmartArt graphic-frame builder.
 //
 // A SmartArt diagram on a slide is a `<p:graphicFrame>` whose
 // `<a:graphicData uri="…/diagram">` carries a single `<dgm:relIds>` element —

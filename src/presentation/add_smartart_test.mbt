@@ -1,4 +1,4 @@
-// Tests for `Presentation::add_smartart_mut` (roadmap D1).
+// Tests for `Presentation::add_smartart_mut`.
 
 ///|
 /// Find the `<dgm:relIds>` element inside a SmartArt graphicFrame's captured
@@ -236,7 +236,7 @@ test "add_smartart_mut: org_chart with nested children wires + reopens" {
     @units.Emu(5_000_000L),
   )
   // The cached drawing draws all four nodes plus one connector line per
-  // parent→child edge (D1-b).
+  // parent→child edge.
   let drawing = @oxml.bytes_to_string(
     prs.pkg.part_by_name("/ppt/drawings/drawing1.xml").unwrap().bytes,
   )

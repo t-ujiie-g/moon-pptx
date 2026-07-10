@@ -105,41 +105,41 @@ pub let rt_extended_properties : String = "http://schemas.openxmlformats.org/off
 pub let rt_hyperlink : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
 
 ///|
-/// `<a:videoFile r:link>` target — the video media part. Roadmap A6.
+/// `<a:videoFile r:link>` target — the video media part.
 pub let rt_video : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/video"
 
 ///|
-/// `<a:audioFile r:link>` target — the audio media part. Roadmap A6.
+/// `<a:audioFile r:link>` target — the audio media part.
 pub let rt_audio : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio"
 
 ///|
 /// `<p14:media r:embed>` target — the embedded media part (Office 2007+
 /// extension; the same media part is also referenced by `rt_video` /
-/// `rt_audio`). Roadmap A6.
+/// `rt_audio`).
 pub let rt_media : String = "http://schemas.microsoft.com/office/2007/relationships/media"
 
 ///|
 /// `<dgm:relIds r:dm>` target — a SmartArt data part
-/// (`/ppt/diagrams/dataN.xml`). Slide → diagram data. Roadmap D1.
+/// (`/ppt/diagrams/dataN.xml`). Slide → diagram data.
 pub let rt_diagram_data : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramData"
 
 ///|
 /// `<dgm:relIds r:lo>` target — a SmartArt layout part
-/// (`/ppt/diagrams/layoutN.xml`). Slide → diagram layout. Roadmap D1.
+/// (`/ppt/diagrams/layoutN.xml`). Slide → diagram layout.
 pub let rt_diagram_layout : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramLayout"
 
 ///|
 /// `<dgm:relIds r:qs>` target — a SmartArt quick-style part
-/// (`/ppt/diagrams/quickStyleN.xml`). Slide → diagram quick style. Roadmap D1.
+/// (`/ppt/diagrams/quickStyleN.xml`). Slide → diagram quick style.
 pub let rt_diagram_quick_style : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramQuickStyle"
 
 ///|
 /// `<dgm:relIds r:cs>` target — a SmartArt colors part
-/// (`/ppt/diagrams/colorsN.xml`). Slide → diagram colors. Roadmap D1.
+/// (`/ppt/diagrams/colorsN.xml`). Slide → diagram colors.
 pub let rt_diagram_colors : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramColors"
 
 ///|
 /// `<dsp:dataModelExt relId>` target — the cached drawing part
 /// (`/ppt/drawings/drawingN.xml`). Data part → its `<dsp:drawing>` (Office
-/// 2007+ extension). Roadmap D1.
+/// 2007+ extension).
 pub let rt_diagram_drawing : String = "http://schemas.microsoft.com/office/2007/relationships/diagramDrawing"

@@ -1,4 +1,4 @@
-// Typed document core properties (`docProps/core.xml`) — roadmap v0.6 F2.
+// Typed document core properties (`docProps/core.xml`).
 //
 // `docProps/core.xml` is the OPC core-properties part PowerPoint surfaces in
 // File ▸ Info / the Properties dialog. CT_CoreProperties is a *closed* schema
@@ -9,7 +9,7 @@
 // python-pptx exposes the same set via `prs.core_properties`; PptxGenJS
 // surfaces `title` / `author` (= creator) / `subject` / `revision`.
 // (`company` / `application` live in the separate, sequenced
-// `docProps/app.xml` — a documented F2 follow-up.)
+// `docProps/app.xml` — a documented follow-up.)
 
 ///|
 /// Document core properties (`docProps/core.xml`). Every field is `String?`

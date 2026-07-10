@@ -1,4 +1,4 @@
-// Tests for the generic typed-placeholder builder (roadmap M1 building block).
+// Tests for the generic typed-placeholder builder.
 
 ///|
 test "Slide::with_placeholder appends a typed placeholder, idempotent per kind+idx" {

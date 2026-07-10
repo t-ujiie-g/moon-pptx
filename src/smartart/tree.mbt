@@ -1,4 +1,4 @@
-// Node-tree flattening (roadmap D1 slice 3).
+// Node-tree flattening.
 //
 // The data model and the cached drawing both need every node in the diagram —
 // not just the top-level ones — keyed by a stable id and tagged with its

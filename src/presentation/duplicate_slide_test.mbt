@@ -1,4 +1,4 @@
-// Slide duplication tests (roadmap v0.3.1 E3).
+// Slide duplication tests.
 //
 // `stamp_slide` / `marker_of` are shared with move_slide_test.mbt (same
 // blackbox test package).
@@ -70,7 +70,7 @@ test "duplicate_slide_mut: save → reopen round-trips both slides" {
 
 ///|
 test "duplicate_slide_mut: shared image survives deleting the original" {
-  // E1 + E3 together: a clone keeps a shared part alive when the source
+  // Deletion + duplication together: a clone keeps a shared part alive when the source
   // slide is removed (reference-counted GC sees the clone's reference).
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)

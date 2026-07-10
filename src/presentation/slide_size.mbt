@@ -1,4 +1,4 @@
-// Slide-size selector (v0.2 A5).
+// Slide-size selector.
 //
 // `Presentation::set_slide_size_mut(SlideSizeKind)` updates the
 // deck's `<p:sldSz>` attribute set in one call. `SlideSizeKind`

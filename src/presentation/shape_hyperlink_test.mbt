@@ -1,4 +1,4 @@
-// Tests for shape-level hyperlinks (roadmap v0.6 F5):
+// Tests for shape-level hyperlinks:
 // `AutoShape` / `Picture` `with_hyperlink` / `with_hyperlink_to_slide`,
 // resolved by `update_slide_mut` (shared resolver with run hyperlinks).
 
@@ -126,10 +126,10 @@ test "ShapeHyperlink::external / to_slide constructors carry the target" {
   assert_true(jump.click is None && jump.action is None)
 }
 
-// --- F5-b: the remaining shape kinds (Connector / Group / GraphicFrame) ---
+// --- whole-shape hyperlinks on the remaining kinds (Connector / Group / GraphicFrame) ---
 
 ///|
-/// A free-floating straight connector for the F5-b tests (no builder
+/// A free-floating straight connector for these tests (no builder
 /// constructor exists for connectors — literal construction is the norm).
 fn test_connector(id : Int) -> @slide.Connector {
   {
@@ -236,7 +236,7 @@ test "graphic frame with_hyperlink: a clickable table survives save → reopen" 
 }
 
 ///|
-test "F5-b builders set the unresolved target and leave the original intact" {
+test "shape hyperlink builders set the unresolved target and leave the original intact" {
   let conn = test_connector(9)
   let conn_ext = conn.with_hyperlink(url="https://a.example")
   let conn_jump = conn.with_hyperlink_to_slide(slide_idx=2)

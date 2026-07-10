@@ -1,8 +1,8 @@
-// Slide transition — typed `<p:transition>` (roadmap v0.4 D3).
+// Slide transition — typed `<p:transition>`.
 //
 // `<p:transition>` (CT_SlideTransition, ECMA-376 §19.3.1.50) was previously
-// captured into `Slide.extension` (ADR-004). D3 lifts it into a typed
-// `Slide.transition` field, mirroring how A7 lifted `<p:bg>`. The effect is a
+// captured into `Slide.extension` (ADR-004). This lifts it into a typed
+// `Slide.transition` field, mirroring the `<p:bg>` lift. The effect is a
 // choice of one transition-type child element (each carrying its own direction
 // /orientation attribute); the wrapper carries the `spd` (speed), `advClick`
 // (advance on mouse click), and `advTm` (auto-advance after N ms) attributes.

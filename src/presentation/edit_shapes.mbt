@@ -1,4 +1,4 @@
-// Pinpoint shape editing at the presentation level (roadmap v0.3 B4).
+// Pinpoint shape editing at the presentation level.
 //
 // These close the find → edit → write-back loop in one call: they fetch the
 // slide at `slide_idx`, apply a shape transform via the `@slide` edit

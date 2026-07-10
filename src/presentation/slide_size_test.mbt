@@ -1,4 +1,4 @@
-// Tests for `Presentation::set_slide_size_mut` (v0.2 A5).
+// Tests for `Presentation::set_slide_size_mut`.
 
 ///|
 test "SlideSizeKind: dimensions of common presets" {

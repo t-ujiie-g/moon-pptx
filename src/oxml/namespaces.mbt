@@ -49,7 +49,7 @@ pub let svg_ns : String = "http://schemas.microsoft.com/office/drawing/2016/SVG/
 /// Microsoft PowerPoint 2010 namespace — `p14:` prefix. Home of
 /// `<p14:media>`, the extension that marks a picture's media part as
 /// *embedded* (vs linked). Lives inside a `<p:ext>` keyed by
-/// `media_ext_uri`. Used by audio / video embedding (roadmap A6).
+/// `media_ext_uri`. Used by audio / video embedding.
 pub let powerpoint_2010_ns : String = "http://schemas.microsoft.com/office/powerpoint/2010/main"
 
 ///|
@@ -62,19 +62,19 @@ pub let media_ext_uri : String = "{DAA4B4D4-668B-4A5B-A93E-BE16DBB66F30}"
 /// `<dgm:dataModel>` (data part), `<dgm:layoutDef>`, `<dgm:colorsDef>`,
 /// `<dgm:styleDef>`, and the `<dgm:relIds>` reference inside a SmartArt
 /// `<a:graphicData>`. Numerically equal to `graphic_data_diagram_uri`.
-/// Roadmap D1.
+///
 pub let diagram_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/diagram"
 
 ///|
 /// Microsoft diagram-drawing namespace — `dsp:` prefix. Home of the cached
 /// `<dsp:drawing>` (laid-out shapes) referenced from a SmartArt data part so
-/// the diagram renders without re-running the layout engine. Roadmap D1.
+/// the diagram renders without re-running the layout engine.
 pub let diagram_drawing_ns : String = "http://schemas.microsoft.com/office/drawing/2008/diagram"
 
 ///|
 /// The `<a:ext>` URI keying the `<dsp:dataModelExt>` extension inside a
 /// SmartArt data model's `<dgm:extLst>` — points the data part at its cached
-/// `<dsp:drawing>`. Fixed by Office. Roadmap D1.
+/// `<dsp:drawing>`. Fixed by Office.
 pub let diagram_data_model_ext_uri : String = "{74C2E1F8-2D9B-489B-A2DD-C0C0D5F4E0E0}"
 
 ///|
@@ -82,23 +82,23 @@ pub let diagram_data_model_ext_uri : String = "{74C2E1F8-2D9B-489B-A2DD-C0C0D5F4
 /// `<cp:coreProperties>` and its `<cp:keywords>` / `<cp:lastModifiedBy>` /
 /// `<cp:revision>` / `<cp:category>` / `<cp:contentStatus>` /
 /// `<cp:lastPrinted>` / `<cp:version>` children in `docProps/core.xml`.
-/// Roadmap F2.
+///
 pub let core_properties_ns : String = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
 
 ///|
 /// Dublin Core element namespace — `dc:` prefix. Home of `<dc:title>` /
 /// `<dc:creator>` / `<dc:subject>` / `<dc:description>` / `<dc:identifier>`
-/// / `<dc:language>` in `docProps/core.xml`. Roadmap F2.
+/// / `<dc:language>` in `docProps/core.xml`.
 pub let dublin_core_ns : String = "http://purl.org/dc/elements/1.1/"
 
 ///|
 /// Dublin Core terms namespace — `dcterms:` prefix. Home of the W3CDTF
 /// date elements `<dcterms:created>` / `<dcterms:modified>` in
-/// `docProps/core.xml`. Roadmap F2.
+/// `docProps/core.xml`.
 pub let dublin_core_terms_ns : String = "http://purl.org/dc/terms/"
 
 ///|
 /// XML Schema instance namespace — `xsi:` prefix. Used in
 /// `docProps/core.xml` only for the `xsi:type="dcterms:W3CDTF"` attribute
-/// the date elements carry. Roadmap F2.
+/// the date elements carry.
 pub let xml_schema_instance_ns : String = "http://www.w3.org/2001/XMLSchema-instance"

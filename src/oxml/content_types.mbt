@@ -67,7 +67,7 @@ pub let ct_svg : String = "image/svg+xml"
 /// / boxwhisker / funnel / paretoLine / regionMap / clusteredColumn).
 pub let ct_chart_ex : String = "application/vnd.ms-office.chartex+xml"
 
-// --- SmartArt / DiagramML parts (roadmap D1) ---
+// --- SmartArt / DiagramML parts ---
 //
 // A SmartArt graphic is four DiagramML parts referenced from the slide's
 // `<dgm:relIds>` (data / layout / quickStyle / colors), plus a cached drawing
@@ -76,29 +76,29 @@ pub let ct_chart_ex : String = "application/vnd.ms-office.chartex+xml"
 
 ///|
 /// `ppt/diagrams/dataN.xml` — the DiagramML data model (`<dgm:dataModel>`:
-/// node points + connections). Roadmap D1.
+/// node points + connections).
 pub let ct_diagram_data : String = "application/vnd.openxmlformats-officedocument.drawingml.diagramData+xml"
 
 ///|
 /// `ppt/diagrams/layoutN.xml` — the DiagramML layout definition
-/// (`<dgm:layoutDef>`). Roadmap D1.
+/// (`<dgm:layoutDef>`).
 pub let ct_diagram_layout : String = "application/vnd.openxmlformats-officedocument.drawingml.diagramLayout+xml"
 
 ///|
 /// `ppt/diagrams/quickStyleN.xml` — the DiagramML style definition
 /// (`<dgm:styleDef>`). The content type is `diagramStyle`, not
-/// `diagramQuickStyle`. Roadmap D1.
+/// `diagramQuickStyle`.
 pub let ct_diagram_style : String = "application/vnd.openxmlformats-officedocument.drawingml.diagramStyle+xml"
 
 ///|
 /// `ppt/diagrams/colorsN.xml` — the DiagramML color definition
-/// (`<dgm:colorsDef>`). Roadmap D1.
+/// (`<dgm:colorsDef>`).
 pub let ct_diagram_colors : String = "application/vnd.openxmlformats-officedocument.drawingml.diagramColors+xml"
 
 ///|
 /// `ppt/drawings/drawingN.xml` — the cached `<dsp:drawing>` (Office 2007+
 /// extension) that holds the laid-out shapes, so the SmartArt renders
-/// without re-running the layout engine. Roadmap D1.
+/// without re-running the layout engine.
 pub let ct_diagram_drawing : String = "application/vnd.ms-office.drawingml.diagramDrawing+xml"
 
 ///|

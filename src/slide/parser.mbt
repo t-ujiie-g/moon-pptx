@@ -83,8 +83,8 @@ fn parse_slide_xml(
     shapes,
     clr_map_override,
     transition,
-    // <p:timing> stays captured in `extension` (D2 is build-only); see
-    // animation.mbt.
+    // <p:timing> stays captured in `extension` (the typed timeline is
+    // build-only); see animation.mbt.
     timing: None,
     extension,
   }
@@ -93,8 +93,8 @@ fn parse_slide_xml(
 ///|
 /// Parse `<p:transition>` (CT_SlideTransition) — the `spd` / `advClick` /
 /// `advTm` attributes plus the optional single transition-effect child. Lifts
-/// the transition out of `extension` into the typed `Slide.transition` field
-/// (roadmap D3). `<p:sndAc>` / `<p:extLst>` and any unmodelled children are
+/// the transition out of `extension` into the typed `Slide.transition`
+/// field. `<p:sndAc>` / `<p:extLst>` and any unmodelled children are
 /// preserved per ADR-004.
 fn parse_transition(
   r : @xml.XmlReader,
@@ -226,7 +226,7 @@ fn parse_c_sld(
 ///|
 /// Parse `<p:bg>` (CT_Background) — a choice of `<p:bgPr>` (explicit fill)
 /// or `<p:bgRef>` (theme style-matrix reference). Lifts the background out
-/// of `extension` into the typed `Slide.background` field (roadmap A7).
+/// of `extension` into the typed `Slide.background` field.
 fn parse_bg(r : @xml.XmlReader) -> Background raise SlideError {
   let mut bg : Background? = None
   while true {

@@ -1,7 +1,7 @@
-// Online / URL video embedding (roadmap v0.5 C5).
+// Online / URL video embedding.
 //
 // An online video (YouTube, Vimeo, or any web URL) is the same `<p:pic>` as an
-// embedded media clip (A6), but the two media relationships are `External` and
+// embedded media clip, but the two media relationships are `External` and
 // point at the web URL instead of an in-package media part. So there is *no*
 // `/ppt/media/mediaN.*` part — only the poster-frame image — and the
 // `<a:videoFile r:link>` + `<p14:media r:embed>` both target the URL. We reuse
@@ -30,7 +30,7 @@ pub fn Presentation::add_online_video_mut(
   if video_url == "" {
     raise Malformed("add_online_video_mut: empty video URL")
   }
-  // Poster must be a recognised raster image (same gate as A6 media).
+  // Poster must be a recognised raster image (same gate as embedded media).
   let poster_fmt = match @oxml.detect_image_format(poster_bytes) {
     Some(f) => f
     None =>

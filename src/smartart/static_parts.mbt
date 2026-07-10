@@ -1,4 +1,4 @@
-// Static DiagramML parts: layout / colors / quickStyle (roadmap D1).
+// Static DiagramML parts: layout / colors / quickStyle.
 //
 // Unlike the data + drawing parts, these three are independent of the node
 // content, so we emit them as template strings (same approach as the blank
@@ -10,7 +10,7 @@
 // - layout  (`<dgm:layoutDef>`)  : per family — the flat families use the
 //   single-level template below (linear / cycle / pyramid / snake, one
 //   rounded box per top-level node); the nesting families use the recursive
-//   hierarchy / radial definitions in `hier_layouts.mbt` (D1-b).
+//   hierarchy / radial definitions in `hier_layouts.mbt`.
 // - colors  (`<dgm:colorsDef>`)  : accent-1 fills with light text.
 // - quickStyle (`<dgm:styleDef>`): the "simple" 3-D-free style references.
 
@@ -47,7 +47,7 @@ fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
 ///|
 /// `<dgm:layoutDef>` for `kind`. The nesting families get the recursive
 /// hierarchy / radial definitions (so PowerPoint's layout engine renders the
-/// full tree — D1-b); the flat families keep the single-level linear /
+/// full tree); the flat families keep the single-level linear /
 /// cycle / pyramid / snake template below.
 pub fn SmartArt::layout_xml(self : SmartArt) -> FixedArray[Byte] {
   match self.kind {

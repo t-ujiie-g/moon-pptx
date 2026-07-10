@@ -1,8 +1,8 @@
-// Lossless diff-write regression (roadmap v0.3 D6).
+// Lossless diff-write regression.
 //
 // `Presentation` retains each part's *source bytes* (the OPC layer stores
 // raw ZIP-entry bytes; only `_mut` operations replace a part's bytes), so
-// `save()` re-emits untouched parts verbatim — the D6 property — by
+// `save()` re-emits untouched parts verbatim by
 // construction, with no dirty-tracking or hashing. These tests lock that in:
 // editing one slide must leave every other part byte-for-byte identical,
 // which is what preserves a real-world Office deck's exact formatting on the
@@ -30,7 +30,7 @@ fn part_bytes(
 }
 
 ///|
-test "D6: editing one slide leaves every other part byte-for-byte identical" {
+test "editing one slide leaves every other part byte-for-byte identical" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let _ = prs.add_slide_mut(0)
@@ -85,7 +85,7 @@ test "D6: editing one slide leaves every other part byte-for-byte identical" {
 }
 
 ///|
-test "D6: open → save with no edits preserves every part byte-for-byte" {
+test "open → save with no edits preserves every part byte-for-byte" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let original = prs.save()

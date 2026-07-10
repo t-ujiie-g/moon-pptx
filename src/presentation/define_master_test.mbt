@@ -1,4 +1,4 @@
-// Tests for Presentation::define_master (roadmap v0.3 C1).
+// Tests for Presentation::define_master.
 
 ///|
 fn rect(x : Int64, y : Int64, cx : Int64, cy : Int64) -> @slide.Transform {

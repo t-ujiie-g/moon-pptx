@@ -1,18 +1,18 @@
-// Slide duplication API (roadmap v0.3.1 E3).
+// Slide duplication API.
 //
 // `duplicate_slide_mut(slide_index)` deep-copies a slide part and threads
 // the copy into the package exactly like `add_slide_mut` does for a blank
 // slide: a new `/ppt/slides/slideN.xml` (verbatim copy of the source body),
 // a fresh `slideN.xml.rels`, a `presentation.xml.rels` relationship, a new
 // `<p:sldId>`, and a content-type `<Override>`. The duplicate is appended
-// to the end of the deck; pair with `move_slide_mut` (E2) to position it.
+// to the end of the deck; pair with `move_slide_mut` to position it.
 //
 // Q12 decision (shared media): the clone *re-references* the source slide's
 // relationship targets rather than deep-copying each image / chart / media /
 // notes part. The slide's `.rels` is slide-local, so the copy's `.rels`
 // carries the same relative targets (both slides live in `/ppt/slides/`),
 // the copied slide XML keeps its `rId` references valid unchanged, and the
-// shared parts are kept alive by E1's reference-counted deletion. This is
+// shared parts are kept alive by `remove_slide_mut`'s reference-counted deletion. This is
 // leaner and round-trip-safe; the trade-off is that editing a shared chart's
 // data or the shared notes affects both slides. A deep-copy variant (fully
 // independent parts) can land later if a consumer needs it.

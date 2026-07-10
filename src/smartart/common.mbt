@@ -1,4 +1,4 @@
-// Shared DiagramML constants + helpers (roadmap D1).
+// Shared DiagramML constants + helpers.
 //
 // Single source of truth for the built-in layout / quickStyle / colors
 // `uniqueId`s and the per-kind layout identity, so the data writer (the doc

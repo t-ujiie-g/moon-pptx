@@ -1,4 +1,4 @@
-// Programmatic slide-master definition (roadmap v0.3 C1 + A8 master side).
+// Programmatic slide-master definition.
 //
 // `define_master` synthesises a new `<p:sldMaster>` + one dependent
 // `<p:sldLayout>` and wires them into the package (parts, rels, content
@@ -9,7 +9,7 @@
 // vs `<p:clrMapOvr>` and the trailing `<p:sldLayoutIdLst>`).
 
 ///|
-/// One placeholder declared on a master (roadmap C1). `kind` is the
+/// One placeholder declared on a master. `kind` is the
 /// `ST_PlaceholderType`; `position` is its rectangle on the master;
 /// `default_text` is prompt text shown until a slide overrides it.
 pub(all) struct PlaceholderDef {
@@ -19,7 +19,7 @@ pub(all) struct PlaceholderDef {
 }
 
 ///|
-/// A high-level master definition (roadmap C1). Build with
+/// A high-level master definition. Build with
 /// `MasterDefinition::new` then the `with_*` helpers, or as a struct literal.
 pub(all) struct MasterDefinition {
   name : String

@@ -90,7 +90,7 @@ test "pPr: lnSpc percent form (spcPct, 1/1000 %)" {
 }
 
 ///|
-test "pPr: lnSpc absolute form (spcPts, 1/100 pt) — F4" {
+test "pPr: lnSpc absolute form (spcPts, 1/100 pt)" {
   let slide = @slide.Slide::parse(
     slide_with_ppr("<a:pPr><a:lnSpc><a:spcPts val=\"1800\"/></a:lnSpc></a:pPr>"),
   )
@@ -98,7 +98,7 @@ test "pPr: lnSpc absolute form (spcPts, 1/100 pt) — F4" {
 }
 
 ///|
-test "pPr: spcBef points + spcAft percent forms — F4" {
+test "pPr: spcBef points + spcAft percent forms" {
   let slide = @slide.Slide::parse(
     slide_with_ppr(
       "<a:pPr>" +
@@ -113,7 +113,7 @@ test "pPr: spcBef points + spcAft percent forms — F4" {
 }
 
 ///|
-test "pPr: spacing round-trips (parse → serialize → parse) — F4" {
+test "pPr: spacing round-trips (parse → serialize → parse)" {
   let xml = slide_with_ppr(
     "<a:pPr>" +
     "<a:lnSpc><a:spcPct val=\"150000\"/></a:lnSpc>" +
@@ -128,7 +128,7 @@ test "pPr: spacing round-trips (parse → serialize → parse) — F4" {
 }
 
 ///|
-test "pPr: empty lnSpc (no choice child) raises — F4" {
+test "pPr: empty lnSpc (no choice child) raises" {
   try @slide.Slide::parse(slide_with_ppr("<a:pPr><a:lnSpc/></a:pPr>")) catch {
     _ => ()
   } noraise {
@@ -137,7 +137,7 @@ test "pPr: empty lnSpc (no choice child) raises — F4" {
 }
 
 ///|
-test "pPr: spacing builders (with_line_spacing / before / after) — F4" {
+test "pPr: spacing builders (with_line_spacing / before / after)" {
   let para = @slide.Paragraph::of_text("hello")
     .with_line_spacing(Percent(@units.Percentage(120.0)))
     .with_space_before(Points(@units.Pt(6.0)))

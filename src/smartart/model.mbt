@@ -1,4 +1,4 @@
-// SmartArt model (roadmap D1).
+// SmartArt model.
 //
 // A `SmartArt` is a typed description of a diagram: a `SmartArtKind` (which
 // built-in layout family it maps to) plus a list of top-level `Node`s. From
@@ -10,7 +10,7 @@
 // `Pyramid` / `Matrix`) lay out from the flat list of top-level nodes, and
 // the *nesting* ones (`OrgChart` / `Hierarchy` / `Relationship`) consume
 // `Node.children` — both in the data model and in the recursive / radial
-// layout definitions (`hier_layouts.mbt`, D1-b) PowerPoint lays out from.
+// layout definitions (`hier_layouts.mbt`) PowerPoint lays out from.
 
 ///|
 /// Which built-in SmartArt layout family a diagram maps to.
