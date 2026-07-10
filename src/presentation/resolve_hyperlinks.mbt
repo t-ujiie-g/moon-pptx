@@ -86,7 +86,12 @@ fn shape_has_unresolved_hyperlinks(shape : @slide.Shape) -> Bool {
         None => false
       })
     Picture(p) => shape_hyperlink_unresolved(p.hyperlink)
+    Connector(c) => shape_hyperlink_unresolved(c.hyperlink)
+    GraphicFrame(gf) => shape_hyperlink_unresolved(gf.hyperlink)
     Group(g) => {
+      if shape_hyperlink_unresolved(g.hyperlink) {
+        return true
+      }
       for c in g.children {
         if shape_has_unresolved_hyperlinks(c) {
           return true
@@ -149,12 +154,31 @@ fn resolve_shape_hyperlinks(
           Picture({ ..p, hyperlink: Some(resolve_shape_hyperlink(h, ctx)) })
         None => shape
       }
+    Connector(c) =>
+      match c.hyperlink {
+        Some(h) =>
+          Connector({ ..c, hyperlink: Some(resolve_shape_hyperlink(h, ctx)) })
+        None => shape
+      }
+    GraphicFrame(gf) =>
+      match gf.hyperlink {
+        Some(h) =>
+          GraphicFrame({
+            ..gf,
+            hyperlink: Some(resolve_shape_hyperlink(h, ctx)),
+          })
+        None => shape
+      }
     Group(g) => {
+      let new_hyperlink = match g.hyperlink {
+        Some(h) => Some(resolve_shape_hyperlink(h, ctx))
+        None => None
+      }
       let new_children = []
       for c in g.children {
         new_children.push(resolve_shape_hyperlinks(c, ctx))
       }
-      Group({ ..g, children: new_children })
+      Group({ ..g, hyperlink: new_hyperlink, children: new_children })
     }
     _ => shape
   }

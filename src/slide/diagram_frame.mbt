@@ -50,6 +50,7 @@ pub fn GraphicFrame::of_diagram_ref(
     name,
     transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     content: OtherGraphic(@oxml.graphic_data_diagram_uri, graphic_data),
+    hyperlink: None,
     extension: [],
   }
 }

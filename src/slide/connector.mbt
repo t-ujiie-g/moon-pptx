@@ -43,6 +43,12 @@ pub(all) struct Connector {
   effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
+  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
+  /// connector (roadmap F5-b). Build-only: set by `with_hyperlink` /
+  /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
+  /// `None` for a parsed connector (its `<a:hlinkClick>` round-trips via the
+  /// captured `<p:cNvPr>` in `extension`).
+  hyperlink : ShapeHyperlink?
   /// Lossless preservation (ADR-004): unmodelled `<p:cxnSp>` siblings
   /// (`<p:style>`, `<p:extLst>`, …) captured verbatim.
   extension : Array[@xml.XmlElement]

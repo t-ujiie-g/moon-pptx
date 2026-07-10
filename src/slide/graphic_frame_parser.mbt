@@ -69,7 +69,16 @@ fn parse_graphic_frame(r : @xml.XmlReader) -> GraphicFrame raise SlideError {
     None =>
       raise Malformed("<p:graphicFrame> is missing required <a:graphic> child")
   }
-  { id, name, transform, content: c, extension }
+  {
+    id,
+    name,
+    transform,
+    content: c,
+    // Build-only (like AutoShape's): a parsed `<a:hlinkClick>` round-trips
+    // via the captured `<p:cNvPr>` in `extension` (ADR-004).
+    hyperlink: None,
+    extension,
+  }
 }
 
 ///|

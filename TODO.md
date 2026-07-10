@@ -19,7 +19,7 @@ status touches this file.
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1137 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1141 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -36,7 +36,7 @@ status touches this file.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
 ### Where we are now (2026-07-10)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1137 tests × 4
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1141 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
@@ -176,7 +176,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | AutoShape (preset geometry) | ✅ | ✅ | ✅ 187 `PresetShape` variants | — |
 | Custom geometry (`<a:custGeom>`) | △ XML | △ | ✅ typed AST (Phase 3h) | — |
 | Shape rotation (`rot`) / flip (`flipH`/`flipV`) | ✅ `shape.rotation` | ✅ `rotate`/`flipH/V` | ✅ typed `Transform.rotation`/`flip_h`/`flip_v` + `with_rotation`/`with_flip` (0.6 F1) | — |
-| Shape-level hyperlink / click action (`<a:hlinkClick>` on `cNvPr`) | ✅ `click_action` | ✅ shape `hyperlink` | ✅ `with_hyperlink`/`with_hyperlink_to_slide` (AutoShape + Picture, 0.6 F5) | — |
+| Shape-level hyperlink / click action (`<a:hlinkClick>` on `cNvPr`) | ✅ `click_action` | ✅ shape `hyperlink` | ✅ `with_hyperlink`/`with_hyperlink_to_slide` on **all five shape kinds** (AutoShape + Picture 0.6 F5; Connector + Group + GraphicFrame 0.7 F5-b) | — |
 | Picture (PNG / JPEG / GIF / BMP / TIFF) | ✅ + WMF | ✅ + SVG + animated GIF | ✅ | — |
 | Picture: auto-detect EMU size from header | ✅ via PIL | ✅ | ✅ A1 (`detect_image_dimensions` — PNG/JPEG/GIF/BMP/TIFF) | — |
 | Picture: cropping fluent builder | ✅ | ✅ | ✅ A4 (`Picture::with_crop`) | — |
@@ -438,10 +438,20 @@ consumers ask.
     `CT_Properties` (an ordered sequence with many unmodelled fields) —
     a small dedicated app.xml editor (§5 note, F2 deferral).
 
-🔴 **F5-b — Shape hyperlinks on Group / GraphicFrame / Connector**
-  - F5 shipped AutoShape + Picture; the remaining kinds' parsed
-    `<a:hlinkClick>` already round-trips via `extension` — the typed
-    field + writer threading extends additively.
+🟢 **F5-b — Shape hyperlinks on Group / GraphicFrame / Connector**
+  *(landed 2026-07-10)*
+  - **Shipped**: build-only `hyperlink : ShapeHyperlink?` on all three +
+    `with_hyperlink` / `with_hyperlink_to_slide` builders (6 fns), the
+    F5 resolver walk extended (a Group resolves its own hyperlink *and*
+    its children's), and writer threading — Group / GraphicFrame just
+    pass the field to `write_nv_wrapper`; the Connector writer's bespoke
+    verbatim-cNvPr emission was consolidated onto the shared
+    `write_cnvpr` (byte-identical for parsed input, and it gains B4
+    id/name authority as a bonus). Parsed `<a:hlinkClick>` still rides
+    the captured `<p:cNvPr>` per ADR-004.
+  - 5 new tests (per-kind e2e incl. save→reopen + builder direct
+    coverage); 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields +
+    6 builders (additive).
 
 🔴 **SmartArt per-node styling** (`Node.style` — the field exists,
   unused by the writers)
@@ -740,6 +750,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-10** — **v0.7 F5-b landed: shape-level hyperlinks on Connector / Group / GraphicFrame — all five shape kinds are now clickable.** Completes F5 (v0.5.2, AutoShape + Picture) additively: each of the three remaining kinds gains the build-only `hyperlink : ShapeHyperlink?` field plus `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)` builders, resolved through the same `allocate_hyperlink` pipeline in `update_slide_mut` (a Group resolves its own hyperlink *and* recurses into children; the unresolved-precheck covers the new kinds so no rels round-trip happens on hyperlink-free slides). Writer threading: Group / GraphicFrame simply pass the field into `write_nv_wrapper`; the **Connector writer's bespoke verbatim-cNvPr emission was consolidated onto the shared `write_cnvpr`** — byte-identical for parsed connectors (typed id/name were read off that element), and connectors gain B4 id/name edit authority as a side benefit. Parse stays untouched per ADR-004 (a parsed `<a:hlinkClick>` rides the captured `<p:cNvPr>`; the typed field is build-only, like media). 5 new tests: per-kind e2e (external rel + `<a:hlinkClick>` for connector, `rt_slide` + `ppaction://hlinksldjump` for group, clickable table incl. save→reopen for graphicFrame) + direct builder coverage of all 6 fns with ADR-003 immutability checks. 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields + 6 builders (additive). §3.3 matrix row now reads "all five shape kinds".
 - **2026-07-10** — **v0.7 Tier-1 reader-losslessness landed: `moon test` now proves the reader drops nothing on real Office files, on every backend (ADR-011 follow-up, §4.2).** The Tier-2 SDK validator shows the corpus is schema-valid but says nothing about *our* preservation — this closes that gap without file I/O (the library is FFI-free; JS/Wasm can't read the filesystem). New `tools/embed-corpus/gen.py` (stdlib-only Python, run only to regenerate — committed output, never in CI) emits `src/integration/corpus_*_embed_test.mbt` with each file's bytes as fixed-width base64 chunks + a length/sha header; `corpus_test.mbt` adds a ~30-line base64 decoder (none in core, verified via `moon ide doc`) with a decoded-length abort so a corrupted embed can't masquerade as a parser finding, and a shared `assert_reader_lossless` invariant: open → `parse_everything` floor → re-serialise every parser-bearing part through its package-level writer → save → reopen → re-parse → **assert model equality per part**. Embedded trio (~110 KB binary → ~150 KB source, fmt-stable): `testPPT.pptx` (theme + master + 11 layouts + 3 slides), `table_test.pptx` (real 3×6 Office table, spot-checked lifting to the typed `Table`), `with_japanese.pptx` (CJK 「ゾルゲと尾崎、淡々と最期」 + astral-plane Gothic `𐌲𐌿𐍄𐌹𐍃𐌺` — surrogate-pair stress across the UTF-8↔UTF-16 XML boundary, asserted to survive serialize→reparse). **All three passed the losslessness invariant first-try** — the ADR-004 extension mechanism holds on real Office output. Corpus README's "why not embedded" section rewritten to point at the generator. 6 new tests; 1131 → 1137 × 4 backends; no `.mbti` change. Also refreshed §0 to post-0.6.0 reality (version row, test count, §4.0 gains the v0.6.0 row — tags `v0.5.3`/`v0.6.0` confirmed pushed).
 - **2026-07-06** — **Roadmap reorganised around a new release policy: v1.0.0 ships when MoonBit itself reaches v1.0.** The library is feature-complete for its core mission (all §1 vision goals delivered; verified against source: 1109 tests × 4 backends green, F3-b/F4/D1-b confirmed still open in code). §4 restructured: the shipped v0.2.0–v0.5.3 cycles' ~320 lines of landed-item detail are compressed into the §4.0 summary table (the full record stays in §11 + `CHANGELOG.md`); forward work is now **§4.1 v0.6.0** (the deliberate pre-1.0 *breaking* pass — F3-b non-solid text fill + F4 paragraph-spacing ADTs — plus D1-b SmartArt recursive hierarchy `layoutDef` and API-stability review pass 1), **§4.2 v0.7.x** (additive parity/ergonomics: B3 xlsx cache, F2-b app.xml, F5-b remaining shape hyperlinks, SmartArt node styling, sections, fill/table-style conveniences, Tier-1 reader-losslessness on the corpus), and **§4.3 v1.0.0** (the gate: final API review, Tier 3 verification, benchmarks, announcement). **B3 moved out of the 1.0 gate to §4.2** (a feature, not a stability item) and **D5 streaming write demoted to §5** (needs fzip upstream work, no consumer demand; benchmarks decide). Also refreshed to match reality: §0 at-a-glance (0.5.3 released; `v0.5.3` git tag noted as not yet pushed), §3 matrix (stale ⏳ v0.2 rows for A1/A2/A3/A4/A5/C2 flipped to ✅; column header → 0.5.3; B3/D5 targets retargeted), §5 trimmed (promoted/completed items removed — the real-world corpus landed 2026-06-20 with 7 Apache-POI files), **Q8/Q9 moved to resolved** (answered by D1/D2 as shipped), new **Q13** (what counts as "MoonBit v1.0"), §9 risks refreshed (v0.5-scope + M1 rows obsolete → removed; new external-1.0-gate risk). Docs-only; no library `.mbti` change.
 - **2026-07-06** — **Whole-tree refactor sweep (CLAUDE.md §7) ahead of the v0.6 PR.** Five-lens pass over the full source. **Test adequacy (the actionable lens)**: the API audit's 16-item missing-direct-test list is fully closed — 13 new blackbox tests across `builders_test` (`of_preset`, `with_stroke` incl. ADR-003 immutability, `of_styled_text` + `with_properties`), `table_properties_test` (the four `with_border_*` singly, `TableProperties::default` all-inherit, `TableCell::empty`), `background_test` (`of_fill` defaults), `shape_hyperlink_test` (`ShapeHyperlink::external`/`to_slide` constructors + a `Picture::with_hyperlink_to_slide` end-to-end jump: `ppaction://hlinksldjump` + the `rt_slide` rel), `define_master_test` (`with_background` renders the `<p:bg>` fill into the synthesised master), `slide_size_test` (`to_slide_size` mirrors `dimensions` + `size_type` incl. `Custom`), `add_chart_test` (first *direct* `add_chart_ex_mut` test: chartEx part + content-type override + slide reference + save→reopen), `package_test` (`validate_part_name` accepts canonical names, raises `MalformedPackage` on empty / no-leading-slash / trailing-slash). One test correction along the way: `AutoShape::rect` deliberately ships a default 1 pt outline (documented), so the `with_stroke` immutability check bases on `of_preset` (no default stroke). **Other lenses — no action with rationale**: constants (per-package test fixture helpers are the blackbox-test convention; inline OOXML attribute values match the 2026-06-16 precedent), duplicate/dead code (deny-warn clean; the API pass already removed the leaked surface), file splitting (`parser.mbt` 1315 L / `chart/builders.mbt` 1197 L unchanged since the prior sweep's keep decision), docs (README.mbt.md carries no stale counts; cookbook + deck README refreshed earlier today). 1118 → 1131 × 4 backends; no `.mbti` change.

@@ -200,6 +200,7 @@ pub fn GraphicFrame::of_table(
     name,
     transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     content: TableContent(table),
+    hyperlink: None,
     extension: [],
   }
 }
@@ -224,6 +225,7 @@ pub fn GraphicFrame::of_chart_ref(
     name,
     transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     content: ChartContent(embed_rid),
+    hyperlink: None,
     extension: [],
   }
 }
@@ -245,6 +247,7 @@ pub fn GraphicFrame::of_chart_ex_ref(
     name,
     transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     content: ChartExContent(embed_rid),
+    hyperlink: None,
     extension: [],
   }
 }

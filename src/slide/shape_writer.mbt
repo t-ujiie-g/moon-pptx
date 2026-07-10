@@ -672,20 +672,11 @@ fn write_connector(
   // than capturing it wholesale, so we re-synthesise it from those
   // fields here.
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "nvCxnSpPr"))
-  // cNvPr (still captured wholesale per parse_nv_cxn_sp_pr).
-  let mut emitted_cnvpr = false
-  for ext in c.extension {
-    if ext.name.uri == @oxml.presentation_ns && ext.name.local_name == "cNvPr" {
-      @oxml.write_xml_element(w, ctx, ext)
-      emitted_cnvpr = true
-    }
-  }
-  if !emitted_cnvpr {
-    w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
-    w.attribute(@xml.QName::unqualified("id"), c.id.to_string())
-    w.attribute(@xml.QName::unqualified("name"), c.name)
-    w.end_element()
-  }
+  // <p:cNvPr> via the shared writer (typed id/name authoritative, typed
+  // hyperlink injected — F5-b). Byte-identical to the previous verbatim
+  // re-emit for parsed connectors, since the typed id/name were read off
+  // this very element.
+  write_cnvpr(w, ctx, c.id, c.name, None, c.hyperlink, c.extension)
   // cNvCxnSpPr re-synthesised with modeled stCxn / endCxn.
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvCxnSpPr"))
   match c.start {
@@ -767,9 +758,7 @@ fn write_group_shape(
     g.name,
     None,
     None,
-    // Group-shape hyperlinks aren't typed yet (F5 covers AutoShape + Picture);
-    // a parsed group's `<a:hlinkClick>` still round-trips via `extension`.
-    None,
+    g.hyperlink,
     g.extension,
   )
   // <p:grpSpPr> with group-specific xfrm.

@@ -36,6 +36,12 @@ pub(all) struct GroupShape {
   child_offset : Point?
   child_extent : Size?
   children : Array[Shape]
+  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
+  /// group (roadmap F5-b). Build-only: set by `with_hyperlink` /
+  /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
+  /// `None` for a parsed group (its `<a:hlinkClick>` round-trips via the
+  /// captured `<p:cNvPr>` in `extension`).
+  hyperlink : ShapeHyperlink?
   /// Lossless preservation (ADR-004): unmodelled `<p:grpSp>` siblings
   /// (foreign-namespace extensions, future shape kinds, …) captured
   /// verbatim.

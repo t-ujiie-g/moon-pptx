@@ -211,8 +211,11 @@ pub(all) struct Connector {
   effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Connector::with_hyperlink(Self, url~ : String) -> Self
+pub fn Connector::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 
 pub(all) struct CustomGeometry {
   adjust_values : Array[ShapeAdjustValue]
@@ -260,12 +263,15 @@ pub(all) struct GraphicFrame {
   name : String
   transform : Transform?
   content : GraphicFrameContent
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn GraphicFrame::of_chart_ex_ref(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 pub fn GraphicFrame::of_chart_ref(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 pub fn GraphicFrame::of_diagram_ref(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String, String, String, String) -> Self
 pub fn GraphicFrame::of_table(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, Table) -> Self
+pub fn GraphicFrame::with_hyperlink(Self, url~ : String) -> Self
+pub fn GraphicFrame::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 
 pub(all) enum GraphicFrameContent {
   TableContent(Table)
@@ -281,9 +287,12 @@ pub(all) struct GroupShape {
   child_offset : Point?
   child_extent : Size?
   children : Array[Shape]
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn GroupShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn GroupShape::with_hyperlink(Self, url~ : String) -> Self
+pub fn GroupShape::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 pub fn GroupShape::with_rotation(Self, @units.Angle) -> Self
 
 pub(all) enum HyperlinkTarget {

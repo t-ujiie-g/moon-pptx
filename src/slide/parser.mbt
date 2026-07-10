@@ -438,7 +438,20 @@ fn parse_connector(r : @xml.XmlReader) -> Connector raise SlideError {
       _ => ()
     }
   }
-  { id, name, transform, geometry, stroke, effects, start, end, extension }
+  {
+    id,
+    name,
+    transform,
+    geometry,
+    stroke,
+    effects,
+    start,
+    end,
+    // Build-only (like AutoShape's): a parsed `<a:hlinkClick>` round-trips
+    // via the captured `<p:cNvPr>` in `extension` (ADR-004).
+    hyperlink: None,
+    extension,
+  }
 }
 
 ///|
@@ -576,7 +589,18 @@ fn parse_group_shape(r : @xml.XmlReader) -> GroupShape raise SlideError {
       _ => ()
     }
   }
-  { id, name, transform, child_offset, child_extent, children, extension }
+  {
+    id,
+    name,
+    transform,
+    child_offset,
+    child_extent,
+    children,
+    // Build-only (like AutoShape's): a parsed `<a:hlinkClick>` round-trips
+    // via the captured `<p:cNvPr>` in `extension` (ADR-004).
+    hyperlink: None,
+    extension,
+  }
 }
 
 ///|

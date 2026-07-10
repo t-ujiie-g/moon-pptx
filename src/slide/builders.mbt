@@ -663,6 +663,67 @@ pub fn GroupShape::with_flip(
   { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
 }
 
+// --- shape-level hyperlinks on the remaining kinds (F5-b) ------------------
+
+///|
+/// Attach a whole-group hyperlink to an external URL (`<p:cNvPr>
+/// <a:hlinkClick>` — clicking anywhere on the group follows it). Stored
+/// unresolved; resolved by `Presentation::update_slide_mut`.
+pub fn GroupShape::with_hyperlink(
+  self : GroupShape,
+  url~ : String,
+) -> GroupShape {
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+}
+
+///|
+/// Attach a whole-group click action that jumps to another slide by
+/// zero-based index (as in `Presentation::slides()`).
+pub fn GroupShape::with_hyperlink_to_slide(
+  self : GroupShape,
+  slide_idx~ : Int,
+) -> GroupShape {
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+}
+
+///|
+/// Attach a connector-level hyperlink to an external URL. Stored
+/// unresolved; resolved by `Presentation::update_slide_mut`.
+pub fn Connector::with_hyperlink(self : Connector, url~ : String) -> Connector {
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+}
+
+///|
+/// Attach a connector-level click action that jumps to another slide by
+/// zero-based index.
+pub fn Connector::with_hyperlink_to_slide(
+  self : Connector,
+  slide_idx~ : Int,
+) -> Connector {
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+}
+
+///|
+/// Attach a frame-level hyperlink to an external URL — e.g. a clickable
+/// table or chart. Stored unresolved; resolved by
+/// `Presentation::update_slide_mut`.
+pub fn GraphicFrame::with_hyperlink(
+  self : GraphicFrame,
+  url~ : String,
+) -> GraphicFrame {
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+}
+
+///|
+/// Attach a frame-level click action that jumps to another slide by
+/// zero-based index.
+pub fn GraphicFrame::with_hyperlink_to_slide(
+  self : GraphicFrame,
+  slide_idx~ : Int,
+) -> GraphicFrame {
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+}
+
 // --- Slide::with_shape ---
 
 ///|

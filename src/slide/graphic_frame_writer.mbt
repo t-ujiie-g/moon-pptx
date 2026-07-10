@@ -26,9 +26,7 @@ fn write_graphic_frame(
     gf.name,
     None,
     None,
-    // GraphicFrame hyperlinks aren't typed (F5 covers AutoShape + Picture);
-    // a parsed frame's `<a:hlinkClick>` round-trips via `extension`.
-    None,
+    gf.hyperlink,
     gf.extension,
   )
   // <p:xfrm> — graphicFrame's transform wrapper is presentation-ns,

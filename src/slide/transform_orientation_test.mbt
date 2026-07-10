@@ -181,6 +181,7 @@ test "GroupShape::with_rotation + with_flip set the transform" {
     child_offset: None,
     child_extent: None,
     children: [],
+    hyperlink: None,
     extension: [],
   }
   let g2 = g.with_rotation(@units.Angle(60.0)).with_flip(h=true)
@@ -207,6 +208,7 @@ test "GroupShape: rotated group emits orientation and round-trips" {
     child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
     child_extent: Some({ cx: @units.Emu(100L), cy: @units.Emu(100L) }),
     children: [],
+    hyperlink: None,
     extension: [],
   }
   let s = base.with_shape(

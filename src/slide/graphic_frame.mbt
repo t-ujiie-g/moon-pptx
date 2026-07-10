@@ -43,6 +43,13 @@ pub(all) struct GraphicFrame {
   transform : Transform?
   /// What kind of foreign content sits inside `<a:graphicData>`.
   content : GraphicFrameContent
+  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
+  /// frame (roadmap F5-b), e.g. a clickable table or chart. Build-only: set
+  /// by `with_hyperlink` / `with_hyperlink_to_slide`, resolved by
+  /// `Presentation::update_slide_mut`. `None` for a parsed frame (its
+  /// `<a:hlinkClick>` round-trips via the captured `<p:cNvPr>` in
+  /// `extension`).
+  hyperlink : ShapeHyperlink?
   /// Lossless preservation (ADR-004): captured `<p:cNvPr>` /
   /// `<p:cNvGraphicFramePr>` / `<p:nvPr>` wrappers + any other
   /// unmodelled `<p:graphicFrame>` children. Same wrapper pattern
