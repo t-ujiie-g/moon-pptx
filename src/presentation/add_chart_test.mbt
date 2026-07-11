@@ -334,3 +334,37 @@ test "add_chart_mut without embed_data: no workbook, no externalData" {
   )
   assert_true(!chart_xml.contains("externalData"))
 }
+
+///|
+test "add_chart_mut embed_data: 26+ series spill into double-letter columns" {
+  let mut data = @chart.ChartData::new().with_category("only")
+  for i in 0..<27 {
+    data = data.with_series("S" + i.to_string(), [i.to_double()])
+  }
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  prs.add_chart_mut(
+    0,
+    @chart.Chart::of_bar(data),
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(100L),
+    @units.Emu(100L),
+    embed_data=data,
+  )
+  let emb = prs.pkg
+    .part_by_name("/ppt/embeddings/Microsoft_Excel_Worksheet1.xlsx")
+    .unwrap()
+  let sheet = @oxml.bytes_to_string(
+    @opc.Package::open(emb.bytes).require_part("/xl/worksheets/sheet1.xml").bytes,
+  )
+  // Column A is the category column, so series 24 (0-based) lands in
+  // Z and series 25 wraps to AA.
+  assert_true(
+    sheet.contains("<c r=\"Z1\" t=\"inlineStr\"><is><t>S24</t></is></c>"),
+  )
+  assert_true(
+    sheet.contains("<c r=\"AA1\" t=\"inlineStr\"><is><t>S25</t></is></c>"),
+  )
+  assert_true(sheet.contains("<c r=\"AA2\"><v>25</v></c>"))
+}

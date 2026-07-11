@@ -196,3 +196,20 @@ test "Table::with_style: styled table survives serialize -> reparse" {
     _ => fail("expected GraphicFrame")
   }
 }
+
+///|
+test "Table::with_style: creates properties when the table has none" {
+  let bare : @slide.Table = {
+    properties: None,
+    grid: [@units.Emu(914400L)],
+    rows: [],
+    extension: [],
+  }
+  let styled = bare.with_style(NoStyleTableGrid)
+  let p = styled.properties.unwrap()
+  assert_eq(
+    p.table_style_id.unwrap(),
+    @slide.TableStylePreset::NoStyleTableGrid.guid(),
+  )
+  assert_true(p.first_row == Some(true))
+}

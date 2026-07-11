@@ -9,6 +9,10 @@
 // every other child of `<Properties>` is preserved verbatim.
 
 ///|
+/// OPC part name of the extended-properties part.
+let app_part_name : String = "/docProps/app.xml"
+
+///|
 /// The user-meaningful text fields of `docProps/app.xml`. Every field
 /// is `String?`: on read, `None` means the element is absent; on
 /// write (`set_app_properties_mut`), `None` means "leave whatever the
@@ -185,7 +189,7 @@ fn serialize_app_root(
 pub fn Presentation::app_properties(
   self : Presentation,
 ) -> AppProperties raise PptxError {
-  let root = match self.pkg.part_by_name("/docProps/app.xml") {
+  let root = match self.pkg.part_by_name(app_part_name) {
     Some(p) => parse_app_root(p.bytes)
     None => return AppProperties::new()
   }
@@ -216,7 +220,7 @@ pub fn Presentation::set_app_properties_mut(
   self : Presentation,
   props : AppProperties,
 ) -> Unit raise PptxError {
-  let mut root = match self.pkg.part_by_name("/docProps/app.xml") {
+  let mut root = match self.pkg.part_by_name(app_part_name) {
     Some(p) => parse_app_root(p.bytes)
     None =>
       @xml.XmlElement::new(
@@ -242,7 +246,7 @@ pub fn Presentation::set_app_properties_mut(
     None => ()
   }
   self.replace_part_bytes(
-    "/docProps/app.xml",
+    app_part_name,
     serialize_app_root(root),
     @oxml.ct_extended_properties,
   )

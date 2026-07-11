@@ -19,7 +19,7 @@ status touches this file.
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1175 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1178 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -36,13 +36,15 @@ status touches this file.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
 ### Where we are now (2026-07-11)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1175 tests × 4
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1178 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
-  landed, so everything from here to 1.0 is additive-only. Remaining
-  work: additive parity/ergonomics (§4.2) and the v1.0 gate (§4.3) —
-  which fires when the MoonBit toolchain reaches v1.0.
+  landed, so everything from here to 1.0 is additive-only. The §4.2
+  v0.7.x additive cycle is fully landed (all eight items 🟢,
+  2026-07-10/11) and awaits a v0.7.0 release pass; beyond that:
+  fresh §5 ideas as demand appears, and the v1.0 gate (§4.3) — which
+  fires when the MoonBit toolchain reaches v1.0.
 
 ### What it does not yet do
 See **§3** (feature comparison vs python-pptx + PptxGenJS) and **§4**
@@ -423,8 +425,8 @@ PowerPoint.
 
 ### 4.2 v0.7.x — "Additive parity + ergonomics"
 
-Scope flexible — all items are additive `.mbti`, so they can ship as
-multiple small 0.7.x releases in demand order. Pull more in from §5 as
+**Complete** — all eight items landed 2026-07-10/11 (each additive
+`.mbti`), ready for a v0.7.0 release pass. Pull more in from §5 as
 consumers ask.
 
 🟢 **B3 — Chart embedded xlsx cache generation** *(landed 2026-07-11)*
@@ -810,6 +812,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-11** — **Post-§4.2 refactor sweep (CLAUDE.md §7) over the v0.7 branch.** Findings-first pass over the nine feature commits, all six lenses. **Constants**: `app_properties.mbt` repeated `"/docProps/app.xml"` at four code sites → file-local `app_part_name` (template.mbt's inline namespace URIs deliberately kept — the whole file is a fixture-style literal template, per earlier sweep precedent). **Dedup**: the presentation test package had two same-shape saved-part helpers → one shared `saved_part_xml(prs, name)`. **Test adequacy** (3 gaps closed): a malformed app.xml root now has a direct Malformed test; the xlsx `column_letter` double-letter branch is exercised end-to-end (27-series chart → `Z1`/`AA1`/`AA2` cells — writing the test caught nothing in the code but an off-by-one in the *author's* column arithmetic, which is what the test is for); `Table::with_style` on a properties-less table covered. **Docs**: README.mbt.md sub-package table rows refreshed with the v0.7 surface (sections, app properties, `embed_data` workbooks, `TableStylePreset`, SmartArt per-node colours); TODO.md §0 narrative + §4.2 preamble now say the cycle is complete and awaiting a v0.7.0 release pass. **Comment hygiene / file splitting**: new code clean (the only roadmap-code grep hit was the spreadsheet cell `B1`), largest new file 305 lines — no action. 1175 → 1178 × 4 backends; no `.mbti` change.
 - **2026-07-11** — **v0.7 B3 landed: embedded chart-data workbooks — 「Edit Data」 opens real rows. §4.2 is now complete.** Opt-in `embed_data? : ChartData` on `add_chart_mut` (deviating from the item's “on chart builders” sketch: the workbook is an OPC artifact, so the insertion call owns it — and threading a staging field through 16 builders was the alternative). The generated `.xlsx` is a minimal-but-valid SpreadsheetML package assembled with `@opc.Package::new()` — workbook + one sheet + the two `.rels`, inline-string cells (no sharedStrings part), categories down column A / series across from B1 — embedded as `/ppt/embeddings/Microsoft_Excel_WorksheetN.xlsx` (`xlsx` Default content type, `rt_package` rel from the chart part). The chart side needed **zero model change**: `<c:externalData r:id="rId1"><c:autoUpdate val="0"/></c:externalData>` rides the chart's ADR-004 `extension` array, which the chartSpace writer already emits in exactly that schema slot; a chart that already references external data raises instead of double-emitting (the F4/B4 shadowing class, guarded up front). ADR-009's decision stands — inline `<c:strLit>`/`<c:numLit>` remain the render source; the workbook is a UX add-on. 6 new tests, incl. reopening the generated xlsx as an OPC package and asserting individual cells, plus the duplicate-embed guard on a genuinely reopened deck; example-7 recipe extended. 1170 → 1175 × 4 backends; `.mbti` diff = the optional param + `rt_package` + `ct_xlsx_sheet` (additive). **All eight §4.2 v0.7.x items are now 🟢.**
 - **2026-07-11** — **v0.7 F2-b landed: app.xml document properties — the last docProps gap.** Typed `AppProperties { company / manager / application / app_version }` over `docProps/app.xml`, closing F2's deferral. The deferral note's premise was half wrong: `CT_Properties` is an `xsd:all` (order-free — verified against the schema docs, and PowerPoint itself emits `Company` after `TitlesOfParts` in the corpus), so the editor is simpler than feared: a **DOM merge** — parse the part into its `XmlElement` DOM, replace-or-append only the `Some` fields, and leave every app-maintained child (word counts, the `vt:vector` HeadingPairs / TitlesOfParts) byte-for-byte alone. This is deliberately *not* core.xml's whole-part replace: app.xml mixes user fields with statistics we must not fabricate. Serialisation binds the extended-properties namespace as the *default* (`<Properties xmlns=…>` + `xmlns:vt`, matching Office) via the writer's `default_namespace_attr` + an empty-prefix `WriteCtx` binding. `set_app_properties_mut` also creates the part and its package-level relationship when a package lacks one (fresh `rId`, `rt_extended_properties`). Surface: `app_properties()` reader, the mutator, `with_app_properties` (ADR-003), 4 `with_*` builders, and `@oxml.extended_properties_ns` / `doc_props_vtypes_ns`. 8 new tests — including merging a real Office corpus file where `Company` flips and `TotalTime` + both `vt:vector`s survive — plus the example-19 cookbook recipe covering core + app together. 1162 → 1170 × 4 backends; `.mbti` diff additive. §3.3 document-properties row now fully ✅.
 - **2026-07-11** — **v0.7 slide sections landed (§4.2): typed `Section` API over the `<p14:sectionLst>` extension.** PowerPoint's slide-panel sections are a p14 (PowerPoint 2010) extension in presentation.xml's `<p:extLst>` keyed by `{521415D9-36F7-43E2-AB2F-B90AF26B5E84}` ([MS-PPTX] §2.3.1.25) — not the `<p:sldSectionLst>` the roadmap sketch guessed. The typed model is a list of titled break points, `Section { title, start }`: sections partition the deck in slide order (first at 0, non-decreasing, equal starts = an empty section), which makes every representable value legal — no dangling-slide-id error surface, and empty sections (which PowerPoint allows) fall out naturally. Surface: `set_sections_mut` (validated; `[]` removes the extension), `add_section_mut(title~, start~)`, the `sections()` reader (derives starts by counting each section's `<p14:sldId>`s, so parsed decks read back too), and `with_sections` (ADR-003 pair). The ext rides the part's ADR-004 `extension` array — other extLst content is preserved, re-setting replaces in place, and section ids are deterministic counter-derived GUIDs (reproducible builds; nothing keys off their values). Example-18 cookbook recipe added. 9 new tests; 1153 → 1162 × 4 backends; `.mbti` diff = `Section` + 4 fns + the `section_list_ext_uri` constant (additive).

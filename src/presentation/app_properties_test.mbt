@@ -1,13 +1,6 @@
 // AppProperties (docProps/app.xml) tests.
 
 ///|
-/// The saved `docProps/app.xml` as a string, for raw-XML assertions.
-fn saved_app_xml(prs : @presentation.Presentation) -> String raise {
-  let pkg = @opc.Package::open(prs.save())
-  @oxml.bytes_to_string(pkg.require_part("/docProps/app.xml").bytes)
-}
-
-///|
 test "app_properties: reads the template's Application, absent fields None" {
   let prs = @presentation.Presentation::new()
   let props = prs.app_properties()
@@ -29,7 +22,7 @@ test "set_app_properties_mut: merges without disturbing other fields" {
   assert_eq(props.manager.unwrap(), "Coyote")
   // Untouched fields survive the merge.
   assert_eq(props.application.unwrap(), "moon-pptx")
-  let xml = saved_app_xml(prs)
+  let xml = saved_part_xml(prs, "/docProps/app.xml")
   assert_true(
     xml.contains(
       "<PresentationFormat>On-screen Show (4:3)</PresentationFormat>",
@@ -55,7 +48,7 @@ test "set_app_properties_mut: setting an existing field replaces it once" {
     @presentation.AppProperties::new().with_application("my-tool 2.0"),
   )
   assert_eq(prs.app_properties().application.unwrap(), "my-tool 2.0")
-  let xml = saved_app_xml(prs)
+  let xml = saved_part_xml(prs, "/docProps/app.xml")
   let first = xml.find("<Application>").unwrap()
   let rest = xml.view(start_offset=first + 1).to_owned()
   assert_true(rest.find("<Application>") is None)
@@ -100,4 +93,24 @@ test "with_app_properties: immutable counterpart leaves the original untouched" 
   )
   assert_true(prs.app_properties().company is None)
   assert_eq(edited.app_properties().company.unwrap(), "Hooli")
+}
+
+///|
+test "app_properties: a malformed app.xml raises instead of guessing" {
+  let prs = @presentation.Presentation::new()
+  assert_true(prs.pkg.remove_part("/docProps/app.xml"))
+  // A part whose root is not <Properties> in the ep namespace.
+  prs.pkg.add_part(
+    @opc.Part::new(
+      "/docProps/app.xml",
+      @oxml.ct_extended_properties,
+      @oxml.string_to_bytes("<?xml version=\"1.0\"?><wrong/>"),
+    ),
+  )
+  try prs.app_properties() |> ignore catch {
+    @presentation.PptxError::Malformed(_) => ()
+    _ => fail("expected Malformed for a non-Properties root")
+  } noraise {
+    _ => fail("expected Malformed for a non-Properties root")
+  }
 }

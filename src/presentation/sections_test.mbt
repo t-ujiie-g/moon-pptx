@@ -11,10 +11,14 @@ fn deck_with_slides(n : Int) -> @presentation.Presentation raise {
 }
 
 ///|
-/// The saved `presentation.xml` as a string, for raw-XML assertions.
-fn saved_presentation_xml(prs : @presentation.Presentation) -> String raise {
+/// A named part of the saved package as a string, for raw-XML
+/// assertions (shared across this test package).
+fn saved_part_xml(
+  prs : @presentation.Presentation,
+  name : String,
+) -> String raise {
   let pkg = @opc.Package::open(prs.save())
-  @oxml.bytes_to_string(pkg.require_part("/ppt/presentation.xml").bytes)
+  @oxml.bytes_to_string(pkg.require_part(name).bytes)
 }
 
 ///|
@@ -32,7 +36,7 @@ test "set_sections_mut: partitions the deck and reads back" {
   assert_true(sections[2] == { title: "Conclusion", start: 3 })
   // The raw XML carries the fixed ext URI, the p14 section list, and
   // one sldId per slide, matching <p:sldIdLst>.
-  let xml = saved_presentation_xml(prs)
+  let xml = saved_part_xml(prs, "/ppt/presentation.xml")
   assert_true(xml.contains(@oxml.section_list_ext_uri))
   assert_true(xml.contains("name=\"Introduction\""))
   assert_true(xml.contains("name=\"Conclusion\""))
@@ -72,7 +76,7 @@ test "set_sections_mut: setting again replaces, never duplicates" {
   let sections = prs.sections()
   assert_eq(sections.length(), 1)
   assert_eq(sections[0].title, "Second")
-  let xml = saved_presentation_xml(prs)
+  let xml = saved_part_xml(prs, "/ppt/presentation.xml")
   assert_true(!xml.contains("First"))
   // Exactly one section ext in the file.
   let first = xml.find(@oxml.section_list_ext_uri).unwrap()
@@ -87,7 +91,10 @@ test "set_sections_mut: empty array removes all sections" {
   prs.set_sections_mut([])
   assert_eq(prs.sections().length(), 0)
   assert_true(
-    saved_presentation_xml(prs).find(@oxml.section_list_ext_uri) is None,
+    saved_part_xml(prs, "/ppt/presentation.xml").find(
+      @oxml.section_list_ext_uri,
+    )
+    is None,
   )
 }
 
