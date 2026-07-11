@@ -210,3 +210,25 @@ test "corpus with_japanese: CJK and surrogate-pair text survive UTF round-trips"
   // hardest case for the UTF-8 ↔ UTF-16 boundary in the XML layer.
   assert_true(text.contains("𐌲𐌿𐍄𐌹𐍃𐌺"))
 }
+
+///|
+test "corpus testPPT: app.xml merge preserves the vt subtrees" {
+  let prs = @presentation.Presentation::open(corpus_testppt())
+  // The real Office part carries statistics and vt: vectors we must
+  // not disturb when editing the typed fields.
+  assert_eq(prs.app_properties().company.unwrap(), "Pegasystems")
+  prs.set_app_properties_mut(
+    @presentation.AppProperties::new().with_company("moon-pptx tests"),
+  )
+  let reopened = @presentation.Presentation::open(prs.save())
+  assert_eq(reopened.app_properties().company.unwrap(), "moon-pptx tests")
+  let xml = @oxml.bytes_to_string(
+    @opc.Package::open(prs.save()).require_part("/docProps/app.xml").bytes,
+  )
+  // Office's statistics and both vt: vectors are still intact.
+  assert_true(xml.contains("<TotalTime>1</TotalTime>"))
+  assert_true(xml.contains("<vt:lpstr>Attachment Test</vt:lpstr>"))
+  assert_true(xml.contains("<vt:vector size=\"4\" baseType=\"variant\">"))
+  assert_true(xml.contains("<AppVersion>12.0000</AppVersion>"))
+  assert_true(!xml.contains("Pegasystems"))
+}

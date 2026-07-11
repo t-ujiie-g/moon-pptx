@@ -64,6 +64,17 @@ pub let media_ext_uri : String = "{DAA4B4D4-668B-4A5B-A93E-BE16DBB66F30}"
 pub let section_list_ext_uri : String = "{521415D9-36F7-43E2-AB2F-B90AF26B5E84}"
 
 ///|
+/// Extended (application-specific) document properties namespace — the
+/// *default* namespace of `docProps/app.xml`'s `<Properties>` root.
+pub let extended_properties_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+
+///|
+/// Document-properties variant types namespace — `vt:` prefix. Home of
+/// the `<vt:vector>` / `<vt:lpstr>` values inside `docProps/app.xml`'s
+/// `<HeadingPairs>` / `<TitlesOfParts>`.
+pub let doc_props_vtypes_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"
+
+///|
 /// DrawingML diagram (SmartArt) namespace — `dgm:` prefix. Home of
 /// `<dgm:dataModel>` (data part), `<dgm:layoutDef>`, `<dgm:colorsDef>`,
 /// `<dgm:styleDef>`, and the `<dgm:relIds>` reference inside a SmartArt

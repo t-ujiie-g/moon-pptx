@@ -19,7 +19,7 @@ status touches this file.
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1162 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1170 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -36,7 +36,7 @@ status touches this file.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
 ### Where we are now (2026-07-11)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1162 tests × 4
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1170 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
@@ -249,7 +249,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ✅ C2 (`Pct` + `pct_of_slide_w` / `pct_of_slide_h`) | — |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | open idea (§5; promoted only if v1.0 benchmarks demand it) |
 | Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
-| Document properties (creator, title, subject, keywords, …) | ✅ `core_properties` | ✅ `author`/`title`/… | ✅ typed `CoreProperties` (15-field closed core.xml) + `set_core_properties_mut`/`core_properties` (0.6 F2); app.xml `company`/`application` ⏳ follow-up | — |
+| Document properties (creator, title, subject, keywords, …) | ✅ `core_properties` | ✅ `author`/`title`/… | ✅ typed `CoreProperties` (15-field closed core.xml, 0.6 F2) + typed `AppProperties` app.xml merge (`company`/`manager`/`application`/`app_version`, 0.7 F2-b) | — |
 | Slide sections (`<p:sldSectionLst>`) | △ | ✅ `addSection` | △ extension-only | open idea (§5) |
 | WordArt / preset text warp (`<a:prstTxWarp>`) | ❌ | △ | △ extension-only | open idea (§5) |
 | 3-D shape (bevel / `<a:scene3d>` / `<a:sp3d>`) | △ | △ | △ extension-only | open idea (§5) |
@@ -433,10 +433,26 @@ consumers ask.
     CT_SharedStrings); opt-in `embed_xlsx~ = true` on chart builders.
   - Resolves the degraded "Edit Data" UX called out in ADR-009.
 
-🔴 **F2-b — app.xml document properties** (`company` / `application`)
-  - Needs an order-preserving, default-namespace-aware DOM round-trip of
-    `CT_Properties` (an ordered sequence with many unmodelled fields) —
-    a small dedicated app.xml editor (§5 note, F2 deferral).
+🟢 **F2-b — app.xml document properties** *(landed 2026-07-11)*
+  - The deferral's premise was half wrong: `CT_Properties` is an
+    **`xsd:all`**, not an ordered sequence (verified against the schema
+    docs, and PowerPoint's own output emits `Company` mid-file) — so no
+    order bookkeeping was needed, just the default-namespace-aware DOM
+    merge.
+  - **Shipped**: `AppProperties { company / manager / application /
+    app_version }` + `Presentation::app_properties()` /
+    `set_app_properties_mut` / `with_app_properties`. Semantics are a
+    **merge** (unlike core.xml's whole-part replace): `Some` fields
+    replace-or-append their element; everything else — word counts,
+    the `vt:vector` HeadingPairs / TitlesOfParts — is preserved
+    verbatim. Emits `<Properties xmlns=…>` with the ep namespace as
+    the default + `vt:` bound (what Office writes; the writer's
+    default-namespace support made this direct). Creates the part +
+    package rel for packages that lack one.
+  - 8 new tests, incl. a real-corpus merge (testPPT.pptx: `Company`
+    replaced, `TotalTime` / both `vt:vector`s intact) + example-19
+    recipe (core + app together); 1162 → 1170 × 4 backends; `.mbti`
+    diff = `AppProperties` + 7 fns + 2 ns constants (additive).
 
 🟢 **F5-b — Shape hyperlinks on Group / GraphicFrame / Connector**
   *(landed 2026-07-10)*
@@ -779,6 +795,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-11** — **v0.7 F2-b landed: app.xml document properties — the last docProps gap.** Typed `AppProperties { company / manager / application / app_version }` over `docProps/app.xml`, closing F2's deferral. The deferral note's premise was half wrong: `CT_Properties` is an `xsd:all` (order-free — verified against the schema docs, and PowerPoint itself emits `Company` after `TitlesOfParts` in the corpus), so the editor is simpler than feared: a **DOM merge** — parse the part into its `XmlElement` DOM, replace-or-append only the `Some` fields, and leave every app-maintained child (word counts, the `vt:vector` HeadingPairs / TitlesOfParts) byte-for-byte alone. This is deliberately *not* core.xml's whole-part replace: app.xml mixes user fields with statistics we must not fabricate. Serialisation binds the extended-properties namespace as the *default* (`<Properties xmlns=…>` + `xmlns:vt`, matching Office) via the writer's `default_namespace_attr` + an empty-prefix `WriteCtx` binding. `set_app_properties_mut` also creates the part and its package-level relationship when a package lacks one (fresh `rId`, `rt_extended_properties`). Surface: `app_properties()` reader, the mutator, `with_app_properties` (ADR-003), 4 `with_*` builders, and `@oxml.extended_properties_ns` / `doc_props_vtypes_ns`. 8 new tests — including merging a real Office corpus file where `Company` flips and `TotalTime` + both `vt:vector`s survive — plus the example-19 cookbook recipe covering core + app together. 1162 → 1170 × 4 backends; `.mbti` diff additive. §3.3 document-properties row now fully ✅.
 - **2026-07-11** — **v0.7 slide sections landed (§4.2): typed `Section` API over the `<p14:sectionLst>` extension.** PowerPoint's slide-panel sections are a p14 (PowerPoint 2010) extension in presentation.xml's `<p:extLst>` keyed by `{521415D9-36F7-43E2-AB2F-B90AF26B5E84}` ([MS-PPTX] §2.3.1.25) — not the `<p:sldSectionLst>` the roadmap sketch guessed. The typed model is a list of titled break points, `Section { title, start }`: sections partition the deck in slide order (first at 0, non-decreasing, equal starts = an empty section), which makes every representable value legal — no dangling-slide-id error surface, and empty sections (which PowerPoint allows) fall out naturally. Surface: `set_sections_mut` (validated; `[]` removes the extension), `add_section_mut(title~, start~)`, the `sections()` reader (derives starts by counting each section's `<p14:sldId>`s, so parsed decks read back too), and `with_sections` (ADR-003 pair). The ext rides the part's ADR-004 `extension` array — other extLst content is preserved, re-setting replaces in place, and section ids are deterministic counter-derived GUIDs (reproducible builds; nothing keys off their values). Example-18 cookbook recipe added. 9 new tests; 1153 → 1162 × 4 backends; `.mbti` diff = `Section` + 4 fns + the `section_list_ext_uri` constant (additive).
 - **2026-07-11** — **v0.7 table-style preset library landed (§4.2): `TableStylePreset` — PowerPoint's 74 built-in gallery styles by name.** The `table_style_id : String?` GUID field has round-tripped since the typed `TableProperties` landed, but writing one meant pasting a GUID. Now the full built-in gallery is a `pub(all)` enum named as in the PowerPoint UI (`MediumStyle2Accent1` = the insert-table default `{5C22544A-…}`, `NoStyleNoGrid`, `DarkStyle2Accent1And2`, …), with the GUIDs **machine-extracted from MS-OE376 Part 4 §5.1.6.10** — the authoritative Microsoft list (15 base styles + 59 colour-replaced derivations), not hand-typed; a test sweeps all 74 for distinctness/shape and spot-checks four against the spec. Surface: `TableStylePreset::guid()`, `TableProperties::with_style(preset)`, and the table-level `Table::with_style(preset, first_row~ = true, band_row~ = true)` whose flag defaults mirror what PowerPoint sets when inserting a table (header emphasis + row banding), both opt-outable; existing properties are preserved. Example-6 cookbook recipe extended. 5 new tests; 1148 → 1153 × 4 backends; `.mbti` diff = the enum + 3 fns (additive).
 - **2026-07-11** — **v0.7 SmartArt per-node styling landed (§4.2): `Node.style` colour overrides.** New `NodeStyle { fill / line / text_color : RgbColor? }` on every `Node` (the §4.2 item's premise "the field exists" was stale — it didn't; now it does), set via merging builders `Node::with_fill` / `with_line` / `with_text_color` (each overrides one aspect, preserves the others — ADR-003 immutable). The overrides are emitted to **both rendering channels**: the diagram data model — fill/line in the point's `<dgm:spPr>`, text colour in the `<dgm:t>` run properties flagged `custT="1"` so PowerPoint's layout engine treats it as a manual customisation and keeps it on re-layout — and the cached `<dsp:drawing>`, where `srgbClr` replaces the accent1 fill / lt1 outline quick-style defaults, covering non-editing viewers. Unstyled nodes stay byte-identical to before. Example-15 cookbook recipe extended with a styled node, verified through save → reopen down to the data part. 3 new tests; 1145 → 1148 × 4 backends; `.mbti` diff = `NodeStyle` + `Node.style` + 4 fns (additive). Also confirmed the downstream ecosystem the additive policy protects: mooncakes registry shows exactly one published dependent, `Milky2018/pptz` (active — 0.7.1 released 2026-07-10 — still pinned to moon-pptx 0.5.1).

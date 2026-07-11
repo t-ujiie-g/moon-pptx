@@ -583,6 +583,33 @@ immutable counterpart.
 
 ---
 
+## 19. Document properties (core + app)
+
+Two parts back File ▸ Info: `docProps/core.xml` (title, author, dates —
+whole-part replace, so start from the current values) and
+`docProps/app.xml` (company, manager, application — a merge that leaves
+the app-maintained statistics untouched).
+
+```moonbit
+let prs = @presentation.Presentation::new()
+
+prs.set_core_properties_mut(
+  prs.core_properties().with_title("Q3 Review").with_author("Ada"),
+)
+
+prs.set_app_properties_mut(
+  @presentation.AppProperties::new()
+    .with_company("ACME Corp")
+    .with_manager("Grace"),
+)
+```
+
+`app_properties()` reads the current values back; fields left unset by
+the merge — and everything else in app.xml, word counts and
+`TitlesOfParts` included — are preserved as-is.
+
+---
+
 ## Where to next?
 
 - [TODO.md](../TODO.md) — full feature comparison vs python-pptx + PptxGenJS and the v0.3 / v0.4 / v0.5 roadmap.

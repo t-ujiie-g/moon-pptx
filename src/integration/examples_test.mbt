@@ -518,3 +518,24 @@ fn minimal_png() -> FixedArray[Byte] {
   }
   out
 }
+
+///|
+test "example 19: document properties (core + app)" {
+  let prs = @presentation.Presentation::new()
+  prs.set_core_properties_mut(
+    prs.core_properties().with_title("Q3 Review").with_author("Ada"),
+  )
+  prs.set_app_properties_mut(
+    @presentation.AppProperties::new()
+    .with_company("ACME Corp")
+    .with_manager("Grace"),
+  )
+  let reopened = @presentation.Presentation::open(prs.save())
+  assert_eq(reopened.core_properties().title.unwrap(), "Q3 Review")
+  assert_eq(reopened.core_properties().creator.unwrap(), "Ada")
+  let app = reopened.app_properties()
+  assert_eq(app.company.unwrap(), "ACME Corp")
+  assert_eq(app.manager.unwrap(), "Grace")
+  // The merge kept the template's own Application field.
+  assert_eq(app.application.unwrap(), "moon-pptx")
+}

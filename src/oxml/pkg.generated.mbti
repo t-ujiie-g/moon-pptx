@@ -78,6 +78,8 @@ pub let diagram_drawing_ns : String
 
 pub let diagram_ns : String
 
+pub let doc_props_vtypes_ns : String
+
 pub let drawing_ns : String
 
 pub let dublin_core_ns : String
@@ -85,6 +87,8 @@ pub let dublin_core_ns : String
 pub let dublin_core_terms_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
+
+pub let extended_properties_ns : String
 
 pub let graphic_data_chart_ex_uri : String
 
