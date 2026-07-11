@@ -178,6 +178,8 @@ test "example 7: bar chart from data" {
   let chart = @chart.Chart::of_bar(data)
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
+  // embed_data generates the editable .xlsx workbook behind
+  // PowerPoint's "Edit Data" button.
   prs.add_chart_mut(
     0,
     chart,
@@ -185,8 +187,13 @@ test "example 7: bar chart from data" {
     prs.pct_h(15.0),
     prs.pct_w(80.0),
     prs.pct_h(70.0),
+    embed_data=data,
   )
   assert_eq(prs.charts().length(), 1)
+  assert_true(
+    prs.pkg.part_by_name("/ppt/embeddings/Microsoft_Excel_Worksheet1.xlsx")
+    is Some(_),
+  )
 }
 
 ///|

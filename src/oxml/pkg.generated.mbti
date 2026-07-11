@@ -66,6 +66,8 @@ pub let ct_theme : String
 
 pub let ct_view_props : String
 
+pub let ct_xlsx_sheet : String
+
 pub fn detect_image_dimensions(FixedArray[Byte]) -> ImageDimensions?
 
 pub fn detect_image_format(FixedArray[Byte]) -> ImageFormat?

@@ -19,7 +19,7 @@ status touches this file.
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.6.0` (released 2026-07-06 — the pre-1.0 breaking pass, §4.1; tags `v0.5.3` + `v0.6.0` pushed) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1170 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1175 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -36,7 +36,7 @@ status touches this file.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
 ### Where we are now (2026-07-11)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1170 tests × 4
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1175 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
@@ -231,7 +231,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Axis title / chart title | ✅ | ✅ | ✅ typed `ChartTitle` | — |
 | Legend positioning | ✅ | ✅ 5 positions | ✅ typed `ChartLegend` | — |
 | Data labels (per-point overrides) | ✅ | ✅ | ✅ typed `DLbls` + `DLbl` | — |
-| Embedded xlsx data-cache generation | ✅ | ❌ | ❌ (ADR-009: inline `<c:strLit>` instead) | ⏳ v0.7 (B3, §4.2) |
+| Embedded xlsx data-cache generation | ✅ | ❌ | ✅ opt-in `embed_data` on `add_chart_mut` (0.7 B3; inline literals stay the render source per ADR-009) | — |
 | Existing xlsx cache pass-through | ✅ | n/a | ✅ via OPC opaque part | — |
 
 ### 3.6 Multimedia, navigation, advanced
@@ -427,11 +427,25 @@ Scope flexible — all items are additive `.mbti`, so they can ship as
 multiple small 0.7.x releases in demand order. Pull more in from §5 as
 consumers ask.
 
-🔴 **B3 — Chart embedded xlsx cache generation** *(moved out of the 1.0
-  gate 2026-07-06 — it's a feature, not a stability item)*
-  - Minimal SpreadsheetML writer (CT_Workbook + CT_Worksheet +
-    CT_SharedStrings); opt-in `embed_xlsx~ = true` on chart builders.
+🟢 **B3 — Chart embedded xlsx cache generation** *(landed 2026-07-11)*
+  - **Shipped**: opt-in `embed_data? : ChartData` on `add_chart_mut`
+    (on the *insertion* call, not the chart builders as sketched — the
+    workbook is an OPC artifact, so the presentation layer owns it).
+    Generates a minimal-but-valid SpreadsheetML package (workbook +
+    one sheet + two `.rels`, built with `@opc.Package::new()`;
+    inline-string cells, so no sharedStrings part) mirroring the
+    `ChartData` layout, embeds it under `/ppt/embeddings/`, and wires
+    `<c:externalData r:id><c:autoUpdate val="0"/>` through the
+    chart's ADR-004 `extension` channel — the chartSpace writer
+    already emits that slot, so **zero chart-model change**. Inline
+    literals remain the render source (ADR-009 upheld); a chart that
+    already references external data is rejected (no double emit).
   - Resolves the degraded "Edit Data" UX called out in ADR-009.
+  - 6 new tests (rels/content-type chain, reopening the generated
+    xlsx *as an OPC package* with cell-level asserts, save→reopen +
+    duplicate-embed guard, two-chart numbering, no-embed default) +
+    example-7 recipe extended; 1170 → 1175 × 4 backends; `.mbti`
+    diff = 1 optional param + 2 constants (additive).
 
 🟢 **F2-b — app.xml document properties** *(landed 2026-07-11)*
   - The deferral's premise was half wrong: `CT_Properties` is an
@@ -690,6 +704,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Decision**: From-scratch chart builders (`Chart::of_bar` etc.) emit inline `<c:strLit>` / `<c:numLit>` data sources only. We do not generate xlsx caches in v0.1.0. Existing `<c:externalData>` references in parsed charts round-trip losslessly via `Chart.extension` (ADR-004); the referenced xlsx part rides through `@opc.Package` as an opaque part keyed by content type (no SpreadsheetML parsing). python-pptx (the de-facto Python PPTX library) takes the same approach for the same reasons.
 - **Consequences**: Builder-produced charts render correctly in PowerPoint / LibreOffice but PowerPoint's "Edit Data" UX is slightly degraded. v1.0 reopens this as item **B3** with an opt-in `embed_xlsx~ = true` builder flag.
 - **Status update (2026-07-06)**: B3 moved off the v1.0 gate to the v0.7.x additive cycle (§4.2) — it is a feature, not a stability item, so it should not block the 1.0 tag.
+- **Status update (2026-07-11)**: B3 landed — `add_chart_mut(embed_data=data)` generates the embedded workbook and the `<c:externalData>` reference. The decision itself stands: inline literals remain the (only) render source; the xlsx is a pure Edit-Data UX add-on and stays opt-in.
 
 ### ADR-010: SmartArt = own `src/smartart/` package, build-only, cached-drawing render guarantee
 - **Date**: 2026-06-11
@@ -795,6 +810,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-11** — **v0.7 B3 landed: embedded chart-data workbooks — 「Edit Data」 opens real rows. §4.2 is now complete.** Opt-in `embed_data? : ChartData` on `add_chart_mut` (deviating from the item's “on chart builders” sketch: the workbook is an OPC artifact, so the insertion call owns it — and threading a staging field through 16 builders was the alternative). The generated `.xlsx` is a minimal-but-valid SpreadsheetML package assembled with `@opc.Package::new()` — workbook + one sheet + the two `.rels`, inline-string cells (no sharedStrings part), categories down column A / series across from B1 — embedded as `/ppt/embeddings/Microsoft_Excel_WorksheetN.xlsx` (`xlsx` Default content type, `rt_package` rel from the chart part). The chart side needed **zero model change**: `<c:externalData r:id="rId1"><c:autoUpdate val="0"/></c:externalData>` rides the chart's ADR-004 `extension` array, which the chartSpace writer already emits in exactly that schema slot; a chart that already references external data raises instead of double-emitting (the F4/B4 shadowing class, guarded up front). ADR-009's decision stands — inline `<c:strLit>`/`<c:numLit>` remain the render source; the workbook is a UX add-on. 6 new tests, incl. reopening the generated xlsx as an OPC package and asserting individual cells, plus the duplicate-embed guard on a genuinely reopened deck; example-7 recipe extended. 1170 → 1175 × 4 backends; `.mbti` diff = the optional param + `rt_package` + `ct_xlsx_sheet` (additive). **All eight §4.2 v0.7.x items are now 🟢.**
 - **2026-07-11** — **v0.7 F2-b landed: app.xml document properties — the last docProps gap.** Typed `AppProperties { company / manager / application / app_version }` over `docProps/app.xml`, closing F2's deferral. The deferral note's premise was half wrong: `CT_Properties` is an `xsd:all` (order-free — verified against the schema docs, and PowerPoint itself emits `Company` after `TitlesOfParts` in the corpus), so the editor is simpler than feared: a **DOM merge** — parse the part into its `XmlElement` DOM, replace-or-append only the `Some` fields, and leave every app-maintained child (word counts, the `vt:vector` HeadingPairs / TitlesOfParts) byte-for-byte alone. This is deliberately *not* core.xml's whole-part replace: app.xml mixes user fields with statistics we must not fabricate. Serialisation binds the extended-properties namespace as the *default* (`<Properties xmlns=…>` + `xmlns:vt`, matching Office) via the writer's `default_namespace_attr` + an empty-prefix `WriteCtx` binding. `set_app_properties_mut` also creates the part and its package-level relationship when a package lacks one (fresh `rId`, `rt_extended_properties`). Surface: `app_properties()` reader, the mutator, `with_app_properties` (ADR-003), 4 `with_*` builders, and `@oxml.extended_properties_ns` / `doc_props_vtypes_ns`. 8 new tests — including merging a real Office corpus file where `Company` flips and `TotalTime` + both `vt:vector`s survive — plus the example-19 cookbook recipe covering core + app together. 1162 → 1170 × 4 backends; `.mbti` diff additive. §3.3 document-properties row now fully ✅.
 - **2026-07-11** — **v0.7 slide sections landed (§4.2): typed `Section` API over the `<p14:sectionLst>` extension.** PowerPoint's slide-panel sections are a p14 (PowerPoint 2010) extension in presentation.xml's `<p:extLst>` keyed by `{521415D9-36F7-43E2-AB2F-B90AF26B5E84}` ([MS-PPTX] §2.3.1.25) — not the `<p:sldSectionLst>` the roadmap sketch guessed. The typed model is a list of titled break points, `Section { title, start }`: sections partition the deck in slide order (first at 0, non-decreasing, equal starts = an empty section), which makes every representable value legal — no dangling-slide-id error surface, and empty sections (which PowerPoint allows) fall out naturally. Surface: `set_sections_mut` (validated; `[]` removes the extension), `add_section_mut(title~, start~)`, the `sections()` reader (derives starts by counting each section's `<p14:sldId>`s, so parsed decks read back too), and `with_sections` (ADR-003 pair). The ext rides the part's ADR-004 `extension` array — other extLst content is preserved, re-setting replaces in place, and section ids are deterministic counter-derived GUIDs (reproducible builds; nothing keys off their values). Example-18 cookbook recipe added. 9 new tests; 1153 → 1162 × 4 backends; `.mbti` diff = `Section` + 4 fns + the `section_list_ext_uri` constant (additive).
 - **2026-07-11** — **v0.7 table-style preset library landed (§4.2): `TableStylePreset` — PowerPoint's 74 built-in gallery styles by name.** The `table_style_id : String?` GUID field has round-tripped since the typed `TableProperties` landed, but writing one meant pasting a GUID. Now the full built-in gallery is a `pub(all)` enum named as in the PowerPoint UI (`MediumStyle2Accent1` = the insert-table default `{5C22544A-…}`, `NoStyleNoGrid`, `DarkStyle2Accent1And2`, …), with the GUIDs **machine-extracted from MS-OE376 Part 4 §5.1.6.10** — the authoritative Microsoft list (15 base styles + 59 colour-replaced derivations), not hand-typed; a test sweeps all 74 for distinctness/shape and spot-checks four against the spec. Surface: `TableStylePreset::guid()`, `TableProperties::with_style(preset)`, and the table-level `Table::with_style(preset, first_row~ = true, band_row~ = true)` whose flag defaults mirror what PowerPoint sets when inserting a table (header emphasis + row banding), both opt-outable; existing properties are preserved. Example-6 cookbook recipe extended. 5 new tests; 1148 → 1153 × 4 backends; `.mbti` diff = the enum + 3 fns (additive).

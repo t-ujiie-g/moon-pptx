@@ -252,6 +252,20 @@ Swap `Chart::of_bar` for any of the 16 standard families
 `of_surface_3d`, `of_bar_3d`, `of_line_3d`, `of_pie_3d`,
 `of_of_pie`) — or the 9 extended chartEx families.
 
+To make PowerPoint's "Edit Data" button open the real rows in Excel
+(instead of a blank sheet), pass the chart's data again as
+`embed_data` — an editable `.xlsx` workbook mirroring it is generated
+and embedded alongside the chart:
+
+```moonbit
+prs.add_chart_mut(
+  0, chart,
+  prs.pct_w(10.0), prs.pct_h(15.0),
+  prs.pct_w(80.0), prs.pct_h(70.0),
+  embed_data=data,
+)
+```
+
 ---
 
 ## 8. A complete 3-slide pitch deck

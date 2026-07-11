@@ -130,6 +130,12 @@ pub let ct_core_properties : String = "application/vnd.openxmlformats-package.co
 /// level part, referenced from `_rels/.rels`.
 pub let ct_extended_properties : String = "application/vnd.openxmlformats-officedocument.extended-properties+xml"
 
+///|
+/// An embedded SpreadsheetML workbook (`/ppt/embeddings/*.xlsx`) — a
+/// chart's editable data cache. Registered as a `Default` for the
+/// `xlsx` extension.
+pub let ct_xlsx_sheet : String = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
 // --- <a:graphicData uri="…"> values ---
 //
 // `<p:graphicFrame>` hosts foreign-namespace content through

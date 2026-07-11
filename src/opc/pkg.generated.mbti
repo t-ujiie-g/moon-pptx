@@ -60,6 +60,8 @@ pub let rt_notes_slide : String
 
 pub let rt_office_document : String
 
+pub let rt_package : String
+
 pub let rt_pres_props : String
 
 pub let rt_slide : String

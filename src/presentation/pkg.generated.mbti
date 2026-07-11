@@ -136,7 +136,7 @@ pub(all) struct Presentation {
 pub fn Presentation::add_audio_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_blank_typed_slide_mut(Self) -> LayoutSlide[BlankSlide] raise PptxError
 pub fn Presentation::add_chart_ex_mut(Self, Int, @chart_ex.ChartEx, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
-pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu, embed_data? : @chart.ChartData) -> Unit raise PptxError
 pub fn Presentation::add_online_video_mut(Self, Int, String, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError

@@ -99,6 +99,11 @@ pub let rt_core_properties : String = "http://schemas.openxmlformats.org/package
 pub let rt_extended_properties : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"
 
 ///|
+/// `…/relationships/package` — a part → an embedded OPC package
+/// (e.g. a chart part → its `/ppt/embeddings/*.xlsx` data workbook).
+pub let rt_package : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/package"
+
+///|
 /// `…/relationships/hyperlink` — slide → external URL (used for
 /// `<a:hlinkClick>` rel ids). The target is the URL itself; the
 /// relationship's `TargetMode` is `External`.
