@@ -500,8 +500,29 @@ consumers ask.
     through save → reopen to the data part); 1145 → 1148 × 4 backends;
     `.mbti` diff = `NodeStyle` + 1 field + 4 fns (additive).
 
-🔴 **Slide sections typed API** (`<p:sldSectionLst>` — typed
-  `Section { title, slide_ids }` + `add_section`; PptxGenJS `addSection`)
+🟢 **Slide sections typed API** *(landed 2026-07-11)*
+  - Two corrections to the item's sketch: sections are **not**
+    `<p:sldSectionLst>` — they're the `<p14:sectionLst>` PowerPoint
+    2010 extension inside presentation.xml's `<p:extLst>` (`<p:ext
+    uri="{521415D9-…}">`, [MS-PPTX] §2.3.1.25, shape verified against
+    the spec page); and `Section { title, slide_ids }` became
+    `Section { title, start }` — sections partition the deck in slide
+    order, so titled break points model exactly the legal states
+    (contiguous, every slide covered, empty sections as equal starts)
+    with no invalid-id error surface.
+  - **Shipped**: `Presentation::set_sections_mut(Array[Section])`
+    (validated: first start 0, non-decreasing, in range; `[]`
+    removes), `add_section_mut(title~, start~)` (inserts in slide
+    order), `sections()` reader (works on parsed decks too — counts
+    each section's `<p14:sldId>`s), `with_sections` immutable
+    counterpart. Section ids are deterministic counter-derived GUIDs
+    (no RNG/clock). Other `<p:extLst>` content is preserved; setting
+    twice replaces rather than duplicates.
+  - 9 new tests (partition read-back incl. CJK title save→reopen, raw
+    XML shape, replace/remove/empty-section, insertion order, all
+    three validation errors, immutability) + example-18 recipe;
+    1153 → 1162 × 4 backends; `.mbti` diff = `Section` + 4 fns +
+    1 oxml constant (additive).
 
 🟢 **Gradient / pattern fill convenience constructors** *(landed 2026-07-10)*
   - **Shipped**: `Fill::linear_gradient(from, to, via?, angle?)` — both
