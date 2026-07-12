@@ -5,6 +5,81 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] — 2026-07-12
+
+The **additive parity + ergonomics** release — every item of the
+v0.7.x cycle (TODO.md §4.2) in one batch, all additive `.mbti`. The
+headline: the three remaining shape kinds become clickable, tables get
+PowerPoint's built-in style gallery by name, decks get sections and
+full document properties, charts get an editable embedded data
+workbook, and the common fills / SmartArt node colours get one-line
+constructors.
+
+### Added
+
+- **Shape hyperlinks on `Connector` / `GroupShape` / `GraphicFrame`**
+  (`with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)`) —
+  all five shape kinds are now clickable. A `GroupShape` resolves its
+  own hyperlink *and* its children's.
+- **`TableStylePreset`** — all 74 built-in PowerPoint table styles by
+  their gallery names (`MediumStyle2Accent1`, …), GUIDs extracted from
+  MS-OE376 §5.1.6.10. `Table::with_style(preset, first_row~, band_row~)`
+  applies one to a whole table (flags default to PowerPoint's
+  insert-table behaviour); `TableStylePreset::guid()` and
+  `TableProperties::with_style` for finer control.
+- **Slide sections** — `Section { title, start }` +
+  `Presentation::set_sections_mut` / `add_section_mut` / `sections()` /
+  `with_sections` over the `<p14:sectionLst>` extension ([MS-PPTX]
+  §2.3.1.25). Sections partition the deck in slide order; `[]` removes
+  them; other `<p:extLst>` content is preserved.
+- **app.xml document properties** — `AppProperties { company / manager
+  / application / app_version }` + `Presentation::app_properties()` /
+  `set_app_properties_mut` / `with_app_properties`. A DOM *merge*:
+  only the fields you set change; the app-maintained statistics and
+  `vt:vector` parts are preserved verbatim.
+- **Embedded chart-data workbooks** — opt-in
+  `add_chart_mut(…, embed_data=chart_data)` generates a minimal valid
+  `.xlsx` mirroring the data and wires `<c:externalData>`, so
+  PowerPoint's "Edit Data" opens the real rows. Charts still render
+  from inline literals (ADR-009); the workbook is a pure UX add-on.
+- **Fill convenience constructors** — `Fill::solid(rgb)`,
+  `Fill::linear_gradient(from, to, via?, angle?)` (≥ 2 stops enforced
+  by the signature; `via` colours spaced evenly; defaults to the 90°
+  scaled form PowerPoint emits), `Fill::pattern(preset, fg~, bg~)`.
+- **SmartArt per-node colours** — `NodeStyle { fill / line /
+  text_color }` + merging builders `Node::with_fill` / `with_line` /
+  `with_text_color`. Overrides are written to both the data model
+  (kept on re-layout) and the cached drawing (non-editing viewers).
+- New public constants: `@oxml.section_list_ext_uri` /
+  `extended_properties_ns` / `doc_props_vtypes_ns` / `ct_xlsx_sheet`,
+  `@opc.rt_package`.
+
+### Compatibility note (not breaking for builder users)
+
+- Four `pub(all)` structs gained an optional field: `hyperlink :
+  ShapeHyperlink?` on `Connector` / `GroupShape` / `GraphicFrame`, and
+  `style : NodeStyle?` on `@smartart.Node`. Code constructing these
+  via **struct literals** must add the field (`hyperlink: None` /
+  `style: None`); construction through the builders (`of_*` /
+  `Node::leaf` / `Node::new`, …) is unaffected.
+
+### Development
+
+- Tier-1 reader-losslessness: three real Office files are embedded as
+  base64 test sources, so `moon test` proves parse → serialise →
+  re-parse model equality on every backend without file I/O
+  (ADR-011). All three passed first try.
+- New standing refactor lens (CLAUDE.md §7.6): no roadmap/phase codes
+  in code comments; ~150 sites swept across the tree.
+- Sample deck grows to 26 slides (v0.7 features slide + sections /
+  app properties / embedded workbook / per-node SmartArt colours woven
+  in) and now builds via a committed `moon.work`, replacing the CI
+  dep-flip. Cookbook gains recipes 18 (sections) and 19 (document
+  properties), plus embed_data / table-style / SmartArt-colour
+  extensions to existing ones.
+- 1131 → 1178 library tests × 4 backends (Native / Wasm-GC / JS /
+  Wasm), all green.
+
 ## [0.6.0] — 2026-07-06
 
 The **pre-1.0 breaking pass**. This release deliberately spends the
