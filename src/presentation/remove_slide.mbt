@@ -1,4 +1,4 @@
-// Slide deletion API (roadmap v0.3.1 E1).
+// Slide deletion API.
 //
 // `remove_slide_mut(slide_index)` is the inverse of `add_slide_mut`: it
 // unthreads a slide from every place the OPC package tracks it —

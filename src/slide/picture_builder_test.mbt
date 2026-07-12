@@ -1,4 +1,4 @@
-// Tests for the typed picture builder state machine (roadmap v0.4 D4).
+// Tests for the typed picture builder state machine.
 //
 // The compile-time guarantees (no second `with_crop`; no `with_effects`
 // after `build`) are enforced by the type system and so cannot be

@@ -1,4 +1,4 @@
-// Tests for ADT-driven chart options (roadmap v0.4 M2).
+// Tests for ADT-driven chart options.
 
 ///|
 fn opt_data() -> @chart.ChartData {

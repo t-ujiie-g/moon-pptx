@@ -1,4 +1,4 @@
-// Tests for pinpoint shape editing (roadmap v0.3 B4).
+// Tests for pinpoint shape editing.
 // Reuses `typical_title_slide()` from parser_test.mbt: shapes are
 // AutoShape(id=2, "Title 1"), AutoShape(id=3, "Subtitle 2"), Picture(id=4).
 //
@@ -148,7 +148,7 @@ test "Slide::without_shape / without_shape_by_id drop one shape" {
 // --- edits survive serialisation ---
 
 ///|
-test "B4: an id-targeted rename round-trips through serialize" {
+test "an id-targeted rename round-trips through serialize" {
   let slide = @slide.Slide::parse(typical_title_slide())
   let edited = slide.with_shape_by_id(3, fn(s) {
     match s {

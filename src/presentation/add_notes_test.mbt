@@ -1,4 +1,4 @@
-// Tests for `Presentation::set_notes_mut` (v0.2 A3 — speaker notes builder).
+// Tests for `Presentation::set_notes_mut` (speaker notes builder).
 
 ///|
 test "set_notes_mut: first call creates the notesSlide part + slide rel" {
@@ -142,7 +142,7 @@ test "set_notes_mut: XML-special chars in text get escaped safely" {
   }
 }
 
-// --- v0.2 notes-master synthesis ---
+// --- notes-master synthesis ---
 
 ///|
 test "set_notes_mut: synthesises a notesMaster on first call" {

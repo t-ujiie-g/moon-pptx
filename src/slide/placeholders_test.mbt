@@ -1,4 +1,4 @@
-// Tests for PlaceholderType + Slide placeholder accessors (v0.3 B1).
+// Tests for PlaceholderType + Slide placeholder accessors.
 
 ///|
 /// A slide whose spTree carries a representative spread of placeholders plus

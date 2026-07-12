@@ -66,6 +66,8 @@ pub let ct_theme : String
 
 pub let ct_view_props : String
 
+pub let ct_xlsx_sheet : String
+
 pub fn detect_image_dimensions(FixedArray[Byte]) -> ImageDimensions?
 
 pub fn detect_image_format(FixedArray[Byte]) -> ImageFormat?
@@ -78,6 +80,8 @@ pub let diagram_drawing_ns : String
 
 pub let diagram_ns : String
 
+pub let doc_props_vtypes_ns : String
+
 pub let drawing_ns : String
 
 pub let dublin_core_ns : String
@@ -85,6 +89,8 @@ pub let dublin_core_ns : String
 pub let dublin_core_terms_ns : String
 
 pub fn emu_attr_opt(Array[(@xml.QName, String)], String) -> @units.Emu?
+
+pub let extended_properties_ns : String
 
 pub let graphic_data_chart_ex_uri : String
 
@@ -123,6 +129,8 @@ pub let powerpoint_2010_ns : String
 pub let presentation_ns : String
 
 pub fn require_attr(Array[(@xml.QName, String)], String, String) -> String raise XmlReadError
+
+pub let section_list_ext_uri : String
 
 pub fn skip_subtree(@xml.XmlReader) -> Unit raise XmlReadError
 
@@ -288,6 +296,9 @@ pub(all) enum Fill {
   PatternFill(Pattern)
   BlipFillVariant(BlipFill)
 } derive(Eq, @debug.Debug)
+pub fn Fill::linear_gradient(@units.RgbColor, @units.RgbColor, via? : Array[@units.RgbColor], angle? : @units.Angle) -> Self
+pub fn Fill::pattern(String, fg~ : @units.RgbColor, bg~ : @units.RgbColor) -> Self
+pub fn Fill::solid(@units.RgbColor) -> Self
 
 pub(all) struct FillRect {
   left : @units.Percentage

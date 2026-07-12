@@ -1,4 +1,4 @@
-// SmartArt graphic-frame builder (roadmap D1).
+// SmartArt graphic-frame builder.
 //
 // A SmartArt diagram on a slide is a `<p:graphicFrame>` whose
 // `<a:graphicData uri="…/diagram">` carries a single `<dgm:relIds>` element —
@@ -50,6 +50,7 @@ pub fn GraphicFrame::of_diagram_ref(
     name,
     transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
     content: OtherGraphic(@oxml.graphic_data_diagram_uri, graphic_data),
+    hyperlink: None,
     extension: [],
   }
 }

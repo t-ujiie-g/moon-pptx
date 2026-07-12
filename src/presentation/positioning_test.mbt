@@ -1,4 +1,4 @@
-// Tests for percentage / slide-extent positioning helpers (v0.2 C2).
+// Tests for percentage / slide-extent positioning helpers.
 
 ///|
 test "pct_w / pct_h on a fresh deck (4:3 default)" {

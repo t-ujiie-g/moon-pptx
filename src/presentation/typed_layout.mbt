@@ -1,6 +1,7 @@
-// Compile-time placeholder schema — typed layout handles (roadmap v0.4 M1). ⭐
+// Compile-time placeholder schema — typed layout handles. ⭐
 //
-// Each slide layout has a fixed set of placeholders. M1 makes that set part of
+// Each slide layout has a fixed set of placeholders. The typed handles below
+// make that set part of
 // the *type*: `Presentation::add_title_slide_mut()` returns a
 // `LayoutSlide[TitleSlide]`, and the placeholder accessors (`title`,
 // `subtitle`, `body`) are gated by capability traits the layout marker

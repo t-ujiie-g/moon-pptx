@@ -53,7 +53,7 @@ test "Slide::serialize: clrMapOvr (master mapping) round-trips" {
 ///|
 test "Slide::serialize: slide-level transition + timing round-trip" {
   let s1 = roundtrip_slide(typical_title_slide())
-  // D3: <p:transition> is the typed field now; <p:timing> + the root-group
+  // <p:transition> is the typed field now; <p:timing> + the root-group
   // metadata (<p:nvGrpSpPr> + <p:grpSpPr>) still ride on extension.
   assert_true(s1.transition is Some(_))
   let names = s1.extension.map(fn(e) { e.name.local_name })

@@ -1,4 +1,4 @@
-// Tests for the compile-time placeholder schema (roadmap v0.4 M1).
+// Tests for the compile-time placeholder schema.
 //
 // The compile-time guarantee — e.g. `.body()` on `LayoutSlide[TitleSlide]`
 // being a type error — can't be exercised at runtime; these tests cover the
@@ -19,7 +19,7 @@ fn has_layout_of(
 }
 
 ///|
-test "M1 title slide: title + subtitle round-trip + layout synthesised" {
+test "title slide: title + subtitle round-trip + layout synthesised" {
   let prs = @presentation.Presentation::new()
   let _ = prs
     .add_title_slide_mut()
@@ -35,7 +35,7 @@ test "M1 title slide: title + subtitle round-trip + layout synthesised" {
 }
 
 ///|
-test "M1 title-and-content slide: title + body" {
+test "title-and-content slide: title + body" {
   let prs = @presentation.Presentation::new()
   let _ = prs
     .add_title_content_slide_mut()
@@ -49,7 +49,7 @@ test "M1 title-and-content slide: title + body" {
 }
 
 ///|
-test "M1 section header: title + body" {
+test "section header: title + body" {
   let prs = @presentation.Presentation::new()
   let _ = prs
     .add_section_header_slide_mut()
@@ -63,7 +63,7 @@ test "M1 section header: title + body" {
 }
 
 ///|
-test "M1 title-only: just a title" {
+test "title-only: just a title" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_title_only_slide_mut().title("Section break").finish_mut()
   assert_true(has_layout_of(prs, @slide_master.SlideLayoutType::TitleOnly))
@@ -73,7 +73,7 @@ test "M1 title-only: just a title" {
 }
 
 ///|
-test "M1 blank typed slide: no placeholders" {
+test "blank typed slide: no placeholders" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_blank_typed_slide_mut().finish_mut()
   let s = @presentation.Presentation::open(prs.save()).slides()[0]
@@ -81,7 +81,7 @@ test "M1 blank typed slide: no placeholders" {
 }
 
 ///|
-test "M1 layout synthesis is idempotent across same-type slides" {
+test "layout synthesis is idempotent across same-type slides" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_title_slide_mut().title("A").finish_mut()
   let _ = prs.add_title_slide_mut().title("B").finish_mut()
@@ -97,7 +97,7 @@ test "M1 layout synthesis is idempotent across same-type slides" {
 }
 
 ///|
-test "M1 successive typed layouts attach to the same (main) master" {
+test "successive typed layouts attach to the same (main) master" {
   // Regression: with a second master present (define_master), synthesising two
   // layouts must keep attaching them to the main master. `replace_part_bytes`
   // reorders parts, so a "first in package order" pick used to drift to the
@@ -119,7 +119,7 @@ test "M1 successive typed layouts attach to the same (main) master" {
 }
 
 ///|
-test "M1 mixed deck: several typed layouts coexist and reopen" {
+test "mixed deck: several typed layouts coexist and reopen" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_title_slide_mut().title("Deck").subtitle("2026").finish_mut()
   let _ = prs.add_section_header_slide_mut().title("Intro").finish_mut()

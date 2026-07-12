@@ -1,4 +1,4 @@
-// Tests for shape rotation & flip on `Transform` (roadmap v0.6 F1).
+// Tests for shape rotation & flip on `Transform`.
 //
 // Covers the `<a:xfrm rot/flipH/flipV>` lift: parse, write (with default
 // omission), the `Transform` / `AutoShape` / `Picture` / `GroupShape`
@@ -181,6 +181,7 @@ test "GroupShape::with_rotation + with_flip set the transform" {
     child_offset: None,
     child_extent: None,
     children: [],
+    hyperlink: None,
     extension: [],
   }
   let g2 = g.with_rotation(@units.Angle(60.0)).with_flip(h=true)
@@ -207,6 +208,7 @@ test "GroupShape: rotated group emits orientation and round-trips" {
     child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
     child_extent: Some({ cx: @units.Emu(100L), cy: @units.Emu(100L) }),
     children: [],
+    hyperlink: None,
     extension: [],
   }
   let s = base.with_shape(

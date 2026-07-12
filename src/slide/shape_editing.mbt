@@ -1,8 +1,8 @@
-// Pinpoint shape editing (roadmap v0.3 B4).
+// Pinpoint shape editing.
 //
 // The base mutation API is append-only (`Slide::with_shape`) + whole-slide
 // replace (`@presentation.update_slide_mut`). These helpers close the gap:
-// locate an *existing* shape (by position, by stable id, or via the B1
+// locate an *existing* shape (by position, by stable id, or via the placeholder
 // placeholder accessors) and overwrite it in place, all without rebuilding
 // the `shapes` array by hand. Immutable per ADR-003 — every builder returns
 // a new `Slide`; the original is untouched. Lookups that can't resolve their

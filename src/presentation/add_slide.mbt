@@ -35,7 +35,7 @@ pub fn Presentation::add_slide_mut(
 ///|
 /// Like `add_slide_mut` but links the new slide to a layout identified by its
 /// part name rather than its index. Used by the typed layout-handle
-/// constructors (roadmap M1), which synthesise/resolve the layout part first
+/// constructors, which synthesise/resolve the layout part first
 /// and would otherwise have to re-derive its index.
 fn Presentation::add_slide_on_layout_mut(
   self : Presentation,

@@ -1,32 +1,32 @@
-// Animation DSL — typed `<p:timing>` (roadmap v0.5 D2).
+// Animation DSL — typed `<p:timing>`.
 //
 // `<p:timing>` (CT_SlideTiming, ECMA-376 §19.3.1.48) is the slide's animation
 // tree. It is one of the deepest, most boilerplate-heavy parts of the format: a
 // fixed "main sequence" scaffold (tmRoot → seq → mainSeq) wraps one node per
 // click group, and each visible effect adds a leaf of behaviour elements
 // (`<p:set>` / `<p:animEffect>` / …). PowerPoint regenerates that scaffold
-// identically for every deck, so D2 models the *high-level* intent — an ordered
+// identically for every deck, so the model captures the *high-level* intent — an ordered
 // list of effects, each targeting a shape with a start mode — and the writer
 // (`animation_writer.mbt`) synthesises the full canonical tree.
 //
-// Scope (slices 1–5, documented like the A6/A7/C4/D3 deviations):
+// Scope:
 //   * **Entrance + Exit** effects driven by a DrawingML `<p:animEffect>` filter
 //     (or a bare `<p:set>` for Appear/Disappear). The same filter family powers
 //     both; an entrance plays it `in` and reveals the shape, an exit plays it
 //     `out` and hides it.
-//   * **Fly In / Fly Out** (slice 4) — a positional `<p:anim>` moving the shape
+//   * **Fly In / Fly Out** — a positional `<p:anim>` moving the shape
 //     in from / out to a slide edge, paired with the visibility set.
-//   * **Emphasis** effects (slice 2) on an already-visible shape — Spin
+//   * **Emphasis** effects on an already-visible shape — Spin
 //     (`<p:animRot>`), Grow/Shrink (`<p:animScale>`), Change Fill Colour
 //     (`<p:animClr>`) — no visibility toggle.
-//   * **Motion paths** (slice 3) — a custom `MotionPath` the shape travels
+//   * **Motion paths** — a custom `MotionPath` the shape travels
 //     along (`<p:animMotion>`), in `0..1` slide-fraction coordinates.
-//   * **By-paragraph text builds** (slice 5) — an effect can target one text
+//   * **By-paragraph text builds** — an effect can target one text
 //     paragraph (`AnimStep.paragraph`); such shapes get a `<p:bldP build="p">`
 //     so a multi-bullet body reveals one line per click.
 //   * Start modes: on click / with previous / after previous, grouped into the
 //     standard click-driven main sequence.
-//   * **Build-only** (like A6 media): a typed `Slide.timing` is emitted by the
+//   * **Build-only** (like media): a typed `Slide.timing` is emitted by the
 //     writer; on parse, an existing `<p:timing>` still round-trips losslessly
 //     through `Slide.extension` (ADR-004) and `timing` stays `None`. So a built
 //     timeline re-serialises stably rather than round-tripping to an equal
@@ -213,8 +213,7 @@ pub(all) enum MotionCommand {
 /// slide.with_animations(Timeline::new().on_click(Motion(path), shape_id))
 /// ```
 ///
-/// **Deviation from the roadmap sketch** (documented like D4 / C4): the roadmap
-/// suggested reusing Phase 3h's `CustomGeometry::PathCommand`, but that type's
+/// Deliberately *not* a reuse of `CustomGeometry::PathCommand`: that type's
 /// `PathPoint` carries EMU / guide-reference coordinates (`<a:path>` shape
 /// space), whereas `<p:animMotion>` uses `0..1` slide fractions — a different
 /// coordinate space. A dedicated fractional `MotionPath` keeps each model in

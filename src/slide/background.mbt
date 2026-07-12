@@ -1,7 +1,7 @@
-// Slide background — typed `<p:bg>` (roadmap v0.3 A7).
+// Slide background — typed `<p:bg>`.
 //
 // `<p:bg>` (CT_Background) was previously captured into `Slide.extension`
-// (ADR-004). A7 lifts it into a typed `Slide.background` field while keeping
+// (ADR-004). This lifts it into a typed `Slide.background` field while keeping
 // full round-trip fidelity: both the `<p:bgPr>` (explicit fill) and
 // `<p:bgRef>` (theme style-matrix reference) forms are modelled, and any
 // unmodelled `<p:bgPr>` children survive via `BackgroundProperties.extension`.

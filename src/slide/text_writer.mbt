@@ -250,7 +250,7 @@ fn write_paragraph_props_with_wrapper(
 ///|
 /// Emit a `CT_TextSpacing` wrapper (`<a:lnSpc>` / `<a:spcBef>` /
 /// `<a:spcAft>`) with its choice child: `<a:spcPct>` in 1/1000 of a
-/// percent or `<a:spcPts>` in 1/100 of a point (F4).
+/// percent or `<a:spcPts>` in 1/100 of a point.
 fn write_text_spacing(
   w : @xml.XmlWriter,
   wrapper_local : String,
@@ -451,7 +451,7 @@ fn write_run_properties(
     Some(s) => @oxml.write_stroke(w, ctx, s)
     None => ()
   }
-  // Fill child (any of the fill-choice group — F3-b).
+  // Fill child (any of the fill-choice group).
   match p.fill {
     Some(f) => @oxml.write_fill(w, ctx, f)
     None => ()

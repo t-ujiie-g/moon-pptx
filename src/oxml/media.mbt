@@ -1,4 +1,4 @@
-// Audio / video format detection from magic bytes (roadmap v0.3 A6).
+// Audio / video format detection from magic bytes.
 //
 // Mirrors `image.mbt`'s `detect_image_format`: inspect leading bytes, pick
 // the content type + file extension PowerPoint expects for the media part.

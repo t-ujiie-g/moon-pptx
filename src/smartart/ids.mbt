@@ -1,4 +1,4 @@
-// Deterministic model-id generation (roadmap D1).
+// Deterministic model-id generation.
 //
 // DiagramML points and connections are keyed by `ST_ModelId` — a union of
 // xsd:int and a GUID. PowerPoint emits GUIDs; we synthesise stable GUID-shaped

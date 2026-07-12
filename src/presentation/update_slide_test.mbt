@@ -126,7 +126,7 @@ test "Presentation::new + add_slide_mut + update_slide_mut: end-to-end builder" 
   }
 }
 
-// --- pinpoint shape editing (roadmap B4) ---
+// --- pinpoint shape editing ---
 
 ///|
 /// Build a one-slide presentation whose slide holds a rectangle with id 2.

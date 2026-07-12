@@ -165,7 +165,7 @@ fn write_auto_shape(
 ///
 /// Both `<p:cNvPr>` and `<p:cNv*Pr>` are captured wholesale into
 /// `extension` during parse. `<p:cNvPr>` goes through `write_cnvpr`
-/// (which keeps the typed `id`/`name` authoritative so B4 edits take
+/// (which keeps the typed `id`/`name` authoritative so builder edits take
 /// effect); the `<p:cNv*Pr>` wrapper is emitted verbatim — both are
 /// synthesised only when the input didn't include them (hand-built
 /// values, not anything that round-trips through `::parse`).
@@ -177,7 +177,7 @@ fn write_auto_shape(
 /// verbatim — *except* we override its `id` and `name` attribute values with
 /// the typed fields. For a freshly-parsed shape those values are identical
 /// (the parser read them from this very element), so the output is
-/// byte-for-byte unchanged; once a builder edits `name`/`id` (B4), the new
+/// byte-for-byte unchanged; once a builder edits `name`/`id`, the new
 /// value flows through while everything else round-trips losslessly. When no
 /// `<p:cNvPr>` was captured (hand-built shapes), synthesise a minimal one.
 fn write_cnvpr(
@@ -189,7 +189,7 @@ fn write_cnvpr(
   hyperlink : ShapeHyperlink?,
   extension : Array[@xml.XmlElement],
 ) -> Unit raise @xml.XmlError {
-  // A typed, resolved shape hyperlink (roadmap F5) to inject as the first
+  // A typed, resolved shape hyperlink to inject as the first
   // `<p:cNvPr>` child, replacing any captured one. `None` when there's no
   // typed hyperlink or it hasn't been resolved yet.
   let typed_hlink : @xml.XmlElement? = match hyperlink {
@@ -264,11 +264,11 @@ fn write_cnvpr(
       w.attribute(@xml.QName::unqualified("id"), id.to_string())
       w.attribute(@xml.QName::unqualified("name"), name)
       match typed_hlink {
-        // A typed shape hyperlink (F5) takes precedence on a built shape.
+        // A typed shape hyperlink takes precedence on a built shape.
         Some(el) => @oxml.write_xml_element(w, ctx, el)
         None =>
           // A media picture needs a `ppaction://media` hyperlink so PowerPoint
-          // treats the shape as a playable clip (roadmap A6).
+          // treats the shape as a playable clip.
           match media {
             Some(_) => {
               w.start_element(@xml.QName::new(@oxml.drawing_ns, "hlinkClick"))
@@ -302,7 +302,7 @@ fn write_nv_wrapper(
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.presentation_ns, wrapper_local))
   // <p:cNvPr>: emit it, with the typed id/name authoritative so edits to
-  // those fields (roadmap B4) take effect, plus any typed shape hyperlink (F5).
+  // those fields take effect, plus any typed shape hyperlink.
   write_cnvpr(w, ctx, id, name, media, hyperlink, extension)
   // <p:cNv*Pr>: captured if present, empty otherwise.
   let mut emitted_cnvkind = false
@@ -322,7 +322,7 @@ fn write_nv_wrapper(
     Some(ph) => write_placeholder(w, ph)
     None => ()
   }
-  // Typed media reference (roadmap A6): <a:videoFile>/<a:audioFile> +
+  // Typed media reference: <a:videoFile>/<a:audioFile> +
   // <p:extLst><p14:media>. Parsed media pics carry this verbatim in
   // `extension` instead (media is None), so the two paths never overlap.
   match media {
@@ -672,20 +672,11 @@ fn write_connector(
   // than capturing it wholesale, so we re-synthesise it from those
   // fields here.
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "nvCxnSpPr"))
-  // cNvPr (still captured wholesale per parse_nv_cxn_sp_pr).
-  let mut emitted_cnvpr = false
-  for ext in c.extension {
-    if ext.name.uri == @oxml.presentation_ns && ext.name.local_name == "cNvPr" {
-      @oxml.write_xml_element(w, ctx, ext)
-      emitted_cnvpr = true
-    }
-  }
-  if !emitted_cnvpr {
-    w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvPr"))
-    w.attribute(@xml.QName::unqualified("id"), c.id.to_string())
-    w.attribute(@xml.QName::unqualified("name"), c.name)
-    w.end_element()
-  }
+  // <p:cNvPr> via the shared writer (typed id/name authoritative, typed
+  // hyperlink injected). Byte-identical to the previous verbatim
+  // re-emit for parsed connectors, since the typed id/name were read off
+  // this very element.
+  write_cnvpr(w, ctx, c.id, c.name, None, c.hyperlink, c.extension)
   // cNvCxnSpPr re-synthesised with modeled stCxn / endCxn.
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "cNvCxnSpPr"))
   match c.start {
@@ -767,9 +758,7 @@ fn write_group_shape(
     g.name,
     None,
     None,
-    // Group-shape hyperlinks aren't typed yet (F5 covers AutoShape + Picture);
-    // a parsed group's `<a:hlinkClick>` still round-trips via `extension`.
-    None,
+    g.hyperlink,
     g.extension,
   )
   // <p:grpSpPr> with group-specific xfrm.

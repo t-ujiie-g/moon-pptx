@@ -1,4 +1,4 @@
-// Tests for the v0.2 hyperlink builder: `RunProperties::with_hyperlink` /
+// Tests for the run-level hyperlink builder: `RunProperties::with_hyperlink` /
 // `with_hyperlink_to_slide` + the resolver hooked into `update_slide_mut`.
 
 ///|

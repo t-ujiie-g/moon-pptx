@@ -141,7 +141,7 @@ pub(all) struct AutoShape {
   effects : @oxml.EffectList?
   text_body : TextBody?
   /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
-  /// shape (roadmap F5). Build-only: set by `with_hyperlink` /
+  /// shape. Build-only: set by `with_hyperlink` /
   /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
   /// `None` for a parsed shape (its `<a:hlinkClick>` round-trips via the
   /// captured `<p:cNvPr>` in `extension`).
@@ -158,7 +158,7 @@ pub(all) struct Slide {
   /// `name` from `<p:cSld name="…">`. Empty if the attribute is absent
   /// (which is the common case — slides are usually unnamed).
   name : String
-  /// `<p:cSld><p:bg>` — the slide background (roadmap A7). `None` means
+  /// `<p:cSld><p:bg>` — the slide background. `None` means
   /// the slide inherits its background from the layout / master (the
   /// common case). Lifted out of `extension` into a typed field; see
   /// `background.mbt`.
@@ -171,11 +171,11 @@ pub(all) struct Slide {
   /// layouts do. Reuses the layout's enum so the inheritance resolver
   /// works uniformly.
   clr_map_override : @slide_master.ClrMapOverride
-  /// `<p:transition>` — the slide's entrance transition (roadmap D3). `None`
+  /// `<p:transition>` — the slide's entrance transition. `None`
   /// means the slide has no transition effect (the common case). Lifted out
   /// of `extension` into a typed field; see `transition.mbt`.
   transition : Transition?
-  /// `<p:timing>` — the slide's animation timeline (roadmap D2). `None` means
+  /// `<p:timing>` — the slide's animation timeline. `None` means
   /// the slide has no animations (the common case). **Build-only**: set by
   /// `with_animations` and emitted by the writer; on *parse* an existing
   /// `<p:timing>` round-trips through `extension` (ADR-004) and this stays

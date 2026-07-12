@@ -135,6 +135,8 @@ test "example 6: tables with merged cells and styled borders" {
     @units.Emu(2_286_000L),
     @units.Emu(2_286_000L),
   ])
+  // A built-in gallery style restyles the whole table by reference.
+  let t = t.with_style(MediumStyle2Accent1)
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let gf = @slide.GraphicFrame::of_table(
@@ -147,11 +149,17 @@ test "example 6: tables with merged cells and styled borders" {
     t,
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
-  // The shape landed and the table has 2 rows.
+  // The shape landed, the table has 2 rows, and the gallery style stuck.
   match prs.slides()[0].shapes[0] {
     GraphicFrame(g) =>
       match g.content {
-        TableContent(t) => assert_eq(t.rows.length(), 2)
+        TableContent(t) => {
+          assert_eq(t.rows.length(), 2)
+          assert_eq(
+            t.properties.unwrap().table_style_id.unwrap(),
+            @slide.TableStylePreset::MediumStyle2Accent1.guid(),
+          )
+        }
         _ => fail("expected TableContent")
       }
     _ => fail("expected GraphicFrame")
@@ -170,6 +178,8 @@ test "example 7: bar chart from data" {
   let chart = @chart.Chart::of_bar(data)
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
+  // embed_data generates the editable .xlsx workbook behind
+  // PowerPoint's "Edit Data" button.
   prs.add_chart_mut(
     0,
     chart,
@@ -177,8 +187,13 @@ test "example 7: bar chart from data" {
     prs.pct_h(15.0),
     prs.pct_w(80.0),
     prs.pct_h(70.0),
+    embed_data=data,
   )
   assert_eq(prs.charts().length(), 1)
+  assert_true(
+    prs.pkg.part_by_name("/ppt/embeddings/Microsoft_Excel_Worksheet1.xlsx")
+    is Some(_),
+  )
 }
 
 ///|
@@ -381,7 +396,15 @@ test "example 14: entrance animations" {
 test "example 15: SmartArt diagram" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
-  let art = @smartart.SmartArt::process(["Plan", "Build", "Ship"])
+  // Per-node colour overrides ride on top of the diagram's quick style.
+  let hot = @smartart.Node::leaf("Ship")
+    .with_fill(@units.RgbColor::new(0xC0, 0x00, 0x00))
+    .with_text_color(@units.RgbColor::new(0xFF, 0xFF, 0xFF))
+  let art = @smartart.SmartArt::new(Process, [
+    @smartart.Node::leaf("Plan"),
+    @smartart.Node::leaf("Build"),
+    hot,
+  ])
   prs.add_smartart_mut(
     0,
     art,
@@ -391,7 +414,7 @@ test "example 15: SmartArt diagram" {
     prs.pct_h(70.0),
   )
   // The tree families take nested Nodes; the recursive hierarchy layout
-  // definition lays the whole tree out in PowerPoint (D1-b — see
+  // definition lays the whole tree out in PowerPoint (see
   // examples/README.md §15).
   let _ = prs.add_slide_mut(0)
   let ceo = @smartart.Node::new("CEO", [
@@ -408,9 +431,15 @@ test "example 15: SmartArt diagram" {
   )
   // Each slide gains one graphic-frame shape; the DiagramML parts survive
   // a save → reopen round-trip.
-  let prs2 = @presentation.Presentation::open(prs.save())
+  let saved = prs.save()
+  let prs2 = @presentation.Presentation::open(saved)
   assert_eq(prs2.slides()[0].shapes.length(), 1)
   assert_eq(prs2.slides()[1].shapes.length(), 1)
+  // The node's colour overrides reach the saved diagram data part.
+  let data = @oxml.bytes_to_string(
+    @opc.Package::open(saved).require_part("/ppt/diagrams/data1.xml").bytes,
+  )
+  assert_true(data.contains("<a:srgbClr val=\"C00000\""))
 }
 
 ///|
@@ -456,6 +485,29 @@ test "example 17: plot-type-aware chart validation" {
 }
 
 ///|
+test "example 18: slide sections" {
+  let prs = @presentation.Presentation::new()
+  for _ in 0..<4 {
+    let _ = prs.add_slide_mut(0)
+  }
+  prs.set_sections_mut([
+    { title: "Introduction", start: 0 },
+    { title: "Content", start: 1 },
+    { title: "Conclusion", start: 3 },
+  ])
+  prs.add_section_mut(title="Details", start=2)
+  // Sections partition the deck in slide order and survive save → reopen.
+  let reopened = @presentation.Presentation::open(prs.save())
+  let sections = reopened.sections()
+  assert_eq(sections.length(), 4)
+  assert_true(sections[1] == { title: "Content", start: 1 })
+  assert_true(sections[2] == { title: "Details", start: 2 })
+  // Removal:
+  prs.set_sections_mut([])
+  assert_eq(prs.sections().length(), 0)
+}
+
+///|
 /// A minimal valid PNG (signature + IHDR + IDAT + IEND) — enough for the image
 /// detector; the cookbook's video poster stands in for a real frame.
 fn minimal_png() -> FixedArray[Byte] {
@@ -472,4 +524,25 @@ fn minimal_png() -> FixedArray[Byte] {
     out[i] = raw[i].to_byte()
   }
   out
+}
+
+///|
+test "example 19: document properties (core + app)" {
+  let prs = @presentation.Presentation::new()
+  prs.set_core_properties_mut(
+    prs.core_properties().with_title("Q3 Review").with_author("Ada"),
+  )
+  prs.set_app_properties_mut(
+    @presentation.AppProperties::new()
+    .with_company("ACME Corp")
+    .with_manager("Grace"),
+  )
+  let reopened = @presentation.Presentation::open(prs.save())
+  assert_eq(reopened.core_properties().title.unwrap(), "Q3 Review")
+  assert_eq(reopened.core_properties().creator.unwrap(), "Ada")
+  let app = reopened.app_properties()
+  assert_eq(app.company.unwrap(), "ACME Corp")
+  assert_eq(app.manager.unwrap(), "Grace")
+  // The merge kept the template's own Application field.
+  assert_eq(app.application.unwrap(), "moon-pptx")
 }

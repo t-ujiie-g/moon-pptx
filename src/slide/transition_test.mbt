@@ -1,4 +1,4 @@
-// Tests for the typed slide transition (`<p:transition>`, roadmap v0.4 D3).
+// Tests for the typed slide transition (`<p:transition>`).
 //
 // Whole-value equality on the transition types goes through `assert_true(a ==
 // b)` (they derive `Eq, Debug`, and `assert_eq` would additionally require

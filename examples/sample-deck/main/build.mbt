@@ -2,17 +2,19 @@
 // from a downstream consumer's perspective.
 //
 // This module is **separate from the moon-pptx library itself**: it
-// has its own `moon.mod.json` and depends on `t-ujiie-g/moon-pptx`
-// just like any user would. It currently uses a path dep on `../..`
-// so the deck can exercise the unreleased v0.5.2 features; switch back
-// to a published `"version": "0.5.2"` dep once that version is on
-// mooncakes. The library proper (in `src/`) is the published artefact
-// and contains no demo / sample code.
+// has its own `moon.mod` and depends on `t-ujiie-g/moon-pptx` just
+// like any user would — the manifest names the latest *published*
+// version. The committed `moon.work` makes in-repo builds resolve
+// that dependency to the repo source instead, so the deck (and the
+// CI validator) always exercises the current tree, unreleased
+// features included. The library proper (in `src/`) is the published
+// artefact and contains no demo / sample code.
 //
-// 24 slides covering every typed feature through v0.5.2 plus every chart
-// family from v0.1. The deck also sets document core properties
-// (v0.5.2 F2 — title / author / subject / keywords, visible in
-// PowerPoint's File ▸ Info):
+// 26 slides covering every typed feature plus every chart family. The
+// deck also sets document properties — core (title / author / subject /
+// keywords) *and* app.xml (company / manager) — visible in PowerPoint's
+// File ▸ Info, and groups its slides into named sections shown in the
+// slide panel:
 //
 //   1.  Title — widescreen sizing, styled run, hyperlink, speaker notes.
 //   2.  Table of contents — internal hyperlinks jumping to later slides.
@@ -24,17 +26,19 @@
 //   7.  Tables — merged header + per-edge custom borders.
 //   8–11. Charts — bar/line/pie, area/radar/doughnut, scatter/bubble,
 //       3-D bar/stock/ofPie.
-//   12. Slide background.            13. Combo + secondary-axis chart.
+//   12. Slide background.            13. Combo chart + embedded workbook.
 //   14. SVG image.                   15. In-place shape editing (map_shapes).
-//   16. Embedded video + audio.      17. SmartArt org chart (v0.5 D1).
-//   18. Animations (v0.5 D2).        19. YouTube / online video (v0.5 C5).
-//   20. v0.5.2 fidelity — shape rotation/flip (F1), run highlight / kerning /
-//       text outline / text effects (F3), shape hyperlinks (F5).
-//   21. Master / template slide (footer / date / slide number).
-//   22–23. Typed layout slides (v0.4 M1 compile-time placeholder schema).
-//   24. Closing — hyperlink back to slide 1.
+//   16. Embedded video + audio.      17. SmartArt org chart (per-node colours).
+//   18. Animations.                  19. YouTube / online video.
+//   20. v0.5.2 features — shape rotation/flip, run highlight / kerning /
+//       text outline / text effects, shape hyperlinks.
+//   21. v0.6 features — gradient/pattern text fills, paragraph spacing.
+//   22. v0.7 features — gallery table styles, fill convenience constructors.
+//   23. Master / template slide (footer / date / slide number).
+//   24–25. Typed layout slides (compile-time placeholder schema).
+//   26. Closing — hyperlink back to slide 1.
 //
-// Plus: a slide transition on every slide (v0.4 D3). Every position is
+// Plus: a slide transition on every slide. Every position is
 // expressed through `prs.pct_w` / `prs.pct_h` so switching slide sizes
 // is a one-line change.
 //
@@ -50,7 +54,7 @@
 pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
   let prs = @presentation.Presentation::new()
   prs.set_slide_size_mut(Widescreen)
-  // v0.5.2 F2 — document core properties (shown in PowerPoint's File ▸ Info).
+  // Document properties, both parts of File ▸ Info: core.xml…
   prs.set_core_properties_mut(
     @presentation.CoreProperties::new()
     .with_title("moon-pptx feature sample deck")
@@ -60,31 +64,24 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
     .with_category("Demo")
     .with_revision("2"),
   )
+  // …and app.xml (a merge — the template's Application field stays).
+  prs.set_app_properties_mut(
+    @presentation.AppProperties::new()
+    .with_company("moon-pptx project")
+    .with_manager("sample deck"),
+  )
   // The layout-0 feature slides, in order. They are *all pre-added* before
   // any are filled, so the table-of-contents slide's forward "jump to
   // section" hyperlinks resolve against slides that already exist.
-  let builders : Array[(@presentation.Presentation, Int) -> Unit raise @presentation.PptxError] = [
-    sample_title_slide,
-    sample_toc_slide,
-    sample_text_slide,
-    sample_shapes_slide,
-    sample_custom_geom_slide,
-    sample_picture_slide,
-    sample_table_slide,
-    sample_charts_1_slide,
-    sample_charts_2_slide,
-    sample_charts_3_slide,
-    sample_charts_4_slide,
-    sample_background_slide,
-    sample_combo_chart_slide,
-    sample_svg_slide,
-    sample_edit_slide,
-    sample_media_slide,
-    sample_smartart_slide,
-    sample_animation_slide,
-    sample_online_video_slide,
-    sample_v052_features_slide,
-    sample_v06_features_slide,
+  let builders : Array[
+    (@presentation.Presentation, Int) -> Unit raise @presentation.PptxError,
+  ] = [
+    sample_title_slide, sample_toc_slide, sample_text_slide, sample_shapes_slide,
+    sample_custom_geom_slide, sample_picture_slide, sample_table_slide, sample_charts_1_slide,
+    sample_charts_2_slide, sample_charts_3_slide, sample_charts_4_slide, sample_background_slide,
+    sample_combo_chart_slide, sample_svg_slide, sample_edit_slide, sample_media_slide,
+    sample_smartart_slide, sample_animation_slide, sample_online_video_slide, sample_v052_features_slide,
+    sample_v06_features_slide, sample_v07_features_slide,
   ]
   for _ in 0..<builders.length() {
     let _ = prs.add_slide_mut(0)
@@ -100,8 +97,8 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
   // Closing slide (links back to the title).
   let _ = prs.add_slide_mut(0)
   sample_closing_slide(prs, prs.slides().length() - 1)
-  // Slide transitions (v0.4 D3) — cycle a few effects across every slide so
-  // the deck animates on advance.
+  // Slide transitions — cycle a few effects across every slide so the
+  // deck animates on advance.
   let transitions = [
     @slide.Transition::fade(),
     @slide.Transition::push(@slide.TransitionSide::Left),
@@ -114,6 +111,16 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
       prs.slides()[i].with_transition(transitions[i % transitions.length()]),
     )
   }
+  // Slide sections — the named groups PowerPoint shows in the slide
+  // panel. Each starts at its slide index and runs to the next start.
+  prs.set_sections_mut([
+    { title: "Introduction", start: 0 },
+    { title: "Text, shapes & tables", start: 2 },
+    { title: "Charts & backgrounds", start: 7 },
+    { title: "Graphics, media & motion", start: 13 },
+    { title: "Release highlights", start: 19 },
+    { title: "Templates & closing", start: 22 },
+  ])
   prs.save()
 }
 
@@ -198,7 +205,12 @@ pub fn build_sample_chart_isolated(
 ///   13 — editing existing shapes
 ///   14 — embedded video + audio
 ///   15 — master / template (footer / date / slide number)
-///   16 — closing (with back-link hyperlink)
+///   16 — SmartArt org chart
+///   17 — animations
+///   18 — YouTube / online video
+///   19 — v0.6 features (text fills + paragraph spacing)
+///   20 — v0.7 features (table styles + fill shortcuts)
+///   21+ — closing (with back-link hyperlink)
 ///
 /// The TOC slide is intentionally excluded — its internal hyperlinks
 /// would point at non-existent slides in a two-slide deck. The full
@@ -240,6 +252,7 @@ pub fn build_sample_isolated(
     17 => sample_animation_slide(prs, 1)
     18 => sample_online_video_slide(prs, 1)
     19 => sample_v06_features_slide(prs, 1)
+    20 => sample_v07_features_slide(prs, 1)
     _ => sample_closing_slide(prs, 1)
   }
   prs.save()
@@ -508,10 +521,10 @@ fn sample_shapes_slide(
     id: 6,
     name: "FlowArrow",
     transform: Some(
-      @slide.Transform::new(
-        offset={ x: prs.pct_w(27.0), y: prs.pct_h(28.0) },
-        extent={ cx: prs.pct_w(13.0), cy: @units.Emu(0L) },
-      ),
+      @slide.Transform::new(offset={ x: prs.pct_w(27.0), y: prs.pct_h(28.0) }, extent={
+        cx: prs.pct_w(13.0),
+        cy: @units.Emu(0L),
+      }),
     ),
     geometry: Some(
       @slide.Geometry::Preset(@slide.PresetShape::StraightConnector1, []),
@@ -520,6 +533,7 @@ fn sample_shapes_slide(
     effects: None,
     start: None,
     end: None,
+    hyperlink: None,
     extension: [],
   }
 
@@ -532,10 +546,10 @@ fn sample_shapes_slide(
     name: "GroupedRect1",
     placeholder: None,
     transform: Some(
-      @slide.Transform::new(
-        offset={ x: @units.Emu(0L), y: @units.Emu(0L) },
-        extent={ cx: @units.Emu(4000L), cy: @units.Emu(10000L) },
-      ),
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+        cx: @units.Emu(4000L),
+        cy: @units.Emu(10000L),
+      }),
     ),
     geometry: Some(@slide.Geometry::Preset(@slide.PresetShape::Rect, [])),
     fill: Some(
@@ -597,10 +611,10 @@ fn sample_shapes_slide(
     id: 30,
     name: "DemoGroup",
     transform: Some(
-      @slide.Transform::new(
-        offset={ x: prs.pct_w(30.0), y: prs.pct_h(55.0) },
-        extent={ cx: group_w, cy: group_h },
-      ),
+      @slide.Transform::new(offset={ x: prs.pct_w(30.0), y: prs.pct_h(55.0) }, extent={
+        cx: group_w,
+        cy: group_h,
+      }),
     ),
     child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
     child_extent: Some({ cx: @units.Emu(10000L), cy: @units.Emu(10000L) }),
@@ -609,6 +623,7 @@ fn sample_shapes_slide(
       @slide.AutoShape(child_rect_2),
       @slide.AutoShape(child_ellipse),
     ],
+    hyperlink: None,
     extension: [],
   }
   let s = prs.slides()[idx]
@@ -696,10 +711,10 @@ fn sample_custom_geom_slide(
     name: "Star",
     placeholder: None,
     transform: Some(
-      @slide.Transform::new(
-        offset={ x: prs.pct_w(33.0), y: prs.pct_h(20.0) },
-        extent={ cx: prs.pct_w(34.0), cy: prs.pct_h(70.0) },
-      ),
+      @slide.Transform::new(offset={ x: prs.pct_w(33.0), y: prs.pct_h(20.0) }, extent={
+        cx: prs.pct_w(34.0),
+        cy: prs.pct_h(70.0),
+      }),
     ),
     geometry: Some(@slide.Geometry::Custom(star_geom)),
     fill: Some(

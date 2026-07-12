@@ -211,8 +211,11 @@ pub(all) struct Connector {
   effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Connector::with_hyperlink(Self, url~ : String) -> Self
+pub fn Connector::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 
 pub(all) struct CustomGeometry {
   adjust_values : Array[ShapeAdjustValue]
@@ -260,12 +263,15 @@ pub(all) struct GraphicFrame {
   name : String
   transform : Transform?
   content : GraphicFrameContent
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn GraphicFrame::of_chart_ex_ref(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 pub fn GraphicFrame::of_chart_ref(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String) -> Self
 pub fn GraphicFrame::of_diagram_ref(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, String, String, String, String) -> Self
 pub fn GraphicFrame::of_table(Int, String, @units.Emu, @units.Emu, @units.Emu, @units.Emu, Table) -> Self
+pub fn GraphicFrame::with_hyperlink(Self, url~ : String) -> Self
+pub fn GraphicFrame::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 
 pub(all) enum GraphicFrameContent {
   TableContent(Table)
@@ -281,9 +287,12 @@ pub(all) struct GroupShape {
   child_offset : Point?
   child_extent : Size?
   children : Array[Shape]
+  hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn GroupShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
+pub fn GroupShape::with_hyperlink(Self, url~ : String) -> Self
+pub fn GroupShape::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 pub fn GroupShape::with_rotation(Self, @units.Angle) -> Self
 
 pub(all) enum HyperlinkTarget {
@@ -790,6 +799,7 @@ pub(all) struct Table {
 } derive(Eq, @debug.Debug)
 pub fn Table::of_grid(rows~ : Int, cols~ : Int, col_width~ : @units.Emu, row_height~ : @units.Emu) -> Self
 pub fn Table::of_rows(Array[TableRow], col_widths~ : Array[@units.Emu]) -> Self
+pub fn Table::with_style(Self, TableStylePreset, first_row? : Bool, band_row? : Bool) -> Self
 
 pub(all) struct TableCell {
   grid_span : Int
@@ -848,6 +858,7 @@ pub(all) struct TableProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TableProperties::default() -> Self
+pub fn TableProperties::with_style(Self, TableStylePreset) -> Self
 
 pub(all) struct TableRow {
   height : @units.Emu
@@ -855,6 +866,84 @@ pub(all) struct TableRow {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TableRow::of_cells(Array[TableCell], height~ : @units.Emu) -> Self
+
+pub(all) enum TableStylePreset {
+  NoStyleNoGrid
+  ThemedStyle1Accent1
+  ThemedStyle1Accent2
+  ThemedStyle1Accent3
+  ThemedStyle1Accent4
+  ThemedStyle1Accent5
+  ThemedStyle1Accent6
+  NoStyleTableGrid
+  ThemedStyle2Accent1
+  ThemedStyle2Accent2
+  ThemedStyle2Accent3
+  ThemedStyle2Accent4
+  ThemedStyle2Accent5
+  ThemedStyle2Accent6
+  LightStyle1
+  LightStyle1Accent1
+  LightStyle1Accent2
+  LightStyle1Accent3
+  LightStyle1Accent4
+  LightStyle1Accent5
+  LightStyle1Accent6
+  LightStyle2
+  LightStyle2Accent1
+  LightStyle2Accent2
+  LightStyle2Accent3
+  LightStyle2Accent4
+  LightStyle2Accent5
+  LightStyle2Accent6
+  LightStyle3
+  LightStyle3Accent1
+  LightStyle3Accent2
+  LightStyle3Accent3
+  LightStyle3Accent4
+  LightStyle3Accent5
+  LightStyle3Accent6
+  MediumStyle1
+  MediumStyle1Accent1
+  MediumStyle1Accent2
+  MediumStyle1Accent3
+  MediumStyle1Accent4
+  MediumStyle1Accent5
+  MediumStyle1Accent6
+  MediumStyle2
+  MediumStyle2Accent1
+  MediumStyle2Accent2
+  MediumStyle2Accent3
+  MediumStyle2Accent4
+  MediumStyle2Accent5
+  MediumStyle2Accent6
+  MediumStyle3
+  MediumStyle3Accent1
+  MediumStyle3Accent2
+  MediumStyle3Accent3
+  MediumStyle3Accent4
+  MediumStyle3Accent5
+  MediumStyle3Accent6
+  MediumStyle4
+  MediumStyle4Accent1
+  MediumStyle4Accent2
+  MediumStyle4Accent3
+  MediumStyle4Accent4
+  MediumStyle4Accent5
+  MediumStyle4Accent6
+  DarkStyle1
+  DarkStyle1Accent1
+  DarkStyle1Accent2
+  DarkStyle1Accent3
+  DarkStyle1Accent4
+  DarkStyle1Accent5
+  DarkStyle1Accent6
+  DarkStyle2
+  DarkStyle2Accent1And2
+  DarkStyle2Accent3And4
+  DarkStyle2Accent5And6
+} derive(Eq, @debug.Debug)
+pub fn TableStylePreset::guid(Self) -> String
 
 pub(all) enum TextAlignment {
   AlignLeft

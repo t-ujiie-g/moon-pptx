@@ -226,7 +226,27 @@ the trigger is a single file or the whole tree.
 - `pkg.generated.mbti` is regenerated (`moon info`) — diff shows the
   intended public-API change.
 
-### 7.6 Validation loop after refactoring
+### 7.6 Comment hygiene
+Comments must make sense to a reader who has never opened `TODO.md` and
+was not there when the code landed.
+
+- **No roadmap/phase codes in code comments** — `roadmap F5`, `v0.6 D1-b`,
+  `Phase 3h`, `TODO.md §4.2` mean nothing later or to outsiders. Say the
+  *thing* instead ("shape-level hyperlink", "the SmartArt layout
+  definition"). ADR-nnn, ECMA-376 §, and issue #N references are fine —
+  those are stable, findable records.
+- **Delete comments the code already says** — a comment restating the next
+  line, narrating what was changed, or justifying the change to a reviewer
+  is noise once merged. History belongs in git / `TODO.md §11`, not in
+  comments.
+- **Keep comments that carry a constraint the code can't show** — spec
+  rules ("`h` is required per ECMA-376"), non-obvious *why* ("PowerPoint
+  needs `action=` to recognise the jump"), invariants, and deliberate
+  deviations. Doc comments (`///`) on public APIs stay mandatory.
+- When trimming an over-written comment, keep the informative core and cut
+  the provenance framing.
+
+### 7.7 Validation loop after refactoring
 After changes, always run:
 
 ```bash

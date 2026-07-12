@@ -1,4 +1,4 @@
-// Unit tests for the `smartart` package (roadmap D1).
+// Unit tests for the `smartart` package.
 
 ///|
 /// Count non-overlapping occurrences of `needle` in `s`.
@@ -112,7 +112,7 @@ test "org_chart data model: parent/child connections + all nodes drawn" {
     assert_true(data.find("<a:t>" + label + "</a:t>") is Some(_))
   }
   // The cached drawing lays out every node (not just the root) plus one
-  // connector line per parent→child edge (D1-b).
+  // connector line per parent→child edge.
   let drawing = @oxml.bytes_to_string(
     art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(5_000_000L)),
   )
@@ -125,7 +125,7 @@ test "org_chart data model: parent/child connections + all nodes drawn" {
 }
 
 ///|
-test "hier layoutDef recurses + wires connectors (D1-b)" {
+test "hier layoutDef recurses + wires connectors" {
   let xml = @oxml.bytes_to_string(
     @smartart.SmartArt::org_chart(@smartart.Node::leaf("CEO")).layout_xml(),
   )
@@ -160,7 +160,7 @@ test "hier layoutDef recurses + wires connectors (D1-b)" {
 }
 
 ///|
-test "drawing connector geometry: bounding box + flipH (D1-b)" {
+test "drawing connector geometry: bounding box + flipH" {
   // Root centred over two children in a wide frame: the left child's
   // connector runs down-left (flipH), the right child's down-right (no
   // flip). Both span from the parent box's bottom centre to the child's
@@ -179,7 +179,7 @@ test "drawing connector geometry: bounding box + flipH (D1-b)" {
 }
 
 ///|
-test "radial layoutDef pins the hub and rings the spokes (D1-b)" {
+test "radial layoutDef pins the hub and rings the spokes" {
   let xml = @oxml.bytes_to_string(
     @smartart.SmartArt::relationship(@smartart.Node::leaf("Core"), [
       @smartart.Node::leaf("A"),
@@ -233,7 +233,7 @@ test "matrix grid + relationship hub layouts" {
   let rxml = @oxml.bytes_to_string(
     r.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
   )
-  // Four boxes + three hub→spoke connector lines (D1-b).
+  // Four boxes + three hub→spoke connector lines.
   assert_eq(count_occurrences(rxml, "<dsp:sp "), 7)
   assert_eq(count_occurrences(rxml, "prst=\"line\""), 3)
   // All parts well-formed for both families.
@@ -290,4 +290,74 @@ test "all generated parts are well-formed XML" {
   assert_well_formed(@oxml.bytes_to_string(art.layout_xml()))
   assert_well_formed(@oxml.bytes_to_string(art.colors_xml()))
   assert_well_formed(@oxml.bytes_to_string(art.quick_style_xml()))
+}
+
+///|
+test "Node style builders merge aspects on one style" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let n = @smartart.Node::leaf("Hot").with_fill(red).with_text_color(white)
+  match n.style {
+    Some(s) => {
+      assert_true(s.fill == Some(red))
+      assert_true(s.text_color == Some(white))
+      assert_true(s.line == None)
+    }
+    None => fail("expected a style")
+  }
+  // Styling doesn't disturb the rest of the node.
+  assert_eq(n.text, "Hot")
+  assert_eq(n.children.length(), 0)
+  let s = @smartart.NodeStyle::new(line=red)
+  assert_true(s.line == Some(red))
+  assert_true(s.fill == None && s.text_color == None)
+}
+
+///|
+test "data_xml carries per-node colour overrides" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let blue = @units.RgbColor::new(0x00, 0x00, 0xFF)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let art = @smartart.SmartArt::new(List, [
+    @smartart.Node::leaf("Hot")
+    .with_fill(red)
+    .with_line(blue)
+    .with_text_color(white),
+    @smartart.Node::leaf("Plain"),
+  ])
+  let xml = @oxml.bytes_to_string(art.data_xml("rId1"))
+  // Fill + line ride the styled point's <dgm:spPr>.
+  assert_true(xml.find("<a:srgbClr val=\"FF0000\"") is Some(_))
+  assert_true(
+    xml.find("<a:ln><a:solidFill><a:srgbClr val=\"0000FF\"") is Some(_),
+  )
+  // The text colour rides the run properties, flagged as a manual
+  // customisation — and only on the styled node.
+  assert_true(
+    xml.find("<a:rPr lang=\"en-US\"><a:solidFill><a:srgbClr val=\"FFFFFF\"")
+    is Some(_),
+  )
+  assert_eq(count_occurrences(xml, "custT=\"1\""), 1)
+  // The unstyled node keeps an empty <dgm:spPr>.
+  assert_true(count_occurrences(xml, "<dgm:spPr/>") >= 1)
+}
+
+///|
+test "drawing_xml overrides the styled box, keeps quick-style defaults elsewhere" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let white = @units.RgbColor::new(0xFF, 0xFF, 0xFF)
+  let art = @smartart.SmartArt::new(List, [
+    @smartart.Node::leaf("Hot").with_fill(red).with_text_color(white),
+    @smartart.Node::leaf("Plain"),
+  ])
+  let xml = @oxml.bytes_to_string(
+    art.drawing_xml(@units.Emu(6_000_000L), @units.Emu(3_000_000L)),
+  )
+  // The styled box fills FF0000; the unstyled one keeps accent1.
+  assert_true(xml.find("<a:srgbClr val=\"FF0000\"") is Some(_))
+  assert_eq(count_occurrences(xml, "schemeClr val=\"accent1\""), 1)
+  // Its text run carries the white override.
+  assert_true(xml.find("<a:srgbClr val=\"FFFFFF\"") is Some(_))
+  // The outline wasn't overridden, so both boxes keep the lt1 default.
+  assert_eq(count_occurrences(xml, "schemeClr val=\"lt1\""), 2)
 }

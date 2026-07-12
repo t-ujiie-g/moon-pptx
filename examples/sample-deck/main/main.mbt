@@ -16,7 +16,7 @@
 // `moon run` status lines.
 //
 // To bisect a PowerPoint Online compatibility issue, flip
-// `split_mode` to `true` below: the CLI then emits 11 hex streams
+// `split_mode` to `true` below: the CLI then emits one hex stream per entry
 // (each preceded by `===FILE-NN-NAME===`), one for the title slide
 // alone and one for the title plus each feature slide, so a shell
 // fan-out can produce per-slide `.pptx` files for isolation testing.
@@ -39,7 +39,7 @@ fn main {
 ///|
 /// Compile-time flag. Set to `true` to emit per-feature isolation
 /// files (used for bisecting PowerPoint Online repair triggers);
-/// `false` to emit the full 12-slide deck. We use a compile-time
+/// `false` to emit the full deck. We use a compile-time
 /// constant rather than argv because MoonBit's native CLI args vary
 /// by backend, and the file is short enough that a re-build per
 /// mode is acceptable.
@@ -52,7 +52,7 @@ fn emit_split() -> Unit {
     "06-charts-bar-line-pie", "07-charts-area-radar-doughnut", "08-charts-scatter-bubble",
     "09-charts-3d-stock-ofpie", "10-background", "11-combo-chart", "12-svg-image",
     "13-edit-shapes", "14-media", "15-master-template", "16-smartart", "17-animation",
-    "18-online-video", "19-v06-features", "20-closing",
+    "18-online-video", "19-v06-features", "20-v07-features", "21-closing",
   ]
   for i in 0..<names.length() {
     let bytes = build_sample_isolated(i) catch {

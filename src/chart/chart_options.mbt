@@ -1,18 +1,18 @@
-// ADT-driven chart options (roadmap v0.4 M2).
+// ADT-driven chart options.
 //
 // `Chart::with_options(Array[ChartOption])` is an ergonomic facade over the
 // chart's already-typed model: instead of hand-assembling `ChartTitle` /
 // `ChartLegend` / `DLbls` and threading them through `ChartBody` / `PlotArea`,
 // the caller passes a list of high-level options and `with_options` folds each
 // one into the typed fields. The existing writer serialises those fields, so
-// M2 adds no parser/writer code — it is pure model construction.
+// This layer adds no parser/writer code — it is pure model construction.
 //
 // The headline property is compile-time exhaustiveness: `apply_chart_option`
 // matches every `ChartOption` and `plot_with_d_lbls` matches every `Plot`
 // kind, so adding a new option or a new plot family without handling it is a
 // compiler error, not a silently-dropped feature.
 //
-// Scope (documented like the A6/A7/C4/D3 deviations): the v1 option set covers
+// Scope: the v1 option set covers
 // chart-level styling that maps unambiguously onto the typed model — title,
 // legend, data labels, data table, and the chartSpace/chart scalar toggles.
 // `Trendline(series_idx, …)` and `SecondaryAxis(series_idx)` are deferred: they

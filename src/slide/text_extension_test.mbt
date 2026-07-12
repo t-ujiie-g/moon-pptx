@@ -43,7 +43,7 @@ test "ADR-004: Paragraph captures endParaRPr" {
 }
 
 ///|
-test "ADR-004: RunProperties captures hlinkMouseOver; effectLst now typed (F3)" {
+test "ADR-004: RunProperties captures hlinkMouseOver; effectLst now typed" {
   let inner = "<a:p><a:r>" +
     "<a:rPr lang=\"en-US\" b=\"1\">" +
     "<a:effectLst><a:outerShdw blurRad=\"40000\"><a:srgbClr val=\"000000\"/></a:outerShdw></a:effectLst>" +
@@ -58,7 +58,7 @@ test "ADR-004: RunProperties captures hlinkMouseOver; effectLst now typed (F3)" 
   match p.content[0] {
     RunContent(r) => {
       assert_eq(r.properties.bold.unwrap(), true)
-      // effectLst lifts into the typed `text_effects` field (F3); only the
+      // effectLst lifts into the typed `text_effects` field; only the
       // still-unmodelled hlinkMouseOver remains in `extension`.
       assert_true(r.properties.text_effects is Some(_))
       assert_eq(r.properties.extension.length(), 1)

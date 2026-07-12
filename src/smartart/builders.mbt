@@ -1,9 +1,8 @@
-// SmartArt builders (roadmap D1).
+// SmartArt builders.
 //
 // Ergonomic constructors that map a flat list of strings (or pre-built
-// `Node`s) onto a diagram family. The hierarchical families (org_chart /
-// hierarchy / cycle / pyramid / matrix / relationship) named in the roadmap
-// land in later slices on the same model.
+// `Node`s) onto a diagram family: list / process / cycle / pyramid / matrix
+// are flat, org_chart / hierarchy / relationship consume `Node` trees.
 
 ///|
 /// Build a vertical **list** diagram from one box per string.

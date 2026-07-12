@@ -269,7 +269,7 @@ test "add_picture_mut: produced bytes reopen and round-trip" {
   assert_eq(img.bytes.length(), fake_png().length())
 }
 
-// --- add_svg_picture_mut (roadmap C4) ---
+// --- add_svg_picture_mut ---
 
 ///|
 /// Minimal SVG document as ASCII bytes. The detector never inspects it
@@ -372,7 +372,7 @@ test "add_svg_picture_mut: rejects an unrecognised fallback image" {
   }
 }
 
-// --- add_video_mut / add_audio_mut (roadmap A6) ---
+// --- add_video_mut / add_audio_mut ---
 
 ///|
 /// Minimal MP4 (ISO-BMFF) header: "ftyp" box with an "isom" brand.

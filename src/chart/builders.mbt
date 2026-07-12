@@ -214,7 +214,7 @@ pub fn BubbleData::with_series(
   { series: s }
 }
 
-// --- Combo charts (roadmap C3) ---
+// --- Combo charts ---
 
 ///|
 /// One plot in a combo chart (`Chart::of_combo`). Each variant wraps the

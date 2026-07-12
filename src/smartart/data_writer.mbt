@@ -1,4 +1,4 @@
-// DiagramML data-model writer (roadmap D1).
+// DiagramML data-model writer.
 //
 // Emits `/ppt/diagrams/dataN.xml` — `<dgm:dataModel>` (ECMA-376 §21.4.2.13,
 // CT_DataModel): the point list (`<dgm:ptLst>`), connection list
@@ -50,7 +50,7 @@ fn SmartArt::serialize_data_xml(
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "ptLst"))
   write_doc_pt(w, self.kind)
   for f in flat {
-    write_node_pt(w, node_id(f.gidx), f.text)
+    write_node_pt(w, node_id(f.gidx), f.text, f.style)
     write_trans_pt(w, par_trans_id(f.gidx), "parTrans", cxn_id(f.gidx))
     write_trans_pt(w, sib_trans_id(f.gidx), "sibTrans", cxn_id(f.gidx))
   }
@@ -109,19 +109,43 @@ fn write_doc_pt(
 }
 
 ///|
-/// A content `<dgm:pt>` (a node box) carrying `text`.
+/// A content `<dgm:pt>` (a node box) carrying `text`, plus its colour
+/// overrides. Fill / line overrides live in the point's `<dgm:spPr>`; a text
+/// colour goes into the `<dgm:t>` run properties with `custT="1"` on
+/// `<dgm:prSet>` so the layout engine keeps it as a manual customisation.
 fn write_node_pt(
   w : @xml.XmlWriter,
   model_id : String,
   text : String,
+  style : NodeStyle?,
 ) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "pt"))
   w.attribute(@xml.QName::unqualified("modelId"), model_id)
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "prSet"))
   w.attribute(@xml.QName::unqualified("phldrT"), text)
-  w.end_element()
-  write_empty_sppr(w)
-  write_pt_text(w, text)
+  let (fill, line, text_color) = match style {
+    Some(s) => (s.fill, s.line, s.text_color)
+    None => (None, None, None)
+  }
+  if text_color is Some(_) {
+    w.attribute(@xml.QName::unqualified("custT"), "1")
+  }
+  w.end_element() // prSet
+  w.start_element(@xml.QName::new(@oxml.diagram_ns, "spPr"))
+  match fill {
+    Some(rgb) => write_srgb_fill(w, rgb)
+    None => ()
+  }
+  match line {
+    Some(rgb) => {
+      w.start_element(@xml.QName::new(@oxml.drawing_ns, "ln"))
+      write_srgb_fill(w, rgb)
+      w.end_element()
+    }
+    None => ()
+  }
+  w.end_element() // spPr
+  write_pt_text(w, text, color?=text_color)
   w.end_element()
 }
 
@@ -174,14 +198,19 @@ fn write_empty_sppr(w : @xml.XmlWriter) -> Unit raise @xml.XmlError {
 ///|
 /// `<dgm:t>` — a point's text body. Non-empty text emits one run; empty text
 /// emits a bare `<a:endParaRPr>` paragraph (the canonical empty body).
-fn write_pt_text(w : @xml.XmlWriter, text : String) -> Unit raise @xml.XmlError {
+/// `color` overrides the run's text colour.
+fn write_pt_text(
+  w : @xml.XmlWriter,
+  text : String,
+  color? : @units.RgbColor,
+) -> Unit raise @xml.XmlError {
   w.start_element(@xml.QName::new(@oxml.diagram_ns, "t"))
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "bodyPr"))
   w.end_element()
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "lstStyle"))
   w.end_element()
   w.start_element(@xml.QName::new(@oxml.drawing_ns, "p"))
-  write_run_or_endpara(w, text)
+  write_run_or_endpara(w, text, color?)
   w.end_element() // p
   w.end_element() // t
 }

@@ -1,4 +1,4 @@
-// Tests for typed document core properties (`docProps/core.xml`, v0.6 F2).
+// Tests for typed document core properties (`docProps/core.xml`).
 
 ///|
 test "core_properties: blank deck reads the template defaults" {

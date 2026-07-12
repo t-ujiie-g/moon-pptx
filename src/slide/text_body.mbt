@@ -104,7 +104,7 @@ pub(all) struct RunProperties {
   complex_script : String?
   /// The text fill — the full shape-level `@oxml.Fill` ADT
   /// (`<a:noFill>` / `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>`
-  /// / `<a:blipFill>`), so gradient / pattern text is typed (F3-b).
+  /// / `<a:blipFill>`), so gradient / pattern text is typed.
   /// Only `<a:grpFill>` (not modelled by `@oxml.Fill`) still rides on
   /// the run's `extension` per ADR-004.
   fill : @oxml.Fill?
@@ -424,11 +424,11 @@ pub(all) struct ParagraphProperties {
   margin_left : @units.Emu?
   /// `indent` — first-line indent in EMU; negative = hanging indent.
   indent : @units.Emu?
-  /// `<a:lnSpc>` — line height, percent or absolute points (F4).
+  /// `<a:lnSpc>` — line height, percent or absolute points.
   line_spacing : TextSpacing?
-  /// `<a:spcBef>` — extra space above the paragraph (F4).
+  /// `<a:spcBef>` — extra space above the paragraph.
   space_before : TextSpacing?
-  /// `<a:spcAft>` — extra space below the paragraph (F4).
+  /// `<a:spcAft>` — extra space below the paragraph.
   space_after : TextSpacing?
   /// Bullet specification — `None` means "inherit from list style".
   bullet : Bullet?
@@ -440,7 +440,7 @@ pub(all) struct ParagraphProperties {
 
 ///|
 /// `CT_TextSpacing` — the spacing choice shared by `<a:lnSpc>` /
-/// `<a:spcBef>` / `<a:spcAft>` (F4): a percentage of the line
+/// `<a:spcBef>` / `<a:spcAft>`: a percentage of the line
 /// (`<a:spcPct>`, stored as 1/1000 % in XML) or absolute points
 /// (`<a:spcPts>`, stored as 1/100 pt in XML).
 pub(all) enum TextSpacing {

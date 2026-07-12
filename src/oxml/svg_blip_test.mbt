@@ -1,4 +1,4 @@
-// @oxml SVG-blip builder tests (roadmap v0.3 C4).
+// @oxml SVG-blip builder tests.
 
 ///|
 test "BlipFill::svg: fallback embed + svgBlip extension structure" {

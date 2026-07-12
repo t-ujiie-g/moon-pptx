@@ -1,4 +1,4 @@
-// Tests for the typed slide background (`<p:bg>`, roadmap v0.3 A7).
+// Tests for the typed slide background (`<p:bg>`).
 
 ///|
 /// Index of the first occurrence of `needle` in `haystack`, or `-1`.

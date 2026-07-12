@@ -1,4 +1,4 @@
-// Typed picture builder state machine (roadmap v0.4 D4).
+// Typed picture builder state machine.
 //
 // A compile-time-enforced construction pipeline for `Picture`:
 //
@@ -10,18 +10,16 @@
 // Each state exposes only the operations valid from it, so cropping
 // twice — or applying effects and *then* cropping — is a type error,
 // not a runtime surprise. `build()` is available at every stage (crop
-// and effects are both optional). This is the v0.4 "MoonBit
-// differentiator" applied to the image pipeline; it complements the
+// and effects are both optional). It complements the
 // flat `Picture::of_image` / `with_crop` builders, which stay as the
 // unconstrained path.
 //
 // The builder state types are opaque (`pub struct` with package-private
 // fields): callers move through them only via the methods below.
 //
-// Deviation from the roadmap sketch: the entry point is a new
-// `Picture::builder(...)` rather than re-typing `Picture::of_image`,
-// whose `-> Picture` return type is load-bearing for existing callers
-// and the presentation-level `add_picture_mut` pipeline.
+// The entry point is a new `Picture::builder(...)` rather than a re-typed
+// `Picture::of_image`, whose `-> Picture` return type is load-bearing for
+// existing callers and the presentation-level `add_picture_mut` pipeline.
 
 ///|
 /// Stage 1 — a freshly-created picture with no crop applied yet.

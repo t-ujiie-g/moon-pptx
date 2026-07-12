@@ -1,4 +1,4 @@
-// Slide deletion tests (roadmap v0.3.1 E1).
+// Slide deletion tests.
 
 ///|
 test "remove_slide_mut: drops the targeted slide and its sldId" {

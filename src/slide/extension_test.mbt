@@ -33,8 +33,8 @@ test "ADR-004: slide-level timing survives parse; transition lifts to typed fiel
     "<p:timing/>" +
     "</p:sld>"
   let slide = @slide.Slide::parse(fixture_bytes(xml))
-  // D3: `<p:transition>` is now the typed `Slide.transition` field, so it must
-  // *not* appear in extension (mirrors A7's `<p:bg>` lift below).
+  // `<p:transition>` is now the typed `Slide.transition` field, so it must
+  // *not* appear in extension (mirrors the `<p:bg>` lift below).
   assert_true(find_ext(slide, "transition") is None)
   match slide.transition {
     Some(t) => {
@@ -49,8 +49,8 @@ test "ADR-004: slide-level timing survives parse; transition lifts to typed fiel
 }
 
 ///|
-test "A7: <p:cSld><p:bg> lifts into the typed background field, not extension" {
-  // Pre-A7 this `<p:bg>` round-tripped through `Slide.extension`; it is now
+test "<p:cSld><p:bg> lifts into the typed background field, not extension" {
+  // Previously this `<p:bg>` round-tripped through `Slide.extension`; it is now
   // the typed `Slide.background` field, so it must *not* appear in extension.
   let xml = "<?xml version=\"1.0\"?>" +
     "<p:sld xmlns:p=\"" +

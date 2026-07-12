@@ -1,5 +1,5 @@
-// Animation timing writer — synthesises `<p:timing>` from a typed `Timeline`
-// (roadmap v0.5 D2). See `animation.mbt` for the model + scope.
+// Animation timing writer — synthesises `<p:timing>` from a typed
+// `Timeline`. See `animation.mbt` for the model + scope.
 //
 // The timing tree is built as an `@xml.XmlElement` DOM and emitted through the
 // shared `@oxml.write_xml_element` (which auto-declares namespaces), rather than

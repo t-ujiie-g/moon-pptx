@@ -209,8 +209,18 @@ let gf = @slide.GraphicFrame::of_table(
 prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
 ```
 
-`with_borders` is the v0.2 fluent helper — pass `None` (default) for
-any edge you want to leave untouched.
+`with_borders` is a fluent helper — pass `None` (default) for any edge
+you want to leave untouched.
+
+To restyle the whole table, apply one of PowerPoint's 74 built-in
+gallery styles by name instead of hand-styling cells —
+`Table::with_style` sets the style reference plus the header-emphasis
+and row-banding flags (both default on, as PowerPoint does):
+
+```moonbit
+let styled = t.with_style(MediumStyle2Accent1) // the insert-table default
+let plain = t.with_style(LightStyle1, first_row=false, band_row=false)
+```
 
 ---
 
@@ -241,6 +251,20 @@ Swap `Chart::of_bar` for any of the 16 standard families
 `of_scatter`, `of_bubble`, `of_stock`, `of_surface`,
 `of_surface_3d`, `of_bar_3d`, `of_line_3d`, `of_pie_3d`,
 `of_of_pie`) — or the 9 extended chartEx families.
+
+To make PowerPoint's "Edit Data" button open the real rows in Excel
+(instead of a blank sheet), pass the chart's data again as
+`embed_data` — an editable `.xlsx` workbook mirroring it is generated
+and embedded alongside the chart:
+
+```moonbit
+prs.add_chart_mut(
+  0, chart,
+  prs.pct_w(10.0), prs.pct_h(15.0),
+  prs.pct_w(80.0), prs.pct_h(70.0),
+  embed_data=data,
+)
+```
 
 ---
 
@@ -473,7 +497,25 @@ prs.add_smartart_mut(
 PowerPoint lays SmartArt out from the layout definition on open; the
 nesting families ship a recursive `hierRoot`/`hierChild` definition (and
 `relationship` a radial one), so the whole tree lays out — children,
-connector lines and all (D1-b).
+connector lines and all.
+
+Individual nodes take colour overrides on top of the diagram's quick
+style — box fill, outline, and text colour, each optional:
+
+```moonbit
+let hot = @smartart.Node::leaf("Ship")
+  .with_fill(@units.RgbColor::new(0xC0, 0x00, 0x00))
+  .with_text_color(@units.RgbColor::new(0xFF, 0xFF, 0xFF))
+let art = @smartart.SmartArt::new(Process, [
+  @smartart.Node::leaf("Plan"),
+  @smartart.Node::leaf("Build"),
+  hot,
+])
+```
+
+The overrides land in both the diagram data model (what PowerPoint's
+layout engine applies) and the cached drawing (what non-editing viewers
+show), so the colours hold everywhere.
 
 ---
 
@@ -519,6 +561,66 @@ let _ = @chart.Chart::of_bar(data).with_options([DataLabels(DLblOutEnd)]).valida
 let line = @chart.Chart::of_line(data).with_options([DataLabels(DLblOutEnd)])
 assert_eq(line.is_consistent(), false)   // and `line.validate()` raises Malformed
 ```
+
+---
+
+## 18. Slide sections
+
+Sections group slides in PowerPoint's slide panel. Each `Section`
+names where it starts; it runs to the next section's start, the last
+to the end of the deck — so the list partitions every slide, which is
+what PowerPoint expects.
+
+```moonbit
+let prs = @presentation.Presentation::new()
+for _ in 0..<4 {
+  let _ = prs.add_slide_mut(0)
+}
+prs.set_sections_mut([
+  { title: "Introduction", start: 0 },
+  { title: "Content", start: 1 },
+  { title: "Conclusion", start: 3 },
+])
+
+// Or grow them one at a time (kept in slide order automatically):
+prs.add_section_mut(title="Details", start=2)
+
+// Read back / remove:
+let sections = prs.sections()      // -> Array[Section]
+prs.set_sections_mut([])           // removes all sections
+```
+
+The first section must start at slide 0 and starts must be
+non-decreasing (two equal starts make the earlier section empty —
+PowerPoint allows slide-less sections). `with_sections` is the
+immutable counterpart.
+
+---
+
+## 19. Document properties (core + app)
+
+Two parts back File ▸ Info: `docProps/core.xml` (title, author, dates —
+whole-part replace, so start from the current values) and
+`docProps/app.xml` (company, manager, application — a merge that leaves
+the app-maintained statistics untouched).
+
+```moonbit
+let prs = @presentation.Presentation::new()
+
+prs.set_core_properties_mut(
+  prs.core_properties().with_title("Q3 Review").with_author("Ada"),
+)
+
+prs.set_app_properties_mut(
+  @presentation.AppProperties::new()
+    .with_company("ACME Corp")
+    .with_manager("Grace"),
+)
+```
+
+`app_properties()` reads the current values back; fields left unset by
+the merge — and everything else in app.xml, word counts and
+`TitlesOfParts` included — are preserved as-is.
 
 ---
 

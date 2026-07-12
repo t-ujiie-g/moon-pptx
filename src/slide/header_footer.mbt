@@ -1,9 +1,9 @@
-// Slide date / footer / slide-number placeholders (roadmap v0.3 A8).
+// Slide date / footer / slide-number placeholders.
 //
 // These append the slide-level placeholder shapes PowerPoint fills from the
 // master / layout: `<p:ph type="dt"/"ftr"/"sldNum">`. They render only when
 // the master declares matching placeholders — pair with `define_master`
-// (C1) and `MasterDefinition.slide_number` / `footer_text`. The shapes carry
+// and `MasterDefinition.slide_number` / `footer_text`. The shapes carry
 // no `<a:xfrm>`, so position / size inherit from the master placeholder of
 // the same type (the OOXML cascade).
 

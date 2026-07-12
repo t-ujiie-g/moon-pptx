@@ -34,6 +34,18 @@ pub(all) suberror PptxError {
 pub impl Show for PptxError
 
 // Types and methods
+pub(all) struct AppProperties {
+  company : String?
+  manager : String?
+  application : String?
+  app_version : String?
+} derive(Eq, @debug.Debug)
+pub fn AppProperties::new() -> Self
+pub fn AppProperties::with_app_version(Self, String) -> Self
+pub fn AppProperties::with_application(Self, String) -> Self
+pub fn AppProperties::with_company(Self, String) -> Self
+pub fn AppProperties::with_manager(Self, String) -> Self
+
 pub struct BlankSlide {
 }
 pub impl LayoutPlaceholders for BlankSlide
@@ -124,11 +136,12 @@ pub(all) struct Presentation {
 pub fn Presentation::add_audio_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_blank_typed_slide_mut(Self) -> LayoutSlide[BlankSlide] raise PptxError
 pub fn Presentation::add_chart_ex_mut(Self, Int, @chart_ex.ChartEx, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
-pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::add_chart_mut(Self, Int, @chart.Chart, @units.Emu, @units.Emu, @units.Emu, @units.Emu, embed_data? : @chart.ChartData) -> Unit raise PptxError
 pub fn Presentation::add_online_video_mut(Self, Int, String, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_auto_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_section_header_slide_mut(Self) -> LayoutSlide[SectionHeader] raise PptxError
+pub fn Presentation::add_section_mut(Self, title~ : String, start~ : Int) -> Unit raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
 pub fn Presentation::add_smartart_mut(Self, Int, @smartart.SmartArt, @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_svg_picture_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
@@ -137,6 +150,7 @@ pub fn Presentation::add_title_only_slide_mut(Self) -> LayoutSlide[TitleOnly] ra
 pub fn Presentation::add_title_slide_mut(Self) -> LayoutSlide[TitleSlide] raise PptxError
 pub fn Presentation::add_video_mut(Self, Int, FixedArray[Byte], FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_youtube_video_mut(Self, Int, String, FixedArray[Byte], @units.Emu, @units.Emu, @units.Emu, @units.Emu) -> Unit raise PptxError
+pub fn Presentation::app_properties(Self) -> AppProperties raise PptxError
 pub fn Presentation::charts(Self) -> Array[@chart.Chart] raise PptxError
 pub fn Presentation::charts_ex(Self) -> Array[@chart_ex.ChartEx] raise PptxError
 pub fn Presentation::clone(Self) -> Self
@@ -155,8 +169,11 @@ pub fn Presentation::pct_w(Self, Double) -> @units.Emu
 pub fn Presentation::presentation_part(Self) -> PresentationPart? raise PptxError
 pub fn Presentation::remove_slide_mut(Self, Int) -> Unit raise PptxError
 pub fn Presentation::save(Self) -> FixedArray[Byte]
+pub fn Presentation::sections(Self) -> Array[Section] raise PptxError
+pub fn Presentation::set_app_properties_mut(Self, AppProperties) -> Unit raise PptxError
 pub fn Presentation::set_core_properties_mut(Self, CoreProperties) -> Unit raise PptxError
 pub fn Presentation::set_notes_mut(Self, Int, String) -> Unit raise PptxError
+pub fn Presentation::set_sections_mut(Self, Array[Section]) -> Unit raise PptxError
 pub fn Presentation::set_slide_size_mut(Self, SlideSizeKind) -> Unit raise PptxError
 pub fn Presentation::slide_h(Self) -> @units.Emu
 pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] raise PptxError
@@ -167,8 +184,10 @@ pub fn Presentation::themes(Self) -> Array[@theme.Theme] raise PptxError
 pub fn Presentation::update_shape_by_id_mut(Self, Int, Int, (@slide.Shape) -> @slide.Shape) -> Unit raise PptxError
 pub fn Presentation::update_slide_mut(Self, Int, @slide.Slide) -> Unit raise PptxError
 pub fn Presentation::with_added_slide(Self, layout_index~ : Int) -> (Self, String) raise PptxError
+pub fn Presentation::with_app_properties(Self, AppProperties) -> Self raise PptxError
 pub fn Presentation::with_core_properties(Self, CoreProperties) -> Self raise PptxError
 pub fn Presentation::with_duplicated_slide(Self, Int) -> (Self, String) raise PptxError
+pub fn Presentation::with_sections(Self, Array[Section]) -> Self raise PptxError
 pub fn Presentation::with_slide_moved(Self, Int, Int) -> Self raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError
 pub fn Presentation::without_slide(Self, Int) -> Self raise PptxError
@@ -184,6 +203,11 @@ pub(all) struct PresentationPart {
 } derive(Eq, @debug.Debug)
 pub fn PresentationPart::parse(FixedArray[Byte]) -> Self raise PptxError
 pub fn PresentationPart::serialize(Self) -> FixedArray[Byte] raise PptxError
+
+pub(all) struct Section {
+  title : String
+  start : Int
+} derive(Eq, @debug.Debug)
 
 pub struct SectionHeader {
 }

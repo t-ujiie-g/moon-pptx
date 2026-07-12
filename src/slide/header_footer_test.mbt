@@ -1,4 +1,4 @@
-// Tests for slide date / footer / slide-number placeholders (roadmap A8).
+// Tests for slide date / footer / slide-number placeholders.
 
 ///|
 /// Find the first placeholder AutoShape of `kind` on the slide.
@@ -79,7 +79,7 @@ test "with_date: Auto emits a datetime field; Fixed emits literal text" {
 }
 
 ///|
-test "A8: header/footer placeholders round-trip through serialize" {
+test "header/footer placeholders round-trip through serialize" {
   let slide = @slide.Slide::parse(typical_title_slide())
     .with_footer("Footer")
     .with_slide_number(true)

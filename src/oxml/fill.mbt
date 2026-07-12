@@ -250,6 +250,72 @@ pub(all) enum Fill {
   BlipFillVariant(BlipFill)
 } derive(Eq, Debug)
 
+// The ADT above is fully buildable by hand but verbose for the common
+// cases; the constructors below cover them. Anything they don't expose
+// (theme colours, path gradients, per-stop transforms, tile modes) is
+// still available through direct construction.
+
+///|
+/// A solid RGB fill — shorthand for `SolidFill(Color::srgb(rgb))`.
+pub fn Fill::solid(rgb : @units.RgbColor) -> Fill {
+  SolidFill(Color::srgb(rgb))
+}
+
+///|
+/// A linear gradient from `from` (at 0 %) to `to` (at 100 %), optionally
+/// through evenly-spaced `via` colours. Requiring both endpoints keeps the
+/// spec's "at least two stops" rule enforced by the signature.
+///
+/// `angle` is the gradient direction, clockwise from the positive x-axis:
+/// the default 90° runs top → bottom; 0° runs left → right. The linear
+/// extent scales with the shape (`<a:lin scaled="1"/>`, what PowerPoint
+/// emits); build a `Gradient` directly for the unscaled form.
+pub fn Fill::linear_gradient(
+  from : @units.RgbColor,
+  to : @units.RgbColor,
+  via? : Array[@units.RgbColor] = [],
+  angle? : @units.Angle = @units.Angle(90.0),
+) -> Fill {
+  let colors = [from]
+  for c in via {
+    colors.push(c)
+  }
+  colors.push(to)
+  let last = (colors.length() - 1).to_double()
+  let stops : Array[GradientStop] = []
+  for i, c in colors {
+    stops.push({
+      position: @units.Percentage(100.0 * i.to_double() / last),
+      color: Color::srgb(c),
+    })
+  }
+  GradientFill({
+    stops,
+    direction: Linear(angle, true),
+    rotate_with_shape: None,
+    flip: None,
+    extension: [],
+  })
+}
+
+///|
+/// A preset pattern fill. `preset` is one of the ~48 `ST_PresetPatternVal`
+/// names (`"pct50"`, `"dashHorz"`, `"ltUpDiag"`, …) — passed through
+/// verbatim, so an unknown name reaches the file unchanged. `fg` draws the
+/// pattern strokes, `bg` fills behind them.
+pub fn Fill::pattern(
+  preset : String,
+  fg~ : @units.RgbColor,
+  bg~ : @units.RgbColor,
+) -> Fill {
+  PatternFill({
+    preset,
+    fg: Color::srgb(fg),
+    bg: Color::srgb(bg),
+    extension: [],
+  })
+}
+
 ///|
 /// Errors raised by `parse_fill`.
 pub(all) suberror FillError {

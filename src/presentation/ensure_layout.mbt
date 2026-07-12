@@ -1,4 +1,4 @@
-// Layout resolution / synthesis by type (roadmap v0.4 M1).
+// Layout resolution / synthesis by type.
 //
 // The typed layout-handle constructors need a `<p:sldLayout>` of a specific
 // `ST_SlideLayoutType` to link their slide to. A deck built by

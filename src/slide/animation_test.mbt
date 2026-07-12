@@ -1,4 +1,4 @@
-// Tests for the animation DSL — typed `<p:timing>` (roadmap v0.5 D2).
+// Tests for the animation DSL — typed `<p:timing>`.
 
 ///|
 /// Serialise a slide to an XML string for structural assertions.
@@ -61,7 +61,7 @@ fn count(haystack : String, needle : String) -> Int {
 
 ///|
 /// A real parsed slide (the title-slide fixture already carries a `<p:timing>`
-/// in `extension`, which is what D2 must strip when a typed timeline is set).
+/// in `extension`, which `with_animations` must strip when a typed timeline is set).
 fn anim_base_slide() -> @slide.Slide raise {
   @slide.Slide::parse(typical_title_slide())
 }
@@ -234,7 +234,7 @@ test "timing: a leading with_previous step behaves like on_click" {
   assert_false(has(xml, "nodeType=\"withEffect\""))
 }
 
-// --- Emphasis effects (slice 2) ---
+// --- Emphasis effects ---
 
 ///|
 test "EmphasisEffect::preset_id classifies each emphasis" {
@@ -313,7 +313,7 @@ test "timing: emphasis composes with entrance in one timeline" {
   assert_true(has(xml, "<p:animRot by=\"43200000\">"))
 }
 
-// --- Fly In / Fly Out (slice 4) ---
+// --- Fly In / Fly Out ---
 
 ///|
 test "VisualEffect: FlyIn classifies as a fly, not a filter" {
@@ -378,7 +378,7 @@ test "timing: each fly direction targets the right axis + off-slide value" {
   assert_true(has(fly_xml(Up), "<p:attrName>ppt_y</p:attrName>"))
 }
 
-// --- Motion paths (slice 3) ---
+// --- Motion paths ---
 
 ///|
 test "MotionPath::to_path_string formats the animMotion mini-language" {
@@ -443,7 +443,7 @@ test "timing: motion composes after an entrance in one timeline" {
   assert_true(has(xml, "C 0.1 0.1 0.2 -0.1 0.3 0"))
 }
 
-// --- By-paragraph text builds (slice 5) ---
+// --- By-paragraph text builds ---
 
 ///|
 test "timing: a paragraph-targeted effect emits a <p:pRg> + a <p:bldP>" {
@@ -491,7 +491,7 @@ test "timing: build-group ids match between paragraph effects and their <p:bldP>
   assert_true(has(xml, "grpId=\"0\""))
 }
 
-// --- Build-only round-trip (A6-style) ---
+// --- Build-only round-trip ---
 
 ///|
 test "timing: built timeline re-serialises stably (build-only round-trip)" {

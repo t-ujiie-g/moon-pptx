@@ -1,15 +1,14 @@
-// Shape-level hyperlink / click action (`<p:cNvPr><a:hlinkClick>`) —
-// roadmap v0.6 F5.
+// Shape-level hyperlink / click action (`<p:cNvPr><a:hlinkClick>`).
 //
-// Run-level hyperlinks landed in A2 (`RunProperties::with_hyperlink`). A
-// hyperlink on a *whole shape* lives on its `<p:cNvPr>` as an
-// `<a:hlinkClick>` child. This mirrors the run model exactly: the builder
-// stores an **unresolved** `target` (a URL or a jump-to-slide index), and
+// A hyperlink on a *whole shape* lives on its `<p:cNvPr>` as an
+// `<a:hlinkClick>` child. This mirrors the run-level model
+// (`RunProperties::with_hyperlink`) exactly: the builder stores an
+// **unresolved** `target` (a URL or a jump-to-slide index), and
 // `Presentation::update_slide_mut` resolves it into a slide-rels `rId`
 // (`click`) + the `action` attribute just before serialisation (shared
 // resolver with run hyperlinks).
 //
-// Build-only, like A6 media / D2 animations: a *parsed* shape's
+// Build-only, like media and animations: a *parsed* shape's
 // `<a:hlinkClick>` round-trips losslessly through the captured `<p:cNvPr>`
 // in `extension` (ADR-004), so the parser leaves `hyperlink = None`; the
 // typed field is set only by the builders.

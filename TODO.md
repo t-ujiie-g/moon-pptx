@@ -17,9 +17,9 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.5.3` (released 2026-06-20 — ADR-011 verification pyramid + media `<p:nvPr>` fix #11; ⚠ git tag `v0.5.3` not yet pushed) |
+| Current version | `0.7.0` (2026-07-12 — the additive parity + ergonomics release, §4.2) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
-| Test suite | 1109 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1178 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260522` or newer |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -35,13 +35,15 @@ status touches this file.
 - Generated decks open in PowerPoint Online without repair prompts; the bundled blank template emits every part ECMA-376 marks as required.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
-### Where we are now (2026-07-06)
-- v0.2.0 → v0.5.3 all shipped (summary table in §4.0); 1109 tests × 4
+### Where we are now (2026-07-11)
+- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1178 tests × 4
   backends; 100 % public-API doc coverage.
-- **Feature-complete for the core mission** — the §1 vision goals are
-  delivered. Remaining work: the pre-1.0 breaking pass + SmartArt render
-  fidelity (§4.1), additive parity/ergonomics (§4.2), and the v1.0 gate
-  (§4.3) — which fires when the MoonBit toolchain reaches v1.0.
+- **Feature-complete for the core mission, breaking budget spent** —
+  the §1 vision goals are delivered and the v0.6.0 breaking pass has
+  landed, so everything from here to 1.0 is additive-only. The §4.2
+  v0.7.x additive cycle shipped as **v0.7.0** (2026-07-12); beyond
+  that: fresh §5 ideas as demand appears, and the v1.0 gate (§4.3) —
+  which fires when the MoonBit toolchain reaches v1.0.
 
 ### What it does not yet do
 See **§3** (feature comparison vs python-pptx + PptxGenJS) and **§4**
@@ -175,7 +177,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | AutoShape (preset geometry) | ✅ | ✅ | ✅ 187 `PresetShape` variants | — |
 | Custom geometry (`<a:custGeom>`) | △ XML | △ | ✅ typed AST (Phase 3h) | — |
 | Shape rotation (`rot`) / flip (`flipH`/`flipV`) | ✅ `shape.rotation` | ✅ `rotate`/`flipH/V` | ✅ typed `Transform.rotation`/`flip_h`/`flip_v` + `with_rotation`/`with_flip` (0.6 F1) | — |
-| Shape-level hyperlink / click action (`<a:hlinkClick>` on `cNvPr`) | ✅ `click_action` | ✅ shape `hyperlink` | ✅ `with_hyperlink`/`with_hyperlink_to_slide` (AutoShape + Picture, 0.6 F5) | — |
+| Shape-level hyperlink / click action (`<a:hlinkClick>` on `cNvPr`) | ✅ `click_action` | ✅ shape `hyperlink` | ✅ `with_hyperlink`/`with_hyperlink_to_slide` on **all five shape kinds** (AutoShape + Picture 0.6 F5; Connector + Group + GraphicFrame 0.7 F5-b) | — |
 | Picture (PNG / JPEG / GIF / BMP / TIFF) | ✅ + WMF | ✅ + SVG + animated GIF | ✅ | — |
 | Picture: auto-detect EMU size from header | ✅ via PIL | ✅ | ✅ A1 (`detect_image_dimensions` — PNG/JPEG/GIF/BMP/TIFF) | — |
 | Picture: cropping fluent builder | ✅ | ✅ | ✅ A4 (`Picture::with_crop`) | — |
@@ -230,7 +232,7 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Axis title / chart title | ✅ | ✅ | ✅ typed `ChartTitle` | — |
 | Legend positioning | ✅ | ✅ 5 positions | ✅ typed `ChartLegend` | — |
 | Data labels (per-point overrides) | ✅ | ✅ | ✅ typed `DLbls` + `DLbl` | — |
-| Embedded xlsx data-cache generation | ✅ | ❌ | ❌ (ADR-009: inline `<c:strLit>` instead) | ⏳ v0.7 (B3, §4.2) |
+| Embedded xlsx data-cache generation | ✅ | ❌ | ✅ opt-in `embed_data` on `add_chart_mut` (0.7 B3; inline literals stay the render source per ADR-009) | — |
 | Existing xlsx cache pass-through | ✅ | n/a | ✅ via OPC opaque part | — |
 
 ### 3.6 Multimedia, navigation, advanced
@@ -244,11 +246,11 @@ This matrix is the basis for the roadmap in **§4**. Legend:
 | Comments | ✅ | ❌ | ✅ read+write | — |
 | Animations | △ XML-level | ❌ | ✅ D2 entrance/exit/emphasis/motion-path/fly-in + by-paragraph text builds (`Slide::with_animations` + `Timeline`) ⭐ | — |
 | Transitions (slide-to-slide) | △ XML-level | ❌ | ✅ D3 (typed `Slide.transition`; base CT_SlideTransition — p14 extended transitions round-trip via extension) | — |
-| SmartArt build | ❌ identification only | ❌ | ✅ D1 + D1-b (`add_smartart_mut` — all 8 families build and lay out fully; nesting families via recursive hierRoot/hierChild + radial layoutDefs) ⭐ | — |
+| SmartArt build | ❌ identification only | ❌ | ✅ D1 + D1-b (`add_smartart_mut` — all 8 families build and lay out fully; nesting families via recursive hierRoot/hierChild + radial layoutDefs; per-node colour overrides) ⭐ | — |
 | Percentage / relative positioning helpers | ❌ | ✅ `x: "5%"` | ✅ C2 (`Pct` + `pct_of_slide_w` / `pct_of_slide_h`) | — |
 | Streaming write for huge decks | ❌ | ❌ | ❌ | open idea (§5; promoted only if v1.0 benchmarks demand it) |
 | Lossless diff-write (untouched parts = byte-identical) | ❌ | n/a | ✅ inherent in `save()` (parts retain source bytes) | — |
-| Document properties (creator, title, subject, keywords, …) | ✅ `core_properties` | ✅ `author`/`title`/… | ✅ typed `CoreProperties` (15-field closed core.xml) + `set_core_properties_mut`/`core_properties` (0.6 F2); app.xml `company`/`application` ⏳ follow-up | — |
+| Document properties (creator, title, subject, keywords, …) | ✅ `core_properties` | ✅ `author`/`title`/… | ✅ typed `CoreProperties` (15-field closed core.xml, 0.6 F2) + typed `AppProperties` app.xml merge (`company`/`manager`/`application`/`app_version`, 0.7 F2-b) | — |
 | Slide sections (`<p:sldSectionLst>`) | △ | ✅ `addSection` | △ extension-only | open idea (§5) |
 | WordArt / preset text warp (`<a:prstTxWarp>`) | ❌ | △ | △ extension-only | open idea (§5) |
 | 3-D shape (bevel / `<a:scene3d>` / `<a:sp3d>`) | △ | △ | △ extension-only | open idea (§5) |
@@ -302,6 +304,8 @@ at `v0.5.2` although `0.5.3` is released in `moon.mod` / CHANGELOG.)*
 | v0.5.1 (2026-06-16) | Fix | run character spacing (issue #7) |
 | v0.5.2 (2026-06-17) | Fidelity & formatting | F1 rotation/flip · F2 core properties · F3 kerning + highlight + text outline + text effects · F5 shape hyperlinks (AutoShape + Picture) · fzip 0.6.1→0.8.2 |
 | v0.5.3 (2026-06-20) | Verification | ADR-011 three-tier pyramid (Tier 1 in-repo + Tier 2 Open XML SDK CI job + real-world corpus) · media `<p:nvPr>` fix (issue #11) |
+| v0.6.0 (2026-07-06) | Pre-1.0 breaking pass | F3-b non-solid text fill · F4 paragraph-spacing `TextSpacing` ADT (+ real parser bug fixed) · D1-b SmartArt recursive hierarchy layoutDef + connectors ⭐ · API pass 1 (33 internals privatized) — breaking budget fully spent |
+| v0.7.0 (2026-07-12) | Additive parity + ergonomics | Tier-1 corpus embedding · F5-b hyperlinks on all 5 shape kinds · fill convenience constructors · SmartArt per-node colours · `TableStylePreset` (74 styles) · slide sections · F2-b app.xml properties · B3 embedded chart-data workbooks |
 
 ---
 
@@ -421,46 +425,146 @@ PowerPoint.
 
 ### 4.2 v0.7.x — "Additive parity + ergonomics"
 
-Scope flexible — all items are additive `.mbti`, so they can ship as
-multiple small 0.7.x releases in demand order. Pull more in from §5 as
+**Shipped as v0.7.0 (2026-07-12)** — all eight items landed
+2026-07-10/11, each additive `.mbti`. Pull more in from §5 as
 consumers ask.
 
-🔴 **B3 — Chart embedded xlsx cache generation** *(moved out of the 1.0
-  gate 2026-07-06 — it's a feature, not a stability item)*
-  - Minimal SpreadsheetML writer (CT_Workbook + CT_Worksheet +
-    CT_SharedStrings); opt-in `embed_xlsx~ = true` on chart builders.
+🟢 **B3 — Chart embedded xlsx cache generation** *(landed 2026-07-11)*
+  - **Shipped**: opt-in `embed_data? : ChartData` on `add_chart_mut`
+    (on the *insertion* call, not the chart builders as sketched — the
+    workbook is an OPC artifact, so the presentation layer owns it).
+    Generates a minimal-but-valid SpreadsheetML package (workbook +
+    one sheet + two `.rels`, built with `@opc.Package::new()`;
+    inline-string cells, so no sharedStrings part) mirroring the
+    `ChartData` layout, embeds it under `/ppt/embeddings/`, and wires
+    `<c:externalData r:id><c:autoUpdate val="0"/>` through the
+    chart's ADR-004 `extension` channel — the chartSpace writer
+    already emits that slot, so **zero chart-model change**. Inline
+    literals remain the render source (ADR-009 upheld); a chart that
+    already references external data is rejected (no double emit).
   - Resolves the degraded "Edit Data" UX called out in ADR-009.
+  - 6 new tests (rels/content-type chain, reopening the generated
+    xlsx *as an OPC package* with cell-level asserts, save→reopen +
+    duplicate-embed guard, two-chart numbering, no-embed default) +
+    example-7 recipe extended; 1170 → 1175 × 4 backends; `.mbti`
+    diff = 1 optional param + 2 constants (additive).
 
-🔴 **F2-b — app.xml document properties** (`company` / `application`)
-  - Needs an order-preserving, default-namespace-aware DOM round-trip of
-    `CT_Properties` (an ordered sequence with many unmodelled fields) —
-    a small dedicated app.xml editor (§5 note, F2 deferral).
+🟢 **F2-b — app.xml document properties** *(landed 2026-07-11)*
+  - The deferral's premise was half wrong: `CT_Properties` is an
+    **`xsd:all`**, not an ordered sequence (verified against the schema
+    docs, and PowerPoint's own output emits `Company` mid-file) — so no
+    order bookkeeping was needed, just the default-namespace-aware DOM
+    merge.
+  - **Shipped**: `AppProperties { company / manager / application /
+    app_version }` + `Presentation::app_properties()` /
+    `set_app_properties_mut` / `with_app_properties`. Semantics are a
+    **merge** (unlike core.xml's whole-part replace): `Some` fields
+    replace-or-append their element; everything else — word counts,
+    the `vt:vector` HeadingPairs / TitlesOfParts — is preserved
+    verbatim. Emits `<Properties xmlns=…>` with the ep namespace as
+    the default + `vt:` bound (what Office writes; the writer's
+    default-namespace support made this direct). Creates the part +
+    package rel for packages that lack one.
+  - 8 new tests, incl. a real-corpus merge (testPPT.pptx: `Company`
+    replaced, `TotalTime` / both `vt:vector`s intact) + example-19
+    recipe (core + app together); 1162 → 1170 × 4 backends; `.mbti`
+    diff = `AppProperties` + 7 fns + 2 ns constants (additive).
 
-🔴 **F5-b — Shape hyperlinks on Group / GraphicFrame / Connector**
-  - F5 shipped AutoShape + Picture; the remaining kinds' parsed
-    `<a:hlinkClick>` already round-trips via `extension` — the typed
-    field + writer threading extends additively.
+🟢 **F5-b — Shape hyperlinks on Group / GraphicFrame / Connector**
+  *(landed 2026-07-10)*
+  - **Shipped**: build-only `hyperlink : ShapeHyperlink?` on all three +
+    `with_hyperlink` / `with_hyperlink_to_slide` builders (6 fns), the
+    F5 resolver walk extended (a Group resolves its own hyperlink *and*
+    its children's), and writer threading — Group / GraphicFrame just
+    pass the field to `write_nv_wrapper`; the Connector writer's bespoke
+    verbatim-cNvPr emission was consolidated onto the shared
+    `write_cnvpr` (byte-identical for parsed input, and it gains B4
+    id/name authority as a bonus). Parsed `<a:hlinkClick>` still rides
+    the captured `<p:cNvPr>` per ADR-004.
+  - 5 new tests (per-kind e2e incl. save→reopen + builder direct
+    coverage); 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields +
+    6 builders (additive).
 
-🔴 **SmartArt per-node styling** (`Node.style` — the field exists,
-  unused by the writers)
+🟢 **SmartArt per-node styling** *(landed 2026-07-11)*
+  - The item's original premise ("the field exists, unused by the
+    writers") was stale — `Node` had no `style` field; this added it.
+  - **Shipped**: `NodeStyle { fill / line / text_color : RgbColor? }` +
+    `Node.style : NodeStyle?` + merging builders `with_fill` /
+    `with_line` / `with_text_color`. Overrides are written to **both**
+    channels: the data model's point (`<dgm:spPr>` fill/ln; text colour
+    in the `<dgm:t>` run properties with `custT="1"` so the layout
+    engine keeps it as a manual customisation) and the cached
+    `<dsp:drawing>` (srgbClr replacing the accent1 / lt1 quick-style
+    defaults), so colours hold in re-layout *and* non-editing viewers.
+  - 3 new tests + example-15 recipe extended (styled node verified
+    through save → reopen to the data part); 1145 → 1148 × 4 backends;
+    `.mbti` diff = `NodeStyle` + 1 field + 4 fns (additive).
 
-🔴 **Slide sections typed API** (`<p:sldSectionLst>` — typed
-  `Section { title, slide_ids }` + `add_section`; PptxGenJS `addSection`)
+🟢 **Slide sections typed API** *(landed 2026-07-11)*
+  - Two corrections to the item's sketch: sections are **not**
+    `<p:sldSectionLst>` — they're the `<p14:sectionLst>` PowerPoint
+    2010 extension inside presentation.xml's `<p:extLst>` (`<p:ext
+    uri="{521415D9-…}">`, [MS-PPTX] §2.3.1.25, shape verified against
+    the spec page); and `Section { title, slide_ids }` became
+    `Section { title, start }` — sections partition the deck in slide
+    order, so titled break points model exactly the legal states
+    (contiguous, every slide covered, empty sections as equal starts)
+    with no invalid-id error surface.
+  - **Shipped**: `Presentation::set_sections_mut(Array[Section])`
+    (validated: first start 0, non-decreasing, in range; `[]`
+    removes), `add_section_mut(title~, start~)` (inserts in slide
+    order), `sections()` reader (works on parsed decks too — counts
+    each section's `<p14:sldId>`s), `with_sections` immutable
+    counterpart. Section ids are deterministic counter-derived GUIDs
+    (no RNG/clock). Other `<p:extLst>` content is preserved; setting
+    twice replaces rather than duplicates.
+  - 9 new tests (partition read-back incl. CJK title save→reopen, raw
+    XML shape, replace/remove/empty-section, insertion order, all
+    three validation errors, immutability) + example-18 recipe;
+    1153 → 1162 × 4 backends; `.mbti` diff = `Section` + 4 fns +
+    1 oxml constant (additive).
 
-🔴 **Gradient / pattern fill convenience constructors**
-  (`Fill::linear_gradient(...)` / `Fill::pattern(...)` — the ADT is
-  buildable but verbose)
+🟢 **Gradient / pattern fill convenience constructors** *(landed 2026-07-10)*
+  - **Shipped**: `Fill::linear_gradient(from, to, via?, angle?)` — both
+    endpoints required so the spec's ≥ 2-stops rule is enforced by the
+    signature; `via` colours space evenly; default 90° top→bottom scaled
+    (what PowerPoint emits). `Fill::pattern(preset, fg~, bg~)` with the
+    `ST_PresetPatternVal` name passed through verbatim. Plus
+    `Fill::solid(rgb)` for the most common construction. Path gradients /
+    theme colours / tile modes stay direct-ADT territory.
+  - 4 new tests (spacing, defaults, write→parse round-trips);
+    1141 → 1145 × 4 backends; `.mbti` diff = 3 constructors (additive).
 
-🔴 **Table-style preset library** (named `<a:tblPr><a:tableStyleId>`
-  constants — the GUID field round-trips; no named presets yet)
+🟢 **Table-style preset library** *(landed 2026-07-11)*
+  - **Shipped**: `TableStylePreset` — all 74 built-in gallery styles
+    named as in the PowerPoint UI (`MediumStyle2Accent1`, …), GUIDs
+    machine-extracted from MS-OE376 Part 4 §5.1.6.10 (the authoritative
+    list; not hand-typed). `TableStylePreset::guid()`,
+    `TableProperties::with_style(preset)`, and `Table::with_style(preset,
+    first_row~ = true, band_row~ = true)` — the flags default to
+    PowerPoint's insert-table behaviour (header emphasis + banding),
+    opt-outable.
+  - 5 new tests (spot-checks vs the spec, 74-distinct-GUIDs sweep,
+    builder semantics, serialize → reparse) + example-6 recipe extended;
+    1148 → 1153 × 4 backends; `.mbti` diff = enum + 3 fns (additive).
 
-🔴 **Tier-1 reader-losslessness on real corpus input** (ADR-011 follow-up)
-  - Embed a few `test_fixtures/corpus/` files' bytes as generated `.mbt`
-    so `moon test` (all backends) asserts parse → serialise → parse
-    model-equality on real Office output — proving the *reader* drops
-    nothing (the external validator only proves schema-validity, not
-    that *we* preserved it). Needs a tiny binary→`.mbt` embed generator.
-    The corpus itself landed 2026-06-20, so this is now unblocked.
+🟢 **Tier-1 reader-losslessness on real corpus input** *(landed 2026-07-10)*
+  - **Shipped**: `tools/embed-corpus/gen.py` (stdlib-only Python,
+    run-on-regen only — CI never needs it) embeds corpus files as
+    base64-chunk `corpus_*_embed_test.mbt` sources;
+    `src/integration/corpus_test.mbt` decodes them (small in-test
+    base64 decoder — core has none) and drives each through
+    parse → serialise (package-level writers) → save → reopen →
+    re-parse, asserting **model equality per part** (theme / master /
+    layout / slide / notes / comments dispatched by content type).
+  - **Embedded trio** (~110 KB binary → ~150 KB generated source):
+    `testPPT.pptx` (baseline: theme + master + 11 layouts + 3 slides),
+    `table_test.pptx` (real Office 3×6 table, lifts to the typed
+    model), `with_japanese.pptx` (CJK + astral-plane Gothic-script
+    runs — surrogate-pair stress for the UTF-8↔UTF-16 XML boundary).
+    All three pass the invariant **first-try** — no parser fix needed.
+    More files are a one-line `FILES` addition + regen.
+  - 6 new tests; 1131 → 1137 × 4 backends; no `.mbti` change.
 
 ---
 
@@ -623,6 +727,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Decision**: From-scratch chart builders (`Chart::of_bar` etc.) emit inline `<c:strLit>` / `<c:numLit>` data sources only. We do not generate xlsx caches in v0.1.0. Existing `<c:externalData>` references in parsed charts round-trip losslessly via `Chart.extension` (ADR-004); the referenced xlsx part rides through `@opc.Package` as an opaque part keyed by content type (no SpreadsheetML parsing). python-pptx (the de-facto Python PPTX library) takes the same approach for the same reasons.
 - **Consequences**: Builder-produced charts render correctly in PowerPoint / LibreOffice but PowerPoint's "Edit Data" UX is slightly degraded. v1.0 reopens this as item **B3** with an opt-in `embed_xlsx~ = true` builder flag.
 - **Status update (2026-07-06)**: B3 moved off the v1.0 gate to the v0.7.x additive cycle (§4.2) — it is a feature, not a stability item, so it should not block the 1.0 tag.
+- **Status update (2026-07-11)**: B3 landed — `add_chart_mut(embed_data=data)` generates the embedded workbook and the `<c:externalData>` reference. The decision itself stands: inline literals remain the (only) render source; the xlsx is a pure Edit-Data UX add-on and stays opt-in.
 
 ### ADR-010: SmartArt = own `src/smartart/` package, build-only, cached-drawing render guarantee
 - **Date**: 2026-06-11
@@ -728,6 +833,18 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-07-12** — **v0.7.0 release pass.** Version bumped to 0.7.0 (root `moon.mod` + sample-deck dep), CHANGELOG entry written — Added: F5-b shape hyperlinks on all five kinds, `TableStylePreset` (74 gallery styles), slide sections, app.xml `AppProperties`, `embed_data` chart workbooks, fill convenience constructors, SmartArt per-node colours; a **compatibility note** flags the four `pub(all)` structs that gained optional fields (`Connector`/`GroupShape`/`GraphicFrame.hyperlink`, `Node.style`) — struct-literal constructors downstream need the one-line field additions, builder users are unaffected (pptz uses builders per the 0.6 audit). §0 version row + §4.0 table gain the v0.7.0 rows. Suite at release: 1178 × 4 backends.
+- **2026-07-12** — **Sample deck updated for v0.7 (25 → 26 slides) + examples/ refactor sweep — and the dep-flip machinery replaced by a committed `moon.work`.** New slide 22 "v0.7 features": a gallery-styled table (`Table::with_style(MediumStyle2Accent1)` — no hand-styled cells) plus the `Fill::solid` / `linear_gradient` (white `via` stop) / `pattern` convenience constructors side by side. Deck-wide v0.7 features woven in where they live: six named **slide sections** (`set_sections_mut`), **app.xml properties** (company / manager next to the existing core properties), the combo chart gains its **embedded data workbook** (`embed_data` — "Edit Data" opens both series), and the SmartArt org chart's CEO node shows the **per-node colour overrides** (red fill, white text). Deck tests now assert all four on the reopened bytes. Two `hyperlink: None` additions were needed where the deck builds `Connector` / `GroupShape` by struct literal — **flag in the v0.7.0 CHANGELOG**: consumers constructing those `pub(all)` structs literally need the same one-liner (builder users are unaffected; pptz uses builders per the 0.6 audit). Refactor lenses over examples/: comment hygiene — roadmap letter-codes purged from comments *and user-visible slide text* ("chart options (M2) + data validation (D7)" headings, "Typed layouts (M1)", "(F4)" in body text; release version numbers stay — they're public identifiers); docs freshness — build.mbt's stale header (24-slide list, v0.5.2-era dep note), main.mbt's "12-slide deck", and the sample-deck README (0.5.3 dep sample, 16-closing bisect range, slide table) all rewritten. **Toolchain follow-on**: `moon fmt` migrated the deck manifests to `moon.mod`/`moon.pkg` (TOML), whose import syntax rejects path deps — the transient json-edit flip in `gen-pptx.sh` died with it. Replaced by a **committed `moon.work`** (members: deck + repo root): in-repo builds resolve moon-pptx to the current tree automatically (`moon test` in the deck now runs the deck's 2 tests *plus* the library's 1178 against source), while the manifest keeps the published-version dep as the consumer-realistic example; `gen-pptx.sh` shrank to just build-and-decode. Deck verified end-to-end: 26 slides, sections/appProps/workbook confirmed in the emitted bytes.
+- **2026-07-11** — **Post-§4.2 refactor sweep (CLAUDE.md §7) over the v0.7 branch.** Findings-first pass over the nine feature commits, all six lenses. **Constants**: `app_properties.mbt` repeated `"/docProps/app.xml"` at four code sites → file-local `app_part_name` (template.mbt's inline namespace URIs deliberately kept — the whole file is a fixture-style literal template, per earlier sweep precedent). **Dedup**: the presentation test package had two same-shape saved-part helpers → one shared `saved_part_xml(prs, name)`. **Test adequacy** (3 gaps closed): a malformed app.xml root now has a direct Malformed test; the xlsx `column_letter` double-letter branch is exercised end-to-end (27-series chart → `Z1`/`AA1`/`AA2` cells — writing the test caught nothing in the code but an off-by-one in the *author's* column arithmetic, which is what the test is for); `Table::with_style` on a properties-less table covered. **Docs**: README.mbt.md sub-package table rows refreshed with the v0.7 surface (sections, app properties, `embed_data` workbooks, `TableStylePreset`, SmartArt per-node colours); TODO.md §0 narrative + §4.2 preamble now say the cycle is complete and awaiting a v0.7.0 release pass. **Comment hygiene / file splitting**: new code clean (the only roadmap-code grep hit was the spreadsheet cell `B1`), largest new file 305 lines — no action. 1175 → 1178 × 4 backends; no `.mbti` change.
+- **2026-07-11** — **v0.7 B3 landed: embedded chart-data workbooks — 「Edit Data」 opens real rows. §4.2 is now complete.** Opt-in `embed_data? : ChartData` on `add_chart_mut` (deviating from the item's “on chart builders” sketch: the workbook is an OPC artifact, so the insertion call owns it — and threading a staging field through 16 builders was the alternative). The generated `.xlsx` is a minimal-but-valid SpreadsheetML package assembled with `@opc.Package::new()` — workbook + one sheet + the two `.rels`, inline-string cells (no sharedStrings part), categories down column A / series across from B1 — embedded as `/ppt/embeddings/Microsoft_Excel_WorksheetN.xlsx` (`xlsx` Default content type, `rt_package` rel from the chart part). The chart side needed **zero model change**: `<c:externalData r:id="rId1"><c:autoUpdate val="0"/></c:externalData>` rides the chart's ADR-004 `extension` array, which the chartSpace writer already emits in exactly that schema slot; a chart that already references external data raises instead of double-emitting (the F4/B4 shadowing class, guarded up front). ADR-009's decision stands — inline `<c:strLit>`/`<c:numLit>` remain the render source; the workbook is a UX add-on. 6 new tests, incl. reopening the generated xlsx as an OPC package and asserting individual cells, plus the duplicate-embed guard on a genuinely reopened deck; example-7 recipe extended. 1170 → 1175 × 4 backends; `.mbti` diff = the optional param + `rt_package` + `ct_xlsx_sheet` (additive). **All eight §4.2 v0.7.x items are now 🟢.**
+- **2026-07-11** — **v0.7 F2-b landed: app.xml document properties — the last docProps gap.** Typed `AppProperties { company / manager / application / app_version }` over `docProps/app.xml`, closing F2's deferral. The deferral note's premise was half wrong: `CT_Properties` is an `xsd:all` (order-free — verified against the schema docs, and PowerPoint itself emits `Company` after `TitlesOfParts` in the corpus), so the editor is simpler than feared: a **DOM merge** — parse the part into its `XmlElement` DOM, replace-or-append only the `Some` fields, and leave every app-maintained child (word counts, the `vt:vector` HeadingPairs / TitlesOfParts) byte-for-byte alone. This is deliberately *not* core.xml's whole-part replace: app.xml mixes user fields with statistics we must not fabricate. Serialisation binds the extended-properties namespace as the *default* (`<Properties xmlns=…>` + `xmlns:vt`, matching Office) via the writer's `default_namespace_attr` + an empty-prefix `WriteCtx` binding. `set_app_properties_mut` also creates the part and its package-level relationship when a package lacks one (fresh `rId`, `rt_extended_properties`). Surface: `app_properties()` reader, the mutator, `with_app_properties` (ADR-003), 4 `with_*` builders, and `@oxml.extended_properties_ns` / `doc_props_vtypes_ns`. 8 new tests — including merging a real Office corpus file where `Company` flips and `TotalTime` + both `vt:vector`s survive — plus the example-19 cookbook recipe covering core + app together. 1162 → 1170 × 4 backends; `.mbti` diff additive. §3.3 document-properties row now fully ✅.
+- **2026-07-11** — **v0.7 slide sections landed (§4.2): typed `Section` API over the `<p14:sectionLst>` extension.** PowerPoint's slide-panel sections are a p14 (PowerPoint 2010) extension in presentation.xml's `<p:extLst>` keyed by `{521415D9-36F7-43E2-AB2F-B90AF26B5E84}` ([MS-PPTX] §2.3.1.25) — not the `<p:sldSectionLst>` the roadmap sketch guessed. The typed model is a list of titled break points, `Section { title, start }`: sections partition the deck in slide order (first at 0, non-decreasing, equal starts = an empty section), which makes every representable value legal — no dangling-slide-id error surface, and empty sections (which PowerPoint allows) fall out naturally. Surface: `set_sections_mut` (validated; `[]` removes the extension), `add_section_mut(title~, start~)`, the `sections()` reader (derives starts by counting each section's `<p14:sldId>`s, so parsed decks read back too), and `with_sections` (ADR-003 pair). The ext rides the part's ADR-004 `extension` array — other extLst content is preserved, re-setting replaces in place, and section ids are deterministic counter-derived GUIDs (reproducible builds; nothing keys off their values). Example-18 cookbook recipe added. 9 new tests; 1153 → 1162 × 4 backends; `.mbti` diff = `Section` + 4 fns + the `section_list_ext_uri` constant (additive).
+- **2026-07-11** — **v0.7 table-style preset library landed (§4.2): `TableStylePreset` — PowerPoint's 74 built-in gallery styles by name.** The `table_style_id : String?` GUID field has round-tripped since the typed `TableProperties` landed, but writing one meant pasting a GUID. Now the full built-in gallery is a `pub(all)` enum named as in the PowerPoint UI (`MediumStyle2Accent1` = the insert-table default `{5C22544A-…}`, `NoStyleNoGrid`, `DarkStyle2Accent1And2`, …), with the GUIDs **machine-extracted from MS-OE376 Part 4 §5.1.6.10** — the authoritative Microsoft list (15 base styles + 59 colour-replaced derivations), not hand-typed; a test sweeps all 74 for distinctness/shape and spot-checks four against the spec. Surface: `TableStylePreset::guid()`, `TableProperties::with_style(preset)`, and the table-level `Table::with_style(preset, first_row~ = true, band_row~ = true)` whose flag defaults mirror what PowerPoint sets when inserting a table (header emphasis + row banding), both opt-outable; existing properties are preserved. Example-6 cookbook recipe extended. 5 new tests; 1148 → 1153 × 4 backends; `.mbti` diff = the enum + 3 fns (additive).
+- **2026-07-11** — **v0.7 SmartArt per-node styling landed (§4.2): `Node.style` colour overrides.** New `NodeStyle { fill / line / text_color : RgbColor? }` on every `Node` (the §4.2 item's premise "the field exists" was stale — it didn't; now it does), set via merging builders `Node::with_fill` / `with_line` / `with_text_color` (each overrides one aspect, preserves the others — ADR-003 immutable). The overrides are emitted to **both rendering channels**: the diagram data model — fill/line in the point's `<dgm:spPr>`, text colour in the `<dgm:t>` run properties flagged `custT="1"` so PowerPoint's layout engine treats it as a manual customisation and keeps it on re-layout — and the cached `<dsp:drawing>`, where `srgbClr` replaces the accent1 fill / lt1 outline quick-style defaults, covering non-editing viewers. Unstyled nodes stay byte-identical to before. Example-15 cookbook recipe extended with a styled node, verified through save → reopen down to the data part. 3 new tests; 1145 → 1148 × 4 backends; `.mbti` diff = `NodeStyle` + `Node.style` + 4 fns (additive). Also confirmed the downstream ecosystem the additive policy protects: mooncakes registry shows exactly one published dependent, `Milky2018/pptz` (active — 0.7.1 released 2026-07-10 — still pinned to moon-pptx 0.5.1).
+- **2026-07-10** — **v0.7 fill convenience constructors landed (§4.2): `Fill::solid` / `Fill::linear_gradient` / `Fill::pattern`.** The `@oxml.Fill` ADT stays the full-control surface; these cover the common cases that were verbose to hand-build (a two-colour gradient was ~15 lines of stops/direction/extension). `linear_gradient(from, to, via?, angle?)` requires both endpoints — the spec's "at least two stops" rule enforced by the signature, no runtime error path — spaces `via` colours evenly, and defaults to the 90° top→bottom scaled form PowerPoint itself emits; `pattern(preset, fg~, bg~)` passes the `ST_PresetPatternVal` name through verbatim (unknown names reach the file unchanged, consistent with the round-trip-friendly `String` field); `solid(rgb)` shortens the ubiquitous `SolidFill(Color::srgb(rgb))`. Deliberately *not* covered (direct ADT construction remains): path gradients, theme-colour stops, per-stop transforms, tile modes. Test-side `roundtrip_fill` refactored to expose `reparse_fill` so builder-constructed fills get the same write→parse equality check as parsed ones. 4 new tests; 1141 → 1145 × 4 backends; `.mbti` diff = the 3 constructors (additive).
+- **2026-07-10** — **Comment-hygiene sweep (new CLAUDE.md §7.6 lens) — all roadmap/phase codes purged from code comments.** New standing refactor lens added to CLAUDE.md §7 (validation loop renumbered to §7.7): code comments must make sense without ever having read TODO.md — no roadmap item codes (`F5`, `D1-b`, `v0.6`, `Phase 3h`, `slice N`), no `TODO.md §` pointers; ADR-nnn / ECMA-376 § / issue #N stay (stable, findable records); provenance framing goes to git + §11, and comments the code already states get deleted. Swept the whole tree: ~150 sites across 100 files — mechanical removal of `(roadmap …)` / bare-code parentheticals on comment lines and test names, plus ~30 hand-rewritten sentences where the code was load-bearing ("Deviation from the roadmap sketch…" → the design statement itself; "kept alive by E1's reference-counted deletion" → names `remove_slide_mut`; stale SmartArt "land in later slices" note corrected to present reality). Kept as-is: spec-value strings that merely look like codes (`ISO A4`, JPEG `FF D8`, spreadsheet `Cell A1`). The corpus embed generator's header template updated + embeds regenerated. Comments-only: 1141 × 4 backends unchanged; no `.mbti` change.
+- **2026-07-10** — **v0.7 F5-b landed: shape-level hyperlinks on Connector / Group / GraphicFrame — all five shape kinds are now clickable.** Completes F5 (v0.5.2, AutoShape + Picture) additively: each of the three remaining kinds gains the build-only `hyperlink : ShapeHyperlink?` field plus `with_hyperlink(url~)` / `with_hyperlink_to_slide(slide_idx~)` builders, resolved through the same `allocate_hyperlink` pipeline in `update_slide_mut` (a Group resolves its own hyperlink *and* recurses into children; the unresolved-precheck covers the new kinds so no rels round-trip happens on hyperlink-free slides). Writer threading: Group / GraphicFrame simply pass the field into `write_nv_wrapper`; the **Connector writer's bespoke verbatim-cNvPr emission was consolidated onto the shared `write_cnvpr`** — byte-identical for parsed connectors (typed id/name were read off that element), and connectors gain B4 id/name edit authority as a side benefit. Parse stays untouched per ADR-004 (a parsed `<a:hlinkClick>` rides the captured `<p:cNvPr>`; the typed field is build-only, like media). 5 new tests: per-kind e2e (external rel + `<a:hlinkClick>` for connector, `rt_slide` + `ppaction://hlinksldjump` for group, clickable table incl. save→reopen for graphicFrame) + direct builder coverage of all 6 fns with ADR-003 immutability checks. 1137 → 1141 × 4 backends; `.mbti` diff = 3 fields + 6 builders (additive). §3.3 matrix row now reads "all five shape kinds".
+- **2026-07-10** — **v0.7 Tier-1 reader-losslessness landed: `moon test` now proves the reader drops nothing on real Office files, on every backend (ADR-011 follow-up, §4.2).** The Tier-2 SDK validator shows the corpus is schema-valid but says nothing about *our* preservation — this closes that gap without file I/O (the library is FFI-free; JS/Wasm can't read the filesystem). New `tools/embed-corpus/gen.py` (stdlib-only Python, run only to regenerate — committed output, never in CI) emits `src/integration/corpus_*_embed_test.mbt` with each file's bytes as fixed-width base64 chunks + a length/sha header; `corpus_test.mbt` adds a ~30-line base64 decoder (none in core, verified via `moon ide doc`) with a decoded-length abort so a corrupted embed can't masquerade as a parser finding, and a shared `assert_reader_lossless` invariant: open → `parse_everything` floor → re-serialise every parser-bearing part through its package-level writer → save → reopen → re-parse → **assert model equality per part**. Embedded trio (~110 KB binary → ~150 KB source, fmt-stable): `testPPT.pptx` (theme + master + 11 layouts + 3 slides), `table_test.pptx` (real 3×6 Office table, spot-checked lifting to the typed `Table`), `with_japanese.pptx` (CJK 「ゾルゲと尾崎、淡々と最期」 + astral-plane Gothic `𐌲𐌿𐍄𐌹𐍃𐌺` — surrogate-pair stress across the UTF-8↔UTF-16 XML boundary, asserted to survive serialize→reparse). **All three passed the losslessness invariant first-try** — the ADR-004 extension mechanism holds on real Office output. Corpus README's "why not embedded" section rewritten to point at the generator. 6 new tests; 1131 → 1137 × 4 backends; no `.mbti` change. Also refreshed §0 to post-0.6.0 reality (version row, test count, §4.0 gains the v0.6.0 row — tags `v0.5.3`/`v0.6.0` confirmed pushed).
 - **2026-07-06** — **Roadmap reorganised around a new release policy: v1.0.0 ships when MoonBit itself reaches v1.0.** The library is feature-complete for its core mission (all §1 vision goals delivered; verified against source: 1109 tests × 4 backends green, F3-b/F4/D1-b confirmed still open in code). §4 restructured: the shipped v0.2.0–v0.5.3 cycles' ~320 lines of landed-item detail are compressed into the §4.0 summary table (the full record stays in §11 + `CHANGELOG.md`); forward work is now **§4.1 v0.6.0** (the deliberate pre-1.0 *breaking* pass — F3-b non-solid text fill + F4 paragraph-spacing ADTs — plus D1-b SmartArt recursive hierarchy `layoutDef` and API-stability review pass 1), **§4.2 v0.7.x** (additive parity/ergonomics: B3 xlsx cache, F2-b app.xml, F5-b remaining shape hyperlinks, SmartArt node styling, sections, fill/table-style conveniences, Tier-1 reader-losslessness on the corpus), and **§4.3 v1.0.0** (the gate: final API review, Tier 3 verification, benchmarks, announcement). **B3 moved out of the 1.0 gate to §4.2** (a feature, not a stability item) and **D5 streaming write demoted to §5** (needs fzip upstream work, no consumer demand; benchmarks decide). Also refreshed to match reality: §0 at-a-glance (0.5.3 released; `v0.5.3` git tag noted as not yet pushed), §3 matrix (stale ⏳ v0.2 rows for A1/A2/A3/A4/A5/C2 flipped to ✅; column header → 0.5.3; B3/D5 targets retargeted), §5 trimmed (promoted/completed items removed — the real-world corpus landed 2026-06-20 with 7 Apache-POI files), **Q8/Q9 moved to resolved** (answered by D1/D2 as shipped), new **Q13** (what counts as "MoonBit v1.0"), §9 risks refreshed (v0.5-scope + M1 rows obsolete → removed; new external-1.0-gate risk). Docs-only; no library `.mbti` change.
 - **2026-07-06** — **Whole-tree refactor sweep (CLAUDE.md §7) ahead of the v0.6 PR.** Five-lens pass over the full source. **Test adequacy (the actionable lens)**: the API audit's 16-item missing-direct-test list is fully closed — 13 new blackbox tests across `builders_test` (`of_preset`, `with_stroke` incl. ADR-003 immutability, `of_styled_text` + `with_properties`), `table_properties_test` (the four `with_border_*` singly, `TableProperties::default` all-inherit, `TableCell::empty`), `background_test` (`of_fill` defaults), `shape_hyperlink_test` (`ShapeHyperlink::external`/`to_slide` constructors + a `Picture::with_hyperlink_to_slide` end-to-end jump: `ppaction://hlinksldjump` + the `rt_slide` rel), `define_master_test` (`with_background` renders the `<p:bg>` fill into the synthesised master), `slide_size_test` (`to_slide_size` mirrors `dimensions` + `size_type` incl. `Custom`), `add_chart_test` (first *direct* `add_chart_ex_mut` test: chartEx part + content-type override + slide reference + save→reopen), `package_test` (`validate_part_name` accepts canonical names, raises `MalformedPackage` on empty / no-leading-slash / trailing-slash). One test correction along the way: `AutoShape::rect` deliberately ships a default 1 pt outline (documented), so the `with_stroke` immutability check bases on `of_preset` (no default stroke). **Other lenses — no action with rationale**: constants (per-package test fixture helpers are the blackbox-test convention; inline OOXML attribute values match the 2026-06-16 precedent), duplicate/dead code (deny-warn clean; the API pass already removed the leaked surface), file splitting (`parser.mbt` 1315 L / `chart/builders.mbt` 1197 L unchanged since the prior sweep's keep decision), docs (README.mbt.md carries no stale counts; cookbook + deck README refreshed earlier today). 1118 → 1131 × 4 backends; no `.mbti` change.
 - **2026-07-06** — **D1-b Tier-3 verified in PowerPoint Web — and its one finding fixed (child boxes rendered black).** Opening the regenerated deck in PowerPoint Web confirmed the recursive layoutDef works: the org chart lays out **all three levels with connector lines** (the D1-b goal). One defect: every non-root box drew **black with invisible text** — PowerPoint Web resolves an *absent* `styleLbl` to black rather than a usable default, and only the root (`node0`) was labelled. Fix: `childNode` now names `styleLbl="node1"` explicitly (the accent-1 label our colors/quickStyle parts define; the radial spokes already carried it). `hier_text_node` takes a required label; layout test asserts both labels. The v0.6 features slide verified fully correct on the same pass (gradient + pattern text fills, 150 % / space-before / absolute-28 pt spacing). 1118 × 4 backends; validator clean.

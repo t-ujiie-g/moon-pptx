@@ -180,7 +180,7 @@ test "rPr: missing attributes leave fields None" {
 }
 
 ///|
-test "rPr: gradFill lifts to the typed fill (F3-b); effectLst to typed field" {
+test "rPr: gradFill lifts to the typed fill; effectLst to typed field" {
   let slide = @slide.Slide::parse(
     slide_with_rpr(
       "<a:rPr>" +
@@ -193,10 +193,10 @@ test "rPr: gradFill lifts to the typed fill (F3-b); effectLst to typed field" {
     ),
   )
   // The run fill is the full @oxml.Fill ADT — a gradient text fill is
-  // typed, not an extension escape hatch (F3-b).
+  // typed, not an extension escape hatch.
   assert_true(rpr_of(slide).fill is Some(GradientFill(_)))
   // The minimal effectLst (dist/dir absent) lifts into the typed
-  // `text_effects` field (F3 slice 2; lift-safe @oxml parsers).
+  // `text_effects` field (the shadow parsers default absent dist/dir to 0).
   assert_true(rpr_of(slide).text_effects is Some(_))
   // And the writer emits it back: serialize → reparse is model-equal.
   let reparsed = @slide.Slide::parse(slide.serialize())
@@ -204,7 +204,7 @@ test "rPr: gradFill lifts to the typed fill (F3-b); effectLst to typed field" {
 }
 
 ///|
-test "rPr: noFill + pattFill round-trip through the typed fill (F3-b)" {
+test "rPr: noFill + pattFill round-trip through the typed fill" {
   // noFill (invisible text) is a distinct typed state, not "inherit" —
   // and it survives a serialize → reparse round-trip.
   let slide = @slide.Slide::parse(slide_with_rpr("<a:rPr><a:noFill/></a:rPr>"))
@@ -227,7 +227,7 @@ test "rPr: noFill + pattFill round-trip through the typed fill (F3-b)" {
 }
 
 ///|
-test "rPr: with_text_fill / with_color builders set the Fill ADT (F3-b)" {
+test "rPr: with_text_fill / with_color builders set the Fill ADT" {
   let grad = @oxml.Fill::GradientFill({
     stops: [
       {
@@ -319,7 +319,7 @@ test "builder: with_character_spacing emits spc and round-trips" {
   assert_eq(rpr_of(reparsed).character_spacing.unwrap(), @units.Pt(2.0))
 }
 
-// --- kerning (kern) + highlight — roadmap v0.6 F3 (slice 1) ---
+// --- kerning (kern) + highlight ---
 
 ///|
 test "rPr: kern attribute converts 1/100 pt to Pt" {
@@ -396,7 +396,7 @@ test "builder: with_kerning + with_highlight emit and round-trip" {
   )
 }
 
-// --- text outline (a:ln) + text effects (a:effectLst) — F3 follow-up ---
+// --- text outline (a:ln) + text effects (a:effectLst) ---
 
 ///|
 test "rPr: text outline (a:ln) parses into the typed field" {

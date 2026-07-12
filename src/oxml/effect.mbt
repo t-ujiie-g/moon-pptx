@@ -253,7 +253,7 @@ pub fn parse_effect_list(r : @xml.XmlReader) -> EffectList raise EffectError {
 /// the shadow / blur / glow coordinates (`blurRad` / `dist` / `rad`)
 /// optional with a default of 0, so a minimal `<a:outerShdw blurRad="…"/>`
 /// (or a bare `<a:blur/>`) must parse rather than raise — required for the
-/// run-level `<a:effectLst>` lift (F3) where such minimal forms appear and
+/// run-level `<a:effectLst>` lift where such minimal forms appear and
 /// previously round-tripped via `extension`.
 fn emu_attr_or_zero(
   attrs : Array[(@xml.QName, String)],

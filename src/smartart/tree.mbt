@@ -1,4 +1,4 @@
-// Node-tree flattening (roadmap D1 slice 3).
+// Node-tree flattening.
 //
 // The data model and the cached drawing both need every node in the diagram —
 // not just the top-level ones — keyed by a stable id and tagged with its
@@ -23,6 +23,8 @@ priv struct FlatNode {
   sib_ord : Int
   /// Depth from the roots — `0` for a top-level node.
   depth : Int
+  /// The node's colour overrides, if any.
+  style : NodeStyle?
   /// `gidx`s of this node's direct children (left-to-right).
   mut children_gidx : Array[Int]
 }
@@ -41,6 +43,7 @@ fn flatten(nodes : Array[Node]) -> Array[FlatNode] {
       parent_gidx: parent,
       sib_ord,
       depth,
+      style: node.style,
       children_gidx: [],
     })
     let child_ids = []

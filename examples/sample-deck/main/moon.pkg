@@ -1,0 +1,12 @@
+import {
+  "t-ujiie-g/moon-pptx/chart",
+  "t-ujiie-g/moon-pptx/oxml",
+  "t-ujiie-g/moon-pptx/presentation",
+  "t-ujiie-g/moon-pptx/slide",
+  "t-ujiie-g/moon-pptx/smartart",
+  "t-ujiie-g/moon-pptx/units",
+}
+
+options(
+  "is-main": true,
+)

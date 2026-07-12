@@ -2,7 +2,7 @@
 // *OPC-level* class of "PowerPoint repair" triggers, caught in pure MoonBit on
 // every backend.
 //
-// This is **Tier 1** of the verification pyramid (TODO.md ADR-011): it does
+// This is **Tier 1** of the verification pyramid (ADR-011): it does
 // not need a real PowerPoint and runs in `moon test`. It is complementary to
 // the external Open XML SDK validator (Tier 2, `tools/pptx-validate/`), which
 // owns the deeper *schema/semantic* class. Here we check the three integrity

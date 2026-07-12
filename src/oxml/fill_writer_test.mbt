@@ -22,8 +22,14 @@ fn fill_to_xml(f : @oxml.Fill) -> String raise @xml.XmlError {
 
 ///|
 fn roundtrip_fill(input_inner : String) -> @oxml.Fill raise {
-  let first = parse_inner_fill(input_inner)
-  let serialized = fill_to_xml(first)
+  reparse_fill(parse_inner_fill(input_inner))
+}
+
+///|
+/// Serialize a fill value and parse it back — the write-side inverse
+/// check, also usable on builder-constructed fills.
+fn reparse_fill(f : @oxml.Fill) -> @oxml.Fill raise {
+  let serialized = fill_to_xml(f)
   // The serialised string is already a full document with one fill
   // inside, so extract the fill body the same way.
   let r = @xml.XmlReader::new(serialized)
@@ -150,4 +156,71 @@ test "write_fill: blipFill preserves <a:blip> children via extension" {
   let f0 = parse_inner_fill(xml)
   let f1 = roundtrip_fill(xml)
   assert_true(f0 == f1)
+}
+
+// --- convenience constructors ---
+
+///|
+test "Fill::solid builds SolidFill(srgb)" {
+  let f = @oxml.Fill::solid(@units.RgbColor::new(0x11, 0x22, 0x33))
+  assert_true(
+    f == SolidFill(@oxml.Color::srgb(@units.RgbColor::new(0x11, 0x22, 0x33))),
+  )
+}
+
+///|
+test "Fill::linear_gradient: endpoints at 0/100, via evenly spaced" {
+  let red = @units.RgbColor::new(0xFF, 0x00, 0x00)
+  let green = @units.RgbColor::new(0x00, 0xFF, 0x00)
+  let blue = @units.RgbColor::new(0x00, 0x00, 0xFF)
+  match @oxml.Fill::linear_gradient(red, blue, via=[green]) {
+    GradientFill(g) => {
+      assert_eq(g.stops.length(), 3)
+      assert_true(g.stops[0].position == @units.Percentage(0.0))
+      assert_true(g.stops[1].position == @units.Percentage(50.0))
+      assert_true(g.stops[2].position == @units.Percentage(100.0))
+      assert_true(g.stops[0].color == @oxml.Color::srgb(red))
+      assert_true(g.stops[2].color == @oxml.Color::srgb(blue))
+      // Default direction: top -> bottom, scaled (what PowerPoint emits).
+      assert_true(g.direction == Linear(@units.Angle(90.0), true))
+    }
+    _ => fail("expected GradientFill")
+  }
+}
+
+///|
+test "Fill::linear_gradient: custom angle + write -> parse round-trip" {
+  let f = @oxml.Fill::linear_gradient(
+    @units.RgbColor::new(0x10, 0x20, 0x30),
+    @units.RgbColor::new(0xA0, 0xB0, 0xC0),
+    angle=@units.Angle(45.0),
+  )
+  match f {
+    GradientFill(g) =>
+      assert_true(g.direction == Linear(@units.Angle(45.0), true))
+    _ => fail("expected GradientFill")
+  }
+  assert_true(reparse_fill(f) == f)
+}
+
+///|
+test "Fill::pattern: fields set + write -> parse round-trip" {
+  let f = @oxml.Fill::pattern(
+    "pct50",
+    fg=@units.RgbColor::new(0xFF, 0xFF, 0xFF),
+    bg=@units.RgbColor::new(0x00, 0x00, 0x00),
+  )
+  match f {
+    PatternFill(p) => {
+      assert_eq(p.preset, "pct50")
+      assert_true(
+        p.fg == @oxml.Color::srgb(@units.RgbColor::new(0xFF, 0xFF, 0xFF)),
+      )
+      assert_true(
+        p.bg == @oxml.Color::srgb(@units.RgbColor::new(0x00, 0x00, 0x00)),
+      )
+    }
+    _ => fail("expected PatternFill")
+  }
+  assert_true(reparse_fill(f) == f)
 }
