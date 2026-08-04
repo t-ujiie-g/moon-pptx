@@ -50,7 +50,7 @@ test "set_app_properties_mut: setting an existing field replaces it once" {
   assert_eq(prs.app_properties().application.unwrap(), "my-tool 2.0")
   let xml = saved_part_xml(prs, "/docProps/app.xml")
   let first = xml.find("<Application>").unwrap()
-  let rest = xml.view(start_offset=first + 1).to_owned()
+  let rest = xml[first + 1:].to_owned()
   assert_true(rest.find("<Application>") is None)
 }
 

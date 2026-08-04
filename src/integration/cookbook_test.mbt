@@ -202,10 +202,8 @@ test "cookbook: presentation.xml has 5 slide ID entries" {
   let pres = prs.presentation_part().unwrap()
   assert_eq(pres.sld_ids.length(), 5)
   // IDs start at 256 and increment.
-  let mut i = 0
-  while i < pres.sld_ids.length() {
+  for i in 0..<pres.sld_ids.length() {
     assert_eq(pres.sld_ids[i].id, 256L + i.to_int64())
-    i = i + 1
   }
 }
 

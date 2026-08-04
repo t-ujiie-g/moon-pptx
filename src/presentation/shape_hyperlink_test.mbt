@@ -30,8 +30,8 @@ test "shape with_hyperlink: external URL → rel + <a:hlinkClick> on cNvPr" {
   assert_true(hl.target_mode is External)
   // The slide XML carries an <a:hlinkClick> referencing that rId.
   let xml = slide_xml_of(prs, slide_name)
-  assert_true(has_substring(xml, "hlinkClick"))
-  assert_true(has_substring(xml, "r:id=\"" + hl.id + "\""))
+  assert_true(xml.contains("hlinkClick"))
+  assert_true(xml.contains("r:id=\"" + hl.id + "\""))
 }
 
 ///|
@@ -52,8 +52,8 @@ test "shape with_hyperlink_to_slide: rt_slide rel + ppaction jump" {
   let jump = rels.by_type(@opc.rt_slide)[0]
   assert_true(jump.target_mode is Internal)
   let xml = slide_xml_of(prs, slide_name)
-  assert_true(has_substring(xml, "ppaction://hlinksldjump"))
-  assert_true(has_substring(xml, "r:id=\"" + jump.id + "\""))
+  assert_true(xml.contains("ppaction://hlinksldjump"))
+  assert_true(xml.contains("r:id=\"" + jump.id + "\""))
 }
 
 ///|
@@ -74,8 +74,8 @@ test "picture with_hyperlink: external URL → rel + hlinkClick" {
   let hl = rels.by_type(@opc.rt_hyperlink)[0]
   assert_eq(hl.target, "https://pics.example")
   let xml = slide_xml_of(prs, slide_name)
-  assert_true(has_substring(xml, "hlinkClick"))
-  assert_true(has_substring(xml, "r:id=\"" + hl.id + "\""))
+  assert_true(xml.contains("hlinkClick"))
+  assert_true(xml.contains("r:id=\"" + hl.id + "\""))
 }
 
 ///|
@@ -95,7 +95,7 @@ test "shape with_hyperlink: survives save → reopen" {
   let rels = prs2.pkg.relationships_for(slide_name)
   assert_eq(rels.by_type(@opc.rt_hyperlink)[0].target, "https://saved.example")
   // The reopened slide still has the hlinkClick (round-trips via captured cNvPr).
-  assert_true(has_substring(slide_xml_of(prs2, slide_name), "hlinkClick"))
+  assert_true(slide_xml_of(prs2, slide_name).contains("hlinkClick"))
 }
 
 ///|
@@ -113,7 +113,7 @@ test "shape without hyperlink: no hyperlink rel, no hlinkClick" {
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
   let rels = prs.pkg.relationships_for(slide_name)
   assert_eq(rels.by_type(@opc.rt_hyperlink).length(), 0)
-  assert_eq(has_substring(slide_xml_of(prs, slide_name), "hlinkClick"), false)
+  assert_false(slide_xml_of(prs, slide_name).contains("hlinkClick"))
 }
 
 ///|
@@ -162,8 +162,8 @@ test "connector with_hyperlink: external URL → rel + hlinkClick on cNvPr" {
   assert_eq(hl.target, "https://conn.example")
   assert_true(hl.target_mode is External)
   let xml = slide_xml_of(prs, slide_name)
-  assert_true(has_substring(xml, "hlinkClick"))
-  assert_true(has_substring(xml, "r:id=\"" + hl.id + "\""))
+  assert_true(xml.contains("hlinkClick"))
+  assert_true(xml.contains("r:id=\"" + hl.id + "\""))
 }
 
 ///|
@@ -199,8 +199,8 @@ test "group with_hyperlink_to_slide: rt_slide rel + ppaction jump" {
   let jump = rels.by_type(@opc.rt_slide)[0]
   assert_true(jump.target_mode is Internal)
   let xml = slide_xml_of(prs, slide_name)
-  assert_true(has_substring(xml, "ppaction://hlinksldjump"))
-  assert_true(has_substring(xml, "r:id=\"" + jump.id + "\""))
+  assert_true(xml.contains("ppaction://hlinksldjump"))
+  assert_true(xml.contains("r:id=\"" + jump.id + "\""))
 }
 
 ///|
@@ -229,10 +229,10 @@ test "graphic frame with_hyperlink: a clickable table survives save → reopen" 
   let rels = prs.pkg.relationships_for(slide_name)
   assert_eq(rels.by_type(@opc.rt_hyperlink)[0].target, "https://table.example")
   let xml = slide_xml_of(prs, slide_name)
-  assert_true(has_substring(xml, "hlinkClick"))
+  assert_true(xml.contains("hlinkClick"))
   // Save → reopen: the hlinkClick round-trips via the captured cNvPr.
   let prs2 = @presentation.Presentation::open(prs.save())
-  assert_true(has_substring(slide_xml_of(prs2, slide_name), "hlinkClick"))
+  assert_true(slide_xml_of(prs2, slide_name).contains("hlinkClick"))
 }
 
 ///|

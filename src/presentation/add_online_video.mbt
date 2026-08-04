@@ -160,7 +160,7 @@ fn youtube_embed_url(url : String) -> String? {
   for marker in ["/embed/", "/shorts/", "youtu.be/", "v="] {
     match url.find(marker) {
       Some(off) => {
-        let rest = url.view(start_offset=off + marker.length()).to_owned()
+        let rest = url[off + marker.length():].to_owned()
         let id = cut_at_url_delimiter(rest)
         if id != "" {
           return Some("https://www.youtube.com/embed/" + id)

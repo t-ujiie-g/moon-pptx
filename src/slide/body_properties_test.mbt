@@ -20,7 +20,7 @@ fn slide_with_txbody_inner(tx_body_inner : String) -> FixedArray[Byte] {
     "</p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|

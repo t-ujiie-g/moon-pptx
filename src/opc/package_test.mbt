@@ -46,7 +46,7 @@ test "Package::open round-trips a tiny zip" {
   let pkg = @opc.Package::open(bytes)
   assert_eq(pkg.parts().length(), 2)
   let p1 = pkg.require_part("/[Content_Types].xml")
-  assert_true(p1.text().length() > 0)
+  assert_true(!p1.text().is_empty())
   let p2 = pkg.require_part("/ppt/presentation.xml")
   assert_eq(p2.text(), "<presentation/>")
 }

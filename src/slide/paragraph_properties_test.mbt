@@ -22,7 +22,7 @@ fn slide_with_ppr(ppr_body : String) -> FixedArray[Byte] {
     "<a:r><a:t>x</a:t></a:r></a:p></p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|

@@ -25,10 +25,8 @@
 /// occasionally want to duplicate a buffer directly.
 pub fn copy_bytes(bytes : FixedArray[Byte]) -> FixedArray[Byte] {
   let out = FixedArray::make(bytes.length(), b'\x00')
-  let mut i = 0
-  while i < bytes.length() {
+  for i in 0..<bytes.length() {
     out[i] = bytes[i]
-    i = i + 1
   }
   out
 }

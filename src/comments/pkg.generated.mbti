@@ -57,4 +57,3 @@ pub(all) struct CommentPos {
 // Type aliases
 
 // Traits
-

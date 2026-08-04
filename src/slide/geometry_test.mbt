@@ -19,7 +19,7 @@ fn slide_with_sp_pr(inner_sp_pr_body : String) -> FixedArray[Byte] {
     "</p:spPr>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- PresetShape::from_xml / to_xml ---

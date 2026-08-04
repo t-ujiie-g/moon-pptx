@@ -35,7 +35,7 @@ pub fn Presentation::add_smartart_mut(
   cx : @units.Emu,
   cy : @units.Emu,
 ) -> Unit raise PptxError {
-  if smartart.nodes.length() == 0 {
+  if smartart.nodes.is_empty() {
     raise Malformed("add_smartart_mut: diagram has no nodes")
   }
   // Resolve the target slide up front (so we fail before mutating parts).

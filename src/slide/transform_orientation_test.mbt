@@ -20,7 +20,7 @@ fn slide_with_oriented_sp(xfrm : String) -> FixedArray[Byte] {
     xfrm +
     "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr></p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -34,7 +34,7 @@ fn empty_sptree_deck() -> FixedArray[Byte] {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -106,10 +106,10 @@ test "AutoShape::with_rotation + with_flip emit attrs and round-trip" {
     .with_flip(h=true)
   let s = base.with_shape(@slide.AutoShape(rect))
   let xml = @oxml.bytes_to_string(s.serialize())
-  assert_true(char_index_of(xml, "rot=\"2700000\"") >= 0)
-  assert_true(char_index_of(xml, "flipH=\"1\"") >= 0)
+  assert_true(xml.contains("rot=\"2700000\""))
+  assert_true(xml.contains("flipH=\"1\""))
   // flipV not set → no attribute emitted.
-  assert_true(char_index_of(xml, "flipV") < 0)
+  assert_true(!xml.contains("flipV"))
   let reparsed = @slide.Slide::parse(s.serialize())
   match reparsed.shapes[0] {
     AutoShape(a) => {
@@ -135,9 +135,9 @@ test "writer: un-rotated transform emits no rot / flipH / flipV" {
   )
   let s = base.with_shape(@slide.AutoShape(rect))
   let xml = @oxml.bytes_to_string(s.serialize())
-  assert_true(char_index_of(xml, "rot=") < 0)
-  assert_true(char_index_of(xml, "flipH") < 0)
-  assert_true(char_index_of(xml, "flipV") < 0)
+  assert_true(!xml.contains("rot="))
+  assert_true(!xml.contains("flipH"))
+  assert_true(!xml.contains("flipV"))
 }
 
 ///|
@@ -215,8 +215,8 @@ test "GroupShape: rotated group emits orientation and round-trips" {
     @slide.Group(g.with_rotation(@units.Angle(90.0)).with_flip(h=true)),
   )
   let xml = @oxml.bytes_to_string(s.serialize())
-  assert_true(char_index_of(xml, "rot=\"5400000\"") >= 0)
-  assert_true(char_index_of(xml, "flipH=\"1\"") >= 0)
+  assert_true(xml.contains("rot=\"5400000\""))
+  assert_true(xml.contains("flipH=\"1\""))
   let reparsed = @slide.Slide::parse(s.serialize())
   match reparsed.shapes[0] {
     Group(rg) => {

@@ -18,7 +18,7 @@ fn layout_xml_with_master_mapping() -> FixedArray[Byte] {
     "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" +
     "<p:hf sldNum=\"0\" hdr=\"0\" ftr=\"0\" dt=\"0\"/>" +
     "</p:sldLayout>"
-  layout_ascii(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -37,19 +37,7 @@ fn layout_xml_with_override_mapping() -> FixedArray[Byte] {
     " hlink=\"folHlink\" folHlink=\"hlink\"/>" +
     "</p:clrMapOvr>" +
     "</p:sldLayout>"
-  layout_ascii(xml)
-}
-
-///|
-fn layout_ascii(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
+  @oxml.string_to_bytes(xml)
 }
 
 // --- happy path ---
@@ -68,7 +56,7 @@ test "parse: missing type attribute defaults to Blank" {
   let xml = "<?xml version=\"1.0\"?><p:sldLayout xmlns:p=\"" +
     pl_ns +
     "\"><p:cSld name=\"x\"/></p:sldLayout>"
-  let layout = @slide_master.SlideLayout::parse(layout_ascii(xml))
+  let layout = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
   assert_true(layout.layout_type is @slide_master.SlideLayoutType::Blank)
 }
 
@@ -105,7 +93,7 @@ test "parse: missing clrMapOvr defaults to MasterMapping" {
   let xml = "<?xml version=\"1.0\"?><p:sldLayout xmlns:p=\"" +
     pl_ns +
     "\" type=\"blank\"><p:cSld name=\"x\"/></p:sldLayout>"
-  let layout = @slide_master.SlideLayout::parse(layout_ascii(xml))
+  let layout = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
   assert_true(
     layout.clr_map_override is @slide_master.ClrMapOverride::MasterMapping,
   )
@@ -132,7 +120,7 @@ test "parse: layout types map to typed enum (spot check)" {
       "\" type=\"" +
       c.0 +
       "\"><p:cSld name=\"x\"/></p:sldLayout>"
-    let layout = @slide_master.SlideLayout::parse(layout_ascii(xml))
+    let layout = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
     // SlideLayoutType doesn't impl Show; assert_true on equality so the
     // failure message stays readable.
     assert_true(layout.layout_type == c.1)
@@ -144,7 +132,7 @@ test "parse: unknown layout type is rejected" {
   let xml = "<?xml version=\"1.0\"?><p:sldLayout xmlns:p=\"" +
     pl_ns +
     "\" type=\"thisisnotalayout\"><p:cSld name=\"x\"/></p:sldLayout>"
-  try @slide_master.SlideLayout::parse(layout_ascii(xml)) catch {
+  try @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml)) catch {
     @slide_master.SlideMasterError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -164,7 +152,7 @@ test "parse: malformed override mapping (missing slot) is rejected" {
     " tx2=\"dk2\" accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\"" +
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\"/></p:clrMapOvr></p:sldLayout>"
-  try @slide_master.SlideLayout::parse(layout_ascii(xml)) catch {
+  try @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml)) catch {
     @slide_master.SlideMasterError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {

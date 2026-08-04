@@ -11,36 +11,6 @@ let drawing_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/main
 let r_ns : String = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
 ///|
-fn fixture_bytes(s : String) -> FixedArray[Byte] {
-  let buf : Array[Int] = []
-  for c in s {
-    let cp = c.to_int()
-    if cp < 0x80 {
-      buf.push(cp)
-    } else if cp < 0x800 {
-      buf.push(0xC0 | (cp >> 6))
-      buf.push(0x80 | (cp & 0x3F))
-    } else if cp < 0x10000 {
-      buf.push(0xE0 | (cp >> 12))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    } else {
-      buf.push(0xF0 | (cp >> 18))
-      buf.push(0x80 | ((cp >> 12) & 0x3F))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    }
-  }
-  let bytes = FixedArray::make(buf.length(), b'\x00')
-  let mut i = 0
-  while i < buf.length() {
-    bytes[i] = buf[i].to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// Minimal but spec-shaped `<c:chartSpace>` body — one `<c:chart>` child
 /// carrying an empty plotArea. Captures the structure we need for the
 /// 7a1 round-trip floor; later 7a slices lift the inner pieces.
@@ -67,7 +37,7 @@ fn typical_chart_xml() -> String {
 
 ///|
 test "Chart::parse: root recognised + plotArea typed" {
-  let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
+  let chart = @chart.Chart::parse(@oxml.string_to_bytes(typical_chart_xml()))
   // <c:plotArea> is required and typed.
   // Layout is the first optional child; our fixture has one.
   assert_true(chart.chart.plot_area.layout is Some(_))
@@ -91,7 +61,7 @@ test "Chart::parse: PlotArea axes are discriminated" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let chart = @chart.Chart::parse(fixture_bytes(xml))
+  let chart = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   assert_eq(chart.chart.plot_area.axes.length(), 2)
   assert_eq(chart.chart.plot_area.axes[0].local_name(), "catAx")
   assert_eq(chart.chart.plot_area.axes[1].local_name(), "valAx")
@@ -114,7 +84,7 @@ test "Chart::parse: combination chart with multiple plots" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let chart = @chart.Chart::parse(fixture_bytes(xml))
+  let chart = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   assert_eq(chart.chart.plot_area.plots.length(), 2)
   assert_eq(chart.chart.plot_area.plots[0].local_name(), "barChart")
   assert_eq(chart.chart.plot_area.plots[1].local_name(), "lineChart")
@@ -122,7 +92,7 @@ test "Chart::parse: combination chart with multiple plots" {
 
 ///|
 test "Chart::parse: typed chart-body scalar fields" {
-  let chart = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
+  let chart = @chart.Chart::parse(@oxml.string_to_bytes(typical_chart_xml()))
   // Our fixture has no `<c:autoTitleDeleted>` so this should be `None`.
   // Other 7a2 fields likewise.
   assert_true(chart.chart.auto_title_deleted is None)
@@ -149,7 +119,7 @@ test "Chart::parse: typed chart-body fields from rich fixture" {
     "<c:showDLblsOverMax val=\"0\"/>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let chart = @chart.Chart::parse(fixture_bytes(xml))
+  let chart = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   assert_eq(chart.date1904.unwrap(), false)
   assert_eq(chart.lang.unwrap(), "en-US")
   assert_eq(chart.rounded_corners.unwrap(), true)
@@ -163,7 +133,7 @@ test "Chart::parse: typed chart-body fields from rich fixture" {
 ///|
 test "Chart::parse: rejects non-chart root" {
   let xml = "<?xml version=\"1.0\"?><c:notChart xmlns:c=\"" + chart_ns + "\"/>"
-  let bytes = fixture_bytes(xml)
+  let bytes = @oxml.string_to_bytes(xml)
   try @chart.Chart::parse(bytes) catch {
     _ => ()
   } noraise {
@@ -175,7 +145,7 @@ test "Chart::parse: rejects non-chart root" {
 test "Chart::parse: rejects wrong namespace" {
   // local name matches but uri is wrong → Malformed.
   let xml = "<?xml version=\"1.0\"?><x:chartSpace xmlns:x=\"http://example.com/x\"/>"
-  let bytes = fixture_bytes(xml)
+  let bytes = @oxml.string_to_bytes(xml)
   try @chart.Chart::parse(bytes) catch {
     _ => ()
   } noraise {
@@ -185,7 +155,7 @@ test "Chart::parse: rejects wrong namespace" {
 
 ///|
 test "Chart::serialize: re-parse equals original (round-trip floor)" {
-  let original = @chart.Chart::parse(fixture_bytes(typical_chart_xml()))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(typical_chart_xml()))
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
   assert_eq(re_parsed, original)
@@ -202,7 +172,7 @@ test "Chart::serialize: minimal chartSpace round-trips" {
     "\">" +
     "<c:chart><c:plotArea/></c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
   assert_eq(re_parsed, original)
@@ -221,7 +191,7 @@ test "Chart::serialize: foreign-namespace extLst children survive" {
     "<c:extLst><c:ext uri=\"{ABC}\" xmlns:foo=\"http://example.com/foo\"><foo:bar/></c:ext></c:extLst>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
   assert_eq(re_parsed, original)
@@ -232,7 +202,7 @@ test "Chart::parse: missing <c:chart> raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     chart_ns +
     "\"/>"
-  try @chart.Chart::parse(fixture_bytes(xml)) catch {
+  try @chart.Chart::parse(@oxml.string_to_bytes(xml)) catch {
     _ => ()
   } noraise {
     _ => fail("expected Malformed for chartSpace without chart")
@@ -244,7 +214,7 @@ test "Chart::parse: missing <c:plotArea> raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     chart_ns +
     "\"><c:chart/></c:chartSpace>"
-  try @chart.Chart::parse(fixture_bytes(xml)) catch {
+  try @chart.Chart::parse(@oxml.string_to_bytes(xml)) catch {
     _ => ()
   } noraise {
     _ => fail("expected Malformed for chart without plotArea")

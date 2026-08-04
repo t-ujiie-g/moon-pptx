@@ -255,7 +255,7 @@ pub fn Presentation::set_app_properties_mut(
   let rels = self.pkg.relationships_for("/") catch {
     e => raise OpcFailure(e.to_string())
   }
-  if rels.by_type(@opc.rt_extended_properties).length() == 0 {
+  if rels.by_type(@opc.rt_extended_properties).is_empty() {
     let updated = rels.with_relationship({
       id: next_unused_rid(rels),
       rel_type: @opc.rt_extended_properties,

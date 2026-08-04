@@ -57,6 +57,9 @@ pub impl Show for XmlEvent with fn output(self, logger) {
 ///|
 /// Streaming XML reader.
 pub struct XmlReader {
+  // Decoded code points, not a `StringView`: the lexer indexes by *code point*
+  // (`peek_at`, `starts_with(pos, …)`), and `String`/`StringView` indexing
+  // yields UTF-16 code units, which would split astral-plane name characters.
   chars : Array[Char]
   mut pos : Int
   // One Map per open element. `ns_stack[0]` holds bindings declared on the
@@ -76,9 +79,9 @@ pub fn XmlReader::new(input : String) -> XmlReader {
   {
     chars: input.to_array(),
     pos: 0,
-    ns_stack: Array::new(),
-    element_stack: Array::new(),
-    pending: Array::new(),
+    ns_stack: [],
+    element_stack: [],
+    pending: [],
   }
 }
 
@@ -86,11 +89,11 @@ pub fn XmlReader::new(input : String) -> XmlReader {
 /// Return the next event, or `None` at end of input. Raises `XmlError`
 /// for malformed input.
 pub fn XmlReader::next(self : XmlReader) -> XmlEvent? raise XmlError {
-  if self.pending.length() > 0 {
+  if !self.pending.is_empty() {
     return Some(self.pending.remove(0))
   }
   // Consume leading whitespace at the document level.
-  if self.element_stack.length() == 0 {
+  if self.element_stack.is_empty() {
     self.skip_whitespace()
   }
   while self.pos < self.chars.length() {
@@ -116,7 +119,7 @@ pub fn XmlReader::next(self : XmlReader) -> XmlEvent? raise XmlError {
     } else {
       // Text content
       let t = self.read_text()
-      if t.length() == 0 {
+      if t.is_empty() {
         // Was all whitespace between elements at root level — keep scanning.
         continue
       }
@@ -156,12 +159,10 @@ fn XmlReader::starts_with(
   if start + n > self.chars.length() {
     return false
   }
-  let mut i = 0
-  while i < n {
+  for i in 0..<n {
     if self.chars[start + i] != nchars[i] {
       return false
     }
-    i = i + 1
   }
   true
 }
@@ -249,7 +250,7 @@ fn XmlReader::read_start_tag(self : XmlReader) -> XmlEvent raise XmlError {
   let scope : Map[String, String] = Map([])
   // Collect raw attributes; we resolve QNames *after* gathering the scope
   // so that `xmlns:*` decls on this element apply to its own attributes.
-  let raw_attrs : Array[(String, String)] = Array::new()
+  let raw_attrs : Array[(String, String)] = []
   while self.pos < self.chars.length() {
     self.skip_whitespace()
     let c = self.chars[self.pos]
@@ -286,13 +287,11 @@ fn XmlReader::read_start_tag(self : XmlReader) -> XmlEvent raise XmlError {
       self.skip_whitespace()
       let value = self.read_attr_value()
       // Special-case namespace declarations.
-      if attr_name == "xmlns" {
-        scope[""] = value
-      } else if attr_name.length() > 6 && starts_with_str(attr_name, "xmlns:") {
-        let prefix = drop_prefix(attr_name, 6)
-        scope[prefix] = value
-      } else {
-        raw_attrs.push((attr_name, value))
+      match attr_name {
+        "xmlns" => scope[""] = value
+        [.. "xmlns:", .. prefix] if !prefix.is_empty() =>
+          scope[prefix.to_owned()] = value
+        _ => raw_attrs.push((attr_name, value))
       }
     }
   }
@@ -315,13 +314,13 @@ fn XmlReader::read_end_tag(self : XmlReader) -> XmlEvent raise XmlError {
   }
   self.advance()
   // Resolve against the *current* scope (the element being closed).
-  let scope = if self.ns_stack.length() > 0 {
+  let scope = if !self.ns_stack.is_empty() {
     self.ns_stack[self.ns_stack.length() - 1]
   } else {
     Map([])
   }
   let qname = self.resolve_qname(prefixed, scope, is_attribute=false)
-  if self.element_stack.length() == 0 {
+  if self.element_stack.is_empty() {
     raise MismatchedEndTag(prefixed)
   }
   let opened = self.element_stack[self.element_stack.length() - 1]
@@ -372,7 +371,7 @@ fn XmlReader::read_text(self : XmlReader) -> String raise XmlError {
     }
   }
   // At root scope, ignore inter-element whitespace by returning empty.
-  if self.element_stack.length() == 0 && all_space {
+  if self.element_stack.is_empty() && all_space {
     return ""
   }
   buf.to_string()
@@ -430,32 +429,26 @@ fn XmlReader::read_entity(self : XmlReader) -> String raise XmlError {
 
 ///|
 fn decode_numeric_entity(name : String) -> String raise XmlError {
-  let chars = name.to_array()
-  if chars.length() < 2 || chars[0] != '#' {
-    raise Malformed("unknown entity reference `&" + name + ";`")
-  }
-  let (radix, start) = if chars[1] == 'x' || chars[1] == 'X' {
-    (16, 2)
-  } else {
-    (10, 1)
+  let (radix, digits) = match name {
+    ['#', 'x' | 'X', .. rest] => (16, rest)
+    ['#', .. rest] if !rest.is_empty() => (10, rest)
+    _ => raise Malformed("unknown entity reference `&" + name + ";`")
   }
   let mut value = 0
-  let mut i = start
-  while i < chars.length() {
-    let d = match chars[i] {
-      '0'..='9' => chars[i].to_int() - '0'.to_int()
-      'a'..='f' => chars[i].to_int() - 'a'.to_int() + 10
-      'A'..='F' => chars[i].to_int() - 'A'.to_int() + 10
+  for c in digits {
+    let d = match c {
+      '0'..='9' => c.to_int() - '0'.to_int()
+      'a'..='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..='F' => c.to_int() - 'A'.to_int() + 10
       _ => raise Malformed("bad digit in numeric entity `&" + name + ";`")
     }
     if d >= radix {
       raise Malformed("bad digit in numeric entity `&" + name + ";`")
     }
     value = value * radix + d
-    i = i + 1
   }
   match value.to_char() {
-    Some(c) => String::from_array([c])
+    Some(c) => c.to_string()
     None => raise Malformed("invalid code point in `&" + name + ";`")
   }
 }
@@ -482,36 +475,36 @@ fn XmlReader::resolve_qname(
   scope : Map[String, String],
   is_attribute~ : Bool,
 ) -> QName raise XmlError {
-  let chars = prefixed.to_array()
-  let mut colon = -1
-  let mut i = 0
-  while i < chars.length() {
-    if chars[i] == ':' {
-      colon = i
-      break
+  // Split on the *first* colon: `a:b:c` is prefix `a`, local name `b:c`.
+  let prefix_buf = StringBuilder::new()
+  let after_colon = for rest = prefixed[:] {
+    match rest {
+      [':', .. tail] => break Some(tail)
+      [c, .. tail] => {
+        prefix_buf.write_char(c)
+        continue tail
+      }
+      [] => break None
     }
-    i = i + 1
   }
-  if colon < 0 {
+  guard after_colon is Some(local_view) else {
     // No prefix.
     if is_attribute {
       // Default namespace does not apply to unprefixed attributes.
       return QName::unqualified(prefixed)
     }
     let uri = self.lookup_ns("", scope)
-    QName::new(uri, prefixed)
-  } else {
-    let prefix = chars_to_string(chars, 0, colon)
-    let local_name = chars_to_string(chars, colon + 1, chars.length())
-    let uri = match scope.get(prefix) {
-      Some(v) => v
-      None => self.lookup_ns(prefix, scope)
-    }
-    if uri.length() == 0 {
-      raise UnboundPrefix(prefix)
-    }
-    QName::new(uri, local_name)
+    return QName::new(uri, prefixed)
   }
+  let prefix = prefix_buf.to_string()
+  let uri = match scope.get(prefix) {
+    Some(v) => v
+    None => self.lookup_ns(prefix, scope)
+  }
+  if uri.is_empty() {
+    raise UnboundPrefix(prefix)
+  }
+  QName::new(uri, local_view.to_owned())
 }
 
 ///|
@@ -554,33 +547,8 @@ fn XmlReader::resolve_attrs(
 ///|
 fn chars_to_string(chars : Array[Char], start : Int, stop : Int) -> String {
   let buf = StringBuilder::new(size_hint=stop - start)
-  let mut i = start
-  while i < stop {
+  for i in start..<stop {
     buf.write_char(chars[i])
-    i = i + 1
   }
   buf.to_string()
-}
-
-///|
-fn starts_with_str(s : String, prefix : String) -> Bool {
-  let sc = s.to_array()
-  let pc = prefix.to_array()
-  if sc.length() < pc.length() {
-    return false
-  }
-  let mut i = 0
-  while i < pc.length() {
-    if sc[i] != pc[i] {
-      return false
-    }
-    i = i + 1
-  }
-  true
-}
-
-///|
-fn drop_prefix(s : String, n : Int) -> String {
-  let chars = s.to_array()
-  chars_to_string(chars, n, chars.length())
 }

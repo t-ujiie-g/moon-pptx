@@ -31,12 +31,12 @@ pub fn QName::unqualified(local_name : String) -> QName {
 ///|
 /// `True` if this name is in a namespace (i.e. `uri` is non-empty).
 pub fn QName::is_qualified(self : QName) -> Bool {
-  self.uri.length() > 0
+  !self.uri.is_empty()
 }
 
 ///|
 pub impl Show for QName with fn output(self, logger) {
-  if self.uri.length() == 0 {
+  if self.uri.is_empty() {
     logger.write_string(self.local_name)
   } else {
     logger.write_string("{")

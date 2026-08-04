@@ -176,7 +176,7 @@ test "Table::with_style: styled table survives serialize -> reparse" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let base = @slide.Slide::parse(fixture_bytes(base_xml))
+  let base = @slide.Slide::parse(@oxml.string_to_bytes(base_xml))
   let s = base.with_shape(@slide.GraphicFrame(gf))
   let reparsed = @slide.Slide::parse(s.serialize())
   match reparsed.shapes[0] {

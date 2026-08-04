@@ -191,7 +191,7 @@ test "Slide::with_shape: appends shape; original unchanged" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let original = @slide.Slide::parse(fixture_bytes(xml))
+  let original = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   assert_eq(original.shapes.length(), 0)
   let rect = @slide.AutoShape::rect(
     2,
@@ -229,7 +229,7 @@ test "AutoShape: structural fields survive Slide::serialize" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let base = @slide.Slide::parse(fixture_bytes(xml))
+  let base = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   let rect = @slide.AutoShape::rect(
     2,
     "R",
@@ -273,7 +273,7 @@ test "AutoShape: second round-trip is Eq-stable" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let base = @slide.Slide::parse(fixture_bytes(xml))
+  let base = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   let rect = @slide.AutoShape::rect(
     2,
     "R",

@@ -472,7 +472,7 @@ fn parse_gradient_fill(
       _ => ()
     }
   }
-  if stops.length() == 0 {
+  if stops.is_empty() {
     raise MalformedFill("gradFill has no gradient stops")
   }
   { stops, direction, rotate_with_shape, flip, extension }
@@ -611,7 +611,7 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
       _ => ()
     }
   }
-  if embed_id.length() == 0 && link_id.length() == 0 {
+  if embed_id.is_empty() && link_id.is_empty() {
     raise MalformedFill("blipFill is missing both r:embed and r:link")
   }
   { embed_id, link_id, src_rect, fill_mode, extension }

@@ -3,10 +3,8 @@
 ///|
 fn bytes_of(values : Array[Int]) -> FixedArray[Byte] {
   let out = FixedArray::make(values.length(), b'\x00')
-  let mut i = 0
-  while i < values.length() {
+  for i in 0..<values.length() {
     out[i] = values[i].to_byte()
-    i = i + 1
   }
   out
 }

@@ -7,18 +7,6 @@ let p_ns : String = @oxml.presentation_ns
 let r_ns : String = @oxml.office_relationships_ns
 
 ///|
-fn ascii_bytes(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 fn office_like_master() -> FixedArray[Byte] {
   // A trimmed-down sldMaster: clrMap, sldLayoutIdLst with three layouts,
   // plus a deliberately noisy cSld + txStyles to verify skip behaviour.
@@ -51,7 +39,7 @@ fn office_like_master() -> FixedArray[Byte] {
     "</p:txStyles>" +
     "<p:hf sldNum=\"0\" hdr=\"0\" ftr=\"0\" dt=\"0\"/>" +
     "</p:sldMaster>"
-  ascii_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- ColorMapping ---
@@ -123,7 +111,7 @@ test "parse: missing clrMap is rejected" {
     p_ns +
     "\">" +
     "<p:sldLayoutIdLst/></p:sldMaster>"
-  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+  try @slide_master.SlideMaster::parse(@oxml.string_to_bytes(xml)) catch {
     @slide_master.SlideMasterError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -141,7 +129,7 @@ test "parse: clrMap missing required slot is rejected" {
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\"/>" + // folHlink missing
     "</p:sldMaster>"
-  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+  try @slide_master.SlideMaster::parse(@oxml.string_to_bytes(xml)) catch {
     @slide_master.SlideMasterError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -159,7 +147,7 @@ test "parse: clrMap with unknown enum value is rejected" {
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\" folHlink=\"folHlink\"/>" +
     "</p:sldMaster>"
-  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+  try @slide_master.SlideMaster::parse(@oxml.string_to_bytes(xml)) catch {
     @slide_master.SlideMasterError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -180,7 +168,7 @@ test "parse: sldLayoutId without r:id is rejected" {
     " hlink=\"hlink\" folHlink=\"folHlink\"/>" +
     "<p:sldLayoutIdLst><p:sldLayoutId id=\"1\"/></p:sldLayoutIdLst>" +
     "</p:sldMaster>"
-  try @slide_master.SlideMaster::parse(ascii_bytes(xml)) catch {
+  try @slide_master.SlideMaster::parse(@oxml.string_to_bytes(xml)) catch {
     @slide_master.SlideMasterError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -190,7 +178,9 @@ test "parse: sldLayoutId without r:id is rejected" {
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
-  try @slide_master.SlideMaster::parse(ascii_bytes("<p:sldMaster")) catch {
+  try
+    @slide_master.SlideMaster::parse(@oxml.string_to_bytes("<p:sldMaster"))
+  catch {
     @slide_master.SlideMasterError::XmlFailure(_, _) => ()
     _ => fail("expected XmlFailure")
   } noraise {

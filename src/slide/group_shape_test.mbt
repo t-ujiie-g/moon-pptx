@@ -14,7 +14,7 @@ fn slide_with_grp(inner : String) -> FixedArray[Byte] {
     inner +
     "</p:grpSp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- happy path ---

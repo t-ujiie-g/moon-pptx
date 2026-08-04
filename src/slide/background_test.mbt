@@ -1,33 +1,6 @@
 // Tests for the typed slide background (`<p:bg>`).
 
 ///|
-/// Index of the first occurrence of `needle` in `haystack`, or `-1`.
-/// `String` has no `index_of`, so scan over decoded chars (the same
-/// `for c in s` iteration the shared fixture encoder uses).
-fn char_index_of(haystack : String, needle : String) -> Int {
-  let h : Array[Char] = []
-  for c in haystack {
-    h.push(c)
-  }
-  let n : Array[Char] = []
-  for c in needle {
-    n.push(c)
-  }
-  let mut i = 0
-  while i + n.length() <= h.length() {
-    let mut j = 0
-    while j < n.length() && h[i + j] == n[j] {
-      j = j + 1
-    }
-    if j == n.length() {
-      return i
-    }
-    i = i + 1
-  }
-  -1
-}
-
-///|
 /// Wrap a `<p:cSld>` body (the `<p:bg>` plus a minimal empty spTree) into a
 /// parseable `<p:sld>`.
 fn slide_with_bg(bg : String) -> FixedArray[Byte] {
@@ -40,7 +13,7 @@ fn slide_with_bg(bg : String) -> FixedArray[Byte] {
     "<p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/></p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- parse ---
@@ -154,8 +127,8 @@ test "background: <p:bg> serialises before <p:spTree>" {
   )
   let slide = @slide.Slide::parse(bytes)
   let xml = @oxml.bytes_to_string(slide.serialize())
-  let bg_at = char_index_of(xml, "<p:bg>")
-  let sptree_at = char_index_of(xml, "<p:spTree>")
+  let bg_at = xml.find("<p:bg>").unwrap()
+  let sptree_at = xml.find("<p:spTree>").unwrap()
   assert_true(bg_at >= 0)
   assert_true(bg_at < sptree_at)
 }

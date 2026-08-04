@@ -22,7 +22,7 @@ fn slide_with_rpr(rpr_body : String) -> FixedArray[Byte] {
     "<a:t>x</a:t></a:r></a:p></p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -312,7 +312,7 @@ test "builder: with_character_spacing emits spc and round-trips" {
     "\"><p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(base_xml)).with_shape(
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(base_xml)).with_shape(
     @slide.AutoShape(shape),
   )
   let reparsed = @slide.Slide::parse(slide.serialize())
@@ -384,7 +384,7 @@ test "builder: with_kerning + with_highlight emit and round-trip" {
     "\"><p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(base_xml)).with_shape(
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(base_xml)).with_shape(
     @slide.AutoShape(shape),
   )
   let reparsed = @slide.Slide::parse(slide.serialize())
@@ -460,7 +460,7 @@ test "builder: with_text_outline + with_text_effects emit and round-trip" {
     "\"><p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(base_xml)).with_shape(
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(base_xml)).with_shape(
     @slide.AutoShape(shape),
   )
   let reparsed = @slide.Slide::parse(slide.serialize())

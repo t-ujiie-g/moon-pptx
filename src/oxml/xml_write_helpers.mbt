@@ -127,30 +127,27 @@ fn ensure_uri_bound(
 /// `bytes_to_string` (the reader-side decoder) — every serialiser
 /// ends with this conversion when producing part bytes.
 pub fn string_to_bytes(s : String) -> FixedArray[Byte] {
-  let buf : Array[Int] = []
+  let buf : Array[Byte] = []
   for c in s {
     let cp = c.to_int()
     if cp < 0x80 {
-      buf.push(cp)
+      buf.push(cp.to_byte())
     } else if cp < 0x800 {
-      buf.push(0xC0 | (cp >> 6))
-      buf.push(0x80 | (cp & 0x3F))
+      buf
+      ..push((0xC0 | (cp >> 6)).to_byte())
+      .push((0x80 | (cp & 0x3F)).to_byte())
     } else if cp < 0x10000 {
-      buf.push(0xE0 | (cp >> 12))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
+      buf
+      ..push((0xE0 | (cp >> 12)).to_byte())
+      ..push((0x80 | ((cp >> 6) & 0x3F)).to_byte())
+      .push((0x80 | (cp & 0x3F)).to_byte())
     } else {
-      buf.push(0xF0 | (cp >> 18))
-      buf.push(0x80 | ((cp >> 12) & 0x3F))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
+      buf
+      ..push((0xF0 | (cp >> 18)).to_byte())
+      ..push((0x80 | ((cp >> 12) & 0x3F)).to_byte())
+      ..push((0x80 | ((cp >> 6) & 0x3F)).to_byte())
+      .push((0x80 | (cp & 0x3F)).to_byte())
     }
   }
-  let bytes = FixedArray::make(buf.length(), b'\x00')
-  let mut i = 0
-  while i < buf.length() {
-    bytes[i] = buf[i].to_byte()
-    i = i + 1
-  }
-  bytes
+  FixedArray::makei(buf.length(), i => buf[i])
 }

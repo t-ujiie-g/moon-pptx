@@ -96,7 +96,7 @@ pub fn collect_subtree(
 fn collect_children(
   r : @xml.XmlReader,
 ) -> Array[@xml.XmlNode] raise XmlReadError {
-  let children = Array::new()
+  let children = []
   while true {
     let ev = next_event(r)
     match ev {

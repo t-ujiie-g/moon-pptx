@@ -152,7 +152,7 @@ pub fn SchemeColor::with_transform(
 pub impl Show for SchemeColor with fn output(self, logger) {
   logger.write_string("SchemeColor(")
   logger.write_object(self.base)
-  if self.transforms.length() > 0 {
+  if !self.transforms.is_empty() {
     logger.write_string(", [")
     for i, t in self.transforms {
       if i > 0 {

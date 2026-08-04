@@ -51,7 +51,7 @@ test "add_chart_mut: content_types gains Override for the chart part" {
   let cts = prs.pkg.content_types()
   let has_chart_override = cts.overrides
     .iter()
-    .any(fn(kv) { kv.0 == "/ppt/charts/chart1.xml" && kv.1 == @oxml.ct_chart })
+    .any(kv => kv.0 == "/ppt/charts/chart1.xml" && kv.1 == @oxml.ct_chart)
   assert_true(has_chart_override)
 }
 
@@ -217,7 +217,7 @@ test "add_chart_mut embed_data: chart gains externalData + workbook part" {
   assert_eq(emb.content_type, @oxml.ct_xlsx_sheet)
   let has_default = prs.pkg.content_types().defaults
     .iter()
-    .any(fn(kv) { kv.0 == "xlsx" && kv.1 == @oxml.ct_xlsx_sheet })
+    .any(kv => kv.0 == "xlsx" && kv.1 == @oxml.ct_xlsx_sheet)
   assert_true(has_default)
 }
 

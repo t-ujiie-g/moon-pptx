@@ -68,8 +68,8 @@ test "SVG blip serialises with the svg namespace and round-trips" {
   let slide = slide_of_picture(pic)
   let xml = @oxml.bytes_to_string(slide.serialize())
   // The serialised XML must carry the svgBlip and declare the SVG ns.
-  assert_true(char_index_of(xml, "svgBlip") >= 0)
-  assert_true(char_index_of(xml, @oxml.svg_ns) >= 0)
+  assert_true(xml.contains("svgBlip"))
+  assert_true(xml.contains(@oxml.svg_ns))
   // And it re-parses with the SVG extension intact.
   let reparsed = @slide.Slide::parse(slide.serialize())
   match reparsed.shapes[0] {

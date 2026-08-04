@@ -93,7 +93,7 @@ fn write_sld_layout_id_lst(
   w : @xml.XmlWriter,
   refs : Array[SlideLayoutRef],
 ) -> Unit raise @xml.XmlError {
-  if refs.length() == 0 {
+  if refs.is_empty() {
     return
   }
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "sldLayoutIdLst"))

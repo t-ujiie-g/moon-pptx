@@ -64,7 +64,7 @@ fn typical_title_slide() -> FixedArray[Byte] {
     "<p:transition><p:fade/></p:transition>" +
     "<p:timing/>" +
     "</p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- happy path ---
@@ -158,7 +158,7 @@ test "parse: clrMapOvr with overrideClrMapping carries through" {
     " hlink=\"folHlink\" folHlink=\"hlink\"/>" +
     "</p:clrMapOvr>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.clr_map_override {
     Override(cm) => {
       assert_true(cm.bg1 is @units.ThemeColor::Dk1)
@@ -186,7 +186,7 @@ test "parse: missing xfrm components is rejected" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  try @slide.Slide::parse(fixture_bytes(xml)) catch {
+  try @slide.Slide::parse(@oxml.string_to_bytes(xml)) catch {
     @slide.SlideError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -210,7 +210,7 @@ test "parse: non-integer offset attribute is rejected" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  try @slide.Slide::parse(fixture_bytes(xml)) catch {
+  try @slide.Slide::parse(@oxml.string_to_bytes(xml)) catch {
     @slide.SlideError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -220,7 +220,7 @@ test "parse: non-integer offset attribute is rejected" {
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
-  try @slide.Slide::parse(fixture_bytes("<p:sld")) catch {
+  try @slide.Slide::parse(@oxml.string_to_bytes("<p:sld")) catch {
     @slide.SlideError::XmlFailure(_, _) => ()
     _ => fail("expected XmlFailure")
   } noraise {
@@ -244,7 +244,7 @@ test "parse: shape with no placeholder leaves field None" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
       assert_true(s.placeholder is None)

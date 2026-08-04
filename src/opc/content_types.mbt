@@ -73,7 +73,7 @@ pub fn ContentTypes::resolve(
     }
   }
   let ext = extension_of(part_name)
-  if ext.length() == 0 {
+  if ext.is_empty() {
     return None
   }
   for kv in self.defaults {
@@ -149,38 +149,36 @@ pub fn ContentTypes::without_override(
 /// `.`, stopping at `/`). Returns the empty string if the basename has no
 /// dot.
 fn extension_of(name : String) -> String {
-  let chars = name.to_array()
-  let mut i = chars.length() - 1
-  while i >= 0 && chars[i] != '.' && chars[i] != '/' {
-    i = i - 1
+  // Walk forward tracking the tail after the most recent `.`; a `/` starts a
+  // new basename and therefore discards any dot seen so far.
+  for rest = name[:], after_dot = (None : StringView?) {
+    match rest {
+      ['/', .. tail] => continue tail, None
+      ['.', .. tail] => continue tail, Some(tail)
+      [_, .. tail] => continue tail, after_dot
+      [] =>
+        break match after_dot {
+          Some(ext) => ext.to_owned()
+          None => ""
+        }
+    }
   }
-  if i < 0 || chars[i] != '.' {
-    return ""
-  }
-  let buf = StringBuilder::new(size_hint=chars.length() - i - 1)
-  let mut j = i + 1
-  while j < chars.length() {
-    buf.write_char(chars[j])
-    j = j + 1
-  }
-  buf.to_string()
 }
 
 ///|
 fn equals_ignore_case(a : String, b : String) -> Bool {
-  let ca = a.to_array()
-  let cb = b.to_array()
-  if ca.length() != cb.length() {
-    return false
-  }
-  let mut i = 0
-  while i < ca.length() {
-    if to_lower_ascii(ca[i]) != to_lower_ascii(cb[i]) {
-      return false
+  for x = a[:], y = b[:] {
+    match (x, y) {
+      ([ca, .. xs], [cb, .. ys]) =>
+        if to_lower_ascii(ca) == to_lower_ascii(cb) {
+          continue xs, ys
+        } else {
+          break false
+        }
+      ([], []) => break true
+      _ => break false
     }
-    i = i + 1
   }
-  true
 }
 
 ///|

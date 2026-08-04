@@ -19,7 +19,7 @@ fn slide_with_pic(inner : String) -> FixedArray[Byte] {
     inner +
     "</p:pic>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- happy path ---

@@ -67,7 +67,7 @@ pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
 /// Construct an empty package with no parts and an empty content-types
 /// catalog. Useful as a starting point for builder code or tests.
 pub fn Package::new() -> Package {
-  { parts: Array::new(), content_types: ContentTypes::new() }
+  { parts: [], content_types: ContentTypes::new() }
 }
 
 ///|
@@ -92,14 +92,12 @@ pub fn Package::regenerate_content_types_part(
 ) -> Unit raise OpcError {
   let bytes = self.content_types.serialize()
   let mut found = false
-  let mut i = 0
-  while i < self.parts.length() {
+  for i in 0..<self.parts.length() {
     if self.parts[i].name == content_types_part_name {
       self.parts[i] = { name: content_types_part_name, content_type: "", bytes }
       found = true
       break
     }
-    i = i + 1
   }
   if !found {
     self.parts.push({ name: content_types_part_name, content_type: "", bytes })
@@ -181,13 +179,11 @@ pub fn Package::relationships_for(
 ///|
 /// Remove a part by OPC name. Returns true if a part was removed.
 pub fn Package::remove_part(self : Package, name : String) -> Bool {
-  let mut i = 0
-  while i < self.parts.length() {
+  for i in 0..<self.parts.length() {
     if self.parts[i].name == name {
       let _ = self.parts.remove(i)
       return true
     }
-    i = i + 1
   }
   false
 }

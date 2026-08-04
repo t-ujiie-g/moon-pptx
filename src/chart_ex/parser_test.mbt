@@ -4,36 +4,6 @@
 let chart_ex_ns : String = "http://schemas.microsoft.com/office/drawing/2014/chartex"
 
 ///|
-fn fixture_bytes(s : String) -> FixedArray[Byte] {
-  let buf : Array[Int] = []
-  for c in s {
-    let cp = c.to_int()
-    if cp < 0x80 {
-      buf.push(cp)
-    } else if cp < 0x800 {
-      buf.push(0xC0 | (cp >> 6))
-      buf.push(0x80 | (cp & 0x3F))
-    } else if cp < 0x10000 {
-      buf.push(0xE0 | (cp >> 12))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    } else {
-      buf.push(0xF0 | (cp >> 18))
-      buf.push(0x80 | ((cp >> 12) & 0x3F))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    }
-  }
-  let bytes = FixedArray::make(buf.length(), b'\x00')
-  let mut i = 0
-  while i < buf.length() {
-    bytes[i] = buf[i].to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
-///|
 /// A minimal but spec-shaped `<cx:chartSpace>` for a waterfall
 /// chart. The chart kind is determined by the `layoutId="…"`
 /// attribute on `<cx:plotAreaRegion><cx:series>`, which lifts to
@@ -65,7 +35,9 @@ fn typical_waterfall_xml() -> String {
 
 ///|
 test "ChartEx::parse: root recognised + chart body lifted" {
-  let chart = @chart_ex.ChartEx::parse(fixture_bytes(typical_waterfall_xml()))
+  let chart = @chart_ex.ChartEx::parse(
+    @oxml.string_to_bytes(typical_waterfall_xml()),
+  )
   // <cx:chartData> is captured as XmlElement, <cx:chart> is typed.
   assert_true(chart.chart_data is Some(_))
   // The waterfall fixture has exactly one plot-area region with one
@@ -91,7 +63,7 @@ test "ChartEx::parse: layoutId discriminates chart kind" {
     "</cx:plotArea>" +
     "</cx:chart>" +
     "</cx:chartSpace>"
-  let chart = @chart_ex.ChartEx::parse(fixture_bytes(xml))
+  let chart = @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml))
   assert_eq(
     chart.chart.plot_area.plot_area_region.series[0].layout_id,
     Sunburst,
@@ -112,7 +84,7 @@ test "ChartEx::parse: unknown layoutId routes to Other" {
     "</cx:plotArea>" +
     "</cx:chart>" +
     "</cx:chartSpace>"
-  let chart = @chart_ex.ChartEx::parse(fixture_bytes(xml))
+  let chart = @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml))
   match chart.chart.plot_area.plot_area_region.series[0].layout_id {
     Other(name) => assert_eq(name, "futurePlot2030")
     _ => fail("expected Other(futurePlot2030)")
@@ -135,7 +107,7 @@ test "ChartEx::parse: series carry attribute payload" {
     "</cx:plotArea>" +
     "</cx:chart>" +
     "</cx:chartSpace>"
-  let chart = @chart_ex.ChartEx::parse(fixture_bytes(xml))
+  let chart = @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml))
   let s = chart.chart.plot_area.plot_area_region.series[0]
   assert_eq(s.format_idx.unwrap(), 3)
   assert_eq(s.hidden.unwrap(), true)
@@ -156,7 +128,7 @@ test "ChartEx::parse: rejects <cx:series> without layoutId" {
     "</cx:plotArea>" +
     "</cx:chart>" +
     "</cx:chartSpace>"
-  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+  try @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml)) catch {
     _ => ()
   } noraise {
     _ => fail("expected Malformed for series without layoutId")
@@ -169,7 +141,7 @@ test "ChartEx::parse: rejects <cx:chart> without <cx:plotArea>" {
     "<cx:chartSpace xmlns:cx=\"" +
     chart_ex_ns +
     "\"><cx:chart/></cx:chartSpace>"
-  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+  try @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml)) catch {
     _ => ()
   } noraise {
     _ => fail("expected Malformed for chart without plotArea")
@@ -205,7 +177,7 @@ test "ChartEx::parse: rejects standard <c:chartSpace> root" {
   let xml = "<?xml version=\"1.0\"?><c:chartSpace xmlns:c=\"" +
     standard_ns +
     "\"/>"
-  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+  try @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml)) catch {
     _ => ()
   } noraise {
     _ => fail("expected Malformed for standard chartSpace root")
@@ -217,7 +189,7 @@ test "ChartEx::parse: rejects non-chartSpace root" {
   let xml = "<?xml version=\"1.0\"?><cx:notChart xmlns:cx=\"" +
     chart_ex_ns +
     "\"/>"
-  try @chart_ex.ChartEx::parse(fixture_bytes(xml)) catch {
+  try @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml)) catch {
     _ => ()
   } noraise {
     _ => fail("expected Malformed for non-chart root")
@@ -227,7 +199,7 @@ test "ChartEx::parse: rejects non-chartSpace root" {
 ///|
 test "ChartEx::serialize: round-trips through parse → serialize → parse" {
   let original = @chart_ex.ChartEx::parse(
-    fixture_bytes(typical_waterfall_xml()),
+    @oxml.string_to_bytes(typical_waterfall_xml()),
   )
   let bytes = original.serialize()
   let re_parsed = @chart_ex.ChartEx::parse(bytes)
@@ -245,7 +217,7 @@ test "ChartEx::serialize: minimal chartSpace round-trips" {
     "<cx:series layoutId=\"waterfall\"/>" +
     "</cx:plotAreaRegion></cx:plotArea></cx:chart>" +
     "</cx:chartSpace>"
-  let original = @chart_ex.ChartEx::parse(fixture_bytes(xml))
+  let original = @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml))
   let bytes = original.serialize()
   let re_parsed = @chart_ex.ChartEx::parse(bytes)
   assert_eq(re_parsed, original)
@@ -261,7 +233,7 @@ test "ChartEx::serialize: foreign-namespace siblings survive" {
     "</cx:plotAreaRegion></cx:plotArea></cx:chart>" +
     "<foo:bar payload=\"42\"/>" +
     "</cx:chartSpace>"
-  let original = @chart_ex.ChartEx::parse(fixture_bytes(xml))
+  let original = @chart_ex.ChartEx::parse(@oxml.string_to_bytes(xml))
   let bytes = original.serialize()
   let re_parsed = @chart_ex.ChartEx::parse(bytes)
   assert_eq(re_parsed, original)

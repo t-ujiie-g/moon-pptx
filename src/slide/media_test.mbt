@@ -1,5 +1,5 @@
 // Tests for media pictures.
-// Reuses `slide_of_picture` (svg_picture_test.mbt) and `char_index_of`
+// Reuses `slide_of_picture` (svg_picture_test.mbt)
 // (background_test.mbt) from this blackbox test package.
 
 ///|
@@ -43,11 +43,11 @@ test "media picture serialises videoFile + p14:media + media action" {
     @units.Emu(100L),
   )
   let xml = @oxml.bytes_to_string(slide_of_picture(pic).serialize())
-  assert_true(char_index_of(xml, "<a:videoFile") >= 0)
-  assert_true(char_index_of(xml, "media") >= 0) // p14:media
-  assert_true(char_index_of(xml, "ppaction://media") >= 0)
-  assert_true(char_index_of(xml, @oxml.media_ext_uri) >= 0)
-  assert_true(char_index_of(xml, @oxml.powerpoint_2010_ns) >= 0)
+  assert_true(xml.contains("<a:videoFile"))
+  assert_true(xml.contains("media")) // p14:media
+  assert_true(xml.contains("ppaction://media"))
+  assert_true(xml.contains(@oxml.media_ext_uri))
+  assert_true(xml.contains(@oxml.powerpoint_2010_ns))
 }
 
 ///|
@@ -65,7 +65,7 @@ test "audio media emits audioFile" {
     @units.Emu(100L),
   )
   let xml = @oxml.bytes_to_string(slide_of_picture(pic).serialize())
-  assert_true(char_index_of(xml, "<a:audioFile") >= 0)
+  assert_true(xml.contains("<a:audioFile"))
 }
 
 ///|
@@ -88,9 +88,9 @@ test "media XML round-trips losslessly (re-serialise is stable)" {
   let bytes1 = slide_of_picture(pic).serialize()
   let reparsed = @slide.Slide::parse(bytes1)
   let xml2 = @oxml.bytes_to_string(reparsed.serialize())
-  assert_true(char_index_of(xml2, "<a:videoFile") >= 0)
-  assert_true(char_index_of(xml2, "ppaction://media") >= 0)
-  assert_true(char_index_of(xml2, @oxml.media_ext_uri) >= 0)
+  assert_true(xml2.contains("<a:videoFile"))
+  assert_true(xml2.contains("ppaction://media"))
+  assert_true(xml2.contains(@oxml.media_ext_uri))
 }
 
 ///|
@@ -119,13 +119,13 @@ test "issue #11: media nv-children stay inside <p:nvPr> after round-trip" {
   )
   // A non-empty `<p:nvPr>…</p:nvPr>` (the buggy form emitted a self-closed
   // `<p:nvPr/>`, so `<p:nvPr>` with a `>` would be absent).
-  let nvpr_open = char_index_of(xml, "<p:nvPr>")
-  let nvpr_close = char_index_of(xml, "</p:nvPr>")
+  let nvpr_open = xml.find("<p:nvPr>").unwrap()
+  let nvpr_close = xml.find("</p:nvPr>").unwrap()
   assert_true(nvpr_open >= 0)
   assert_true(nvpr_close > nvpr_open)
   // Both the media reference and the p14:media extLst live between them.
-  let video = char_index_of(xml, "<a:videoFile")
-  let media_ext = char_index_of(xml, @oxml.media_ext_uri)
+  let video = xml.find("<a:videoFile").unwrap()
+  let media_ext = xml.find(@oxml.media_ext_uri).unwrap()
   assert_true(video > nvpr_open && video < nvpr_close)
   assert_true(media_ext > nvpr_open && media_ext < nvpr_close)
 }

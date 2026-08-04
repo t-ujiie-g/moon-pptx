@@ -67,4 +67,3 @@ pub fn Theme::serialize(Self) -> FixedArray[Byte] raise ThemeError
 // Type aliases
 
 // Traits
-

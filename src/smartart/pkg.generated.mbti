@@ -67,4 +67,3 @@ pub(all) enum SmartArtKind {
 // Type aliases
 
 // Traits
-

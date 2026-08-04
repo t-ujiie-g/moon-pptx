@@ -47,9 +47,7 @@ test "with_hyperlink: external URL registers a TargetMode::External rel" {
   let slide_name = prs.pkg
     .parts()
     .iter()
-    .filter(fn(p) {
-      p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml")
-    })
+    .filter(p => p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml"))
     .head()
     .unwrap().name
   let rels = prs.pkg.relationships_for(slide_name)
@@ -106,7 +104,7 @@ test "with_hyperlink_to_slide: registers Internal rel pointing at target slide" 
   for p in prs.pkg.parts() {
     if p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml") {
       let arr = prs.pkg.relationships_for(p.name).by_type(@opc.rt_slide)
-      if arr.length() > 0 {
+      if !arr.is_empty() {
         to_slide = Some(arr[0])
         break
       }
@@ -127,9 +125,7 @@ test "no hyperlinks → no rels mutation, no extra relationship lookups" {
   let slide_name = prs.pkg
     .parts()
     .iter()
-    .filter(fn(p) {
-      p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml")
-    })
+    .filter(p => p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml"))
     .head()
     .unwrap().name
   let before = prs.pkg.relationships_for(slide_name).items.length()
@@ -185,9 +181,7 @@ test "with_hyperlink: full save → reopen → rels survive" {
   let slide_name = prs2.pkg
     .parts()
     .iter()
-    .filter(fn(p) {
-      p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml")
-    })
+    .filter(p => p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml"))
     .head()
     .unwrap().name
   let rels = prs2.pkg.relationships_for(slide_name)

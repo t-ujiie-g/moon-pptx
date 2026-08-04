@@ -81,4 +81,3 @@ pub fn XmlWriter::xml_declaration(Self) -> Unit
 // Type aliases
 
 // Traits
-

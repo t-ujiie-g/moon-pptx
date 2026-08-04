@@ -13,7 +13,7 @@ fn fixture_layout_in_title(layout_body : String) -> FixedArray[Byte] {
     "<c:plotArea/>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -113,7 +113,7 @@ test "Layout: plotArea-level layout lifts" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let lay = original.chart.plot_area.layout.unwrap()
   let ml = lay.manual_layout.unwrap()
   assert_true(ml.layout_target is Some(LayoutOuter))
@@ -142,7 +142,7 @@ test "Layout: legend-level layout lifts" {
     "</c:legend>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let lay = original.chart.legend.unwrap().layout.unwrap()
   assert_eq(lay.manual_layout.unwrap().x.unwrap(), "0.8")
   let bytes = original.serialize()
@@ -175,7 +175,7 @@ test "Layout: per-data-point dLbl layout lifts" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
   assert_eq(re_parsed, original)

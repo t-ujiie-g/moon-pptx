@@ -125,7 +125,7 @@ pub(all) struct Color {
 pub impl Show for Color with fn output(self, logger) {
   logger.write_string("Color(")
   logger.write_object(self.base)
-  if self.transforms.length() > 0 {
+  if !self.transforms.is_empty() {
     logger.write_string(", [")
     for i, t in self.transforms {
       if i > 0 {
@@ -409,11 +409,11 @@ fn transform_from(
   attrs : Array[(@xml.QName, String)],
 ) -> @units.ColorTransform? {
   match local_name {
-    "tint" => pct_attr_opt(attrs, "val").map(fn(p) { Tint(p) })
-    "shade" => pct_attr_opt(attrs, "val").map(fn(p) { Shade(p) })
-    "satMod" => pct_attr_opt(attrs, "val").map(fn(p) { SatMod(p) })
-    "lumMod" => pct_attr_opt(attrs, "val").map(fn(p) { LumMod(p) })
-    "alpha" => pct_attr_opt(attrs, "val").map(fn(p) { Alpha(p) })
+    "tint" => pct_attr_opt(attrs, "val").map(p => Tint(p))
+    "shade" => pct_attr_opt(attrs, "val").map(p => Shade(p))
+    "satMod" => pct_attr_opt(attrs, "val").map(p => SatMod(p))
+    "lumMod" => pct_attr_opt(attrs, "val").map(p => LumMod(p))
+    "alpha" => pct_attr_opt(attrs, "val").map(p => Alpha(p))
     _ => None
   }
 }

@@ -63,7 +63,7 @@ fn anim_el(
   attrs : Array[(String, String)],
   children : Array[@xml.XmlNode],
 ) -> @xml.XmlElement {
-  let qattrs = attrs.map(fn(kv) { (@xml.QName::unqualified(kv.0), kv.1) })
+  let qattrs = attrs.map(kv => (@xml.QName::unqualified(kv.0), kv.1))
   @xml.XmlElement::new(
     @xml.QName::new(@oxml.presentation_ns, name),
     qattrs,
@@ -92,7 +92,7 @@ fn group_anim_steps(steps : Array[AnimStep]) -> Array[AnimGroup] {
       OnClick => groups.push({ is_click: true, steps: [step] })
       AfterPrevious => groups.push({ is_click: false, steps: [step] })
       WithPrevious =>
-        if groups.length() == 0 {
+        if groups.is_empty() {
           groups.push({ is_click: true, steps: [step] })
         } else {
           groups[groups.length() - 1].steps.push(step)
@@ -124,7 +124,7 @@ fn anim_attr_names(names : Array[String]) -> @xml.XmlNode {
   anim_node(
     "attrNameLst",
     [],
-    names.map(fn(n) { anim_node("attrName", [], [@xml.Text(n)]) }),
+    names.map(n => anim_node("attrName", [], [@xml.Text(n)])),
   )
 }
 
@@ -424,7 +424,7 @@ fn timing_element(timeline : Timeline) -> @xml.XmlElement {
       build_shapes.push(step.target_shape_id)
     }
   }
-  let grpid_of = fn(spid : Int) -> Int {
+  let grpid_of = (spid : Int) => {
     for i, s in build_shapes {
       if s == spid {
         return i + 1
@@ -434,7 +434,7 @@ fn timing_element(timeline : Timeline) -> @xml.XmlElement {
   }
   let root_id = gen.next() // 1 — tmRoot
   let seq_id = gen.next() // 2 — mainSeq
-  let group_pars = groups.map(fn(g) { anim_group_par(gen, g, grpid_of) })
+  let group_pars = groups.map(g => anim_group_par(gen, g, grpid_of))
   // <p:tnLst> followed by an optional <p:bldLst> declaring each by-paragraph
   // build (CT_SlideTiming order: tnLst, bldLst).
   let timing_children = [
@@ -469,8 +469,8 @@ fn timing_element(timeline : Timeline) -> @xml.XmlElement {
       ]),
     ]),
   ]
-  if build_shapes.length() > 0 {
-    let bld_ps = build_shapes.map(fn(spid) {
+  if !build_shapes.is_empty() {
+    let bld_ps = build_shapes.map(spid => {
       anim_node(
         "bldP",
         [

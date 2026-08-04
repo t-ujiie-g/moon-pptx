@@ -17,12 +17,12 @@ fn collect_uris(events : Array[@xml.XmlEvent]) -> Array[String] {
   for e in events {
     match e {
       StartElement(name, attrs) => {
-        if name.uri.length() > 0 && !seen.contains(name.uri) {
+        if !name.uri.is_empty() && !seen.contains(name.uri) {
           seen[name.uri] = ()
           out.push(name.uri)
         }
         for kv in attrs {
-          if kv.0.uri.length() > 0 && !seen.contains(kv.0.uri) {
+          if !kv.0.uri.is_empty() && !seen.contains(kv.0.uri) {
             seen[kv.0.uri] = ()
             out.push(kv.0.uri)
           }
@@ -75,23 +75,9 @@ fn events_equal(a : Array[@xml.XmlEvent], b : Array[@xml.XmlEvent]) -> Bool {
   if a.length() != b.length() {
     return false
   }
-  let mut i = 0
-  while i < a.length() {
+  for i in 0..<a.length() {
     let eq = match (a[i], b[i]) {
-      (StartElement(na, aa), StartElement(nb, ab)) =>
-        if na != nb || aa.length() != ab.length() {
-          false
-        } else {
-          let mut j = 0
-          let mut ok = true
-          while j < aa.length() && ok {
-            if aa[j].0 != ab[j].0 || aa[j].1 != ab[j].1 {
-              ok = false
-            }
-            j = j + 1
-          }
-          ok
-        }
+      (StartElement(na, aa), StartElement(nb, ab)) => na == nb && aa == ab
       (EndElement(na), EndElement(nb)) => na == nb
       (Text(sa), Text(sb)) => sa == sb
       (CData(sa), CData(sb)) => sa == sb
@@ -100,7 +86,6 @@ fn events_equal(a : Array[@xml.XmlEvent], b : Array[@xml.XmlEvent]) -> Bool {
     if !eq {
       return false
     }
-    i = i + 1
   }
   true
 }
@@ -177,11 +162,9 @@ test "round trip: deep nesting" {
   // A 10-deep nesting — guards against stack/state bugs that grow with depth.
   let mut open = ""
   let mut close = ""
-  let mut i = 0
-  while i < 10 {
+  for i in 0..<10 {
     open = open + "<n" + i.to_string() + ">"
     close = "</n" + i.to_string() + ">" + close
-    i = i + 1
   }
   let original = open + "leaf" + close
   let e1 = drain_again(original)

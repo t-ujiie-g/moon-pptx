@@ -170,88 +170,39 @@ pub fn resolve_target(
     External => return target
     Internal => ()
   }
-  let tchars = target.to_array()
   // Already absolute.
-  if tchars.length() > 0 && tchars[0] == '/' {
+  if target is ['/', ..] {
     return target
   }
-  // Take the directory portion of source (everything up to and including the
-  // last `/`).
-  let schars = source.to_array()
-  let mut last_slash = -1
-  let mut i = 0
-  while i < schars.length() {
-    if schars[i] == '/' {
-      last_slash = i
-    }
-    i = i + 1
-  }
-  if last_slash < 0 {
+  let source_segs = source.split("/").collect()
+  if source_segs.length() < 2 {
     // Source had no `/` — should not happen for well-formed OPC names.
     return "/" + target
   }
-  let dir_chars : Array[Char] = []
-  let mut j = 0
-  while j <= last_slash {
-    dir_chars.push(schars[j])
-    j = j + 1
-  }
-  // Resolve `..` segments inside `target`.
-  let segments : Array[Array[Char]] = []
-  // Seed segments with the directory's segments (excluding leading "/").
-  let mut k = 1
-  let mut current : Array[Char] = []
-  while k < dir_chars.length() {
-    if dir_chars[k] == '/' {
-      if current.length() > 0 {
-        segments.push(current)
-        current = []
-      }
-    } else {
-      current.push(dir_chars[k])
+  // Seed with the source's directory segments (everything before the
+  // basename), then fold the target's segments on top, honouring `.` / `..`.
+  let segments = []
+  for i in 0..<(source_segs.length() - 1) {
+    if !source_segs[i].is_empty() {
+      segments.push(source_segs[i])
     }
-    k = k + 1
   }
-  // Now process the target's segments.
-  let mut t = 0
-  current = []
-  while t <= tchars.length() {
-    if t == tchars.length() || tchars[t] == '/' {
-      let seg_chars = current
-      current = []
-      if seg_chars.length() == 0 {
-        // skip empty segments
-      } else if is_dot_segment(seg_chars) {
-        // "." → no-op
-      } else if is_dot_dot_segment(seg_chars) {
-        if segments.length() > 0 {
-          let _ = segments.pop().unwrap()
-        }
-      } else {
-        segments.push(seg_chars)
-      }
-      if t == tchars.length() {
-        break
-      }
-    } else {
-      current.push(tchars[t])
+  for seg in target.split("/") {
+    match seg {
+      [] | ['.'] => ()
+      ['.', '.'] => segments.pop() |> ignore
+      _ => segments.push(seg)
     }
-    t = t + 1
   }
-  // Reassemble.
+  if segments.is_empty() {
+    return "/"
+  }
   let buf = StringBuilder::new(size_hint=64)
   for seg in segments {
     buf.write_char('/')
-    for c in seg {
-      buf.write_char(c)
-    }
+    buf.write_view(seg)
   }
-  let result = buf.to_string()
-  if result.length() == 0 {
-    "/"
-  } else {
-    result
-  }
+  buf.to_string()
 }
 
 ///|
@@ -263,45 +214,22 @@ pub fn rels_path_for(source : String) -> String {
   if source == package_root {
     return "/_rels/.rels"
   }
-  let chars = source.to_array()
-  // Find last `/` to split into dir and base name.
-  let mut last_slash = -1
-  let mut i = 0
-  while i < chars.length() {
-    if chars[i] == '/' {
-      last_slash = i
-    }
-    i = i + 1
+  // Split at the last `/`: the directory prefix gains a `_rels/` level and the
+  // basename gains a `.rels` suffix.
+  let segs = source.split("/").collect()
+  guard segs.length() > 1 else { return "/_rels/" + source + ".rels" }
+  let buf = StringBuilder::new(size_hint=source.length() + 12)
+  for i in 0..<(segs.length() - 1) {
+    buf..write_view(segs[i]).write_char('/')
   }
-  if last_slash < 0 {
-    return "/_rels/" + source + ".rels"
-  }
-  let buf = StringBuilder::new(size_hint=chars.length() + 12)
-  let mut j = 0
-  while j <= last_slash {
-    buf.write_char(chars[j])
-    j = j + 1
-  }
-  buf.write_string("_rels/")
-  while j < chars.length() {
-    buf.write_char(chars[j])
-    j = j + 1
-  }
-  buf.write_string(".rels")
+  buf
+  ..write_string("_rels/")
+  ..write_view(segs[segs.length() - 1])
+  .write_string(".rels")
   buf.to_string()
 }
 
 // --- internal ---
-
-///|
-fn is_dot_segment(seg : Array[Char]) -> Bool {
-  seg.length() == 1 && seg[0] == '.'
-}
-
-///|
-fn is_dot_dot_segment(seg : Array[Char]) -> Bool {
-  seg.length() == 2 && seg[0] == '.' && seg[1] == '.'
-}
 
 ///|
 fn parse_relationships_xml(

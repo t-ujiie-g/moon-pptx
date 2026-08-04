@@ -8,31 +8,6 @@ fn opt_data() -> @chart.ChartData {
   .with_series("Revenue", [100.0, 200.0])
 }
 
-///|
-/// First index of `needle` in `haystack`, or -1 (String has no `index_of`).
-fn index_of(haystack : String, needle : String) -> Int {
-  let h : Array[Char] = []
-  for c in haystack {
-    h.push(c)
-  }
-  let n : Array[Char] = []
-  for c in needle {
-    n.push(c)
-  }
-  let mut i = 0
-  while i + n.length() <= h.length() {
-    let mut j = 0
-    while j < n.length() && h[i + j] == n[j] {
-      j = j + 1
-    }
-    if j == n.length() {
-      return i
-    }
-    i = i + 1
-  }
-  -1
-}
-
 // --- title ---
 
 ///|
@@ -42,8 +17,8 @@ test "ChartOption Title: sets a rich-text title and serialises the text" {
   assert_true(chart.chart.auto_title_deleted is None)
   // The text reaches the serialised XML inside <c:title>.
   let xml = @oxml.bytes_to_string(chart.serialize())
-  assert_true(index_of(xml, "<c:title>") >= 0)
-  assert_true(index_of(xml, "Revenue") >= 0)
+  assert_true(xml.contains("<c:title>"))
+  assert_true(xml.contains("Revenue"))
   // And the whole thing round-trips structurally.
   assert_eq(@chart.Chart::parse(chart.serialize()), chart)
 }

@@ -106,15 +106,13 @@ fn find_main_master_part_name(pkg : @opc.Package) -> String? {
   for p in pkg.parts() {
     if p.content_type == @oxml.ct_slide_master {
       let rest = if p.name.length() > prefix.length() {
-        p.name.view(start_offset=prefix.length()).to_owned()
+        p.name[prefix.length():]
       } else {
         ""
       }
-      let dot = str_index(rest, ".", 0)
-      let digits = if dot >= 0 {
-        rest.view(start_offset=0, end_offset=dot).to_owned()
-      } else {
-        rest
+      let digits = match rest.find(".") {
+        Some(dot) => rest[:dot].to_owned()
+        None => rest.to_owned()
       }
       let n = @oxml.parse_signed_int(digits).unwrap_or(0)
       if best is None || n < best_n {

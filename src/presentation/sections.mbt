@@ -130,7 +130,7 @@ pub fn Presentation::set_sections_mut(
       )
   }
   let n = pres.sld_ids.length()
-  if sections.length() > 0 {
+  if !sections.is_empty() {
     if sections[0].start != 0 {
       raise Malformed(
         "set_sections_mut: the first section must start at slide 0 — sections cover every slide",
@@ -159,7 +159,7 @@ pub fn Presentation::set_sections_mut(
   // extLst wrappers left empty by that), then splice the new one into
   // the presentation's <p:extLst>, creating it when absent.
   let new_extension : Array[@xml.XmlElement] = []
-  let mut placed = sections.length() == 0
+  let mut placed = sections.is_empty()
   for el in pres.extension {
     if el.name.uri == @oxml.presentation_ns && el.name.local_name == "extLst" {
       let kept : Array[@xml.XmlNode] = []
@@ -173,7 +173,7 @@ pub fn Presentation::set_sections_mut(
         kept.push(@xml.XmlNode::Element(build_section_ext(pres, sections)))
         placed = true
       }
-      if kept.length() > 0 {
+      if !kept.is_empty() {
         new_extension.push(@xml.XmlElement::new(el.name, el.attributes, kept))
       }
     } else {

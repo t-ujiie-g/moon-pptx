@@ -17,7 +17,7 @@ test "remove_slide_mut: drops the targeted slide and its sldId" {
   assert_true(prs.pkg.part_by_name("/ppt/slides/_rels/slide2.xml.rels") is None)
   let has_override = prs.pkg.content_types().overrides
     .iter()
-    .any(fn(kv) { kv.0 == "/ppt/slides/slide2.xml" })
+    .any(kv => kv.0 == "/ppt/slides/slide2.xml")
   assert_false(has_override)
 }
 

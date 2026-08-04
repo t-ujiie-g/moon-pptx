@@ -46,7 +46,7 @@ fn master_xml_with_default_clr_map() -> FixedArray[Byte] {
     "<p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles>" +
     "<p:hf sldNum=\"0\" hdr=\"0\" ftr=\"0\" dt=\"0\"/>" +
     "</p:sldMaster>"
-  ascii_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -77,7 +77,7 @@ test "SlideMaster::serialize: preserves the 12-slot color mapping" {
 ///|
 test "SlideMaster::serialize: preserves cSld + txStyles + hf via extension" {
   let m1 = roundtrip_master(master_xml_with_default_clr_map())
-  let names = m1.extension.map(fn(e) { e.name.local_name })
+  let names = m1.extension.map(e => e.name.local_name)
   assert_true(names.contains("cSld"))
   assert_true(names.contains("txStyles"))
   assert_true(names.contains("hf"))
@@ -98,8 +98,8 @@ test "SlideMaster::serialize: non-default clrMap (bg1=dk1) round-trips" {
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\" folHlink=\"folHlink\"/>" +
     "</p:sldMaster>"
-  let m0 = @slide_master.SlideMaster::parse(ascii_bytes(xml))
-  let m1 = roundtrip_master(ascii_bytes(xml))
+  let m0 = @slide_master.SlideMaster::parse(@oxml.string_to_bytes(xml))
+  let m1 = roundtrip_master(@oxml.string_to_bytes(xml))
   assert_true(m0 == m1)
   assert_true(m1.color_mapping.bg1 == @units.ThemeColor::Dk1)
 }
@@ -120,7 +120,7 @@ fn layout_xml_title() -> FixedArray[Byte] {
     "</p:spTree></p:cSld>" +
     "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" +
     "</p:sldLayout>"
-  ascii_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -150,8 +150,8 @@ test "SlideLayout::serialize: Blank layout (absent type attr) round-trips" {
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld>" +
     "</p:sldLayout>"
-  let l0 = @slide_master.SlideLayout::parse(ascii_bytes(xml))
-  let l1 = roundtrip_layout(ascii_bytes(xml))
+  let l0 = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
+  let l1 = roundtrip_layout(@oxml.string_to_bytes(xml))
   assert_true(l0 == l1)
   assert_true(l1.layout_type == @slide_master.SlideLayoutType::Blank)
 }
@@ -174,8 +174,8 @@ test "SlideLayout::serialize: overrideClrMapping with custom slots" {
     " accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\"" +
     " hlink=\"hlink\" folHlink=\"folHlink\"/></p:clrMapOvr>" +
     "</p:sldLayout>"
-  let l0 = @slide_master.SlideLayout::parse(ascii_bytes(xml))
-  let l1 = roundtrip_layout(ascii_bytes(xml))
+  let l0 = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
+  let l1 = roundtrip_layout(@oxml.string_to_bytes(xml))
   assert_true(l0 == l1)
   match l1.clr_map_override {
     Override(cm) => assert_true(cm.bg1 == @units.ThemeColor::Dk1)

@@ -63,5 +63,5 @@ fn flatten(nodes : Array[Node]) -> Array[FlatNode] {
 ///|
 /// Whether a flat node is a leaf (no children) — used by the tree layout.
 fn FlatNode::is_leaf(self : FlatNode) -> Bool {
-  self.children_gidx.length() == 0
+  self.children_gidx.is_empty()
 }
