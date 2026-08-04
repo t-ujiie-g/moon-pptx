@@ -68,7 +68,7 @@ test "Theme::serialize: theme-level extensions preserved" {
   // themeElements (which goes into theme.extension per ADR-004).
   // Order isn't guaranteed across the read/write boundary; check
   // presence by local-name membership.
-  let names = t1.extension.map(fn(e) { e.name.local_name })
+  let names = t1.extension.map(e => e.name.local_name)
   assert_true(names.contains("fmtScheme"))
   assert_true(names.contains("objectDefaults"))
   assert_true(names.contains("extraClrSchemeLst"))
@@ -99,8 +99,8 @@ test "Theme::serialize: srgbClr slot with modeled transform round-trips" {
     "<a:minorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont>" +
     "</a:fontScheme>" +
     "</a:themeElements></a:theme>"
-  let t0 = @theme.Theme::parse(ascii_bytes(xml))
-  let t1 = roundtrip_theme(ascii_bytes(xml))
+  let t0 = @theme.Theme::parse(@oxml.string_to_bytes(xml))
+  let t1 = roundtrip_theme(@oxml.string_to_bytes(xml))
   assert_true(t0 == t1)
   assert_eq(t1.color_scheme.accent1.transforms.length(), 1)
 }

@@ -20,7 +20,7 @@ test "CommentAuthorList::serialize: round-trips a 2-author list" {
 ///|
 test "CommentAuthorList::serialize: round-trips empty list" {
   let xml = "<?xml version=\"1.0\"?><p:cmAuthorLst xmlns:p=\"" + pml_ns + "\"/>"
-  let list_in = @comments.CommentAuthorList::parse(fixture_bytes(xml))
+  let list_in = @comments.CommentAuthorList::parse(@oxml.string_to_bytes(xml))
   let list_out = @comments.CommentAuthorList::parse(list_in.serialize())
   assert_true(list_in == list_out)
 }
@@ -43,7 +43,7 @@ test "CommentAuthorList::serialize: preserves list-level extLst" {
     "<p:cmAuthor id=\"0\" name=\"A\" initials=\"A\" lastIdx=\"0\" clrIdx=\"0\"/>" +
     "<p:extLst><p:ext uri=\"{X}\"/></p:extLst>" +
     "</p:cmAuthorLst>"
-  let list_in = @comments.CommentAuthorList::parse(fixture_bytes(xml))
+  let list_in = @comments.CommentAuthorList::parse(@oxml.string_to_bytes(xml))
   let list_out = @comments.CommentAuthorList::parse(list_in.serialize())
   assert_true(list_in == list_out)
   assert_eq(list_out.extension.length(), 1)
@@ -86,7 +86,7 @@ test "CommentList::serialize: escapes text with XML metacharacters" {
     "<p:pos x=\"0\" y=\"0\"/>" +
     "<p:text>a &amp; b &lt; c</p:text>" +
     "</p:cm></p:cmLst>"
-  let list_in = @comments.CommentList::parse(fixture_bytes(xml))
+  let list_in = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   let list_out = @comments.CommentList::parse(list_in.serialize())
   // After round-trip the text is still the decoded "a & b < c".
   assert_eq(list_out.comments[0].text, "a & b < c")
@@ -101,7 +101,7 @@ test "CommentList::serialize: preserves pos coordinates verbatim" {
     "<p:pos x=\"123456789\" y=\"-987\"/>" +
     "<p:text>x</p:text>" +
     "</p:cm></p:cmLst>"
-  let list_in = @comments.CommentList::parse(fixture_bytes(xml))
+  let list_in = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   let list_out = @comments.CommentList::parse(list_in.serialize())
   assert_eq(list_out.comments[0].pos.x, @units.Emu(123456789L))
   assert_eq(list_out.comments[0].pos.y, @units.Emu(-987L))
@@ -110,7 +110,7 @@ test "CommentList::serialize: preserves pos coordinates verbatim" {
 ///|
 test "CommentList::serialize: round-trips empty list" {
   let xml = "<?xml version=\"1.0\"?><p:cmLst xmlns:p=\"" + pml_ns + "\"/>"
-  let list_in = @comments.CommentList::parse(fixture_bytes(xml))
+  let list_in = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   let list_out = @comments.CommentList::parse(list_in.serialize())
   assert_true(list_in == list_out)
 }
@@ -125,7 +125,7 @@ test "CommentList::serialize: round-trips unknown <p:cm> child via extension" {
     "<p:text>hi</p:text>" +
     "<p:futureSibling foo=\"bar\"/>" +
     "</p:cm></p:cmLst>"
-  let list_in = @comments.CommentList::parse(fixture_bytes(xml))
+  let list_in = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   let list_out = @comments.CommentList::parse(list_in.serialize())
   assert_eq(list_out.comments[0].extension.length(), 1)
   assert_eq(list_out.comments[0].extension[0].name.local_name, "futureSibling")

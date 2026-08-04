@@ -53,7 +53,7 @@ pub fn Presentation::set_notes_mut(
     e => raise OpcFailure(e.to_string())
   }
   let existing_rels = slide_rels.by_type(@opc.rt_notes_slide)
-  if existing_rels.length() > 0 {
+  if !existing_rels.is_empty() {
     // Resolve relative target → absolute part name and replace bytes.
     let existing_target = @opc.resolve_target(
       slide_name,

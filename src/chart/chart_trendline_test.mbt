@@ -21,7 +21,7 @@ fn fixture_trendline_in_bar(trendline_body : String) -> FixedArray[Byte] {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -193,7 +193,7 @@ test "Trendline: scatter series trendlines" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let trends = match original.chart.plot_area.plots[0] {
     ScatterChart(s) => s.series[0].trendlines
     _ => abort("expected ScatterChart")
@@ -224,7 +224,7 @@ test "Trendline: bubble series trendlines" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let trends = match original.chart.plot_area.plots[0] {
     BubbleChart(b) => b.series[0].trendlines
     _ => abort("expected BubbleChart")

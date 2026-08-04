@@ -21,10 +21,8 @@ fn fake_png() -> FixedArray[Byte] {
      0xAE, 0x42, 0x60, 0x82,
   ]
   let out = FixedArray::make(raw.length(), b'\x00')
-  let mut i = 0
-  while i < raw.length() {
+  for i in 0..<raw.length() {
     out[i] = raw[i].to_byte()
-    i = i + 1
   }
   out
 }
@@ -38,10 +36,8 @@ fn jpeg_signature_bytes() -> FixedArray[Byte] {
     0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46,
   ]
   let out = FixedArray::make(raw.length(), b'\x00')
-  let mut i = 0
-  while i < raw.length() {
+  for i in 0..<raw.length() {
     out[i] = raw[i].to_byte()
-    i = i + 1
   }
   out
 }
@@ -108,7 +104,7 @@ test "add_picture_mut: content_types gains a Default for the extension" {
   let cts = prs.pkg.content_types()
   let has_png_default = cts.defaults
     .iter()
-    .any(fn(kv) { kv.0 == "png" && kv.1 == "image/png" })
+    .any(kv => kv.0 == "png" && kv.1 == "image/png")
   assert_true(has_png_default)
 }
 
@@ -196,10 +192,8 @@ fn png_96x192() -> FixedArray[Byte] {
     0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
   ]
   let out = FixedArray::make(raw.length(), b'\x00')
-  let mut i = 0
-  while i < raw.length() {
+  for i in 0..<raw.length() {
     out[i] = raw[i].to_byte()
-    i = i + 1
   }
   out
 }
@@ -306,9 +300,9 @@ test "add_svg_picture_mut: wires svg + fallback parts, rels, content types" {
   assert_eq(svg.content_type, "image/svg+xml")
   // Both content-type Defaults are declared.
   let cts = prs.pkg.content_types()
-  assert_true(cts.defaults.iter().any(fn(kv) { kv.0 == "png" }))
+  assert_true(cts.defaults.iter().any(kv => kv.0 == "png"))
   assert_true(
-    cts.defaults.iter().any(fn(kv) { kv.0 == "svg" && kv.1 == "image/svg+xml" }),
+    cts.defaults.iter().any(kv => kv.0 == "svg" && kv.1 == "image/svg+xml"),
   )
   // The slide carries one SVG picture: blip embeds the fallback (rId2),
   // svgBlip references the SVG (rId3).
@@ -383,10 +377,8 @@ fn fake_mp4() -> FixedArray[Byte] {
      0x00, 0x00, 0x02, 0x00,
   ]
   let out = FixedArray::make(raw.length(), b'\x00')
-  let mut i = 0
-  while i < raw.length() {
+  for i in 0..<raw.length() {
     out[i] = raw[i].to_byte()
-    i = i + 1
   }
   out
 }
@@ -396,10 +388,8 @@ fn fake_mp4() -> FixedArray[Byte] {
 fn fake_mp3() -> FixedArray[Byte] {
   let raw : Array[Int] = [0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00]
   let out = FixedArray::make(raw.length(), b'\x00')
-  let mut i = 0
-  while i < raw.length() {
+  for i in 0..<raw.length() {
     out[i] = raw[i].to_byte()
-    i = i + 1
   }
   out
 }
@@ -422,7 +412,7 @@ test "add_video_mut: wires media + poster parts, three rels, content types" {
   assert_eq(media.content_type, "video/mp4")
   assert_true(prs.pkg.part_by_name("/ppt/media/image1.png") is Some(_))
   let cts = prs.pkg.content_types()
-  assert_true(cts.defaults.iter().any(fn(kv) { kv.0 == "mp4" }))
+  assert_true(cts.defaults.iter().any(kv => kv.0 == "mp4"))
   // The slide holds one media picture: poster (rId2), link (rId3), embed (rId4).
   // The slide holds one picture whose poster is rId2. On re-parse `media` is
   // None — the videoFile / p14:media references round-trip through

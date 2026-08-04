@@ -49,7 +49,7 @@ test "set_sections_mut: partitions the deck and reads back" {
   let mut rest = xml
   while rest.find(needle) is Some(off) {
     hits = hits + 1
-    rest = rest.view(start_offset=off + needle.length()).to_owned()
+    rest = rest[off + needle.length():].to_owned()
   }
   assert_eq(hits, 2)
 }
@@ -80,7 +80,7 @@ test "set_sections_mut: setting again replaces, never duplicates" {
   assert_true(!xml.contains("First"))
   // Exactly one section ext in the file.
   let first = xml.find(@oxml.section_list_ext_uri).unwrap()
-  let rest = xml.view(start_offset=first + 1).to_owned()
+  let rest = xml[first + 1:].to_owned()
   assert_true(rest.find(@oxml.section_list_ext_uri) is None)
 }
 

@@ -172,7 +172,7 @@ fn Presentation::ordered_slide_parts(
 fn Presentation::main_document_part_name(self : Presentation) -> String? {
   let rels = self.pkg.relationships_for("/") catch { _ => return None }
   let matches = rels.by_type(@opc.rt_office_document)
-  if matches.length() == 0 {
+  if matches.is_empty() {
     return None
   }
   let rel = matches[0]

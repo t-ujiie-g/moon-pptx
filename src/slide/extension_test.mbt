@@ -32,7 +32,7 @@ test "ADR-004: slide-level timing survives parse; transition lifts to typed fiel
     "<p:transition spd=\"med\"><p:fade/></p:transition>" +
     "<p:timing/>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   // `<p:transition>` is now the typed `Slide.transition` field, so it must
   // *not* appear in extension (mirrors the `<p:bg>` lift below).
   assert_true(find_ext(slide, "transition") is None)
@@ -65,7 +65,7 @@ test "<p:cSld><p:bg> lifts into the typed background field, not extension" {
     "</p:spTree>" +
     "</p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   assert_true(find_ext(slide, "bg") is None)
   match slide.background {
     Some(StyleReference(idx, _)) => assert_eq(idx, 1001)
@@ -86,7 +86,7 @@ test "ADR-004: foreign-namespace <p:sld> child is preserved" {
     "</p:spTree></p:cSld>" +
     "<x:custom payload=\"42\"/>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   let custom = find_ext(slide, "custom")
   assert_true(custom is Some(_))
   let c = custom.unwrap()
@@ -126,7 +126,7 @@ test "chart graphicFrame lifts to GraphicFrame(ChartContent)" {
     "</p:graphicFrame>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   assert_eq(slide.shapes.length(), 1)
   match slide.shapes[0] {
     GraphicFrame(gf) => {
@@ -160,7 +160,7 @@ test "ADR-004: AutoShape preserves <p:style> in extension" {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
       // Find <p:style> in the extension. The parser also captures
@@ -213,7 +213,7 @@ test "ADR-004: Picture preserves <p:extLst> in extension" {
     "</p:pic>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     Picture(p) => assert_true(find_local(p.extension, "extLst") is Some(_))
     _ => fail("expected Picture")
@@ -237,7 +237,7 @@ test "ADR-004: Connector preserves <p:style> in extension" {
     "</p:cxnSp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     Connector(c) => assert_true(find_local(c.extension, "style") is Some(_))
     _ => fail("expected Connector")
@@ -261,7 +261,7 @@ test "ADR-004: GroupShape captures foreign-namespace siblings" {
     "</p:grpSp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     Group(g) => {
       let special = find_local(g.extension, "special").unwrap()

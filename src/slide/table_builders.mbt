@@ -158,24 +158,13 @@ pub fn Table::of_grid(
   col_width~ : @units.Emu,
   row_height~ : @units.Emu,
 ) -> Table {
-  let grid : Array[@units.Emu] = []
-  let mut i = 0
-  while i < cols {
-    grid.push(col_width)
-    i = i + 1
-  }
-  let row_list : Array[TableRow] = []
-  let mut r = 0
-  while r < rows {
-    let cells : Array[TableCell] = []
-    let mut c = 0
-    while c < cols {
-      cells.push(TableCell::empty())
-      c = c + 1
-    }
-    row_list.push(TableRow::of_cells(cells, height=row_height))
-    r = r + 1
-  }
+  let grid = Array::make(cols, col_width)
+  let row_list = Array::makei(rows, _ => {
+    TableRow::of_cells(
+      Array::makei(cols, _ => TableCell::empty()),
+      height=row_height,
+    )
+  })
   Table::of_rows(row_list, col_widths=grid)
 }
 

@@ -20,7 +20,7 @@ fn slide_with_txbody(inner : String) -> FixedArray[Byte] {
     "</p:txBody>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -158,7 +158,7 @@ test "parse: shape with no txBody leaves field None" {
     "<p:spPr/>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   assert_true(first_auto_shape(slide).text_body is None)
 }
 

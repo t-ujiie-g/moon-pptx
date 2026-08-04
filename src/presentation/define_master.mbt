@@ -387,31 +387,14 @@ fn wrap_slide_layout_xml(
 ///|
 /// Extract `<p:cSld>…</p:cSld>` (inclusive) from serialised slide XML.
 fn extract_csld(slide_xml : String) -> String {
-  let start = str_index(slide_xml, "<p:cSld", 0)
+  // Only ever called on writer-produced XML, where both markers are present.
+  let start = slide_xml.find("<p:cSld").unwrap_or(0)
   let close = "</p:cSld>"
-  let end = str_index(slide_xml, close, start)
-  slide_xml.view(start_offset=start, end_offset=end + close.length()).to_owned()
-}
-
-///|
-/// Index of `needle` in `hay` at or after `from` (character offsets), or a
-/// negative number if absent. Only used on writer-produced XML where the
-/// markers are guaranteed present.
-fn str_index(hay : String, needle : String, from : Int) -> Int {
-  let hn = hay.length()
-  let nn = needle.length()
-  let mut i = from
-  while i + nn <= hn {
-    let mut j = 0
-    while j < nn && hay[i + j] == needle[j] {
-      j = j + 1
-    }
-    if j == nn {
-      return i
-    }
-    i = i + 1
+  let end = match slide_xml[start:].find(close) {
+    Some(at) => start + at + close.length()
+    None => slide_xml.length()
   }
-  -1
+  slide_xml[start:end].to_owned()
 }
 
 ///|
@@ -476,14 +459,11 @@ fn Presentation::max_part_index(self : Presentation, prefix : String) -> Int {
   let mut max = 0
   for p in self.pkg.parts() {
     if p.name.length() > prefix.length() &&
-      p.name.view(start_offset=0, end_offset=prefix.length()).to_owned() ==
-      prefix {
-      let rest = p.name.view(start_offset=prefix.length()).to_owned()
-      let dot = str_index(rest, ".", 0)
-      let digits = if dot >= 0 {
-        rest.view(start_offset=0, end_offset=dot).to_owned()
-      } else {
-        rest
+      p.name[0:prefix.length()].to_owned() == prefix {
+      let rest = p.name[prefix.length():]
+      let digits = match rest.find(".") {
+        Some(dot) => rest[:dot].to_owned()
+        None => rest.to_owned()
       }
       match @oxml.parse_signed_int(digits) {
         Some(n) => if n > max { max = n }
@@ -505,17 +485,14 @@ fn Presentation::max_slide_layout_id(self : Presentation) -> Int64 {
   let mut max = 2147483647L
   for p in self.pkg.parts() {
     if p.name.length() <= prefix.length() ||
-      p.name.view(start_offset=0, end_offset=prefix.length()).to_owned() !=
-      prefix {
+      p.name[0:prefix.length()].to_owned() != prefix {
       continue
     }
     let xml = @oxml.bytes_to_string(p.bytes) catch { _ => continue }
     let mut from = 0
     while true {
-      let at = str_index(xml, marker, from)
-      if at < 0 {
-        break
-      }
+      guard xml[from:].find(marker) is Some(rel_at) else { break }
+      let at = from + rel_at
       let mut j = at + marker.length()
       let mut value = 0L
       let mut saw_digit = false

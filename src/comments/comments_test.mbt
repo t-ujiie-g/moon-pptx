@@ -3,36 +3,6 @@
 ///|
 let pml_ns : String = "http://schemas.openxmlformats.org/presentationml/2006/main"
 
-///|
-fn fixture_bytes(s : String) -> FixedArray[Byte] {
-  let buf : Array[Int] = []
-  for c in s {
-    let cp = c.to_int()
-    if cp < 0x80 {
-      buf.push(cp)
-    } else if cp < 0x800 {
-      buf.push(0xC0 | (cp >> 6))
-      buf.push(0x80 | (cp & 0x3F))
-    } else if cp < 0x10000 {
-      buf.push(0xE0 | (cp >> 12))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    } else {
-      buf.push(0xF0 | (cp >> 18))
-      buf.push(0x80 | ((cp >> 12) & 0x3F))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    }
-  }
-  let bytes = FixedArray::make(buf.length(), b'\x00')
-  let mut i = 0
-  while i < buf.length() {
-    bytes[i] = buf[i].to_byte()
-    i = i + 1
-  }
-  bytes
-}
-
 // --- commentAuthors.xml ---
 
 ///|
@@ -46,7 +16,7 @@ fn typical_authors() -> FixedArray[Byte] {
     "<p:extLst><p:ext uri=\"{ABC}\"/></p:extLst>" +
     "</p:cmAuthor>" +
     "</p:cmAuthorLst>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -76,7 +46,7 @@ test "CommentAuthorList::parse: per-author extLst is preserved" {
 ///|
 test "CommentAuthorList::parse: empty list" {
   let xml = "<?xml version=\"1.0\"?><p:cmAuthorLst xmlns:p=\"" + pml_ns + "\"/>"
-  let list = @comments.CommentAuthorList::parse(fixture_bytes(xml))
+  let list = @comments.CommentAuthorList::parse(@oxml.string_to_bytes(xml))
   assert_eq(list.authors.length(), 0)
   assert_eq(list.extension.length(), 0)
 }
@@ -89,7 +59,7 @@ test "CommentAuthorList::parse: top-level extLst rides on list extension" {
     "<p:cmAuthor id=\"0\" name=\"A\" initials=\"A\" lastIdx=\"0\" clrIdx=\"0\"/>" +
     "<p:extLst><p:ext uri=\"{X}\"/></p:extLst>" +
     "</p:cmAuthorLst>"
-  let list = @comments.CommentAuthorList::parse(fixture_bytes(xml))
+  let list = @comments.CommentAuthorList::parse(@oxml.string_to_bytes(xml))
   assert_eq(list.authors.length(), 1)
   assert_eq(list.extension.length(), 1)
   assert_eq(list.extension[0].name.local_name, "extLst")
@@ -103,7 +73,7 @@ test "CommentAuthorList::parse: missing required attribute raises Malformed" {
     "\">" +
     "<p:cmAuthor id=\"0\" name=\"A\" initials=\"A\" lastIdx=\"0\"/>" +
     "</p:cmAuthorLst>"
-  try @comments.CommentAuthorList::parse(fixture_bytes(xml)) catch {
+  try @comments.CommentAuthorList::parse(@oxml.string_to_bytes(xml)) catch {
     @comments.CommentsError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -114,7 +84,7 @@ test "CommentAuthorList::parse: missing required attribute raises Malformed" {
 ///|
 test "CommentAuthorList::parse: wrong root element raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><p:cmLst xmlns:p=\"" + pml_ns + "\"/>"
-  try @comments.CommentAuthorList::parse(fixture_bytes(xml)) catch {
+  try @comments.CommentAuthorList::parse(@oxml.string_to_bytes(xml)) catch {
     @comments.CommentsError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -141,7 +111,7 @@ fn typical_comments() -> FixedArray[Byte] {
     "<p:extLst><p:ext uri=\"{XYZ}\"/></p:extLst>" +
     "</p:cm>" +
     "</p:cmLst>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -179,7 +149,7 @@ test "CommentList::parse: per-comment extLst is preserved" {
 ///|
 test "CommentList::parse: empty list" {
   let xml = "<?xml version=\"1.0\"?><p:cmLst xmlns:p=\"" + pml_ns + "\"/>"
-  let list = @comments.CommentList::parse(fixture_bytes(xml))
+  let list = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   assert_eq(list.comments.length(), 0)
   assert_eq(list.extension.length(), 0)
 }
@@ -191,7 +161,7 @@ test "CommentList::parse: missing <p:pos> raises Malformed" {
     "\">" +
     "<p:cm authorId=\"0\" idx=\"1\"><p:text>oops</p:text></p:cm>" +
     "</p:cmLst>"
-  try @comments.CommentList::parse(fixture_bytes(xml)) catch {
+  try @comments.CommentList::parse(@oxml.string_to_bytes(xml)) catch {
     @comments.CommentsError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -208,7 +178,7 @@ test "CommentList::parse: nested element inside <p:text> raises Malformed" {
     "<p:pos x=\"0\" y=\"0\"/>" +
     "<p:text><p:foo/></p:text>" +
     "</p:cm></p:cmLst>"
-  try @comments.CommentList::parse(fixture_bytes(xml)) catch {
+  try @comments.CommentList::parse(@oxml.string_to_bytes(xml)) catch {
     @comments.CommentsError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -226,7 +196,7 @@ test "CommentList::parse: unknown child of <p:cm> is preserved" {
     "<p:text>hi</p:text>" +
     "<p:futureSibling foo=\"bar\"/>" +
     "</p:cm></p:cmLst>"
-  let list = @comments.CommentList::parse(fixture_bytes(xml))
+  let list = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   let c = list.comments[0]
   assert_eq(c.extension.length(), 1)
   assert_eq(c.extension[0].name.local_name, "futureSibling")
@@ -235,7 +205,7 @@ test "CommentList::parse: unknown child of <p:cm> is preserved" {
 ///|
 test "CommentList::parse: wrong root element raises Malformed" {
   let xml = "<?xml version=\"1.0\"?><p:cmAuthorLst xmlns:p=\"" + pml_ns + "\"/>"
-  try @comments.CommentList::parse(fixture_bytes(xml)) catch {
+  try @comments.CommentList::parse(@oxml.string_to_bytes(xml)) catch {
     @comments.CommentsError::Malformed(_) => ()
     _ => fail("expected Malformed")
   } noraise {
@@ -252,6 +222,6 @@ test "CommentList::parse: text with entity references decodes" {
     "<p:pos x=\"0\" y=\"0\"/>" +
     "<p:text>a &amp; b &lt; c</p:text>" +
     "</p:cm></p:cmLst>"
-  let list = @comments.CommentList::parse(fixture_bytes(xml))
+  let list = @comments.CommentList::parse(@oxml.string_to_bytes(xml))
   assert_eq(list.comments[0].text, "a & b < c")
 }

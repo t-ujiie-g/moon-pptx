@@ -114,8 +114,8 @@ test "Chart::validate: outEnd on a line chart raises Malformed naming the plot" 
   try chart.validate() |> ignore catch {
     @chart.ChartError::Malformed(msg) => {
       // names the plot family and the offending position.
-      assert_true(index_of(msg, "lineChart") >= 0)
-      assert_true(index_of(msg, "outEnd") >= 0)
+      assert_true(msg.contains("lineChart"))
+      assert_true(msg.contains("outEnd"))
     }
     _ => fail("expected Malformed")
   } noraise {

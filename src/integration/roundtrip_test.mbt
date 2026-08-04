@@ -133,8 +133,8 @@ test "minimal_deck: round-trip via to_bytes yields identical parsed results" {
   let bytes_out = pkg_in.to_bytes()
   let pkg_out = @opc.Package::open(bytes_out)
   // Same set of parts, same content types, same byte payload per part.
-  let names_in = pkg_in.parts().map(fn(p) { p.name })
-  let names_out = pkg_out.parts().map(fn(p) { p.name })
+  let names_in = pkg_in.parts().map(p => p.name)
+  let names_out = pkg_out.parts().map(p => p.name)
   assert_eq(names_in.length(), names_out.length())
   // Every parsed structure equals on both sides — Eq is derived on
   // every model node so this catches any silent data loss.

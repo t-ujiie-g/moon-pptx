@@ -21,7 +21,7 @@ fn slide_with_transition(tr : String) -> FixedArray[Byte] {
     "<p:grpSpPr/></p:spTree></p:cSld>" +
     tr +
     "</p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -284,9 +284,9 @@ test "transition: default attributes are omitted on serialise" {
   let xml = @oxml.bytes_to_string(
     base.with_transition(@slide.Transition::fade()).serialize(),
   )
-  assert_true(char_index_of(xml, "<p:transition>") >= 0)
-  assert_eq(char_index_of(xml, "spd="), -1)
-  assert_eq(char_index_of(xml, "advClick="), -1)
+  assert_true(xml.contains("<p:transition>"))
+  assert_false(xml.contains("spd="))
+  assert_false(xml.contains("advClick="))
   // Non-default values are emitted.
   let xml2 = @oxml.bytes_to_string(
     base
@@ -295,8 +295,8 @@ test "transition: default attributes are omitted on serialise" {
     )
     .serialize(),
   )
-  assert_true(char_index_of(xml2, "spd=\"slow\"") >= 0)
-  assert_true(char_index_of(xml2, "advClick=\"0\"") >= 0)
+  assert_true(xml2.contains("spd=\"slow\""))
+  assert_true(xml2.contains("advClick=\"0\""))
 }
 
 // --- lossless preservation (ADR-004) ---

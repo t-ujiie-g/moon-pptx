@@ -48,7 +48,7 @@ test "add_smartart_mut: wires five diagram parts with content types" {
     assert_true(
       prs.pkg.content_types().overrides
       .iter()
-      .any(fn(kv) { kv.0 == c.0 && kv.1 == c.1 }),
+      .any(kv => kv.0 == c.0 && kv.1 == c.1),
     )
   }
 }
@@ -107,7 +107,7 @@ test "add_smartart_mut: data part references the cached drawing" {
   let data_rels = prs.pkg.relationships_for("/ppt/diagrams/data1.xml")
   let drawing_rel = data_rels.items
     .iter()
-    .find_first(fn(r) { r.rel_type == @opc.rt_diagram_drawing })
+    .find_first(r => r.rel_type == @opc.rt_diagram_drawing)
     .unwrap()
   assert_true(drawing_rel.target.contains("drawing1.xml"))
   // And the data model records that relId inside <dsp:dataModelExt>.
@@ -244,7 +244,7 @@ test "add_smartart_mut: org_chart with nested children wires + reopens" {
   let mut rest = drawing
   while rest.find("<dsp:sp ") is Some(off) {
     sp = sp + 1
-    rest = rest.view(start_offset=off + 8).to_owned()
+    rest = rest[off + 8:].to_owned()
   }
   assert_eq(sp, 7)
   let prs2 = @presentation.Presentation::open(prs.save())

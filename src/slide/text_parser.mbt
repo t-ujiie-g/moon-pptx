@@ -432,11 +432,11 @@ fn parse_run_properties(
             "hlinkClick" => {
               hyperlink_click = Some(extract_rid(child_attrs))
               let t = optional_attr(child_attrs, "tooltip")
-              if t.length() > 0 {
+              if !t.is_empty() {
                 hyperlink_tooltip = Some(t)
               }
               let a = optional_attr(child_attrs, "action")
-              if a.length() > 0 {
+              if !a.is_empty() {
                 hyperlink_action = Some(a)
               }
               skip_subtree(r)

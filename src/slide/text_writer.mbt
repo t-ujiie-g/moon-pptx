@@ -195,7 +195,7 @@ fn needs_p_pr(p : ParagraphProperties) -> Bool {
   p.space_before is Some(_) ||
   p.space_after is Some(_) ||
   p.bullet is Some(_) ||
-  p.extension.length() > 0
+  !p.extension.is_empty()
 }
 
 ///|
@@ -379,7 +379,7 @@ fn needs_r_pr(p : RunProperties) -> Bool {
   p.text_effects is Some(_) ||
   p.highlight is Some(_) ||
   p.hyperlink_click is Some(_) ||
-  p.extension.length() > 0
+  !p.extension.is_empty()
 }
 
 ///|

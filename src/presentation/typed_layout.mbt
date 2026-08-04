@@ -133,8 +133,8 @@ fn[L : LayoutType + LayoutPlaceholders] Presentation::add_typed_slide(
   marker : L,
 ) -> LayoutSlide[L] raise PptxError {
   let layout_name = self.ensure_layout_of_type(
-    marker.layout_type(),
-    specs_to_defs(marker.placeholders()),
+    LayoutType::layout_type(marker),
+    specs_to_defs(LayoutPlaceholders::placeholders(marker)),
   )
   let slide_name = self.add_slide_on_layout_mut(layout_name)
   let part = self.pkg.require_part(slide_name) catch {
@@ -148,11 +148,7 @@ fn[L : LayoutType + LayoutPlaceholders] Presentation::add_typed_slide(
 
 ///|
 fn specs_to_defs(specs : Array[PlaceholderSpec]) -> Array[PlaceholderDef] {
-  let out : Array[PlaceholderDef] = []
-  for s in specs {
-    out.push({ kind: s.kind, position: s.position, default_text: None })
-  }
-  out
+  specs.map(s => { kind: s.kind, position: s.position, default_text: None })
 }
 
 // --- standard placeholder specs (4:3 deck geometry, ~PowerPoint defaults) ---

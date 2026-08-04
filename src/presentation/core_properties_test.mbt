@@ -76,20 +76,20 @@ test "core_properties: to_xml emits prefixes + xsi:type, omits None fields" {
     .with_keywords("k")
     .with_created("2026-01-01T00:00:00Z")
     .to_xml()
-  assert_true(has_substring(xml, "<dc:title>Hi</dc:title>"))
-  assert_true(has_substring(xml, "<cp:keywords>k</cp:keywords>"))
-  assert_true(has_substring(xml, "<dcterms:created"))
-  assert_true(has_substring(xml, "xsi:type=\"dcterms:W3CDTF\""))
+  assert_true(xml.contains("<dc:title>Hi</dc:title>"))
+  assert_true(xml.contains("<cp:keywords>k</cp:keywords>"))
+  assert_true(xml.contains("<dcterms:created"))
+  assert_true(xml.contains("xsi:type=\"dcterms:W3CDTF\""))
   // a None field is omitted entirely
-  assert_eq(has_substring(xml, "<dc:subject"), false)
+  assert_false(xml.contains("<dc:subject"))
 }
 
 ///|
 test "core_properties: empty new() emits the root but no field elements" {
   let xml = @presentation.CoreProperties::new().to_xml()
-  assert_true(has_substring(xml, "coreProperties"))
-  assert_eq(has_substring(xml, "<dc:title"), false)
-  assert_eq(has_substring(xml, "<cp:revision"), false)
+  assert_true(xml.contains("coreProperties"))
+  assert_false(xml.contains("<dc:title"))
+  assert_false(xml.contains("<cp:revision"))
 }
 
 ///|
@@ -102,5 +102,5 @@ test "core_properties: special characters are XML-escaped + decode back" {
   assert_eq(prs.core_properties().title.unwrap(), "R&D <plan>")
   // the serialised form carries the escaped entity
   let raw = @presentation.CoreProperties::new().with_title("R&D").to_xml()
-  assert_true(has_substring(raw, "R&amp;D"))
+  assert_true(raw.contains("R&amp;D"))
 }

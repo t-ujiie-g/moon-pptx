@@ -26,7 +26,7 @@ fn corpus_bytes(chunks : Array[String], expected_len : Int) -> FixedArray[Byte] 
   let mut bits = 0
   let mut pos = 0
   for chunk in chunks {
-    for c in chunk.to_array() {
+    for c in chunk {
       let v = match c {
         'A'..='Z' => c.to_int() - 'A'.to_int()
         'a'..='z' => c.to_int() - 'a'.to_int() + 26

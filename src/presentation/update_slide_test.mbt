@@ -148,7 +148,7 @@ fn prs_with_one_rect() -> @presentation.Presentation raise {
 ///|
 test "update_shape_by_id_mut: renames the targeted shape, survives reopen" {
   let prs = prs_with_one_rect()
-  prs.update_shape_by_id_mut(0, 2, fn(s) {
+  prs.update_shape_by_id_mut(0, 2, s => {
     match s {
       AutoShape(a) => AutoShape({ ..a, name: "Renamed" })
       other => other
@@ -174,7 +174,7 @@ test "map_slide_shapes_mut: applies to every shape on the slide" {
     @units.Emu(50L),
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(rect2)))
-  prs.map_slide_shapes_mut(0, fn(s) {
+  prs.map_slide_shapes_mut(0, s => {
     match s {
       AutoShape(a) => AutoShape({ ..a, name: "All" })
       other => other
@@ -193,12 +193,12 @@ test "map_slide_shapes_mut: applies to every shape on the slide" {
 ///|
 test "update_shape_by_id_mut: raises on missing id or bad slide index" {
   let prs = prs_with_one_rect()
-  try prs.update_shape_by_id_mut(0, 999, fn(s) { s }) catch {
+  try prs.update_shape_by_id_mut(0, 999, s => s) catch {
     _ => ()
   } noraise {
     _ => fail("expected an error")
   }
-  try prs.map_slide_shapes_mut(99, fn(s) { s }) catch {
+  try prs.map_slide_shapes_mut(99, s => s) catch {
     _ => ()
   } noraise {
     _ => fail("expected an error")

@@ -15,7 +15,7 @@ test "set_notes_mut: first call creates the notesSlide part + slide rel" {
   for p in prs.pkg.parts() {
     if p.name.has_prefix("/ppt/slides/") && p.name.has_suffix(".xml") {
       let rels = prs.pkg.relationships_for(p.name)
-      if rels.by_type(@opc.rt_notes_slide).length() > 0 {
+      if !rels.by_type(@opc.rt_notes_slide).is_empty() {
         found_rt_notes = true
       }
     }
@@ -52,7 +52,7 @@ test "set_notes_mut: Override content type registered" {
   let cts = prs.pkg.content_types()
   let has_notes_override = cts.overrides
     .iter()
-    .any(fn(kv) {
+    .any(kv => {
       kv.0 == "/ppt/notesSlides/notesSlide1.xml" && kv.1 == @oxml.ct_notes_slide
     })
   assert_true(has_notes_override)
@@ -80,7 +80,7 @@ test "set_notes_mut: second call replaces bytes, doesn't create a new part" {
   let notes_parts = prs.pkg
     .parts()
     .iter()
-    .filter(fn(p) { p.content_type == @oxml.ct_notes_slide })
+    .filter(p => p.content_type == @oxml.ct_notes_slide)
     .collect()
   assert_eq(notes_parts.length(), 1)
   let n = prs.notes_slides()[0]
@@ -152,7 +152,7 @@ test "set_notes_mut: synthesises a notesMaster on first call" {
   let before = prs.pkg
     .parts()
     .iter()
-    .filter(fn(p) { p.content_type == @oxml.ct_notes_master })
+    .filter(p => p.content_type == @oxml.ct_notes_master)
     .count()
   assert_eq(before, 0)
   prs.set_notes_mut(0, "first")
@@ -160,7 +160,7 @@ test "set_notes_mut: synthesises a notesMaster on first call" {
   let after = prs.pkg
     .parts()
     .iter()
-    .filter(fn(p) { p.content_type == @oxml.ct_notes_master })
+    .filter(p => p.content_type == @oxml.ct_notes_master)
     .count()
   assert_eq(after, 1)
 }
@@ -201,7 +201,7 @@ test "set_notes_mut: second call reuses the existing notesMaster" {
   let nm_count = prs.pkg
     .parts()
     .iter()
-    .filter(fn(p) { p.content_type == @oxml.ct_notes_master })
+    .filter(p => p.content_type == @oxml.ct_notes_master)
     .count()
   assert_eq(nm_count, 1)
 }

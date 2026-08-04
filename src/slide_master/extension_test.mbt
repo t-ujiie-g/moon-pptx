@@ -61,7 +61,7 @@ test "ADR-004: layout captures cSld + transition + extLst" {
     "<p:transition><p:fade/></p:transition>" +
     "<p:extLst><p:ext uri=\"{a}\"/></p:extLst>" +
     "</p:sldLayout>"
-  let layout = @slide_master.SlideLayout::parse(ascii_bytes(xml))
+  let layout = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
   assert_eq(layout.name, "Title")
   let names = []
   for el in layout.extension {
@@ -83,7 +83,7 @@ test "ADR-004: layout cSld preserves both name attribute and shape tree" {
     "\">" +
     "<p:cSld name=\"My Layout\"><p:spTree><p:nvGrpSpPr/></p:spTree></p:cSld>" +
     "</p:sldLayout>"
-  let layout = @slide_master.SlideLayout::parse(ascii_bytes(xml))
+  let layout = @slide_master.SlideLayout::parse(@oxml.string_to_bytes(xml))
   // The name was pulled out:
   assert_eq(layout.name, "My Layout")
   // …and the full <p:cSld> body is in extension:

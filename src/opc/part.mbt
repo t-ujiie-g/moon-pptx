@@ -44,10 +44,9 @@ pub fn Part::text(self : Part) -> String raise OpcError {
 /// Convert an OPC part name (`/ppt/presentation.xml`) to its ZIP entry name
 /// (`ppt/presentation.xml`).
 pub fn opc_name_to_zip(name : String) -> String {
-  if name.length() > 0 && name.to_array()[0] == '/' {
-    string_drop(name, 1)
-  } else {
-    name
+  match name {
+    ['/', .. rest] => rest.to_owned()
+    _ => name
   }
 }
 
@@ -55,7 +54,7 @@ pub fn opc_name_to_zip(name : String) -> String {
 /// Convert a ZIP entry name (`ppt/presentation.xml`) to an OPC part name
 /// (`/ppt/presentation.xml`).
 pub fn zip_name_to_opc(zip_name : String) -> String {
-  if zip_name.length() > 0 && zip_name.to_array()[0] == '/' {
+  if zip_name is ['/', ..] {
     zip_name
   } else {
     "/" + zip_name
@@ -66,48 +65,29 @@ pub fn zip_name_to_opc(zip_name : String) -> String {
 /// Validate that an OPC part name conforms to the basic shape required by
 /// the spec: non-empty, starts with `/`, no trailing `/`, no empty segments.
 pub fn validate_part_name(name : String) -> Unit raise OpcError {
-  if name.length() == 0 {
-    raise MalformedPackage("part name is empty")
-  }
-  let chars = name.to_array()
-  if chars[0] != '/' {
+  guard name is ['/', .. rest] else {
+    if name.is_empty() {
+      raise MalformedPackage("part name is empty")
+    }
     raise MalformedPackage("part name must start with `/`: " + name)
   }
-  if chars.length() > 1 && chars[chars.length() - 1] == '/' {
+  if rest is [.., '/'] {
     raise MalformedPackage("part name must not end with `/`: " + name)
   }
-  let mut i = 1
   let mut prev_slash = false
-  while i < chars.length() {
-    if chars[i] == '/' {
-      if prev_slash {
-        raise MalformedPackage("part name has empty segment (`//`): " + name)
-      }
-      prev_slash = true
-    } else {
-      prev_slash = false
+  for c in rest {
+    if c == '/' && prev_slash {
+      raise MalformedPackage("part name has empty segment (`//`): " + name)
     }
-    i = i + 1
+    prev_slash = c == '/'
   }
-}
-
-///|
-fn string_drop(s : String, n : Int) -> String {
-  let chars = s.to_array()
-  let buf = StringBuilder::new(size_hint=chars.length() - n)
-  let mut i = n
-  while i < chars.length() {
-    buf.write_char(chars[i])
-    i = i + 1
-  }
-  buf.to_string()
 }
 
 ///|
 pub impl Show for Part with fn output(self, logger) {
   logger.write_string("Part(")
   logger.write_object(self.name)
-  if self.content_type.length() > 0 {
+  if !self.content_type.is_empty() {
     logger.write_string(", ")
     logger.write_object(self.content_type)
   }

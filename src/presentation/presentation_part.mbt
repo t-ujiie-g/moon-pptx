@@ -355,7 +355,7 @@ fn write_master_id_lst(
   w : @xml.XmlWriter,
   ids : Array[SlideMasterIdRef],
 ) -> Unit raise @xml.XmlError {
-  if ids.length() == 0 {
+  if ids.is_empty() {
     return
   }
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "sldMasterIdLst"))
@@ -373,7 +373,7 @@ fn write_sld_id_lst(
   w : @xml.XmlWriter,
   ids : Array[SlideIdRef],
 ) -> Unit raise @xml.XmlError {
-  if ids.length() == 0 {
+  if ids.is_empty() {
     return
   }
   w.start_element(@xml.QName::new(@oxml.presentation_ns, "sldIdLst"))

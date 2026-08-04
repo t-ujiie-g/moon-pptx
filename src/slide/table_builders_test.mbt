@@ -123,7 +123,7 @@ test "GraphicFrame::of_table: round-trips via Slide::serialize" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let base = @slide.Slide::parse(fixture_bytes(base_xml))
+  let base = @slide.Slide::parse(@oxml.string_to_bytes(base_xml))
   let t = @slide.Table::of_grid(
     rows=2,
     cols=2,
@@ -186,7 +186,7 @@ test "GraphicFrame::of_table: second round-trip is Eq-stable" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let base = @slide.Slide::parse(fixture_bytes(base_xml))
+  let base = @slide.Slide::parse(@oxml.string_to_bytes(base_xml))
   let s1 = @slide.Slide::parse(
     base.with_shape(@slide.GraphicFrame(gf)).serialize(),
   )

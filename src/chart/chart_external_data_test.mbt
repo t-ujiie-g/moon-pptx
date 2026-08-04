@@ -26,7 +26,7 @@ test "externalData: round-trips via Chart.extension" {
     "<c:autoUpdate val=\"0\"/>" +
     "</c:externalData>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   // externalData isn't a typed field; it rides on Chart.extension.
   assert_eq(original.extension.length(), 1)
   let bytes = original.serialize()
@@ -45,7 +45,7 @@ test "externalData: rId attribute survives the round-trip" {
     "<c:chart><c:plotArea/></c:chart>" +
     "<c:externalData r:id=\"rId42\"/>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let ext = original.extension[0]
   assert_eq(ext.name.local_name, "externalData")
   // Verify the r:id attribute is captured verbatim.
@@ -81,7 +81,7 @@ test "externalData: works alongside a typed chart" {
     "</c:chart>" +
     "<c:externalData r:id=\"rId1\"/>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   assert_eq(original.extension.length(), 1)
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)

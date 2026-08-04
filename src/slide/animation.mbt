@@ -455,7 +455,7 @@ pub fn Slide::without_animations(self : Slide) -> Slide {
 ///|
 /// Drop any `<p:timing>` element from a captured-extension array.
 fn without_timing(extension : Array[@xml.XmlElement]) -> Array[@xml.XmlElement] {
-  extension.filter(fn(el) {
+  extension.filter(el => {
     !(el.name.uri == @oxml.presentation_ns && el.name.local_name == "timing")
   })
 }

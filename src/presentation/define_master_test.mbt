@@ -9,25 +9,6 @@ fn rect(x : Int64, y : Int64, cx : Int64, cy : Int64) -> @slide.Transform {
 }
 
 ///|
-/// Whether `needle` occurs in `hay`.
-fn has_substring(hay : String, needle : String) -> Bool {
-  let hn = hay.length()
-  let nn = needle.length()
-  let mut i = 0
-  while i + nn <= hn {
-    let mut j = 0
-    while j < nn && hay[i + j] == needle[j] {
-      j = j + 1
-    }
-    if j == nn {
-      return true
-    }
-    i = i + 1
-  }
-  false
-}
-
-///|
 fn brand_master() -> @presentation.MasterDefinition {
   @presentation.MasterDefinition::new("Brand")
   .with_placeholder(
@@ -63,18 +44,18 @@ test "define_master: master part carries placeholders + footer text" {
     .part_by_name("/ppt/slideMasters/slideMaster2.xml")
     .unwrap()
   let xml = @oxml.bytes_to_string(master.bytes)
-  assert_true(has_substring(xml, "type=\"title\""))
-  assert_true(has_substring(xml, "type=\"body\""))
-  assert_true(has_substring(xml, "type=\"ftr\""))
-  assert_true(has_substring(xml, "type=\"sldNum\""))
-  assert_true(has_substring(xml, "type=\"dt\""))
-  assert_true(has_substring(xml, "ACME Confidential"))
-  assert_true(has_substring(xml, "Click to edit"))
-  assert_true(has_substring(xml, "<p:clrMap "))
-  assert_true(has_substring(xml, "<p:sldLayoutIdLst>"))
+  assert_true(xml.contains("type=\"title\""))
+  assert_true(xml.contains("type=\"body\""))
+  assert_true(xml.contains("type=\"ftr\""))
+  assert_true(xml.contains("type=\"sldNum\""))
+  assert_true(xml.contains("type=\"dt\""))
+  assert_true(xml.contains("ACME Confidential"))
+  assert_true(xml.contains("Click to edit"))
+  assert_true(xml.contains("<p:clrMap "))
+  assert_true(xml.contains("<p:sldLayoutIdLst>"))
   // A master without an explicit background still gets the default bgRef
   // (a master with no <p:bg> trips PowerPoint's repair banner).
-  assert_true(has_substring(xml, "<p:bg>"))
+  assert_true(xml.contains("<p:bg>"))
 }
 
 ///|
@@ -89,7 +70,7 @@ test "define_master: layout part exists and references the master" {
     .part_by_name("/ppt/slideLayouts/_rels/slideLayout2.xml.rels")
     .unwrap()
   let rels_xml = @oxml.bytes_to_string(rels.bytes)
-  assert_true(has_substring(rels_xml, "slideMaster2.xml"))
+  assert_true(rels_xml.contains("slideMaster2.xml"))
 }
 
 ///|
@@ -140,8 +121,8 @@ test "define_master: new master gets its own theme (repair-clean)" {
     .unwrap().bytes,
   )
   // slideMaster1 uses theme1; slideMaster2 must not.
-  assert_true(has_substring(m1, "theme1.xml"))
-  assert_false(has_substring(m2, "theme1.xml"))
+  assert_true(m1.contains("theme1.xml"))
+  assert_false(m2.contains("theme1.xml"))
 }
 
 ///|
@@ -153,18 +134,18 @@ test "define_master: layout declares the placeholders so slides inherit geometry
   let layout = @oxml.bytes_to_string(
     prs.pkg.part_by_name("/ppt/slideLayouts/slideLayout2.xml").unwrap().bytes,
   )
-  assert_true(has_substring(layout, "type=\"ftr\""))
-  assert_true(has_substring(layout, "type=\"dt\""))
-  assert_true(has_substring(layout, "type=\"sldNum\""))
+  assert_true(layout.contains("type=\"ftr\""))
+  assert_true(layout.contains("type=\"dt\""))
+  assert_true(layout.contains("type=\"sldNum\""))
   // …and the footer placeholder has an explicit position to inherit.
-  assert_true(has_substring(layout, "<a:off x=\"3124200\""))
+  assert_true(layout.contains("<a:off x=\"3124200\""))
 }
 
 ///|
 fn count_theme_parts(prs : @presentation.Presentation) -> Int {
   let mut n = 0
   for p in prs.pkg.parts() {
-    if has_substring(p.name, "/ppt/theme/theme") {
+    if p.name.contains("/ppt/theme/theme") {
       n = n + 1
     }
   }

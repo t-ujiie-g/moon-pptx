@@ -29,7 +29,7 @@ fn slide_with_sp_pr_body(inner : String) -> FixedArray[Byte] {
     "</p:sp>" +
     "</p:spTree></p:cSld>" +
     "</p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -101,7 +101,7 @@ test "ADR-004: foreign-namespace <p:spPr> child survives" {
     "</p:spPr>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   let wow = find_local_inner(first_sp_extension(slide), "wow").unwrap()
   assert_eq(wow.name.uri, "http://example.org/zz")
 }
@@ -129,7 +129,7 @@ test "ADR-004: cNvPr with <a:hlinkClick> child is preserved" {
     "<p:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1\" cy=\"1\"/></a:xfrm></p:spPr>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
       // id/name still parsed out.
@@ -173,7 +173,7 @@ test "ADR-004: <p:nvPr> with <p:custDataLst> is preserved" {
     "<p:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1\" cy=\"1\"/></a:xfrm></p:spPr>" +
     "</p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     AutoShape(s) => {
       let cust = find_local_inner(s.extension, "custDataLst").unwrap()
@@ -201,7 +201,7 @@ test "ADR-004: parse_grp_sp_pr captures <a:solidFill> on the group" {
     "<p:grpSpPr><a:solidFill><a:srgbClr val=\"FF0000\"/></a:solidFill></p:grpSpPr>" +
     "</p:grpSp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.shapes[0] {
     Group(g) =>
       assert_true(find_local_inner(g.extension, "solidFill") is Some(_))
@@ -237,7 +237,7 @@ test "ADR-004: parse_clr_map_ovr captures foreign-namespace sibling" {
     "</p:spTree></p:cSld>" +
     "<p:clrMapOvr><a:masterClrMapping/><x:tweak/></p:clrMapOvr>" +
     "</p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   // tweak landed on the slide-level extension (parse_clr_map_ovr funnels there).
   let mut found = false
   for el in slide.extension {

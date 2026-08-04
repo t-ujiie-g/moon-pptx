@@ -40,7 +40,7 @@ fn slide_with_placeholders() -> FixedArray[Byte] {
     "</p:nvSpPr><p:spPr/></p:sp>" +
     "</p:spTree></p:cSld>" +
     "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- PlaceholderType conversions ---
@@ -106,7 +106,7 @@ test "Placeholder::kind reads the raw ph_type" {
 ///|
 test "Slide::placeholders lists kinds in source order, skips non-placeholders" {
   let slide = @slide.Slide::parse(slide_with_placeholders())
-  let kinds = slide.placeholders().map(fn(pair) { pair.0 })
+  let kinds = slide.placeholders().map(pair => pair.0)
   assert_true(kinds == [CtrTitle, Body, Ftr, SldNum, Obj])
 }
 
@@ -131,7 +131,7 @@ test "Slide::title also matches a plain title placeholder" {
     "<p:sp><p:nvSpPr><p:cNvPr id=\"9\" name=\"Title\"/><p:cNvSpPr/>" +
     "<p:nvPr><p:ph type=\"title\"/></p:nvPr></p:nvSpPr><p:spPr/></p:sp>" +
     "</p:spTree></p:cSld></p:sld>"
-  let slide = @slide.Slide::parse(fixture_bytes(xml))
+  let slide = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   match slide.title() {
     Some(AutoShape(s)) => assert_eq(s.id, 9)
     _ => fail("expected the title placeholder")
@@ -175,7 +175,7 @@ test "Slide accessors return None when the kind is absent" {
     "\"><p:cSld><p:spTree>" +
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/></p:spTree></p:cSld></p:sld>"
-  let empty = @slide.Slide::parse(fixture_bytes(bare))
+  let empty = @slide.Slide::parse(@oxml.string_to_bytes(bare))
   assert_eq(empty.placeholders().length(), 0)
   assert_true(empty.title() is None)
   assert_true(empty.body() is None)

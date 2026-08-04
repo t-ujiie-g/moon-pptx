@@ -43,12 +43,12 @@ pub impl Show for Utf8Error with fn output(self, logger) {
 /// further up the stack expect to receive whatever bytes the underlying
 /// OPC package gave us; tighter validation is a future hardening pass.
 pub fn bytes_to_string(bytes : FixedArray[Byte]) -> String raise Utf8Error {
-  let chars : Array[Char] = []
+  let buf = StringBuilder::new(size_hint=bytes.length())
   let mut i = 0
   while i < bytes.length() {
     let b0 = bytes[i].to_int().land(0xFF)
     if b0 < 0x80 {
-      chars.push(b0.unsafe_to_char())
+      buf.write_char(b0.unsafe_to_char())
       i = i + 1
     } else if b0 < 0xC0 {
       raise StrayContinuation(i)
@@ -58,7 +58,7 @@ pub fn bytes_to_string(bytes : FixedArray[Byte]) -> String raise Utf8Error {
       }
       let b1 = bytes[i + 1].to_int().land(0xFF)
       let cp = (b0 - 0xC0) * 0x40 + (b1 - 0x80)
-      chars.push(cp.unsafe_to_char())
+      buf.write_char(cp.unsafe_to_char())
       i = i + 2
     } else if b0 < 0xF0 {
       if i + 2 >= bytes.length() {
@@ -67,7 +67,7 @@ pub fn bytes_to_string(bytes : FixedArray[Byte]) -> String raise Utf8Error {
       let b1 = bytes[i + 1].to_int().land(0xFF)
       let b2 = bytes[i + 2].to_int().land(0xFF)
       let cp = (b0 - 0xE0) * 0x1000 + (b1 - 0x80) * 0x40 + (b2 - 0x80)
-      chars.push(cp.unsafe_to_char())
+      buf.write_char(cp.unsafe_to_char())
       i = i + 3
     } else {
       if i + 3 >= bytes.length() {
@@ -80,9 +80,9 @@ pub fn bytes_to_string(bytes : FixedArray[Byte]) -> String raise Utf8Error {
         (b1 - 0x80) * 0x1000 +
         (b2 - 0x80) * 0x40 +
         (b3 - 0x80)
-      chars.push(cp.unsafe_to_char())
+      buf.write_char(cp.unsafe_to_char())
       i = i + 4
     }
   }
-  String::from_array(chars)
+  buf.to_string()
 }

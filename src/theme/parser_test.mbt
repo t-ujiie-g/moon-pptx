@@ -54,15 +54,7 @@ fn office_like_theme() -> FixedArray[Byte] {
     "<a:objectDefaults/>" +
     "<a:extraClrSchemeLst/>" +
     "</a:theme>"
-  // Cheap UTF-8 encoding for ASCII-only fixture.
-  let bytes = FixedArray::make(xml.length(), b'\x00')
-  let chars = xml.to_array()
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -140,7 +132,7 @@ test "parse: missing clrScheme is rejected" {
   let xml = "<?xml version=\"1.0\"?><a:theme xmlns:a=\"" +
     drawing +
     "\"><a:themeElements><a:fontScheme name=\"x\"><a:majorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:majorFont><a:minorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont></a:fontScheme></a:themeElements></a:theme>"
-  let bytes = ascii_bytes(xml)
+  let bytes = @oxml.string_to_bytes(xml)
   try @theme.Theme::parse(bytes) catch {
     @theme.ThemeError::MalformedTheme(_) => ()
     _ => fail("expected MalformedTheme")
@@ -171,7 +163,7 @@ test "parse: missing slot in clrScheme is rejected" {
     "<a:fontScheme name=\"x\"><a:majorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:majorFont>" +
     "<a:minorFont><a:latin typeface=\"X\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/></a:minorFont></a:fontScheme>" +
     "</a:themeElements></a:theme>"
-  try @theme.Theme::parse(ascii_bytes(xml)) catch {
+  try @theme.Theme::parse(@oxml.string_to_bytes(xml)) catch {
     @theme.ThemeError::MalformedTheme(_) => ()
     _ => fail("expected MalformedTheme")
   } noraise {
@@ -181,7 +173,9 @@ test "parse: missing slot in clrScheme is rejected" {
 
 ///|
 test "parse: malformed XML wraps as XmlFailure" {
-  let bytes = ascii_bytes("<a:theme xmlns:a=\"" + drawing + "\"><not closed>")
+  let bytes = @oxml.string_to_bytes(
+    "<a:theme xmlns:a=\"" + drawing + "\"><not closed>",
+  )
   try @theme.Theme::parse(bytes) catch {
     @theme.ThemeError::XmlFailure(_, _) => ()
     _ => fail("expected XmlFailure")
@@ -197,7 +191,7 @@ test "parse: unsupported color element rejected" {
     "\"><a:themeElements><a:clrScheme name=\"x\">" +
     "<a:dk1><a:scrgbClr r=\"50000\" g=\"50000\" b=\"50000\"/></a:dk1>" +
     "</a:clrScheme></a:themeElements></a:theme>"
-  try @theme.Theme::parse(ascii_bytes(xml)) catch {
+  try @theme.Theme::parse(@oxml.string_to_bytes(xml)) catch {
     @theme.ThemeError::MalformedTheme(_) => ()
     _ => fail("expected MalformedTheme")
   } noraise {
@@ -266,25 +260,13 @@ test "ADR-004: foreign-namespace child of <a:theme> is preserved" {
     "</a:themeElements>" +
     "<x:tag flag=\"yes\"/>" +
     "</a:theme>"
-  let theme = @theme.Theme::parse(ascii_bytes(xml))
+  let theme = @theme.Theme::parse(@oxml.string_to_bytes(xml))
   assert_eq(theme.extension.length(), 1)
   assert_eq(theme.extension[0].name.uri, "http://example.org/ext")
   assert_eq(theme.extension[0].name.local_name, "tag")
 }
 
 // --- helpers ---
-
-///|
-fn ascii_bytes(s : String) -> FixedArray[Byte] {
-  let chars = s.to_array()
-  let bytes = FixedArray::make(chars.length(), b'\x00')
-  let mut i = 0
-  while i < chars.length() {
-    bytes[i] = chars[i].to_int().to_byte()
-    i = i + 1
-  }
-  bytes
-}
 
 ///|
 /// Twelve-slot `<a:clrScheme>` body shared by extension-preservation

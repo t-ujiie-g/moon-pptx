@@ -290,4 +290,3 @@ pub trait LayoutPlaceholders {
 pub trait LayoutType {
   fn layout_type(Self) -> @slide_master.SlideLayoutType
 }
-

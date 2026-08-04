@@ -249,7 +249,7 @@ fn Presentation::ensure_default_content_type(
   ct : String,
 ) -> Unit raise PptxError {
   let cur = self.pkg.content_types()
-  if !cur.defaults.iter().any(fn(kv) { kv.0 == ext }) {
+  if !cur.defaults.iter().any(kv => kv.0 == ext) {
     self.pkg.set_content_types(cur.with_default(ext, ct))
     self.pkg.regenerate_content_types_part() catch {
       e => raise OpcFailure(e.to_string())

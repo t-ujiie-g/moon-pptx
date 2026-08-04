@@ -13,7 +13,7 @@ fn fixture_legend_chart_xml(legend_body : String) -> FixedArray[Byte] {
     legend_body +
     "</c:chart>" +
     "</c:chartSpace>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|

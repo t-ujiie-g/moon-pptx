@@ -17,11 +17,11 @@ let hex_digits : FixedArray[Char] = [
 fn hex_pad(n : Int, width : Int) -> String {
   let chars = Array::make(width, '0')
   let mut v = n
-  for i = width - 1; i >= 0; i = i - 1 {
+  for i in (width - 1)>=..0 {
     chars[i] = hex_digits[v % 16]
     v = v / 16
   }
-  String::from_array(chars)
+  String::from_iter(chars.iter())
 }
 
 ///|

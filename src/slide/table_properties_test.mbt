@@ -23,7 +23,7 @@ fn slide_with_table_xml(table_body : String) -> FixedArray[Byte] {
     "</a:graphicData></a:graphic>" +
     "</p:graphicFrame>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -222,7 +222,7 @@ test "TableCellProperties: builder-produced values survive serialize → reparse
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let base = @slide.Slide::parse(fixture_bytes(base_xml))
+  let base = @slide.Slide::parse(@oxml.string_to_bytes(base_xml))
   let s = base.with_shape(@slide.GraphicFrame(gf))
   let reparsed = @slide.Slide::parse(s.serialize())
   match reparsed.shapes[0] {

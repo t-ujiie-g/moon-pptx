@@ -56,7 +56,7 @@ test "Slide::serialize: slide-level transition + timing round-trip" {
   // <p:transition> is the typed field now; <p:timing> + the root-group
   // metadata (<p:nvGrpSpPr> + <p:grpSpPr>) still ride on extension.
   assert_true(s1.transition is Some(_))
-  let names = s1.extension.map(fn(e) { e.name.local_name })
+  let names = s1.extension.map(e => e.name.local_name)
   assert_true(names.contains("timing"))
   assert_true(names.contains("nvGrpSpPr"))
   assert_true(names.contains("grpSpPr"))
@@ -73,8 +73,8 @@ test "Slide::serialize: picture shape round-trips" {
     "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr>" +
     "</p:pic>"
   let xml = wrap_slide(body)
-  let s0 = @slide.Slide::parse(fixture_bytes(xml))
-  let s1 = roundtrip_slide(fixture_bytes(xml))
+  let s0 = @slide.Slide::parse(@oxml.string_to_bytes(xml))
+  let s1 = roundtrip_slide(@oxml.string_to_bytes(xml))
   assert_true(s0 == s1)
 }
 
@@ -90,8 +90,8 @@ test "Slide::serialize: connector round-trips" {
     "<a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom></p:spPr>" +
     "</p:cxnSp>"
   let xml = wrap_slide(body)
-  let s0 = @slide.Slide::parse(fixture_bytes(xml))
-  let s1 = roundtrip_slide(fixture_bytes(xml))
+  let s0 = @slide.Slide::parse(@oxml.string_to_bytes(xml))
+  let s1 = roundtrip_slide(@oxml.string_to_bytes(xml))
   assert_true(s0 == s1)
 }
 
@@ -112,8 +112,8 @@ test "Slide::serialize: group shape with one child round-trips" {
     "</p:sp>" +
     "</p:grpSp>"
   let xml = wrap_slide(body)
-  let s0 = @slide.Slide::parse(fixture_bytes(xml))
-  let s1 = roundtrip_slide(fixture_bytes(xml))
+  let s0 = @slide.Slide::parse(@oxml.string_to_bytes(xml))
+  let s1 = roundtrip_slide(@oxml.string_to_bytes(xml))
   assert_true(s0 == s1)
 }
 
@@ -142,7 +142,7 @@ test "Slide::serialize: AutoShape with custGeom round-trips" {
   // Two re-serialise cycles: the first cycle injects PowerPoint-Online-
   // expected `<a:ahLst/>` (the fixture omits it) so equality only holds
   // from the second cycle onward.
-  let s1 = roundtrip_slide(fixture_bytes(xml))
+  let s1 = roundtrip_slide(@oxml.string_to_bytes(xml))
   let s2 = roundtrip_slide(s1.serialize())
   assert_true(s1 == s2)
 }
@@ -169,8 +169,8 @@ test "Slide::serialize: AutoShape with text body round-trips" {
     "</p:txBody>" +
     "</p:sp>"
   let xml = wrap_slide(body)
-  let s0 = @slide.Slide::parse(fixture_bytes(xml))
-  let s1 = roundtrip_slide(fixture_bytes(xml))
+  let s0 = @slide.Slide::parse(@oxml.string_to_bytes(xml))
+  let s1 = roundtrip_slide(@oxml.string_to_bytes(xml))
   assert_true(s0 == s1)
 }
 
@@ -188,8 +188,8 @@ test "Slide::serialize: empty slide (no shapes) round-trips" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  let s0 = @slide.Slide::parse(fixture_bytes(xml))
-  let s1 = roundtrip_slide(fixture_bytes(xml))
+  let s0 = @slide.Slide::parse(@oxml.string_to_bytes(xml))
+  let s1 = roundtrip_slide(@oxml.string_to_bytes(xml))
   assert_true(s0 == s1)
 }
 

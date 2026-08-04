@@ -26,7 +26,7 @@ let xml_decl : String = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"y
 /// `hier_layouts.mbt` and never reach this table.
 fn layout_meta(kind : SmartArtKind) -> (String, String, String) {
   let (unique_id, category) = kind_layout_id(kind)
-  let lin = fn(dir) {
+  let lin = dir => {
     "<dgm:alg type=\"lin\"><dgm:param type=\"linDir\" val=\"" +
     dir +
     "\"/></dgm:alg>"

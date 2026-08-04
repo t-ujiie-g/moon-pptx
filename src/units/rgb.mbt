@@ -24,18 +24,16 @@ pub fn RgbColor::new(r : Int, g : Int, b : Int) -> RgbColor {
 /// Parse a six-hex-digit color string with optional leading `#`.
 /// Raises `UnitsError::InvalidHexColor` for any other shape.
 pub fn RgbColor::parse_hex(s : String) -> RgbColor raise UnitsError {
-  let stripped = if s.length() == 7 && s.to_array()[0] == '#' {
-    String::from_iter(s.iter().drop(1))
-  } else {
-    s
+  let stripped = match s {
+    ['#', .. rest] => rest
+    rest => rest
   }
-  let chars = stripped.to_array()
-  if chars.length() != 6 {
+  guard stripped is [r_hi, r_lo, g_hi, g_lo, b_hi, b_lo] else {
     raise InvalidHexColor(s)
   }
-  let r = parse_hex_byte(chars[0], chars[1], s)
-  let g = parse_hex_byte(chars[2], chars[3], s)
-  let b = parse_hex_byte(chars[4], chars[5], s)
+  let r = parse_hex_byte(r_hi, r_lo, s)
+  let g = parse_hex_byte(g_hi, g_lo, s)
+  let b = parse_hex_byte(b_hi, b_lo, s)
   { r, g, b }
 }
 
@@ -81,7 +79,7 @@ fn hex_byte(n : Int) -> String {
   // Mask to a byte so over/underflows still produce two hex digits without
   // panicking; OOXML callers should keep values in 0–255 anyway.
   let v = n.land(0xFF)
-  String::from_array([hex_char(v / 16), hex_char(v % 16)])
+  "\{hex_char(v / 16)}\{hex_char(v % 16)}"
 }
 
 ///|

@@ -12,7 +12,7 @@ fn fixture_bubble_chart_xml(body : String) -> FixedArray[Byte] {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|

@@ -17,7 +17,7 @@ fn fixture_d_lbls_bar_chart_xml(d_lbls_body : String) -> FixedArray[Byte] {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -158,7 +158,7 @@ test "DLbls: pie-only showLeaderLines rides on extension" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(pie_xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(pie_xml))
   let dl = match original.chart.plot_area.plots[0] {
     PieChart(p) => p.d_lbls.unwrap()
     _ => abort("expected PieChart")
@@ -191,7 +191,7 @@ test "DLbls: dLbls survives across multiple plot families" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(line_xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(line_xml))
   let bytes = original.serialize()
   let re_parsed = @chart.Chart::parse(bytes)
   assert_eq(re_parsed, original)

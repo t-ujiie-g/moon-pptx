@@ -11,34 +11,6 @@ let dml_ns : String = "http://schemas.openxmlformats.org/drawingml/2006/main"
 /// — duplicated here because every `*_test.mbt` in a package compiles into
 /// its own blackbox-test package, and `@slide`'s helper is private to that
 /// test package.
-fn fixture_bytes(s : String) -> FixedArray[Byte] {
-  let buf : Array[Int] = []
-  for c in s {
-    let cp = c.to_int()
-    if cp < 0x80 {
-      buf.push(cp)
-    } else if cp < 0x800 {
-      buf.push(0xC0 | (cp >> 6))
-      buf.push(0x80 | (cp & 0x3F))
-    } else if cp < 0x10000 {
-      buf.push(0xE0 | (cp >> 12))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    } else {
-      buf.push(0xF0 | (cp >> 18))
-      buf.push(0x80 | ((cp >> 12) & 0x3F))
-      buf.push(0x80 | ((cp >> 6) & 0x3F))
-      buf.push(0x80 | (cp & 0x3F))
-    }
-  }
-  let bytes = FixedArray::make(buf.length(), b'\x00')
-  let mut i = 0
-  while i < buf.length() {
-    bytes[i] = buf[i].to_byte()
-    i = i + 1
-  }
-  bytes
-}
 
 ///|
 /// A trimmed but realistic notes slide: the two canonical placeholders
@@ -84,7 +56,7 @@ fn typical_notes() -> FixedArray[Byte] {
     "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" +
     "<p:custDataLst><p:tags r:id=\"rId1\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/></p:custDataLst>" +
     "</p:notes>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- happy path ---
@@ -145,7 +117,7 @@ test "parse: <p:custDataLst> rides on the slide-level extension" {
   // order.  Cross-section ordering inside `extension` is not part of the
   // contract; the lookup uses local-name membership instead.
   assert_eq(notes.extension.length(), 3)
-  let names = notes.extension.map(fn(e) { e.name.local_name })
+  let names = notes.extension.map(e => e.name.local_name)
   assert_true(names.contains("custDataLst"))
 }
 
@@ -163,11 +135,11 @@ test "parse: <p:extLst> alongside <p:clrMapOvr> is preserved" {
     "</p:spTree></p:cSld>" +
     "<p:extLst><p:ext uri=\"{ABCD}\"/></p:extLst>" +
     "</p:notes>"
-  let notes = @notes.NotesSlide::parse(fixture_bytes(xml))
+  let notes = @notes.NotesSlide::parse(@oxml.string_to_bytes(xml))
   assert_eq(notes.shapes.length(), 0)
   // 3 = nvGrpSpPr + grpSpPr (root-group metadata) + extLst sibling.
   assert_eq(notes.extension.length(), 3)
-  let names = notes.extension.map(fn(e) { e.name.local_name })
+  let names = notes.extension.map(e => e.name.local_name)
   assert_true(names.contains("extLst"))
 }
 
@@ -185,7 +157,7 @@ test "parse: wrong root element raises SlideFailure" {
     "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr/>" +
     "</p:spTree></p:cSld></p:sld>"
-  try @notes.NotesSlide::parse(fixture_bytes(xml)) catch {
+  try @notes.NotesSlide::parse(@oxml.string_to_bytes(xml)) catch {
     @notes.NotesError::SlideFailure(_) => ()
     _ => fail("expected SlideFailure")
   } noraise {

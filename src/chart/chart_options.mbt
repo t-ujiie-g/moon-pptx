@@ -239,7 +239,7 @@ fn d_lbls_at(pos : DLblPos) -> DLbls {
 ///|
 /// Set (or clear) the plot-level data labels on every plot in the plot area.
 fn plot_area_with_d_lbls(pa : PlotArea, dlbls : DLbls?) -> PlotArea {
-  { ..pa, plots: pa.plots.map(fn(p) { plot_with_d_lbls(p, dlbls) }) }
+  { ..pa, plots: pa.plots.map(p => plot_with_d_lbls(p, dlbls)) }
 }
 
 ///|

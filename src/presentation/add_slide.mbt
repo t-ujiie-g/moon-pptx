@@ -225,11 +225,11 @@ fn extract_rid_index(rid : String) -> Int {
   if total <= prefix_len {
     return 0
   }
-  let prefix_part = rid.view(start_offset=0, end_offset=prefix_len)
+  let prefix_part = rid[0:prefix_len]
   if prefix_part.to_owned() != prefix {
     return 0
   }
-  let tail = rid.view(start_offset=prefix_len, end_offset=total)
+  let tail = rid[prefix_len:total]
   match @oxml.parse_signed_int(tail.to_owned()) {
     Some(n) => n
     None => 0
@@ -275,34 +275,34 @@ fn relative_target(source_part : String, target_part : String) -> String {
   }
   // Number of "../" hops.
   let ups = src_dir_comps.length() - common
-  let mut out = ""
-  let mut i = 0
-  while i < ups {
-    out = out + "../"
-    i = i + 1
+  let buf = StringBuilder::new()
+  for _ in 0..<ups {
+    buf.write_string("../")
   }
-  let mut j = common
-  while j < tgt_comps.length() {
+  for j in common..<tgt_comps.length() {
     if j > common {
-      out = out + "/"
+      buf.write_char('/')
     }
-    out = out + tgt_comps[j]
-    j = j + 1
+    buf.write_string(tgt_comps[j])
   }
-  out
+  buf.to_string()
 }
 
 ///|
 fn parent_dir(part : String) -> String {
-  let total = part.length()
-  let mut i = total - 1
-  while i > 0 {
-    if part.view(start_offset=i, end_offset=i + 1).to_owned() == "/" {
-      return part.view(start_offset=0, end_offset=i).to_owned()
-    }
-    i = i - 1
+  let segs = part.split("/").collect()
+  // Fewer than two separators' worth of segments means the part sits at root.
+  if segs.length() <= 2 {
+    return "/"
   }
-  "/"
+  let buf = StringBuilder::new()
+  for i in 0..<(segs.length() - 1) {
+    if i > 0 {
+      buf.write_char('/')
+    }
+    buf.write_view(segs[i])
+  }
+  buf.to_string()
 }
 
 ///|
@@ -311,22 +311,10 @@ fn parent_dir(part : String) -> String {
 /// produces no component.
 fn path_components(path : String) -> Array[String] {
   let out : Array[String] = []
-  let total = path.length()
-  let mut start = 0
-  // Skip the leading slash so the first component isn't empty.
-  if total > 0 && path.view(start_offset=0, end_offset=1).to_owned() == "/" {
-    start = 1
-  }
-  let mut i = start
-  while i <= total {
-    if i == total ||
-      path.view(start_offset=i, end_offset=i + 1).to_owned() == "/" {
-      if i > start {
-        out.push(path.view(start_offset=start, end_offset=i).to_owned())
-      }
-      start = i + 1
+  for seg in path.split("/") {
+    if !seg.is_empty() {
+      out.push(seg.to_owned())
     }
-    i = i + 1
   }
   out
 }

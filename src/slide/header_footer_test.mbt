@@ -57,7 +57,7 @@ test "with_slide_number: true adds a sldNum field; false removes it" {
   assert_eq(sp.placeholder.unwrap().idx, 12)
   // The body holds a slidenum field — serialised as <a:fld type="slidenum">.
   let xml = @oxml.bytes_to_string(on.serialize())
-  assert_true(char_index_of(xml, "type=\"slidenum\"") >= 0)
+  assert_true(xml.contains("type=\"slidenum\""))
   // Toggling off removes it.
   let off = on.with_slide_number(false)
   assert_true(find_ph(off, SldNum) is None)
@@ -68,7 +68,7 @@ test "with_date: Auto emits a datetime field; Fixed emits literal text" {
   let auto = @slide.Slide::parse(typical_title_slide()).with_date(Auto)
   assert_eq(find_ph(auto, Dt).unwrap().placeholder.unwrap().ph_type, "dt")
   let auto_xml = @oxml.bytes_to_string(auto.serialize())
-  assert_true(char_index_of(auto_xml, "type=\"datetime1\"") >= 0)
+  assert_true(auto_xml.contains("type=\"datetime1\""))
   let fixed = @slide.Slide::parse(typical_title_slide()).with_date(
     Fixed("2026-05-29"),
   )

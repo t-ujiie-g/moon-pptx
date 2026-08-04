@@ -21,7 +21,7 @@ fn slide_with_unknown_shape() -> FixedArray[Byte] {
     off_rel_ns +
     "\"/>" +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 // --- Shape::id / name ---
@@ -43,7 +43,7 @@ test "Shape::id / name read every typed variant; Unknown is None" {
 test "Slide::map_shapes applies f to every shape" {
   let slide = @slide.Slide::parse(typical_title_slide())
   // Rename every AutoShape; leave other kinds untouched.
-  let renamed = slide.map_shapes(fn(s) {
+  let renamed = slide.map_shapes(s => {
     match s {
       AutoShape(a) => AutoShape({ ..a, name: "X" })
       other => other
@@ -70,7 +70,7 @@ test "Slide::with_shape_at replaces by index" {
 ///|
 test "Slide::with_shape_mapped transforms only the indexed shape" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  let edited = slide.with_shape_mapped(1, fn(s) {
+  let edited = slide.with_shape_mapped(1, s => {
     match s {
       AutoShape(a) => AutoShape({ ..a, name: "Only2" })
       other => other
@@ -88,7 +88,7 @@ test "Slide::with_shape_at / mapped / without raise on bad index" {
   } noraise {
     _ => fail("expected an error")
   }
-  try slide.with_shape_mapped(-1, fn(s) { s }) catch {
+  try slide.with_shape_mapped(-1, s => s) catch {
     _ => ()
   } noraise {
     _ => fail("expected an error")
@@ -105,7 +105,7 @@ test "Slide::with_shape_at / mapped / without raise on bad index" {
 ///|
 test "Slide::with_shape_by_id transforms the matching shape only" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  let edited = slide.with_shape_by_id(3, fn(s) {
+  let edited = slide.with_shape_by_id(3, s => {
     match s {
       AutoShape(a) => AutoShape({ ..a, name: "ById" })
       other => other
@@ -119,7 +119,7 @@ test "Slide::with_shape_by_id transforms the matching shape only" {
 ///|
 test "Slide::with_shape_by_id raises when the id is absent" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  try slide.with_shape_by_id(999, fn(s) { s }) catch {
+  try slide.with_shape_by_id(999, s => s) catch {
     _ => ()
   } noraise {
     _ => fail("expected an error")
@@ -137,7 +137,7 @@ test "Slide::without_shape / without_shape_by_id drop one shape" {
   assert_eq(a.shapes[1].id().unwrap(), 4)
   let b = slide.without_shape_by_id(4)
   assert_eq(b.shapes.length(), 2)
-  assert_true(b.shapes.iter().all(fn(s) { s.id() != Some(4) }))
+  assert_true(b.shapes.iter().all(s => s.id() != Some(4)))
   try slide.without_shape_by_id(999) catch {
     _ => ()
   } noraise {
@@ -150,7 +150,7 @@ test "Slide::without_shape / without_shape_by_id drop one shape" {
 ///|
 test "an id-targeted rename round-trips through serialize" {
   let slide = @slide.Slide::parse(typical_title_slide())
-  let edited = slide.with_shape_by_id(3, fn(s) {
+  let edited = slide.with_shape_by_id(3, s => {
     match s {
       AutoShape(a) => AutoShape({ ..a, name: "Persisted" })
       other => other

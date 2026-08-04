@@ -21,7 +21,7 @@ fn slide_with_shapes_xml(inner_shapes : String) -> FixedArray[Byte] {
     "<p:grpSpPr/>" +
     inner_shapes +
     "</p:spTree></p:cSld></p:sld>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|

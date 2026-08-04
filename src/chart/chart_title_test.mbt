@@ -13,7 +13,7 @@ fn fixture_title_chart_xml(title_body : String) -> FixedArray[Byte] {
     "<c:plotArea/>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  fixture_bytes(xml)
+  @oxml.string_to_bytes(xml)
 }
 
 ///|
@@ -91,7 +91,7 @@ test "ChartTitle: axis-level title parses + round-trips" {
     "</c:plotArea>" +
     "</c:chart>" +
     "</c:chartSpace>"
-  let original = @chart.Chart::parse(fixture_bytes(xml))
+  let original = @chart.Chart::parse(@oxml.string_to_bytes(xml))
   let axis_title = original.chart.plot_area.axes[0].core().title.unwrap()
   assert_true(axis_title.tx is Some(_))
   assert_eq(axis_title.overlay.unwrap(), false)

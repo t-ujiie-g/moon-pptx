@@ -187,19 +187,13 @@ fn require_attr(
 
 ///|
 fn parse_uint64_decimal(s : String) -> Int64? {
-  let chars = s.to_array()
-  if chars.length() == 0 {
+  if s.is_empty() {
     return None
   }
   let mut acc : Int64 = 0L
-  let mut i = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c < '0' || c > '9' {
-      return None
-    }
+  for c in s {
+    guard c is ('0'..='9') else { return None }
     acc = acc * 10L + (c.to_int() - '0'.to_int()).to_int64()
-    i = i + 1
   }
   Some(acc)
 }

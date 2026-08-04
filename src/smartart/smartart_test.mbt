@@ -7,7 +7,7 @@ fn count_occurrences(s : String, needle : String) -> Int {
   let mut rest = s
   while rest.find(needle) is Some(off) {
     count = count + 1
-    rest = rest.view(start_offset=off + needle.length()).to_owned()
+    rest = rest[off + needle.length():].to_owned()
   }
   count
 }

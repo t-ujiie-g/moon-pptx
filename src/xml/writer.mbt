@@ -32,7 +32,7 @@ pub fn XmlWriter::new() -> XmlWriter {
   {
     buf: StringBuilder::new(size_hint=256),
     prefix_for_uri: Map([]),
-    stack: Array::new(),
+    stack: [],
     in_start_tag: false,
   }
 }
@@ -127,7 +127,7 @@ pub fn XmlWriter::default_namespace_attr(
 ///|
 /// Emit text content inside the current element. The text is XML-escaped.
 pub fn XmlWriter::text(self : XmlWriter, s : String) -> Unit raise XmlError {
-  if self.stack.length() == 0 {
+  if self.stack.is_empty() {
     raise WriterMisuse("text() called with no element open")
   }
   self.close_start_tag(self_close=false)
@@ -137,7 +137,7 @@ pub fn XmlWriter::text(self : XmlWriter, s : String) -> Unit raise XmlError {
 ///|
 /// Emit a CDATA section. The payload must not contain `]]>`.
 pub fn XmlWriter::cdata(self : XmlWriter, s : String) -> Unit raise XmlError {
-  if self.stack.length() == 0 {
+  if self.stack.is_empty() {
     raise WriterMisuse("cdata() called with no element open")
   }
   if contains_cdata_terminator(s) {
@@ -153,7 +153,7 @@ pub fn XmlWriter::cdata(self : XmlWriter, s : String) -> Unit raise XmlError {
 /// Close the most recently opened element. Self-closes (`<foo/>`) if no
 /// children or text were written.
 pub fn XmlWriter::end_element(self : XmlWriter) -> Unit raise XmlError {
-  if self.stack.length() == 0 {
+  if self.stack.is_empty() {
     raise WriterMisuse("end_element() with no element open")
   }
   let name = self.stack.pop().unwrap()
@@ -201,12 +201,12 @@ fn XmlWriter::write_qname(
   self : XmlWriter,
   name : QName,
 ) -> Unit raise XmlError {
-  if name.uri.length() == 0 {
+  if name.uri.is_empty() {
     self.buf.write_string(name.local_name)
   } else {
     match self.prefix_for_uri.get(name.uri) {
       Some(prefix) => {
-        if prefix.length() > 0 {
+        if !prefix.is_empty() {
           self.buf.write_string(prefix)
           self.buf.write_char(':')
         }
@@ -247,16 +247,5 @@ fn write_escaped_text(buf : StringBuilder, s : String) -> Unit {
 
 ///|
 fn contains_cdata_terminator(s : String) -> Bool {
-  // Look for `]]>` as a literal substring. We don't need a fast search here
-  // since CDATA bodies are usually small.
-  let chars = s.to_array()
-  let n = chars.length()
-  let mut i = 0
-  while i + 2 < n {
-    if chars[i] == ']' && chars[i + 1] == ']' && chars[i + 2] == '>' {
-      return true
-    }
-    i = i + 1
-  }
-  false
+  s.contains("]]>")
 }

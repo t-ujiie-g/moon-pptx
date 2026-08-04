@@ -246,7 +246,7 @@ pub fn RunProperties::with_hyperlink(
   url : String,
   tooltip? : String = "",
 ) -> RunProperties {
-  let tt : String? = if tooltip.length() > 0 { Some(tooltip) } else { None }
+  let tt : String? = if !tooltip.is_empty() { Some(tooltip) } else { None }
   {
     ..self,
     hyperlink_target: Some(ExternalUrl(url)),
@@ -265,7 +265,7 @@ pub fn RunProperties::with_hyperlink_to_slide(
   slide_idx : Int,
   tooltip? : String = "",
 ) -> RunProperties {
-  let tt : String? = if tooltip.length() > 0 { Some(tooltip) } else { None }
+  let tt : String? = if !tooltip.is_empty() { Some(tooltip) } else { None }
   {
     ..self,
     hyperlink_target: Some(InternalSlide(slide_idx)),

@@ -7,56 +7,14 @@ fn anim_xml(slide : @slide.Slide) -> String raise {
 }
 
 ///|
-/// Naive substring test (the slide test package has no `String::contains`).
-fn has(haystack : String, needle : String) -> Bool {
-  let h : Array[Char] = []
-  for c in haystack {
-    h.push(c)
-  }
-  let n : Array[Char] = []
-  for c in needle {
-    n.push(c)
-  }
-  let mut i = 0
-  while i + n.length() <= h.length() {
-    let mut j = 0
-    while j < n.length() && h[i + j] == n[j] {
-      j = j + 1
-    }
-    if j == n.length() {
-      return true
-    }
-    i = i + 1
-  }
-  false
-}
-
-///|
 /// Count non-overlapping occurrences of `needle` in `haystack`.
 fn count(haystack : String, needle : String) -> Int {
-  let h : Array[Char] = []
-  for c in haystack {
-    h.push(c)
-  }
-  let n : Array[Char] = []
-  for c in needle {
-    n.push(c)
-  }
-  let mut total = 0
-  let mut i = 0
-  while i + n.length() <= h.length() {
-    let mut j = 0
-    while j < n.length() && h[i + j] == n[j] {
-      j = j + 1
-    }
-    if j == n.length() {
-      total = total + 1
-      i = i + n.length()
-    } else {
-      i = i + 1
+  for rest = haystack[:], total = 0 {
+    match rest.find(needle) {
+      Some(at) => continue rest[at + needle.length():], total + 1
+      None => break total
     }
   }
-  total
 }
 
 ///|
@@ -115,16 +73,14 @@ test "Slide::with_animations sets the typed field and strips extension timing" {
   let base = anim_base_slide()
   // The fixture parsed its <p:timing> into extension; the typed field is None.
   assert_true(base.timing is None)
-  assert_true(
-    base.extension.map(fn(e) { e.name.local_name }).contains("timing"),
-  )
+  assert_true(base.extension.map(e => e.name.local_name).contains("timing"))
   let animated = base.with_animations(
     @slide.Timeline::new().on_click(@slide.Entrance(@slide.Fade), 2),
   )
   assert_true(animated.timing is Some(_))
   // The captured <p:timing> is gone — the typed timeline is the single source.
   assert_false(
-    animated.extension.map(fn(e) { e.name.local_name }).contains("timing"),
+    animated.extension.map(e => e.name.local_name).contains("timing"),
   )
 }
 
@@ -137,9 +93,7 @@ test "Slide::without_animations clears the typed field and extension timing" {
     )
     .without_animations()
   assert_true(cleared.timing is None)
-  assert_false(
-    cleared.extension.map(fn(e) { e.name.local_name }).contains("timing"),
-  )
+  assert_false(cleared.extension.map(e => e.name.local_name).contains("timing"))
 }
 
 ///|
@@ -162,20 +116,20 @@ test "timing: entrance emits the canonical main-sequence scaffold" {
       @slide.Timeline::new().on_click(@slide.Entrance(@slide.Fade), 7),
     ),
   )
-  assert_true(has(xml, "nodeType=\"tmRoot\""))
-  assert_true(has(xml, "nodeType=\"mainSeq\""))
-  assert_true(has(xml, "nodeType=\"clickEffect\""))
-  assert_true(has(xml, "presetClass=\"entr\""))
-  assert_true(has(xml, "presetID=\"10\""))
-  assert_true(has(xml, "filter=\"fade\""))
-  assert_true(has(xml, "transition=\"in\""))
+  assert_true(xml.contains("nodeType=\"tmRoot\""))
+  assert_true(xml.contains("nodeType=\"mainSeq\""))
+  assert_true(xml.contains("nodeType=\"clickEffect\""))
+  assert_true(xml.contains("presetClass=\"entr\""))
+  assert_true(xml.contains("presetID=\"10\""))
+  assert_true(xml.contains("filter=\"fade\""))
+  assert_true(xml.contains("transition=\"in\""))
   // Entrance reveals the shape.
-  assert_true(has(xml, "<p:strVal val=\"visible\"/>"))
+  assert_true(xml.contains("<p:strVal val=\"visible\"/>"))
   // Targets the requested shape id.
-  assert_true(has(xml, "<p:spTgt spid=\"7\"/>"))
+  assert_true(xml.contains("<p:spTgt spid=\"7\"/>"))
   // The sequence navigation conditions are present.
-  assert_true(has(xml, "<p:prevCondLst>"))
-  assert_true(has(xml, "<p:nextCondLst>"))
+  assert_true(xml.contains("<p:prevCondLst>"))
+  assert_true(xml.contains("<p:nextCondLst>"))
 }
 
 ///|
@@ -186,11 +140,11 @@ test "timing: exit plays out and hides the shape" {
       @slide.Timeline::new().on_click(@slide.Exit(@slide.Wipe(@slide.Down)), 3),
     ),
   )
-  assert_true(has(xml, "presetClass=\"exit\""))
-  assert_true(has(xml, "transition=\"out\""))
-  assert_true(has(xml, "filter=\"wipe(down)\""))
+  assert_true(xml.contains("presetClass=\"exit\""))
+  assert_true(xml.contains("transition=\"out\""))
+  assert_true(xml.contains("filter=\"wipe(down)\""))
   // Exit hides the shape at the end.
-  assert_true(has(xml, "<p:strVal val=\"hidden\"/>"))
+  assert_true(xml.contains("<p:strVal val=\"hidden\"/>"))
 }
 
 ///|
@@ -201,8 +155,8 @@ test "timing: Appear is a bare <p:set> with no <p:animEffect>" {
       @slide.Timeline::new().on_click(@slide.Entrance(@slide.Appear), 2),
     ),
   )
-  assert_true(has(xml, "<p:strVal val=\"visible\"/>"))
-  assert_false(has(xml, "<p:animEffect"))
+  assert_true(xml.contains("<p:strVal val=\"visible\"/>"))
+  assert_false(xml.contains("<p:animEffect"))
 }
 
 ///|
@@ -213,12 +167,12 @@ test "timing: start modes map to clickEffect / afterEffect / withEffect" {
     .after_previous(@slide.Entrance(@slide.Fade), 3)
     .with_previous(@slide.Entrance(@slide.Fade), 4)
   let xml = anim_xml(base.with_animations(tl))
-  assert_true(has(xml, "nodeType=\"clickEffect\""))
-  assert_true(has(xml, "nodeType=\"afterEffect\""))
-  assert_true(has(xml, "nodeType=\"withEffect\""))
+  assert_true(xml.contains("nodeType=\"clickEffect\""))
+  assert_true(xml.contains("nodeType=\"afterEffect\""))
+  assert_true(xml.contains("nodeType=\"withEffect\""))
   // The click group waits for a click (delay indefinite); the after-previous
   // group auto-starts (delay 0).
-  assert_true(has(xml, "<p:cond delay=\"indefinite\"/>"))
+  assert_true(xml.contains("<p:cond delay=\"indefinite\"/>"))
 }
 
 ///|
@@ -230,8 +184,8 @@ test "timing: a leading with_previous step behaves like on_click" {
       @slide.Timeline::new().with_previous(@slide.Entrance(@slide.Fade), 2),
     ),
   )
-  assert_true(has(xml, "nodeType=\"clickEffect\""))
-  assert_false(has(xml, "nodeType=\"withEffect\""))
+  assert_true(xml.contains("nodeType=\"clickEffect\""))
+  assert_false(xml.contains("nodeType=\"withEffect\""))
 }
 
 // --- Emphasis effects ---
@@ -258,13 +212,13 @@ test "timing: Spin emphasis emits <p:animRot> on the rotation attribute" {
       ),
     ),
   )
-  assert_true(has(xml, "presetClass=\"emph\""))
+  assert_true(xml.contains("presetClass=\"emph\""))
   // 360° in 60000ths of a degree.
-  assert_true(has(xml, "<p:animRot by=\"21600000\">"))
-  assert_true(has(xml, "<p:attrName>r</p:attrName>"))
-  assert_true(has(xml, "dur=\"2000\""))
+  assert_true(xml.contains("<p:animRot by=\"21600000\">"))
+  assert_true(xml.contains("<p:attrName>r</p:attrName>"))
+  assert_true(xml.contains("dur=\"2000\""))
   // Emphasis does not toggle visibility.
-  assert_false(has(xml, "style.visibility"))
+  assert_false(xml.contains("style.visibility"))
 }
 
 ///|
@@ -278,10 +232,10 @@ test "timing: GrowShrink emphasis emits <p:animScale> with a <p:by>" {
       ),
     ),
   )
-  assert_true(has(xml, "<p:animScale>"))
+  assert_true(xml.contains("<p:animScale>"))
   // 150% in 1000ths of a percent.
-  assert_true(has(xml, "<p:by x=\"150000\" y=\"150000\"/>"))
-  assert_true(has(xml, "<p:spTgt spid=\"5\"/>"))
+  assert_true(xml.contains("<p:by x=\"150000\" y=\"150000\"/>"))
+  assert_true(xml.contains("<p:spTgt spid=\"5\"/>"))
 }
 
 ///|
@@ -295,9 +249,9 @@ test "timing: ChangeFillColor emphasis emits <p:animClr> to an <a:srgbClr>" {
       ),
     ),
   )
-  assert_true(has(xml, "<p:animClr clrSpc=\"rgb\">"))
-  assert_true(has(xml, "<a:srgbClr val=\"FF0000\"/>"))
-  assert_true(has(xml, "<p:attrName>fillColor</p:attrName>"))
+  assert_true(xml.contains("<p:animClr clrSpc=\"rgb\">"))
+  assert_true(xml.contains("<a:srgbClr val=\"FF0000\"/>"))
+  assert_true(xml.contains("<p:attrName>fillColor</p:attrName>"))
 }
 
 ///|
@@ -307,10 +261,10 @@ test "timing: emphasis composes with entrance in one timeline" {
     .on_click(@slide.Entrance(@slide.Fade), 2)
     .after_previous(@slide.Emphasis(@slide.Spin(720)), 2, duration_ms=1500)
   let xml = anim_xml(base.with_animations(tl))
-  assert_true(has(xml, "presetClass=\"entr\""))
-  assert_true(has(xml, "presetClass=\"emph\""))
+  assert_true(xml.contains("presetClass=\"entr\""))
+  assert_true(xml.contains("presetClass=\"emph\""))
   // 720° = two turns.
-  assert_true(has(xml, "<p:animRot by=\"43200000\">"))
+  assert_true(xml.contains("<p:animRot by=\"43200000\">"))
 }
 
 // --- Fly In / Fly Out ---
@@ -335,14 +289,14 @@ test "timing: FlyIn entrance moves ppt_x from off-slide to home" {
       ),
     ),
   )
-  assert_true(has(xml, "presetClass=\"entr\""))
+  assert_true(xml.contains("presetClass=\"entr\""))
   // Reveal + a positional <p:anim> on ppt_x (no <p:animEffect> filter).
-  assert_true(has(xml, "<p:strVal val=\"visible\"/>"))
-  assert_true(has(xml, "<p:anim calcmode=\"lin\" valueType=\"num\">"))
-  assert_true(has(xml, "<p:attrName>ppt_x</p:attrName>"))
-  assert_true(has(xml, "<p:strVal val=\"0-#ppt_w/2\"/>"))
-  assert_true(has(xml, "<p:strVal val=\"#ppt_x\"/>"))
-  assert_false(has(xml, "<p:animEffect"))
+  assert_true(xml.contains("<p:strVal val=\"visible\"/>"))
+  assert_true(xml.contains("<p:anim calcmode=\"lin\" valueType=\"num\">"))
+  assert_true(xml.contains("<p:attrName>ppt_x</p:attrName>"))
+  assert_true(xml.contains("<p:strVal val=\"0-#ppt_w/2\"/>"))
+  assert_true(xml.contains("<p:strVal val=\"#ppt_x\"/>"))
+  assert_false(xml.contains("<p:animEffect"))
 }
 
 ///|
@@ -353,12 +307,12 @@ test "timing: FlyOut exit moves home to off-slide then hides" {
       @slide.Timeline::new().on_click(@slide.Exit(@slide.FlyIn(@slide.Down)), 5),
     ),
   )
-  assert_true(has(xml, "presetClass=\"exit\""))
-  assert_true(has(xml, "<p:attrName>ppt_y</p:attrName>"))
+  assert_true(xml.contains("presetClass=\"exit\""))
+  assert_true(xml.contains("<p:attrName>ppt_y</p:attrName>"))
   // Off-slide value at the END (tm=100000) for a fly-out below the slide.
-  assert_true(has(xml, "<p:strVal val=\"1+#ppt_h/2\"/>"))
+  assert_true(xml.contains("<p:strVal val=\"1+#ppt_h/2\"/>"))
   // Exit hides the shape afterwards.
-  assert_true(has(xml, "<p:strVal val=\"hidden\"/>"))
+  assert_true(xml.contains("<p:strVal val=\"hidden\"/>"))
 }
 
 ///|
@@ -372,10 +326,10 @@ test "timing: each fly direction targets the right axis + off-slide value" {
     )
   }
 
-  assert_true(has(fly_xml(Right), "<p:strVal val=\"1+#ppt_w/2\"/>"))
-  assert_true(has(fly_xml(Right), "<p:attrName>ppt_x</p:attrName>"))
-  assert_true(has(fly_xml(Up), "<p:strVal val=\"0-#ppt_h/2\"/>"))
-  assert_true(has(fly_xml(Up), "<p:attrName>ppt_y</p:attrName>"))
+  assert_true(fly_xml(Right).contains("<p:strVal val=\"1+#ppt_w/2\"/>"))
+  assert_true(fly_xml(Right).contains("<p:attrName>ppt_x</p:attrName>"))
+  assert_true(fly_xml(Up).contains("<p:strVal val=\"0-#ppt_h/2\"/>"))
+  assert_true(fly_xml(Up).contains("<p:attrName>ppt_y</p:attrName>"))
 }
 
 // --- Motion paths ---
@@ -411,17 +365,17 @@ test "timing: motion emits <p:animMotion> with the path + ppt_x/ppt_y" {
       ),
     ),
   )
-  assert_true(has(xml, "presetClass=\"path\""))
+  assert_true(xml.contains("presetClass=\"path\""))
   assert_true(
-    has(
-      xml, "<p:animMotion origin=\"layout\" path=\"M 0 0 L 0.3 0.1 E\" pathEditMode=\"relative\">",
+    xml.contains(
+      "<p:animMotion origin=\"layout\" path=\"M 0 0 L 0.3 0.1 E\" pathEditMode=\"relative\">",
     ),
   )
-  assert_true(has(xml, "<p:attrName>ppt_x</p:attrName>"))
-  assert_true(has(xml, "<p:attrName>ppt_y</p:attrName>"))
-  assert_true(has(xml, "<p:spTgt spid=\"5\"/>"))
+  assert_true(xml.contains("<p:attrName>ppt_x</p:attrName>"))
+  assert_true(xml.contains("<p:attrName>ppt_y</p:attrName>"))
+  assert_true(xml.contains("<p:spTgt spid=\"5\"/>"))
   // Motion does not toggle visibility.
-  assert_false(has(xml, "style.visibility"))
+  assert_false(xml.contains("style.visibility"))
 }
 
 ///|
@@ -438,9 +392,9 @@ test "timing: motion composes after an entrance in one timeline" {
       2,
     )
   let xml = anim_xml(base.with_animations(tl))
-  assert_true(has(xml, "presetClass=\"entr\""))
-  assert_true(has(xml, "presetClass=\"path\""))
-  assert_true(has(xml, "C 0.1 0.1 0.2 -0.1 0.3 0"))
+  assert_true(xml.contains("presetClass=\"entr\""))
+  assert_true(xml.contains("presetClass=\"path\""))
+  assert_true(xml.contains("C 0.1 0.1 0.2 -0.1 0.3 0"))
 }
 
 // --- By-paragraph text builds ---
@@ -453,11 +407,11 @@ test "timing: a paragraph-targeted effect emits a <p:pRg> + a <p:bldP>" {
     .on_click(@slide.Entrance(@slide.Fade), 3, paragraph=1)
   let xml = anim_xml(base.with_animations(tl))
   // Each effect targets a paragraph range, not the whole shape.
-  assert_true(has(xml, "<p:txEl><p:pRg st=\"0\" end=\"0\"/></p:txEl>"))
-  assert_true(has(xml, "<p:txEl><p:pRg st=\"1\" end=\"1\"/></p:txEl>"))
+  assert_true(xml.contains("<p:txEl><p:pRg st=\"0\" end=\"0\"/></p:txEl>"))
+  assert_true(xml.contains("<p:txEl><p:pRg st=\"1\" end=\"1\"/></p:txEl>"))
   // The shape is declared as a by-paragraph build.
-  assert_true(has(xml, "<p:bldLst>"))
-  assert_true(has(xml, "<p:bldP spid=\"3\" grpId=\"1\" build=\"p\"/>"))
+  assert_true(xml.contains("<p:bldLst>"))
+  assert_true(xml.contains("<p:bldP spid=\"3\" grpId=\"1\" build=\"p\"/>"))
 }
 
 ///|
@@ -468,8 +422,8 @@ test "timing: a whole-shape effect has no <p:pRg> and no <p:bldLst>" {
       @slide.Timeline::new().on_click(@slide.Entrance(@slide.Fade), 2),
     ),
   )
-  assert_false(has(xml, "<p:pRg"))
-  assert_false(has(xml, "<p:bldLst>"))
+  assert_false(xml.contains("<p:pRg"))
+  assert_false(xml.contains("<p:bldLst>"))
 }
 
 ///|
@@ -482,13 +436,13 @@ test "timing: build-group ids match between paragraph effects and their <p:bldP>
     .on_click(@slide.Entrance(@slide.Wipe(@slide.Up)), 4, paragraph=0)
     .with_previous(@slide.Emphasis(@slide.Spin(360)), 2)
   let xml = anim_xml(base.with_animations(tl))
-  assert_true(has(xml, "<p:bldP spid=\"3\" grpId=\"1\" build=\"p\"/>"))
-  assert_true(has(xml, "<p:bldP spid=\"4\" grpId=\"2\" build=\"p\"/>"))
+  assert_true(xml.contains("<p:bldP spid=\"3\" grpId=\"1\" build=\"p\"/>"))
+  assert_true(xml.contains("<p:bldP spid=\"4\" grpId=\"2\" build=\"p\"/>"))
   // The paragraph effects carry their shape's build grpId on the cTn.
-  assert_true(has(xml, "grpId=\"1\""))
-  assert_true(has(xml, "grpId=\"2\""))
+  assert_true(xml.contains("grpId=\"1\""))
+  assert_true(xml.contains("grpId=\"2\""))
   // The whole-shape emphasis stays in the default group 0.
-  assert_true(has(xml, "grpId=\"0\""))
+  assert_true(xml.contains("grpId=\"0\""))
 }
 
 // --- Build-only round-trip ---
@@ -508,9 +462,7 @@ test "timing: built timeline re-serialises stably (build-only round-trip)" {
   // Parsing re-captures <p:timing> into extension; the typed field is None.
   let reparsed = @slide.Slide::parse(animated.serialize())
   assert_true(reparsed.timing is None)
-  assert_true(
-    reparsed.extension.map(fn(e) { e.name.local_name }).contains("timing"),
-  )
+  assert_true(reparsed.extension.map(e => e.name.local_name).contains("timing"))
   // …but the bytes are stable across the round trip.
   let xml2 = anim_xml(reparsed)
   assert_eq(xml1, xml2)
@@ -523,5 +475,5 @@ test "timing: a slide with no animations emits no <p:timing> from the field" {
   assert_true(base.timing is None)
   // (Fixture timing was stripped by without_animations.)
   let xml = anim_xml(base)
-  assert_false(has(xml, "<p:timing>"))
+  assert_false(xml.contains("<p:timing>"))
 }
