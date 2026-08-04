@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] — 2026-08-05
+
+A maintenance release: no API change, no behaviour change. The tree was
+swept to current MoonBit idiom after the toolchain moved on, which
+deleted a pile of hand-rolled string code the standard library now
+covers.
+
+### Changed
+
+- **Internal modernisation to current MoonBit idiom.** No public API
+  change — the regenerated `.mbti` differ from 0.7.0 only by a trailing
+  blank line the newer `moon info` no longer emits, with no declaration
+  added, removed, or altered. 1178 tests stay green on all four backends.
+  - Hand-rolled string scanning replaced by the standard library:
+    `String::contains` / `find` / `split` / view slicing (`s[a:b]`) and
+    `StringView` patterns (`s is ['/', .. rest]`, `[.."xmlns:", ..]`)
+    now cover what six copies of a naive substring search, five copies
+    of a UTF-8 encoder, and four copies of an ASCII fixture encoder used
+    to do. Those copies are gone; `@oxml.string_to_bytes` is the single
+    encoder.
+  - Deprecated forms removed: dot-syntax trait-method calls on
+    multi-bound type parameters, `fn(x) { … }` lambdas (now `x => …`),
+    `not(…)`, `Array::new()`, `String::from_array`, `.view(start_offset=…)`.
+  - `.length() == 0` / `> 0` → `.is_empty()`; index-counting `while`
+    loops → range and functional `for` loops.
+
+### Compatibility
+
+- **Minimum toolchain raised to `moon 0.1.20260729`.** The tree now uses
+  `String::contains` / `find`, view slicing (`s[a:b]`), and `StringView`
+  patterns, none of which the previous `0.1.20260522` floor has.
+- Source-compatible for consumers: the public surface carries no
+  declaration change from 0.7.0.
+
 ## [0.7.0] — 2026-07-12
 
 The **additive parity + ergonomics** release — every item of the
@@ -659,7 +693,8 @@ decks containing styled text, shapes, pictures, tables, and charts.
 
 - Native, Wasm-GC, JS, and Wasm targets all tested in CI.
 
-[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.7.0...v0.7.1
 [0.5.1]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.5.0
 [0.1.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.1.0

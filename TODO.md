@@ -17,11 +17,11 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.7.0` (2026-07-12 — the additive parity + ergonomics release, §4.2) |
+| Current version | `0.7.1` (2026-08-05 — maintenance: MoonBit-idiom sweep, no API change) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
 | Test suite | 1178 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
-| MoonBit toolchain | `moon 0.1.20260522` or newer |
+| MoonBit toolchain | `moon 0.1.20260729` or newer (raised 2026-08-03 — the tree now uses `String::contains` / `find`, view slicing `s[a:b]`, and `StringView` patterns) |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
 | Buffer type | `FixedArray[Byte]` (matches `hustcer/fzip` + MoonBit core) |
 | Required deps | `hustcer/fzip` (DEFLATE + ZIP, pure MoonBit) |
@@ -35,15 +35,16 @@ status touches this file.
 - Generated decks open in PowerPoint Online without repair prompts; the bundled blank template emits every part ECMA-376 marks as required.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
-### Where we are now (2026-07-11)
-- v0.2.0 → v0.6.0 all shipped (summary table in §4.0); 1178 tests × 4
+### Where we are now (2026-08-05)
+- v0.2.0 → v0.7.1 all shipped (summary table in §4.0); 1178 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
   landed, so everything from here to 1.0 is additive-only. The §4.2
-  v0.7.x additive cycle shipped as **v0.7.0** (2026-07-12); beyond
-  that: fresh §5 ideas as demand appears, and the v1.0 gate (§4.3) —
-  which fires when the MoonBit toolchain reaches v1.0.
+  v0.7.x additive cycle shipped as **v0.7.0** (2026-07-12), followed by
+  the **v0.7.1** maintenance release (2026-08-05 — MoonBit-idiom sweep,
+  no API change); beyond that: fresh §5 ideas as demand appears, and the
+  v1.0 gate (§4.3) — which fires when the MoonBit toolchain reaches v1.0.
 
 ### What it does not yet do
 See **§3** (feature comparison vs python-pptx + PptxGenJS) and **§4**
@@ -287,12 +288,10 @@ API freeze rides the language's own stability milestone. Until then,
 
 Status legend: 🔴 not started · 🟡 in progress · 🟢 done.
 
-### 4.0 Shipped cycles (v0.2.0 – v0.5.3) — summary
+### 4.0 Shipped cycles (v0.2.0 – v0.7.1) — summary
 
 Item-by-item design detail (deviations, test counts, rationale) lives in
 §11 (living changelog) and `CHANGELOG.md`; this table is the map.
-*(Housekeeping: the `v0.5.3` git tag has not been pushed yet — tags stop
-at `v0.5.2` although `0.5.3` is released in `moon.mod` / CHANGELOG.)*
 
 | Version (landed) | Theme | Items |
 |---|---|---|
@@ -306,6 +305,7 @@ at `v0.5.2` although `0.5.3` is released in `moon.mod` / CHANGELOG.)*
 | v0.5.3 (2026-06-20) | Verification | ADR-011 three-tier pyramid (Tier 1 in-repo + Tier 2 Open XML SDK CI job + real-world corpus) · media `<p:nvPr>` fix (issue #11) |
 | v0.6.0 (2026-07-06) | Pre-1.0 breaking pass | F3-b non-solid text fill · F4 paragraph-spacing `TextSpacing` ADT (+ real parser bug fixed) · D1-b SmartArt recursive hierarchy layoutDef + connectors ⭐ · API pass 1 (33 internals privatized) — breaking budget fully spent |
 | v0.7.0 (2026-07-12) | Additive parity + ergonomics | Tier-1 corpus embedding · F5-b hyperlinks on all 5 shape kinds · fill convenience constructors · SmartArt per-node colours · `TableStylePreset` (74 styles) · slide sections · F2-b app.xml properties · B3 embedded chart-data workbooks |
+| v0.7.1 (2026-08-05) | Maintenance | MoonBit-idiom sweep — deprecated forms removed, hand-rolled string/UTF-8/substring code replaced by the stdlib (−541 lines); toolchain floor raised to `0.1.20260729`; no public declaration change |
 
 ---
 
@@ -627,6 +627,8 @@ Not on the dated roadmap yet — tracked here so they don't get lost:
 - **WordArt / preset text warp** (`<a:bodyPr><a:prstTxWarp>`) — typed warp presets; round-trips losslessly via `extension` today
 - **3-D shape effects** (`<a:scene3d>` camera/light + `<a:sp3d>` bevel/extrusion) — typed builder; round-trips losslessly via `extension` today
 - **`<a:endParaRPr>` typed modelling** — currently rides `Paragraph.extension`
+- **Split `examples/sample-deck/main` into an entrypoint + a library package** — `moon check` warns that main packages will stop generating blackbox tests in a future MoonBit release, and the deck's 2 tests live in `main/showcase_test.mbt`. Move `build.mbt` / `showcase.mbt` into a non-main package and leave `main/` as the entrypoint (noted 2026-08-03 during the idiom sweep)
+- **`XmlReader` on `StringView` instead of `Array[Char]`** — would drop the full code-point copy of every part at parse time. Blocked on wanting code-point (not UTF-16 code-unit) indexing for XML name characters; needs a view cursor that steps by `Char`. Worth revisiting if the §4.3 benchmarks show parse-time allocation hurting
 
 *(Promoted onto the roadmap 2026-07-06: non-solid text fill + paragraph
 spacing → §4.1 (the breaking pass); app.xml properties, remaining shape
@@ -833,6 +835,8 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-08-05** — **v0.7.1 release pass.** Version bumped to 0.7.1 (root `moon.mod` + sample-deck dep + its README dep sample), CHANGELOG entry written for the idiom sweep below. A **maintenance** release: no API change, no behaviour change, no public declaration changed vs 0.7.0 (the regenerated `.mbti` differ only by a trailing blank line the newer `moon info` drops) — the one consumer-visible line is the **minimum toolchain moving to `moon 0.1.20260729`** (the tree now uses `String::contains`/`find`, view slicing, and `StringView` patterns, which the old `0.1.20260522` floor lacks). §0 version row + "where we are now" + §4.0 table gain the v0.7.1 rows; §4.0's heading range and its stale "`v0.5.3` tag not pushed yet" note fixed (every tag through `v0.7.0` is on the remote). Suite at release: 1178 × 4 backends.
+- **2026-08-03** — **MoonBit-idiom modernisation sweep (CLAUDE.md §7, all five lenses).** Toolchain moved on (`moon 0.1.20260729` vs the 0.1.20260522 floor in §0) and brought both new deprecations and a much richer `String` / `StringView` API; the tree was swept to match. **Deprecated forms removed**: dot-syntax trait-method calls on multi-bound type params (`marker.layout_type()` → `LayoutType::layout_type(marker)`), `fn(x) { … }` lambdas → `x => …` (53 sites), `not(…)` → `!…`, `Array::new()` → `[]`, `String::from_array`, `.view(start_offset=…, end_offset=…)` → slicing `s[a:b]`. **Hand-rolled string code deleted in favour of the stdlib** — this is where the line count went: six copies of a naive substring search (`char_index_of` / `index_of` / `has` / `has_substring` / `str_index`, each carrying a now-false "String has no `contains`/`index_of`" comment) → `String::contains` / `find`; five copies of the UTF-8 encoder and four copies of an ASCII fixture encoder in test files → the one public `@oxml.string_to_bytes` (`notes` gained a test-scoped `oxml` import for it); OPC path handling (`resolve_target`, `rels_path_for`, `parent_dir`, `path_components`, `extension_of`) rewritten on `split` + views; `parse_signed_int`/`_int64`, `parse_uint64_decimal`, `RgbColor::parse_hex`, `decode_numeric_entity`, `resolve_qname`, `validate_part_name` rewritten on `StringView` patterns (`s is ['-', .. rest]`, `[.."xmlns:", .. prefix]`, `guard s is [a, b, c, d, e, f]`); `contains_cdata_terminator` is now a one-line `s.contains("]]>")`. `.length() == 0` / `> 0` → `.is_empty()` (44 sites); index-counting `while` loops → range / functional `for`. **Deliberate deviation, now documented in the code**: `XmlReader.chars` stays `Array[Char]` — the lexer indexes by *code point*, and `String`/`StringView` indexing yields UTF-16 code units, which would split astral-plane XML name characters. Net −541 lines, and **no public declaration changed** (only private helpers went — the regenerated `.mbti` differ solely by a trailing blank line the newer `moon info` no longer emits), 1178 tests green on Native / Wasm-GC / JS / Wasm, `moon check --deny-warn` clean. **Follow-up noted, not done**: `examples/sample-deck`'s `main` package warns that "Main packages will stop generating blackbox tests in a future release" — fixing it means splitting the deck's showcase code out of `main/`, which is a new-file change outside this sweep's scope.
 - **2026-07-12** — **v0.7.0 release pass.** Version bumped to 0.7.0 (root `moon.mod` + sample-deck dep), CHANGELOG entry written — Added: F5-b shape hyperlinks on all five kinds, `TableStylePreset` (74 gallery styles), slide sections, app.xml `AppProperties`, `embed_data` chart workbooks, fill convenience constructors, SmartArt per-node colours; a **compatibility note** flags the four `pub(all)` structs that gained optional fields (`Connector`/`GroupShape`/`GraphicFrame.hyperlink`, `Node.style`) — struct-literal constructors downstream need the one-line field additions, builder users are unaffected (pptz uses builders per the 0.6 audit). §0 version row + §4.0 table gain the v0.7.0 rows. Suite at release: 1178 × 4 backends.
 - **2026-07-12** — **Sample deck updated for v0.7 (25 → 26 slides) + examples/ refactor sweep — and the dep-flip machinery replaced by a committed `moon.work`.** New slide 22 "v0.7 features": a gallery-styled table (`Table::with_style(MediumStyle2Accent1)` — no hand-styled cells) plus the `Fill::solid` / `linear_gradient` (white `via` stop) / `pattern` convenience constructors side by side. Deck-wide v0.7 features woven in where they live: six named **slide sections** (`set_sections_mut`), **app.xml properties** (company / manager next to the existing core properties), the combo chart gains its **embedded data workbook** (`embed_data` — "Edit Data" opens both series), and the SmartArt org chart's CEO node shows the **per-node colour overrides** (red fill, white text). Deck tests now assert all four on the reopened bytes. Two `hyperlink: None` additions were needed where the deck builds `Connector` / `GroupShape` by struct literal — **flag in the v0.7.0 CHANGELOG**: consumers constructing those `pub(all)` structs literally need the same one-liner (builder users are unaffected; pptz uses builders per the 0.6 audit). Refactor lenses over examples/: comment hygiene — roadmap letter-codes purged from comments *and user-visible slide text* ("chart options (M2) + data validation (D7)" headings, "Typed layouts (M1)", "(F4)" in body text; release version numbers stay — they're public identifiers); docs freshness — build.mbt's stale header (24-slide list, v0.5.2-era dep note), main.mbt's "12-slide deck", and the sample-deck README (0.5.3 dep sample, 16-closing bisect range, slide table) all rewritten. **Toolchain follow-on**: `moon fmt` migrated the deck manifests to `moon.mod`/`moon.pkg` (TOML), whose import syntax rejects path deps — the transient json-edit flip in `gen-pptx.sh` died with it. Replaced by a **committed `moon.work`** (members: deck + repo root): in-repo builds resolve moon-pptx to the current tree automatically (`moon test` in the deck now runs the deck's 2 tests *plus* the library's 1178 against source), while the manifest keeps the published-version dep as the consumer-realistic example; `gen-pptx.sh` shrank to just build-and-decode. Deck verified end-to-end: 26 slides, sections/appProps/workbook confirmed in the emitted bytes.
 - **2026-07-11** — **Post-§4.2 refactor sweep (CLAUDE.md §7) over the v0.7 branch.** Findings-first pass over the nine feature commits, all six lenses. **Constants**: `app_properties.mbt` repeated `"/docProps/app.xml"` at four code sites → file-local `app_part_name` (template.mbt's inline namespace URIs deliberately kept — the whole file is a fixture-style literal template, per earlier sweep precedent). **Dedup**: the presentation test package had two same-shape saved-part helpers → one shared `saved_part_xml(prs, name)`. **Test adequacy** (3 gaps closed): a malformed app.xml root now has a direct Malformed test; the xlsx `column_letter` double-letter branch is exercised end-to-end (27-series chart → `Z1`/`AA1`/`AA2` cells — writing the test caught nothing in the code but an off-by-one in the *author's* column arithmetic, which is what the test is for); `Table::with_style` on a properties-less table covered. **Docs**: README.mbt.md sub-package table rows refreshed with the v0.7 surface (sections, app properties, `embed_data` workbooks, `TableStylePreset`, SmartArt per-node colours); TODO.md §0 narrative + §4.2 preamble now say the cycle is complete and awaiting a v0.7.0 release pass. **Comment hygiene / file splitting**: new code clean (the only roadmap-code grep hit was the spreadsheet cell `B1`), largest new file 305 lines — no action. 1175 → 1178 × 4 backends; no `.mbti` change.
