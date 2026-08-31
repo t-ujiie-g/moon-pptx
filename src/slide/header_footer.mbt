@@ -48,6 +48,7 @@ fn field_text_body(field_type : String, cached : String) -> TextBody {
       {
         properties: ParagraphProperties::default(),
         content: [FieldContent(fld)],
+        end_run_properties: None,
         extension: [],
       },
     ],

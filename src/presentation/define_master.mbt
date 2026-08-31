@@ -21,16 +21,19 @@ pub(all) struct PlaceholderDef {
 ///|
 /// A high-level master definition. Build with
 /// `MasterDefinition::new` then the `with_*` helpers, or as a struct literal.
+///
+/// - `slide_number` — Declare a slide-number (`sldNum`) placeholder on the
+///   master.
+/// - `footer_text` — Declare a footer (`ftr`) placeholder carrying this text,
+///   if `Some`.
+/// - `date` — Declare a date (`dt`) placeholder on the master (pairs with
+///   `@slide.Slide::with_date`).
 pub(all) struct MasterDefinition {
   name : String
   background : @slide.Background?
   placeholders : Array[PlaceholderDef]
-  /// Declare a slide-number (`sldNum`) placeholder on the master.
   slide_number : Bool
-  /// Declare a footer (`ftr`) placeholder carrying this text, if `Some`.
   footer_text : String?
-  /// Declare a date (`dt`) placeholder on the master (pairs with
-  /// `@slide.Slide::with_date`).
   date : Bool
 }
 

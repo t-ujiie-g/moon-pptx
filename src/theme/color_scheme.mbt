@@ -14,6 +14,7 @@
 /// slide-level mapping (`bg1` / `tx1` / `bg2` / `tx2`) refers to these.
 /// `accent1`..`accent6` are the brand colours, `hlink` and `folHlink` the
 /// hyperlink and followed-hyperlink colours.
+///
 pub(all) struct ColorScheme {
   name : String
   dk1 : @oxml.Color
@@ -28,7 +29,5 @@ pub(all) struct ColorScheme {
   accent6 : @oxml.Color
   hlink : @oxml.Color
   fol_hlink : @oxml.Color
-  /// Lossless preservation (ADR-004): foreign-namespace slot extensions
-  /// or any other unmodelled child of `<a:clrScheme>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

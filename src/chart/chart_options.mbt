@@ -26,33 +26,38 @@
 /// A single high-level chart configuration directive. Consumed by
 /// `Chart::with_options`; each variant maps onto one (or, for `DataLabels`,
 /// every supporting plot's) typed field of the chart model.
+///
+/// - `Title` — Set the chart title from plain text (synthesises
+///   `<c:title><c:tx><c:rich>` …). Clears any `autoTitleDeleted` flag.
+/// - `TitleDeleted` — Remove the chart title and set `<c:autoTitleDeleted
+///   val="1"/>` so the renderer does not auto-generate one.
+/// - `Legend` — Show the legend at the given position
+///   (`<c:legend><c:legendPos>`). Preserves any existing per-entry overrides
+///   / styling.
+/// - `LegendHidden` — Remove the legend entirely.
+/// - `DataLabels` — Show value data labels at the given position on every
+///   plot family that supports them (surface charts have no data labels and
+///   are left untouched).
+/// - `DataLabelsHidden` — Remove data labels from every plot.
+/// - `DataTable` — Show (`true`) or hide (`false`) the data table below the
+///   plot area (`<c:plotArea><c:dTable>`).
+/// - `Style` — Set the `<c:style>` preset index (1..48 in practice).
+/// - `RoundedCorners` — Set `<c:roundedCorners val="…"/>` on the chart space.
+/// - `PlotVisibleOnly` — Set `<c:plotVisOnly val="…"/>` — plot only data on
+///   visible cells.
+/// - `DisplayBlanks` — Set `<c:dispBlanksAs val="…"/>` — how blank cells
+///   render.
 pub(all) enum ChartOption {
-  /// Set the chart title from plain text (synthesises `<c:title><c:tx><c:rich>`
-  /// …). Clears any `autoTitleDeleted` flag.
   Title(String)
-  /// Remove the chart title and set `<c:autoTitleDeleted val="1"/>` so the
-  /// renderer does not auto-generate one.
   TitleDeleted
-  /// Show the legend at the given position (`<c:legend><c:legendPos>`).
-  /// Preserves any existing per-entry overrides / styling.
   Legend(LegendPos)
-  /// Remove the legend entirely.
   LegendHidden
-  /// Show value data labels at the given position on every plot family that
-  /// supports them (surface charts have no data labels and are left untouched).
   DataLabels(DLblPos)
-  /// Remove data labels from every plot.
   DataLabelsHidden
-  /// Show (`true`) or hide (`false`) the data table below the plot area
-  /// (`<c:plotArea><c:dTable>`).
   DataTable(Bool)
-  /// Set the `<c:style>` preset index (1..48 in practice).
   Style(Int)
-  /// Set `<c:roundedCorners val="…"/>` on the chart space.
   RoundedCorners(Bool)
-  /// Set `<c:plotVisOnly val="…"/>` — plot only data on visible cells.
   PlotVisibleOnly(Bool)
-  /// Set `<c:dispBlanksAs val="…"/>` — how blank cells render.
   DisplayBlanks(DisplayBlanksAs)
 } derive(Eq, Debug)
 

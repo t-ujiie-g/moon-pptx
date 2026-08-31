@@ -39,54 +39,54 @@
 /// Body of any of the four axis elements (`<c:catAx>` / `<c:valAx>` /
 /// `<c:dateAx>` / `<c:serAx>`). The axis-kind discriminator lives on
 /// the surrounding `Axis` enum variant, not in the body.
+///
+/// - `ax_id` (`<c:axId val="…"/>`) — REQUIRED. Identifies this axis so other
+///   chart elements can cross-reference it.
+/// - `scaling` — `<c:scaling>` (CT_Scaling). Schema-required; stored optional
+///   so pathological / minimal fixtures still parse.
+/// - `delete` (`<c:delete val="…"/>`) — when `true`, the axis is hidden but
+///   the chart still references it for data layout.
+/// - `ax_pos` (`<c:axPos val="…"/>`) — anchor side. Schema-required; stored
+///   optional for the same reason as `scaling`.
+/// - `major_gridlines` — `<c:majorGridlines>` (CT_ChartLines). Optional;
+///   captured verbatim — typed when the gridline styling slice lands.
+/// - `minor_gridlines` — `<c:minorGridlines>` (CT_ChartLines). Optional;
+///   captured.
+/// - `title` — `<c:title>` (CT_Title) — typed body.
+/// - `num_fmt` — `<c:numFmt formatCode="…" sourceLinked="…"/>`. Optional.
+/// - `major_tick_mark` — `<c:majorTickMark val="…"/>`. Defaults to `Out` if
+///   absent on the surface (the spec default is "out"), but we don't
+///   synthesise the default here — the field stays `None` so writers don't
+///   emit a redundant child.
+/// - `minor_tick_mark` — `<c:minorTickMark val="…"/>`.
+/// - `tick_lbl_pos` (`<c:tickLblPos val="…"/>`) — tick-label placement.
+/// - `sp_pr` — `<c:spPr>` (CT_ShapeProperties) — axis line / fill styling.
+///   Captured.
+/// - `tx_pr` — `<c:txPr>` (CT_TextBody) — axis-label run styling. Captured.
+/// - `cross_ax` (`<c:crossAx val="…"/>`) — the paired axis this one crosses.
+///   Schema-required; stored optional.
+/// - `crosses` (`<c:crosses val="…"/>`) — choice with `crossesAt`.
+/// - `crosses_at` (`<c:crossesAt val="…"/>`) — alternative to `crosses`.
+///   Stored as `String?` to round-trip the source token verbatim (the value
+///   is a `Double` but we want to dodge float-format drift, matching how
+///   `OfPieChartBody.split_pos` is handled).
 pub(all) struct AxisCore {
-  /// `<c:axId val="…"/>` — REQUIRED. Identifies this axis so other
-  /// chart elements can cross-reference it.
   ax_id : Int
-  /// `<c:scaling>` (CT_Scaling). Schema-required; stored optional so
-  /// pathological / minimal fixtures still parse.
   scaling : Scaling?
-  /// `<c:delete val="…"/>` — when `true`, the axis is hidden but
-  /// the chart still references it for data layout.
   delete : Bool?
-  /// `<c:axPos val="…"/>` — anchor side. Schema-required; stored
-  /// optional for the same reason as `scaling`.
   ax_pos : AxPos?
-  /// `<c:majorGridlines>` (CT_ChartLines). Optional; captured
-  /// verbatim — typed when the gridline styling slice lands.
   major_gridlines : @xml.XmlElement?
-  /// `<c:minorGridlines>` (CT_ChartLines). Optional; captured.
   minor_gridlines : @xml.XmlElement?
-  /// `<c:title>` (CT_Title) — typed body.
   title : ChartTitle?
-  /// `<c:numFmt formatCode="…" sourceLinked="…"/>`. Optional.
   num_fmt : NumFmt?
-  /// `<c:majorTickMark val="…"/>`. Defaults to `Out` if absent on
-  /// the surface (the spec default is "out"), but we don't synthesise
-  /// the default here — the field stays `None` so writers don't emit
-  /// a redundant child.
   major_tick_mark : TickMark?
-  /// `<c:minorTickMark val="…"/>`.
   minor_tick_mark : TickMark?
-  /// `<c:tickLblPos val="…"/>` — tick-label placement.
   tick_lbl_pos : TickLblPos?
-  /// `<c:spPr>` (CT_ShapeProperties) — axis line / fill styling.
-  /// Captured.
   sp_pr : @xml.XmlElement?
-  /// `<c:txPr>` (CT_TextBody) — axis-label run styling. Captured.
   tx_pr : @xml.XmlElement?
-  /// `<c:crossAx val="…"/>` — the paired axis this one crosses.
-  /// Schema-required; stored optional.
   cross_ax : Int?
-  /// `<c:crosses val="…"/>` — choice with `crossesAt`.
   crosses : Crosses?
-  /// `<c:crossesAt val="…"/>` — alternative to `crosses`. Stored as
-  /// `String?` to round-trip the source token verbatim (the value is
-  /// a `Double` but we want to dodge float-format drift, matching
-  /// how `OfPieChartBody.split_pos` is handled).
   crosses_at : String?
-  /// Per-axis-kind extras (CatAx-specific / ValAx-specific / etc.)
-  /// plus `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -100,19 +100,19 @@ pub impl Show for AxisCore with fn output(self, logger) {
 ///|
 /// `<c:scaling>` body (CT_Scaling, §21.2.2.43). All four children are
 /// optional; an empty `<c:scaling/>` is valid.
+///
+/// - `log_base` (`<c:logBase val="…"/>`) — value-axis logarithmic base, in
+///   [2.0, 1000.0]. Stored as `String?` to preserve the source representation
+///   losslessly.
+/// - `orientation` (`<c:orientation val="…"/>`) — value direction.
+/// - `max` (`<c:max val="…"/>`) — explicit axis maximum. `String?` to
+///   preserve representation.
+/// - `min` (`<c:min val="…"/>`) — explicit axis minimum. `String?`.
 pub(all) struct Scaling {
-  /// `<c:logBase val="…"/>` — value-axis logarithmic base, in
-  /// [2.0, 1000.0]. Stored as `String?` to preserve the source
-  /// representation losslessly.
   log_base : String?
-  /// `<c:orientation val="…"/>` — value direction.
   orientation : Orientation?
-  /// `<c:max val="…"/>` — explicit axis maximum. `String?` to
-  /// preserve representation.
   max : String?
-  /// `<c:min val="…"/>` — explicit axis minimum. `String?`.
   min : String?
-  /// Unmodelled children (`<c:extLst>`, foreign-namespace). ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -124,11 +124,12 @@ pub impl Show for Scaling with fn output(self, logger) {
 
 ///|
 /// `<c:orientation val="…"/>` (ST_Orientation).
+///
+/// - `MinMax` (`val="minMax"`) — values increase from min toward max along
+///   the axis (the usual configuration).
+/// - `MaxMin` (`val="maxMin"`) — values decrease, flipping the axis.
 pub(all) enum Orientation {
-  /// `val="minMax"` — values increase from min toward max along the
-  /// axis (the usual configuration).
   MinMax
-  /// `val="maxMin"` — values decrease, flipping the axis.
   MaxMin
 } derive(Eq, Debug)
 
@@ -162,14 +163,14 @@ pub fn Orientation::to_xml(self : Orientation) -> String {
 
 ///|
 /// `<c:axPos val="…"/>` (ST_AxPos).
+///
+/// - `Bottom` (`val="b"`) — bottom (usual for catAx in a vertical bar chart).
+/// - `Left` (`val="l"`) — left (usual for valAx in a vertical bar chart).
+/// Direct attribute mappings: `Right`→`val="r"`, `Top`→`val="t"`.
 pub(all) enum AxPos {
-  /// `val="b"` — bottom (usual for catAx in a vertical bar chart).
   Bottom
-  /// `val="l"` — left (usual for valAx in a vertical bar chart).
   Left
-  /// `val="r"` — right.
   Right
-  /// `val="t"` — top.
   Top
 } derive(Eq, Debug)
 
@@ -210,14 +211,15 @@ pub fn AxPos::to_xml(self : AxPos) -> String {
 ///|
 /// `<c:majorTickMark val="…"/>` / `<c:minorTickMark val="…"/>`
 /// (ST_TickMark).
+///
+/// - `Cross` (`val="cross"`) — tick crosses the axis.
+/// - `In` (`val="in"`) — tick on the inside of the plot.
+/// - `NoTick` (`val="none"`) — no tick.
+/// - `Out` (`val="out"`) — tick on the outside (default).
 pub(all) enum TickMark {
-  /// `val="cross"` — tick crosses the axis.
   Cross
-  /// `val="in"` — tick on the inside of the plot.
   In
-  /// `val="none"` — no tick.
   NoTick
-  /// `val="out"` — tick on the outside (default).
   Out
 } derive(Eq, Debug)
 
@@ -257,14 +259,15 @@ pub fn TickMark::to_xml(self : TickMark) -> String {
 
 ///|
 /// `<c:tickLblPos val="…"/>` (ST_TickLblPos).
+///
+/// - `High` (`val="high"`) — labels on the high side of the axis.
+/// - `Low` (`val="low"`) — labels on the low side.
+/// - `NextTo` (`val="nextTo"`) — labels next to the axis (typical default).
+/// - `NoLbl` (`val="none"`) — labels hidden.
 pub(all) enum TickLblPos {
-  /// `val="high"` — labels on the high side of the axis.
   High
-  /// `val="low"` — labels on the low side.
   Low
-  /// `val="nextTo"` — labels next to the axis (typical default).
   NextTo
-  /// `val="none"` — labels hidden.
   NoLbl
 } derive(Eq, Debug)
 
@@ -304,12 +307,13 @@ pub fn TickLblPos::to_xml(self : TickLblPos) -> String {
 
 ///|
 /// `<c:crosses val="…"/>` (ST_Crosses).
+///
+/// - `AutoZero` (`val="autoZero"`) — paired axis crosses at zero (default).
+/// - `Min` (`val="min"`) — at the minimum value.
+/// - `Max` (`val="max"`) — at the maximum value.
 pub(all) enum Crosses {
-  /// `val="autoZero"` — paired axis crosses at zero (default).
   AutoZero
-  /// `val="min"` — at the minimum value.
   Min
-  /// `val="max"` — at the maximum value.
   Max
 } derive(Eq, Debug)
 
@@ -348,13 +352,14 @@ pub fn Crosses::to_xml(self : Crosses) -> String {
 /// `<c:numFmt formatCode="…" sourceLinked="…"/>` (CT_NumFmt).
 /// Unusually for the chart schema, the data lives in attributes on
 /// `<c:numFmt>` itself rather than `val="…"` on inner children.
+///
+/// - `format_code` — `formatCode` attribute — REQUIRED in the schema. The
+///   default "General" is a sensible fallback if the source omits it (which
+///   is non-conforming but tolerated).
+/// - `source_linked` — `sourceLinked` attribute — optional Bool indicating
+///   whether the format code follows the source data's format.
 pub(all) struct NumFmt {
-  /// `formatCode` attribute — REQUIRED in the schema. The default
-  /// "General" is a sensible fallback if the source omits it (which
-  /// is non-conforming but tolerated).
   format_code : String
-  /// `sourceLinked` attribute — optional Bool indicating whether
-  /// the format code follows the source data's format.
   source_linked : Bool?
 } derive(Eq, Debug)
 

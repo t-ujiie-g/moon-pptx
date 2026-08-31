@@ -19,9 +19,10 @@
 ///|
 /// Body of `<c:stockChart>` (CT_StockChart). Stock charts carry
 /// either three (HLC) or four (OHLC) value series.
+///
+/// - `series` (`<c:ser>`) — three for HLC charts, four for OHLC. Captured
+///   XmlElement payloads.
 pub(all) struct StockChartBody {
-  /// `<c:ser>` — three for HLC charts, four for OHLC. Captured
-  /// XmlElement payloads.
   series : Array[ChartSeriesCore]
   d_lbls : DLbls?
   drop_lines : @xml.XmlElement?

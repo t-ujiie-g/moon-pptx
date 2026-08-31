@@ -25,11 +25,14 @@ pub let content_types_part_name : String = "/[Content_Types].xml"
 /// Entries are stored in source order; `with_default` / `with_override`
 /// append. The struct is immutable in the OPC sense: builder methods return
 /// a new value rather than mutating in place.
+///
+/// - `defaults` — `(extension, content_type)` pairs. Extensions are stored as
+///   supplied (no case folding); lookup compares case-insensitively per the
+///   spec.
+/// - `overrides` — `(part_name, content_type)` pairs. Part names are
+///   case-sensitive.
 pub(all) struct ContentTypes {
-  /// `(extension, content_type)` pairs. Extensions are stored as supplied
-  /// (no case folding); lookup compares case-insensitively per the spec.
   defaults : Array[(String, String)]
-  /// `(part_name, content_type)` pairs. Part names are case-sensitive.
   overrides : Array[(String, String)]
 } derive(Eq, Debug)
 

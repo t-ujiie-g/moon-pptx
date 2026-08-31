@@ -17,36 +17,37 @@
 /// default). The date fields (`created` / `modified` / `last_printed`) are
 /// W3CDTF timestamps, e.g. `"2026-06-16T09:30:00Z"`; `created` / `modified`
 /// are emitted with the `xsi:type="dcterms:W3CDTF"` the schema requires.
+///
+/// - `title` — `dc:title`.
+/// - `creator` (`dc:creator`) — the document author.
+/// - `subject` — `dc:subject`.
+/// - `keywords` — `cp:keywords`.
+/// - `description` (`dc:description`) — python-pptx calls this `comments`.
+/// - `category` — `cp:category`.
+/// - `content_status` — `cp:contentStatus` (e.g. `"Draft"` / `"Final"`).
+/// - `created` (`dcterms:created`) — W3CDTF timestamp.
+/// - `modified` (`dcterms:modified`) — W3CDTF timestamp.
+/// - `last_printed` (`cp:lastPrinted`) — dateTime timestamp.
+/// - `last_modified_by` — `cp:lastModifiedBy`.
+/// - `revision` — `cp:revision`.
+/// - `identifier` — `dc:identifier`.
+/// - `language` — `dc:language`.
+/// - `version` — `cp:version`.
 pub(all) struct CoreProperties {
-  /// `dc:title`.
   title : String?
-  /// `dc:creator` — the document author.
   creator : String?
-  /// `dc:subject`.
   subject : String?
-  /// `cp:keywords`.
   keywords : String?
-  /// `dc:description` — python-pptx calls this `comments`.
   description : String?
-  /// `cp:category`.
   category : String?
-  /// `cp:contentStatus` (e.g. `"Draft"` / `"Final"`).
   content_status : String?
-  /// `dcterms:created` — W3CDTF timestamp.
   created : String?
-  /// `dcterms:modified` — W3CDTF timestamp.
   modified : String?
-  /// `cp:lastPrinted` — dateTime timestamp.
   last_printed : String?
-  /// `cp:lastModifiedBy`.
   last_modified_by : String?
-  /// `cp:revision`.
   revision : String?
-  /// `dc:identifier`.
   identifier : String?
-  /// `dc:language`.
   language : String?
-  /// `cp:version`.
   version : String?
 } derive(Eq, Debug)
 

@@ -15,18 +15,19 @@
 ///|
 /// Body of `<c:bubbleChart>` (CT_BubbleChart). Bubble charts
 /// pair XY coordinates with a bubble-size dimension.
+///
+/// - `bubble_scale` (`<c:bubbleScale val="…"/>`) — integer percentage 0..300.
+/// - `show_neg_bubbles` (`<c:showNegBubbles val="…"/>`) — whether to render
+///   bubbles for negative size values.
+/// - `size_represents` (`<c:sizeRepresents val="…"/>`) — how the numeric size
+///   maps to the bubble's drawn dimension (`area` or `w`idth).
 pub(all) struct BubbleChartBody {
   vary_colors : Bool?
   series : Array[BubbleSeriesCore]
   d_lbls : DLbls?
   bubble_3d : Bool?
-  /// `<c:bubbleScale val="…"/>` — integer percentage 0..300.
   bubble_scale : Int?
-  /// `<c:showNegBubbles val="…"/>` — whether to render bubbles for
-  /// negative size values.
   show_neg_bubbles : Bool?
-  /// `<c:sizeRepresents val="…"/>` — how the numeric size maps to
-  /// the bubble's drawn dimension (`area` or `w`idth).
   size_represents : SizeRepresents?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
@@ -41,11 +42,12 @@ pub impl Show for BubbleChartBody with fn output(self, logger) {
 
 ///|
 /// `<c:sizeRepresents val="…"/>` (CT_SizeRepresents). Two-value enum.
+///
+/// - `Area` (`val="area"`) — bubble area is proportional to the size value
+///   (the default).
+/// - `Width` (`val="w"`) — bubble width (diameter) is proportional to size.
 pub(all) enum SizeRepresents {
-  /// `val="area"` — bubble area is proportional to the size value
-  /// (the default).
   Area
-  /// `val="w"` — bubble width (diameter) is proportional to size.
   Width
 } derive(Eq, Debug)
 

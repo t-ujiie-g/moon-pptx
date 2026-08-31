@@ -17,14 +17,15 @@
 /// A hyperlink attached to a whole shape (`<p:cNvPr><a:hlinkClick>`).
 /// `target` is the unresolved destination set by the builder; `click` /
 /// `action` are filled by the resolver (`update_slide_mut`).
+///
+/// - `target` — Unresolved destination set by `with_hyperlink` /
+///   `with_hyperlink_to_slide`. Cleared once resolved.
+/// - `click` — Resolved relationship id emitted as `<a:hlinkClick r:id="…">`.
+/// - `action` — Optional `action` attribute — `"ppaction://hlinksldjump"` for
+///   internal-slide jumps (set by the resolver), `None` for external URLs.
 pub(all) struct ShapeHyperlink {
-  /// Unresolved destination set by `with_hyperlink` /
-  /// `with_hyperlink_to_slide`. Cleared once resolved.
   target : HyperlinkTarget?
-  /// Resolved relationship id emitted as `<a:hlinkClick r:id="…">`.
   click : String?
-  /// Optional `action` attribute — `"ppaction://hlinksldjump"` for
-  /// internal-slide jumps (set by the resolver), `None` for external URLs.
   action : String?
 } derive(Eq, Debug)
 

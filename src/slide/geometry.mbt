@@ -41,12 +41,12 @@ pub(all) enum Geometry {
 ///|
 /// One of the named preset shape kinds (`ST_ShapeType`).
 ///
-/// Variant order follows the spec grouping for readability: lines /
-/// rectangles, polygons, stars + seals, arrows, callouts, ribbons,
-/// flowchart, action buttons, math, Office 2013+ additions. All 187
-/// values are present so we can round-trip any real-world PPTX.
+/// Variant order follows the spec grouping: lines / rectangles, polygons,
+/// stars + seals, round / pie / arc, arrows, arrow callouts, 3D, brackets,
+/// connectors, callouts, ribbons, misc, flowchart, action buttons, math,
+/// Office 2013+ additions. All 187 values are present so any real-world
+/// PPTX round-trips.
 pub(all) enum PresetShape {
-  // Lines / rectangles
   Line
   LineInv
   Rect
@@ -63,7 +63,6 @@ pub(all) enum PresetShape {
   HalfFrame
   Corner
   DiagStripe
-  // Polygons
   Triangle
   RtTriangle
   Parallelogram
@@ -76,7 +75,6 @@ pub(all) enum PresetShape {
   Octagon
   Decagon
   Dodecagon
-  // Stars / seals
   Star4
   Star5
   Star6
@@ -89,7 +87,6 @@ pub(all) enum PresetShape {
   Star32
   IrregularSeal1
   IrregularSeal2
-  // Round / pie / arc
   Ellipse
   Teardrop
   Pie
@@ -99,7 +96,6 @@ pub(all) enum PresetShape {
   BlockArc
   Donut
   NoSmoking
-  // Arrows
   RightArrow
   LeftArrow
   UpArrow
@@ -123,7 +119,6 @@ pub(all) enum PresetShape {
   SwooshArrow
   HomePlate
   Chevron
-  // Arrow callouts
   LeftArrowCallout
   RightArrowCallout
   UpArrowCallout
@@ -131,7 +126,6 @@ pub(all) enum PresetShape {
   LeftRightArrowCallout
   UpDownArrowCallout
   QuadArrowCallout
-  // 3D / pictographic
   Cube
   Can
   Bevel
@@ -142,14 +136,12 @@ pub(all) enum PresetShape {
   SmileyFace
   FoldedCorner
   Cloud
-  // Brackets / braces
   LeftBracket
   RightBracket
   LeftBrace
   RightBrace
   BracketPair
   BracePair
-  // Connectors
   StraightConnector1
   BentConnector2
   BentConnector3
@@ -159,7 +151,6 @@ pub(all) enum PresetShape {
   CurvedConnector3
   CurvedConnector4
   CurvedConnector5
-  // Callouts
   Callout1
   Callout2
   Callout3
@@ -176,7 +167,6 @@ pub(all) enum PresetShape {
   WedgeRoundRectCallout
   WedgeEllipseCallout
   CloudCallout
-  // Ribbons / scrolls / waves
   Ribbon
   Ribbon2
   EllipseRibbon
@@ -186,9 +176,7 @@ pub(all) enum PresetShape {
   HorizontalScroll
   Wave
   DoubleWave
-  // Misc
   Plus
-  // Flowchart
   FlowChartProcess
   FlowChartDecision
   FlowChartInputOutput
@@ -218,7 +206,6 @@ pub(all) enum PresetShape {
   FlowChartDelay
   FlowChartAlternateProcess
   FlowChartOffpageConnector
-  // Action buttons
   ActionButtonBlank
   ActionButtonHome
   ActionButtonHelp
@@ -231,14 +218,12 @@ pub(all) enum PresetShape {
   ActionButtonDocument
   ActionButtonSound
   ActionButtonMovie
-  // Math
   MathPlus
   MathMinus
   MathMultiply
   MathDivide
   MathEqual
   MathNotEqual
-  // Office 2013+ additions
   Gear6
   Gear9
   Funnel

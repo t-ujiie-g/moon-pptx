@@ -168,6 +168,7 @@ fn match_level_name(name : String) -> Int? {
 fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
   let content : Array[ParagraphContent] = []
   let mut properties : ParagraphProperties = ParagraphProperties::default()
+  let mut end_run_properties : RunProperties? = None
   let extension : Array[@xml.XmlElement] = []
   while true {
     let ev = next_event(r)
@@ -181,9 +182,10 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
             "r" => content.push(RunContent(parse_run(r)))
             "br" => content.push(Break(parse_break(r)))
             "fld" => content.push(FieldContent(parse_field(r, child_attrs)))
-            // endParaRPr (run props for the implicit terminal break) and
-            // anything we don't yet model land on `extension` so writers
-            // can re-emit them verbatim.
+            "endParaRPr" =>
+              end_run_properties = Some(parse_run_properties(r, child_attrs))
+            // Anything we don't yet model lands on `extension` so writers
+            // can re-emit it verbatim.
             _ => extension.push(collect_subtree_unknown(r, child, child_attrs))
           }
         }
@@ -191,7 +193,7 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
       _ => ()
     }
   }
-  { properties, content, extension, }
+  { properties, content, end_run_properties, extension, }
 }
 
 ///|
@@ -204,6 +206,7 @@ fn parse_paragraph_properties(
   let alignment = parse_enum_attr(attrs, "algn", TextAlignment::from_xml)
   let margin_left = parse_emu_attr(attrs, "marL")
   let indent = parse_emu_attr(attrs, "indent")
+  let rtl = @oxml.bool_attr_opt(attrs, "rtl")
   let mut line_spacing : TextSpacing? = None
   let mut space_before : TextSpacing? = None
   let mut space_after : TextSpacing? = None
@@ -257,6 +260,7 @@ fn parse_paragraph_properties(
     space_before,
     space_after,
     bullet,
+    rtl,
     extension,
   }
 }

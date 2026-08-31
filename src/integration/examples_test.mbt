@@ -546,3 +546,40 @@ test "example 19: document properties (core + app)" {
   // The merge kept the template's own Application field.
   assert_eq(app.application.unwrap(), "moon-pptx")
 }
+
+///|
+test "example 20: right-to-left text and paragraph-mark formatting" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let rp = @slide.RunProperties::default().with_font_size(@units.Pt(28.0))
+  let para = @slide.Paragraph::of_styled_text("مرحبا بالعالم", rp).with_rtl(
+    true,
+  )
+  let spacer = @slide.Paragraph::of_text("").with_end_run_properties(
+    @slide.RunProperties::default().with_font_size(@units.Pt(12.0)),
+  )
+  let body = @slide.TextBody::of_paragraphs([para, spacer])
+  let shape = @slide.AutoShape::textbox(
+    2,
+    "Arabic",
+    prs.pct_w(10.0),
+    prs.pct_h(30.0),
+    prs.pct_w(80.0),
+    prs.pct_h(25.0),
+    "",
+  ).with_text_body(body)
+  prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(shape)))
+  // Both properties survive save → reopen.
+  let reopened = @presentation.Presentation::open(prs.save())
+  let paras = match reopened.slides()[0].shapes[0] {
+    AutoShape(sp) => sp.text_body.unwrap().paragraphs
+    _ => abort("expected the AutoShape back")
+  }
+  assert_eq(paras[0].properties.rtl, Some(true))
+  assert_eq(
+    paras[1].end_run_properties.unwrap().font_size,
+    Some(@units.Pt(12.0)),
+  )
+  // Unset direction stays unset rather than becoming left-to-right.
+  assert_eq(paras[1].properties.rtl, None)
+}

@@ -134,7 +134,6 @@ test "fixture: presentation rels resolve to real parts (incl. `..` walk)" {
   let pkg = @opc.Package::open(build_fixture())
   let rels = pkg.relationships_for("/ppt/presentation.xml")
   assert_eq(rels.items.length(), 2)
-  // rId1 → slide
   let slide_rel = rels.by_id("rId1").unwrap()
   let slide_path = @opc.resolve_target(
     "/ppt/presentation.xml",
@@ -173,7 +172,6 @@ test "round trip: open -> to_bytes -> open preserves shape" {
 ///|
 test "mutate: add a slide part + register override + save + reopen" {
   let pkg = @opc.Package::open(build_fixture())
-  // Add a new slide part.
   let new_slide = @opc.Part::new(
     "/ppt/slides/slide2.xml",
     "",

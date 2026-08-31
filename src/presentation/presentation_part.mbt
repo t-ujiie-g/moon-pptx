@@ -13,11 +13,12 @@
 ///|
 /// One entry in `<p:sldMasterIdLst>` — a master ID + a rId pointing
 /// to the slide-master part via `presentation.xml.rels`.
+///
+/// - `id` — `id` attribute. Spec says `>= 2147483648`; we keep an `Int64` so
+///   the high bit is representable.
+/// - `r_id` (`r:id`) — the relationship ID into `presentation.xml.rels`.
 pub(all) struct SlideMasterIdRef {
-  /// `id` attribute. Spec says `>= 2147483648`; we keep an `Int64`
-  /// so the high bit is representable.
   id : Int64
-  /// `r:id` — the relationship ID into `presentation.xml.rels`.
   r_id : String
 } derive(Eq, Debug)
 
@@ -25,10 +26,11 @@ pub(all) struct SlideMasterIdRef {
 /// One entry in `<p:sldIdLst>` — a slide ID + a rId pointing to the
 /// slide part via `presentation.xml.rels`. Source order of these
 /// entries is the actual on-screen slide order.
+///
+/// - `id` — `id` attribute. Spec says `>= 256 && <= 2147483647`.
+/// - `r_id` (`r:id`) — the relationship ID into `presentation.xml.rels`.
 pub(all) struct SlideIdRef {
-  /// `id` attribute. Spec says `>= 256 && <= 2147483647`.
   id : Int64
-  /// `r:id` — the relationship ID into `presentation.xml.rels`.
   r_id : String
 } derive(Eq, Debug)
 
@@ -37,10 +39,11 @@ pub(all) struct SlideIdRef {
 /// (`screen4x3`, `screen16x9`, `widescreen`, `custom`, …). We keep
 /// the type as a raw string because PowerPoint occasionally emits
 /// custom enum values we'd otherwise have to enumerate.
+///
+/// - `size_type` — `type` attribute. Empty when the producer didn't emit one.
 pub(all) struct SlideSize {
   cx : @units.Emu
   cy : @units.Emu
-  /// `type` attribute. Empty when the producer didn't emit one.
   size_type : String
 } derive(Eq, Debug)
 
@@ -59,30 +62,26 @@ pub(all) struct NotesSize {
 /// spec says `minOccurs="1"`), but we surface it as a plain array
 /// rather than `Result` so callers can inspect malformed packages
 /// without an extra error path.
+///
+/// - `sld_master_ids` (`<p:sldMasterIdLst>`) — at least one master in
+///   well-formed PPTX. Source order matches the document order.
+/// - `sld_ids` (`<p:sldIdLst>`) — actual slide order. Empty for decks with no
+///   slides (which is what `Presentation::new()` produces).
+/// - `notes_master_id` (`<p:notesMasterIdLst>`) — at most one notes master.
+///   Decks without speaker notes omit this entirely.
+/// - `handout_master_id` (`<p:handoutMasterIdLst>`) — at most one handout
+///   master.
+/// - `sld_sz` (`<p:sldSz>`) — slide dimensions + size type. Real PPTX always
+///   emits this; `None` only happens on malformed input.
+/// - `notes_sz` (`<p:notesSz>`) — notes dimensions. Real PPTX always emits
+///   this too.
 pub(all) struct PresentationPart {
-  /// `<p:sldMasterIdLst>` — at least one master in well-formed
-  /// PPTX. Source order matches the document order.
   sld_master_ids : Array[SlideMasterIdRef]
-  /// `<p:sldIdLst>` — actual slide order. Empty for decks with no
-  /// slides (which is what `Presentation::new()` produces).
   sld_ids : Array[SlideIdRef]
-  /// `<p:notesMasterIdLst>` — at most one notes master. Decks
-  /// without speaker notes omit this entirely.
   notes_master_id : SlideIdRef?
-  /// `<p:handoutMasterIdLst>` — at most one handout master.
   handout_master_id : SlideIdRef?
-  /// `<p:sldSz>` — slide dimensions + size type. Real PPTX always
-  /// emits this; `None` only happens on malformed input.
   sld_sz : SlideSize?
-  /// `<p:notesSz>` — notes dimensions. Real PPTX always emits this
-  /// too.
   notes_sz : NotesSize?
-  /// Lossless preservation (ADR-004): every unmodelled child of
-  /// `<p:presentation>` (`<p:defaultTextStyle>`, `<p:custShowLst>`,
-  /// `<p:photoAlbum>`, `<p:kinsoku>`, `<p:custDataLst>`,
-  /// `<p:extLst>`, foreign-namespace siblings) plus every
-  /// unmodelled attribute on the root (captured as a special
-  /// `<:root-attrs>` ad-hoc sentinel — see `parse_presentation`).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

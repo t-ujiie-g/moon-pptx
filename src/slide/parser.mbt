@@ -1208,7 +1208,7 @@ fn parse_xfrm(
   }
 }
 
-// --- clrMapOvr (mirror of @slide_master's logic) ---
+// --- clrMapOvr ---
 
 ///|
 fn parse_clr_map_ovr(
@@ -1242,8 +1242,11 @@ fn parse_clr_map_ovr(
   result
 }
 
-// --- shared helpers (mirror of @slide_master / @theme — see ADR-009 below
-// for the planned consolidation) ---
+// --- shared helpers ---
+//
+// @oxml exports public equivalents, but each package keeps a copy so the
+// helper raises that package's own suberror rather than @oxml's
+// XmlReadError. Consolidating means giving up that typing.
 
 ///|
 fn skip_subtree(r : @xml.XmlReader) -> Unit raise SlideError {

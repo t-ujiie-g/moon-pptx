@@ -14,18 +14,20 @@
 
 ///|
 /// Typed `<c:pieChart>` body.
+///
+/// - `vary_colors` (`<c:varyColors>`) — optional. Pie charts almost always
+///   emit `val="1"` because slice-by-slice colouring is the visual point.
+/// - `series` — `<c:ser>` series — usually one for pie charts. Captured
+///   `<XmlElement>`.
+/// - `d_lbls` (`<c:dLbls>`) — optional data labels. Captured verbatim.
+/// - `first_slice_ang` (`<c:firstSliceAng val="…"/>`) — integer degrees
+///   0..360 for the starting position of the first slice. `0` (top) is the
+///   default.
 pub(all) struct PieChartBody {
-  /// `<c:varyColors>` — optional. Pie charts almost always emit
-  /// `val="1"` because slice-by-slice colouring is the visual point.
   vary_colors : Bool?
-  /// `<c:ser>` series — usually one for pie charts. Captured `<XmlElement>`.
   series : Array[ChartSeriesCore]
-  /// `<c:dLbls>` — optional data labels. Captured verbatim.
   d_lbls : DLbls?
-  /// `<c:firstSliceAng val="…"/>` — integer degrees 0..360 for the
-  /// starting position of the first slice. `0` (top) is the default.
   first_slice_ang : Int?
-  /// ADR-004 tail.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

@@ -131,18 +131,17 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 
 | # | Gap | State | Why it is open | Size |
 |---|---|---|---|---|
-| G1 | **RTL / bidi text** (`<a:pPr rtl="1">`, right-to-left paragraph direction) | ❌ | The clearest feature gap vs PptxGenJS. Needs a `rtl` field on `ParagraphProperties` + writer support; no text *shaping* is required since PowerPoint does the shaping | S |
 | G2 | **Asian-script font fallback** (`<a:ea>` / `<a:cs>` font resolution) | △ | `complex_script` exists as a field but nothing resolves east-asian vs complex-script fonts per run | S–M |
 | G3 | **WordArt / preset text warp** (`<a:prstTxWarp>`) | △ | Typed warp presets over the existing `bodyPr`; 40-odd preset names | M |
 | G4 | **3-D shape effects** (`<a:scene3d>` camera/light, `<a:sp3d>` bevel/extrusion) | △ | Typed builder; large surface, low demand so far | M–L |
-| G5 | **`<a:endParaRPr>` typed modelling** | △ | Currently rides `Paragraph.extension`; matters for "what formatting does the next typed character inherit" | S |
 | G6 | **Equation editor** (Office Math, `<m:oMathPara>`) | △ | A whole second markup vocabulary; only worth it with a concrete consumer | L |
 | G7 | **Form fields / ink** (`<p:contentPart>`) | △ | Same shape as G6 — niche, preserved losslessly today | M |
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
 
-G1 and G5 are the two small, self-contained wins; G1 is the only one that
-closes a competitor gap.
+G1 (RTL / bidi text) and G5 (`endParaRPr`) closed in the 0.7.2+ cycle; the
+IDs are retired rather than reused so older references still resolve. Of
+what is left, G8 and G2 are the smallest.
 
 ### 3.2 Verification gaps
 
@@ -162,6 +161,7 @@ in CI over generated decks plus the 7-file real-world corpus.
 |---|---|---|
 | H1 | Split `examples/sample-deck/main` into a library package + thin entrypoint | `moon check` warns that main packages will stop generating blackbox tests in a future MoonBit release; the deck's tests live in `main/showcase_test.mbt` |
 | H2 | `XmlReader` over `StringView` instead of `Array[Char]` | Would drop a full code-point copy of every part at parse time. Blocked on wanting code-point (not UTF-16 code-unit) indexing; revisit if V2 shows parse allocation hurting |
+| H3 | Five XML helpers (`skip_subtree`, `next_event`, `collect_subtree_unknown`, `optional_attr`, `require_attr`) are duplicated across six packages | `@oxml` exports public equivalents; each package keeps a copy so the helper raises *its* suberror instead of `XmlReadError`. Deduplicating means either giving up per-subdomain error typing or finding a generic-over-error formulation. Accepted for now — logged so it is not mistaken for an oversight |
 
 ---
 
@@ -178,15 +178,16 @@ No dated cycle is committed. Work is pulled from §3 and §5 as demand
 appears; each item ships in whatever `0.7.x` / `0.8.0` release it lands
 in. Suggested order, highest value first:
 
-1. **G1 RTL / bidi paragraph direction** — the one remaining row where a
-   competitor is ahead, and it is a small change.
-2. **V2 benchmarks** — they gate the streaming-write decision (G9)
+1. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-3. **G5 `endParaRPr`** — small, and removes a surprising formatting
-   inheritance gap.
-4. **H1 sample-deck split** — forced eventually by the toolchain; cheap
+2. **G2 Asian-script font fallback** — the last row where PptxGenJS is
+   ahead on text handling, and it pairs naturally with the RTL support
+   that just landed.
+3. **H1 sample-deck split** — forced eventually by the toolchain; cheap
    to do before it becomes an error.
+4. **G8 p14 extended transitions** — small, and the base transition model
+   is already typed.
 
 ### 4.2 The v1.0.0 gate
 
@@ -386,6 +387,15 @@ moon info                # regenerate pkg.generated.mbti
 Run all four before committing; CI enforces them. Note that **deprecation
 warnings surface under `moon test` / `moon build`, not `moon check`** —
 a green `moon check --deny-warn` is not evidence the tree is warning-free.
+
+### Model records
+- Construct model records by spreading a constructor —
+  `{ ..ParagraphProperties::default(), bullet: Some(…) }` — never by
+  listing every field. Adding a field to a `pub(all)` struct is additive
+  in the generated `.mbti`, but it *does* break exhaustive record
+  literals at consumer sites, so the spread form is what keeps the
+  additive-only promise real. Use it in examples and docs too: they are
+  what consumers copy.
 
 ### Commit style
 - Imperative subject line, ≤72 chars.

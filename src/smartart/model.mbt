@@ -14,22 +14,29 @@
 
 ///|
 /// Which built-in SmartArt layout family a diagram maps to.
+///
+/// - `List` — Vertical list of rounded boxes (built-in layout `list1`).
+/// - `Process` — Left-to-right sequence of boxes (built-in layout
+///   `process1`).
+/// - `Cycle` — Boxes arranged evenly around a ring (built-in layout
+///   `cycle1`).
+/// - `Pyramid` — Stacked levels widening toward the base (built-in layout
+///   `pyramid1`).
+/// - `OrgChart` — Top-down organisation chart from a single root (built-in
+///   `orgChart1`).
+/// - `Hierarchy` — Layered hierarchy from one or more roots (built-in
+///   `hierarchy1`).
+/// - `Matrix` — Items arranged in a roughly-square grid (built-in `matrix1`).
+/// - `Relationship` — A central hub with related items around it (built-in
+///   `radial1`).
 pub(all) enum SmartArtKind {
-  /// Vertical list of rounded boxes (built-in layout `list1`).
   List
-  /// Left-to-right sequence of boxes (built-in layout `process1`).
   Process
-  /// Boxes arranged evenly around a ring (built-in layout `cycle1`).
   Cycle
-  /// Stacked levels widening toward the base (built-in layout `pyramid1`).
   Pyramid
-  /// Top-down organisation chart from a single root (built-in `orgChart1`).
   OrgChart
-  /// Layered hierarchy from one or more roots (built-in `hierarchy1`).
   Hierarchy
-  /// Items arranged in a roughly-square grid (built-in `matrix1`).
   Matrix
-  /// A central hub with related items around it (built-in `radial1`).
   Relationship
 } derive(Eq, Debug)
 
@@ -39,12 +46,13 @@ pub(all) enum SmartArtKind {
 /// overrides go into both the data model (the point's `<dgm:spPr>` /
 /// `<dgm:t>` run properties, which PowerPoint's layout engine applies on
 /// re-layout) and the cached drawing (for viewers that don't re-lay-out).
+///
+/// - `fill` — Box fill colour.
+/// - `line` — Box outline colour.
+/// - `text_color` — Text colour.
 pub(all) struct NodeStyle {
-  /// Box fill colour.
   fill : @units.RgbColor?
-  /// Box outline colour.
   line : @units.RgbColor?
-  /// Text colour.
   text_color : @units.RgbColor?
 } derive(Eq, Debug)
 
@@ -63,11 +71,12 @@ pub fn NodeStyle::new(
 /// One node in a SmartArt diagram: its text plus any child nodes. For the
 /// slice-1 linear families only the top-level nodes are laid out; children are
 /// preserved in the data model for round-trip + future hierarchical layouts.
+///
+/// - `style` — Colour overrides for this node's box, or `None` for the
+///   quick-style defaults.
 pub(all) struct Node {
   text : String
   children : Array[Node]
-  /// Colour overrides for this node's box, or `None` for the quick-style
-  /// defaults.
   style : NodeStyle?
 } derive(Eq, Debug)
 

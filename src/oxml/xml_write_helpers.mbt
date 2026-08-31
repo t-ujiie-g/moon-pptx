@@ -27,11 +27,12 @@
 ///|
 /// Mutable counter for fresh `extN` prefixes. Carried alongside the
 /// known-prefix map so nested calls share the same allocator.
+///
+/// - `known_prefixes` — URI → prefix bindings the writer already knows.
+///   Updated in place as `write_xml_element` discovers foreign URIs.
+/// Next free `extN` counter.
 pub(all) struct WriteCtx {
-  /// URI → prefix bindings the writer already knows. Updated in place
-  /// as `write_xml_element` discovers foreign URIs.
   known_prefixes : Map[String, String]
-  /// Next free `extN` counter.
   mut next_ext : Int
 }
 

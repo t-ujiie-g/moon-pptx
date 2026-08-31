@@ -16,16 +16,19 @@
 
 ///|
 /// Image format detected from leading magic bytes.
+///
+/// - `Png` — PNG (Portable Network Graphics). Magic: `89 50 4E 47 0D 0A 1A
+///   0A`.
+/// - `Jpeg` — JPEG / JFIF. Magic: `FF D8 FF`.
+/// - `Gif` — GIF87a / GIF89a. Magic: `47 49 46 38`.
+/// - `Bmp` — Windows Bitmap. Magic: `42 4D` (`"BM"`).
+/// - `Tiff` — TIFF (little- or big-endian). Magic: `49 49 2A 00` or `4D 4D 00
+///   2A`.
 pub(all) enum ImageFormat {
-  /// PNG (Portable Network Graphics). Magic: `89 50 4E 47 0D 0A 1A 0A`.
   Png
-  /// JPEG / JFIF. Magic: `FF D8 FF`.
   Jpeg
-  /// GIF87a / GIF89a. Magic: `47 49 46 38`.
   Gif
-  /// Windows Bitmap. Magic: `42 4D` (`"BM"`).
   Bmp
-  /// TIFF (little- or big-endian). Magic: `49 49 2A 00` or `4D 4D 00 2A`.
   Tiff
 } derive(Eq, Debug)
 
@@ -120,16 +123,17 @@ pub fn detect_image_format(bytes : FixedArray[Byte]) -> ImageFormat? {
 /// Pixel-space dimensions of an image plus the DPI hints needed to
 /// convert to EMU. `dpi_x` / `dpi_y` default to 96.0 when the file
 /// carries no metadata.
+///
+/// - `format` — Detected image format (matches `detect_image_format`).
+/// - `width_px` — Image width in pixels.
+/// - `height_px` — Image height in pixels.
+/// - `dpi_x` — Horizontal DPI (dots per inch). 96.0 when the file omits it.
+/// - `dpi_y` — Vertical DPI (dots per inch). 96.0 when the file omits it.
 pub(all) struct ImageDimensions {
-  /// Detected image format (matches `detect_image_format`).
   format : ImageFormat
-  /// Image width in pixels.
   width_px : Int
-  /// Image height in pixels.
   height_px : Int
-  /// Horizontal DPI (dots per inch). 96.0 when the file omits it.
   dpi_x : Double
-  /// Vertical DPI (dots per inch). 96.0 when the file omits it.
   dpi_y : Double
 } derive(Eq, Debug)
 

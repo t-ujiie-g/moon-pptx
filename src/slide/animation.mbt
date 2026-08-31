@@ -83,25 +83,27 @@ pub fn AnimOrientation::to_filter(self : AnimOrientation) -> String {
 ///
 /// `preset_id` / `filter` are exhaustive over this enum, so adding a new effect
 /// without classifying it is a compile error.
+///
+/// - `Appear` — Instant show (entrance) / hide (exit) — no `<p:animEffect>`.
+/// - `FlyIn` — Fly in from / out to the given edge (`<p:anim>` on `ppt_x` /
+///   `ppt_y`). The direction is the edge the shape travels from (entrance) or
+///   to (exit).
+/// - `Fade` — Fade in / out (`filter="fade"`).
+/// - `Wipe` — Directional wipe (`filter="wipe(up|down|left|right)"`).
+/// - `Blinds` — Venetian blinds (`filter="blinds(horizontal|vertical)"`).
+/// - `RandomBars` — Random bars (`filter="randombar(horizontal|vertical)"`).
+/// - `Dissolve` — Dissolve (`filter="dissolve"`).
+/// - `Wedge` — Wedge / clock sweep (`filter="wedge"`).
+/// - `Wheel` — Wheel with N spokes (`filter="wheel(N)"`).
 pub(all) enum VisualEffect {
-  /// Instant show (entrance) / hide (exit) — no `<p:animEffect>`.
   Appear
-  /// Fly in from / out to the given edge (`<p:anim>` on `ppt_x` / `ppt_y`).
-  /// The direction is the edge the shape travels from (entrance) or to (exit).
   FlyIn(AnimDirection)
-  /// Fade in / out (`filter="fade"`).
   Fade
-  /// Directional wipe (`filter="wipe(up|down|left|right)"`).
   Wipe(AnimDirection)
-  /// Venetian blinds (`filter="blinds(horizontal|vertical)"`).
   Blinds(AnimOrientation)
-  /// Random bars (`filter="randombar(horizontal|vertical)"`).
   RandomBars(AnimOrientation)
-  /// Dissolve (`filter="dissolve"`).
   Dissolve
-  /// Wedge / clock sweep (`filter="wedge"`).
   Wedge
-  /// Wheel with N spokes (`filter="wheel(N)"`).
   Wheel(Int)
 } derive(Eq, Debug)
 
@@ -160,14 +162,17 @@ pub fn VisualEffect::fly_direction(self : VisualEffect) -> AnimDirection? {
 ///
 /// `preset_id` is exhaustive over this enum, so adding a new emphasis without
 /// classifying it is a compile error.
+///
+/// - `Spin` — Spin the shape by `degrees` (clockwise; `<p:animRot
+///   by="degrees*60000">`). 360 is one full turn.
+/// - `GrowShrink` — Grow / shrink to `percent` of the current size
+///   (`<p:animScale>` with `<p:by>` in 1000ths of a percent). 150 grows by
+///   half, 50 halves it.
+/// - `ChangeFillColor` — Animate the fill colour to `color` (`<p:animClr
+///   clrSpc="rgb">`).
 pub(all) enum EmphasisEffect {
-  /// Spin the shape by `degrees` (clockwise; `<p:animRot by="degrees*60000">`).
-  /// 360 is one full turn.
   Spin(Int)
-  /// Grow / shrink to `percent` of the current size (`<p:animScale>` with
-  /// `<p:by>` in 1000ths of a percent). 150 grows by half, 50 halves it.
   GrowShrink(Int)
-  /// Animate the fill colour to `color` (`<p:animClr clrSpc="rgb">`).
   ChangeFillColor(@units.RgbColor)
 } derive(Eq, Debug)
 
@@ -329,12 +334,16 @@ pub(all) enum AnimEffect {
 
 ///|
 /// When an effect starts, relative to the timeline.
+///
+/// - `OnClick` — Waits for a mouse click — starts a new click group in the
+///   main sequence.
+/// - `WithPrevious` — Starts together with the previous effect (joins the
+///   current group).
+/// - `AfterPrevious` — Starts when the previous effect ends — a new
+///   auto-advancing group.
 pub(all) enum AnimStart {
-  /// Waits for a mouse click — starts a new click group in the main sequence.
   OnClick
-  /// Starts together with the previous effect (joins the current group).
   WithPrevious
-  /// Starts when the previous effect ends — a new auto-advancing group.
   AfterPrevious
 } derive(Eq, Debug)
 

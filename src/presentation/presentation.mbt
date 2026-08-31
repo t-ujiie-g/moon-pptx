@@ -19,11 +19,11 @@
 /// demand. Treat the value as conceptually immutable — `save()`
 /// serialises a snapshot, and immutable mutation APIs return a new
 /// `Presentation` rather than modify in place.
+///
+/// - `pkg` — The OPC package backing this presentation. Public so consumers
+///   who need raw part access can drop down without waiting for a typed
+///   wrapper. Named `pkg` because `package` is a reserved keyword in MoonBit.
 pub(all) struct Presentation {
-  /// The OPC package backing this presentation. Public so consumers
-  /// who need raw part access can drop down without waiting for a
-  /// typed wrapper. Named `pkg` because `package` is a reserved
-  /// keyword in MoonBit.
   pkg : @opc.Package
 }
 

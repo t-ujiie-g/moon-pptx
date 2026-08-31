@@ -15,11 +15,12 @@
 
 ///|
 /// Body of `<c:surfaceChart>` (CT_SurfaceChart).
+///
+/// - `band_fmts` — `<c:bandFmts>` (CT_BandFmts) — band formatting overrides.
+///   Captured XmlElement.
 pub(all) struct SurfaceChartBody {
   wireframe : Bool?
   series : Array[ChartSeriesCore]
-  /// `<c:bandFmts>` (CT_BandFmts) — band formatting overrides.
-  /// Captured XmlElement.
   band_fmts : @xml.XmlElement?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]

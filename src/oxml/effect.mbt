@@ -132,6 +132,7 @@ pub(all) struct Reflection {
 /// The `<a:fillOverlay>` element is recognised but not currently
 /// modelled (it carries a nested `Fill` plus a blend mode); we drop it
 /// rather than block parsing for now.
+///
 pub(all) struct EffectList {
   blur : Blur?
   glow : Glow?
@@ -140,9 +141,6 @@ pub(all) struct EffectList {
   preset_shadow : PresetShadow?
   reflection : Reflection?
   soft_edge : SoftEdge?
-  /// Lossless preservation (ADR-004): `<a:fillOverlay>` (which carries a
-  /// nested `Fill` plus blend mode and is not yet typed), `<a:extLst>`,
-  /// and foreign-namespace `<a:effectLst>` children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

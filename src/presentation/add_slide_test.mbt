@@ -54,7 +54,7 @@ test "add_slide_mut: new slide.xml.rels points at the layout" {
   let slide_rels = prs.pkg.relationships_for("/ppt/slides/slide1.xml")
   assert_eq(slide_rels.items.length(), 1)
   assert_eq(slide_rels.items[0].rel_type, @opc.rt_slide_layout)
-  // Target is relative — `../slideLayouts/slideLayout1.xml`.
+  // Relative, not absolute: OPC resolves it against /ppt/slides/.
   assert_eq(slide_rels.items[0].target, "../slideLayouts/slideLayout1.xml")
 }
 

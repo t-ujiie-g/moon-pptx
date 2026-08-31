@@ -19,30 +19,31 @@
 
 ///|
 /// Typed `<c:barChart>` body.
+///
+/// - `bar_dir` (`<c:barDir>`) — REQUIRED. `bar` for horizontal, `col` for
+///   vertical (the schema's two values).
+/// - `grouping` (`<c:grouping>`) — optional. Four-value enum.
+/// - `vary_colors` (`<c:varyColors>`) — optional bool.
+/// - `series` (`<c:ser>`) — zero or more series in source order. Captured
+///   verbatim; typed (CT_BarSer body) by a later 7a slice.
+/// - `d_lbls` (`<c:dLbls>`) — optional data labels. Captured verbatim.
+/// - `gap_width` (`<c:gapWidth val="…"/>`) — percentage; integer in the
+///   source. 0..500 per schema.
+/// - `overlap` (`<c:overlap val="…"/>`) — signed percentage, -100..100.
+/// - `ax_ids` (`<c:axId val="…"/>`) — REQUIRED. 2-D bar charts emit two, 3-D
+///   bar charts (bar3DChart, not here) emit three. Surfaced as `Array[Int]`
+///   rather than fixed-length so future schema loosening / strict validation
+///   can be added later.
+/// - `extension` — `<c:extLst>` plus any foreign-namespace siblings.
 pub(all) struct BarChartBody {
-  /// `<c:barDir>` — REQUIRED. `bar` for horizontal, `col` for
-  /// vertical (the schema's two values).
   bar_dir : BarDir
-  /// `<c:grouping>` — optional. Four-value enum.
   grouping : BarGrouping?
-  /// `<c:varyColors>` — optional bool.
   vary_colors : Bool?
-  /// `<c:ser>` — zero or more series in source order. Captured
-  /// verbatim; typed (CT_BarSer body) by a later 7a slice.
   series : Array[ChartSeriesCore]
-  /// `<c:dLbls>` — optional data labels. Captured verbatim.
   d_lbls : DLbls?
-  /// `<c:gapWidth val="…"/>` — percentage; integer in the source.
-  /// 0..500 per schema.
   gap_width : Int?
-  /// `<c:overlap val="…"/>` — signed percentage, -100..100.
   overlap : Int?
-  /// `<c:axId val="…"/>` — REQUIRED. 2-D bar charts emit two,
-  /// 3-D bar charts (bar3DChart, not here) emit three. Surfaced
-  /// as `Array[Int]` rather than fixed-length so future schema
-  /// loosening / strict validation can be added later.
   ax_ids : Array[Int]
-  /// `<c:extLst>` plus any foreign-namespace siblings.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -59,10 +60,11 @@ pub impl Show for BarChartBody with fn output(self, logger) {
 
 ///|
 /// `<c:barDir val="…"/>` (CT_BarDir). Two-value enum.
+///
+/// - `Bar` (`val="bar"`) — horizontal bars.
+/// - `Col` (`val="col"`) — vertical columns (the default for new charts).
 pub(all) enum BarDir {
-  /// `val="bar"` — horizontal bars.
   Bar
-  /// `val="col"` — vertical columns (the default for new charts).
   Col
 } derive(Eq, Debug)
 
@@ -93,14 +95,15 @@ pub fn BarDir::to_xml(self : BarDir) -> String {
 
 ///|
 /// `<c:grouping val="…"/>` (CT_BarGrouping). Four-value enum.
+///
+/// - `PercentStacked` — `val="percentStacked"`
+/// - `Clustered` (`val="clustered"`) — bars side by side (the default).
+/// - `Standard` — `val="standard"`
+/// - `Stacked` — `val="stacked"`
 pub(all) enum BarGrouping {
-  /// `val="percentStacked"`
   PercentStacked
-  /// `val="clustered"` — bars side by side (the default).
   Clustered
-  /// `val="standard"`
   Standard
-  /// `val="stacked"`
   Stacked
 } derive(Eq, Debug)
 

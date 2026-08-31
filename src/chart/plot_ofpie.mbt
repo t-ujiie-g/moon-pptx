@@ -23,6 +23,19 @@
 /// Body of `<c:ofPieChart>` (CT_OfPieChart). Pie-of-pie or
 /// bar-of-pie charts split the smallest slices into a
 /// secondary plot.
+///
+/// - `split_pos` (`<c:splitPos val="…"/>`) — schema-typed as Double; kept as
+///   the raw string here so the source representation round-trips without
+///   floating-point format drift. Meaning depends on `split_type`: position
+///   threshold under `Pos`, value threshold under `Val`, percentage threshold
+///   under `Percent`, slice index list under `Cust` (then `custSplit` carries
+///   the actual list).
+/// - `cust_split` (`<c:custSplit>`) — explicit per-slice routing list.
+///   Captured XmlElement.
+/// - `second_pie_size` (`<c:secondPieSize val="…"/>`) — integer percentage
+///   5..200.
+/// - `ser_lines` (`<c:serLines>`) — series-line formatting overrides. Zero or
+///   more in the schema; captured XmlElement payloads.
 pub(all) struct OfPieChartBody {
   of_pie_type : OfPieType
   vary_colors : Bool?
@@ -30,20 +43,9 @@ pub(all) struct OfPieChartBody {
   d_lbls : DLbls?
   gap_width : Int?
   split_type : SplitType?
-  /// `<c:splitPos val="…"/>` — schema-typed as Double; kept as the
-  /// raw string here so the source representation round-trips
-  /// without floating-point format drift. Meaning depends on
-  /// `split_type`: position threshold under `Pos`, value threshold
-  /// under `Val`, percentage threshold under `Percent`, slice index
-  /// list under `Cust` (then `custSplit` carries the actual list).
   split_pos : String?
-  /// `<c:custSplit>` — explicit per-slice routing list. Captured
-  /// XmlElement.
   cust_split : @xml.XmlElement?
-  /// `<c:secondPieSize val="…"/>` — integer percentage 5..200.
   second_pie_size : Int?
-  /// `<c:serLines>` — series-line formatting overrides. Zero or
-  /// more in the schema; captured XmlElement payloads.
   ser_lines : Array[@xml.XmlElement]
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
@@ -57,10 +59,11 @@ pub impl Show for OfPieChartBody with fn output(self, logger) {
 
 ///|
 /// `<c:ofPieType val="…"/>` (CT_OfPieType). Two-value enum.
+///
+/// - `Pie` (`val="pie"`) — secondary chart is a pie.
+/// - `Bar` (`val="bar"`) — secondary chart is a bar.
 pub(all) enum OfPieType {
-  /// `val="pie"` — secondary chart is a pie.
   Pie
-  /// `val="bar"` — secondary chart is a bar.
   Bar
 } derive(Eq, Debug)
 
@@ -93,16 +96,17 @@ pub fn OfPieType::to_xml(self : OfPieType) -> String {
 /// `<c:splitType val="…"/>` (CT_SplitType). Five-value enum
 /// controlling how primary-pie slices route into the secondary
 /// chart.
+///
+/// - `Auto` (`val="auto"`) — automatic split (the default).
+/// - `Cust` (`val="cust"`) — custom split per slice (see `<c:custSplit>`).
+/// - `Percent` (`val="percent"`) — slices below a percentage threshold move.
+/// - `Pos` (`val="pos"`) — last N slices (by position) move.
+/// - `Val` (`val="val"`) — slices below a value threshold move.
 pub(all) enum SplitType {
-  /// `val="auto"` — automatic split (the default).
   Auto
-  /// `val="cust"` — custom split per slice (see `<c:custSplit>`).
   Cust
-  /// `val="percent"` — slices below a percentage threshold move.
   Percent
-  /// `val="pos"` — last N slices (by position) move.
   Pos
-  /// `val="val"` — slices below a value threshold move.
   Val
 } derive(Eq, Debug)
 

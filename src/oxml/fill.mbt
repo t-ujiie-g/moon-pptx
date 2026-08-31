@@ -110,10 +110,11 @@ pub(all) struct TileSpec {
 ///|
 /// Blip fill mode — either stretch with an optional clip rectangle, or
 /// tile with positioning + scaling + flip + alignment.
+///
+/// - `Stretch` — `<a:stretch>` with an optional `<a:fillRect/>` inside.
+/// Direct attribute mappings: `Tile`.
 pub(all) enum BlipFillMode {
-  /// `<a:stretch>` with an optional `<a:fillRect/>` inside.
   Stretch(FillRect?)
-  /// `<a:tile …/>`.
   Tile(TileSpec)
 } derive(Eq, Debug)
 
@@ -125,18 +126,18 @@ pub(all) enum BlipFillMode {
 /// `src_rect` is the optional `<a:srcRect>` crop. `fill_mode` is
 /// the stretch-vs-tile child; defaults to `Stretch(None)` when the
 /// `<a:blipFill>` has neither.
+///
+/// - `extension` — captures both unmodelled `<a:blipFill>` siblings *and*
+///   unmodelled `<a:blip>` children (the colour-mod / effect children listed
+///   in `EG_BlipEffect` — `alphaModFix`, `biLevel`, `blur`, `clrChange`,
+///   `duotone`, `fillOverlay`, `lum`, `tint`, `grayscl`, `extLst`). The two
+///   structural sources collapse into one array; writers re-emit each element
+///   under its right parent based on its OOXML position.
 pub(all) struct BlipFill {
   embed_id : String
   link_id : String
   src_rect : SrcRect?
   fill_mode : BlipFillMode
-  /// Lossless preservation (ADR-004): captures both unmodelled `<a:blipFill>`
-  /// siblings *and* unmodelled `<a:blip>` children (the colour-mod /
-  /// effect children listed in `EG_BlipEffect` — `alphaModFix`,
-  /// `biLevel`, `blur`, `clrChange`, `duotone`, `fillOverlay`, `lum`,
-  /// `tint`, `grayscl`, `extLst`). The two structural sources collapse
-  /// into one array; writers re-emit each element under its right parent
-  /// based on its OOXML position.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -190,9 +191,10 @@ pub fn BlipFill::svg(png_embed_id : String, svg_embed_id : String) -> BlipFill {
 
 ///|
 /// One stop in a gradient fill.
+///
+/// - `position` — Stop position in `Percentage` (0% – 100%, lifted from the
+///   1/1000-percent `pos` attribute).
 pub(all) struct GradientStop {
-  /// Stop position in `Percentage` (0% – 100%, lifted from the
-  /// 1/1000-percent `pos` attribute).
   position : @units.Percentage
   color : Color
 } derive(Eq, Debug)
@@ -200,9 +202,10 @@ pub(all) struct GradientStop {
 ///|
 /// Gradient direction. `Linear(angle, scaled)` mirrors `<a:lin>`;
 /// `Path*` mirror `<a:path path="…">` for the three accepted shapes.
+///
+/// - `Linear` (`<a:lin ang="…" scaled="0"/>`) — linear gradient at `angle`.
+///   `scaled` is `True` when the linear extent scales with the shape.
 pub(all) enum GradientDirection {
-  /// `<a:lin ang="…" scaled="0"/>` — linear gradient at `angle`.
-  /// `scaled` is `True` when the linear extent scales with the shape.
   Linear(@units.Angle, Bool)
   PathRect
   PathCircle
@@ -216,26 +219,24 @@ pub(all) enum GradientDirection {
 /// is missing or contains no `<a:gs>` children. `direction` defaults to
 /// `Linear(Angle(0.0), False)` when the spec's directional choice is
 /// absent — i.e. an unusual but legal "static" gradient.
+///
 pub(all) struct Gradient {
   stops : Array[GradientStop]
   direction : GradientDirection
   rotate_with_shape : Bool?
   flip : TileFlip?
-  /// Lossless preservation (ADR-004): `<a:tileRect>` and any foreign-
-  /// namespace `<a:gradFill>` children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
 /// `<a:pattFill>` — pattern fill (cross-hatch, dot, etc.).
+///
+/// - `preset` (`prst`) — one of ~48 preset names per `ST_PresetPatternVal`.
+///   Kept as a `String` so unknown presets round-trip.
 pub(all) struct Pattern {
-  /// `prst` — one of ~48 preset names per `ST_PresetPatternVal`.
-  /// Kept as a `String` so unknown presets round-trip.
   preset : String
   fg : Color
   bg : Color
-  /// Lossless preservation (ADR-004): foreign-namespace `<a:pattFill>`
-  /// children. Spec only allows `<a:fgClr>` / `<a:bgClr>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

@@ -163,19 +163,16 @@ pub(all) enum ClrMapOverride {
 
 ///|
 /// A parsed slide layout.
+///
+/// - `name` — `name` from `<p:cSld name="…">`. May be empty if absent.
+/// - `layout_type` — Layout type (`p:sldLayout/@type`); `Blank` is the spec
+///   default if the attribute is missing.
+/// - `clr_map_override` — `<p:clrMapOvr>` resolution. Empty `<p:clrMapOvr>`
+///   is treated the same as an explicit `<a:masterClrMapping/>`.
 pub(all) struct SlideLayout {
-  /// `name` from `<p:cSld name="…">`. May be empty if absent.
   name : String
-  /// Layout type (`p:sldLayout/@type`); `Blank` is the spec default if the
-  /// attribute is missing.
   layout_type : SlideLayoutType
-  /// `<p:clrMapOvr>` resolution. Empty `<p:clrMapOvr>` is treated the same
-  /// as an explicit `<a:masterClrMapping/>`.
   clr_map_override : ClrMapOverride
-  /// Lossless preservation (ADR-004): unmodelled `<p:sldLayout>` children
-  /// (`<p:cSld>` shape tree once it's pulled out of the name-only stub,
-  /// `<p:transition>`, `<p:timing>`, `<p:hf>`, `<p:extLst>`, foreign-
-  /// namespace siblings).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
