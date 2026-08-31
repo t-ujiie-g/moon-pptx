@@ -65,7 +65,7 @@ jobs:
       # Microsoft's OpenXmlValidator runs the same schema + semantic checks
       # PowerPoint runs on open, so a clean run is a high-confidence proxy for
       # "opens without a repair prompt". Also validates any real-world fixtures
-      # placed under test_fixtures/corpus/ (see TODO.md ADR-011, Tier 2).
+      # placed under test_fixtures/corpus/ (see ROADMAP.md ADR-011, Tier 2).
       - name: Validate generated + corpus decks
         run: |
           dotnet run --project tools/pptx-validate -- \

@@ -7,7 +7,7 @@ checked for the schema/semantic problems that make PowerPoint show a *repair*
 prompt — both as a regression guard for the library and as a sanity check that
 our validator baseline matches what real Office output looks like.
 
-This realises the `test_fixtures/` slot referenced in `TODO.md §10` and is
+This realises the `test_fixtures/` slot referenced in `ROADMAP.md §9` and is
 **Tier 2** of the verification pyramid (ADR-011). The in-repo MoonBit
 structural-integrity tests (`src/integration/integrity_test.mbt`, Tier 1) cover
 the library's own builder output without needing any of these files.

@@ -626,6 +626,7 @@ the merge — and everything else in app.xml, word counts and
 
 ## Where to next?
 
-- [TODO.md](../TODO.md) — full feature comparison vs python-pptx + PptxGenJS and the v0.3 / v0.4 / v0.5 roadmap.
+- [README.md](../README.md#comparison-with-python-pptx-and-pptxgenjs) — full feature comparison vs python-pptx + PptxGenJS.
+- [ROADMAP.md](../ROADMAP.md) — direction, open gaps, and architecture decisions.
 - [CHANGELOG.md](../CHANGELOG.md) — what changed in this version.
 - [main README](../README.mbt.md) — sub-package overview + install instructions.

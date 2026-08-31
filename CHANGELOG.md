@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.2] — 2026-09-01
 
 Maintenance: no API change, no behaviour change. The tree was swept for
-the forms `moon 0.1.20260827` deprecated.
+the forms `moon 0.1.20260827` deprecated, and the project's documentation
+was reorganised — `TODO.md` became a forward-looking `ROADMAP.md`, and the
+comparison against python-pptx / PptxGenJS moved to `README.md`.
 
 ### Changed
 
@@ -27,6 +29,28 @@ the forms `moon 0.1.20260827` deprecated.
 - **Reformatted by the current `moon fmt`**, which now emits a trailing
   comma inside single-line struct literals (`{ r, g, b }` →
   `{ r, g, b, }`). Formatting only, across 85 files.
+
+### Documentation
+
+- **`TODO.md` is now `ROADMAP.md`, and it is forward-looking.** The old
+  file had grown to 976 lines of which roughly 60 % was history —
+  per-cycle shipped-item detail, a completed-phases list, and a living
+  changelog, all duplicating this file and git. `ROADMAP.md` keeps only
+  direction, the open-gap list, ADRs, open questions, risks, and
+  conventions (418 lines). Release history lives here; the record of how
+  something was built lives in git. See ADR-013, which supersedes
+  ADR-006.
+- **The comparison against python-pptx and PptxGenJS moved to
+  `README.md`**, refreshed against python-pptx 1.0.2 and PptxGenJS 4.0.1
+  and brought up to date with 0.7.2 — the old matrix still said "0.5.3"
+  and listed slide sections and table-style presets as unimplemented,
+  two releases after both shipped. It now also states plainly where the
+  other libraries are still ahead.
+- **New `ROADMAP.md` §3 "What is *not* done yet"** — the gap list the
+  project never had in one place: 9 feature gaps (G1–G9), 3 verification
+  gaps (V1–V3), and 2 housekeeping items, each with a size estimate.
+- `AGENTS.md`, `CLAUDE.md`, `examples/README.md`, the CI workflow, and
+  the two fixture READMEs point at the new locations.
 
 ### Compatibility
 
@@ -73,7 +97,7 @@ covers.
 ## [0.7.0] — 2026-07-12
 
 The **additive parity + ergonomics** release — every item of the
-v0.7.x cycle (TODO.md §4.2) in one batch, all additive `.mbti`. The
+v0.7.x cycle in one batch, all additive `.mbti`. The
 headline: the three remaining shape kinds become clickable, tables get
 PowerPoint's built-in style gallery by name, decks get sections and
 full document properties, charts get an editable embedded data
@@ -148,7 +172,7 @@ constructors.
 ## [0.6.0] — 2026-07-06
 
 The **pre-1.0 breaking pass**. This release deliberately spends the
-project's breaking-change budget in one batch (see TODO.md §4.1): the
+project's breaking-change budget in one batch: the
 run-fill and paragraph-spacing models widen to their full ADTs, and 33
 accidentally-public internals leave the API surface. Every release from
 here to 1.0 is intended to be **additive-only** — v1.0.0 itself ships

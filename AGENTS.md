@@ -7,11 +7,14 @@ Claude Code users: see also `CLAUDE.md` for the Claude-specific overlay.
 
 ## Source of truth
 
-- `TODO.md` is the authoritative roadmap, phase plan, ADR log, and risk
-  register. **Read the relevant phase before starting any non-trivial work**,
-  and update `TODO.md` in the same change set as your code.
+- `ROADMAP.md` is the authoritative direction, open-gap list, ADR log, and
+  risk register. It is **forward-looking**: read §3 (what is not done yet)
+  and §4 (roadmap) before starting any non-trivial work, and update it in
+  the same change set as your code.
+- `CHANGELOG.md` is the release history. What shipped goes there, not in
+  `ROADMAP.md`.
 - Do not create separate planning / decision / analysis docs — append to
-  `TODO.md` instead.
+  `ROADMAP.md` instead (ADR-013).
 
 ## Required skills
 
@@ -83,4 +86,4 @@ These overrides apply on top of the generic guidance above:
 - No FFI. The library must remain pure MoonBit so it builds on Native and
   Wasm-GC alike.
 
-See `TODO.md §4 (ADRs)` for the rationale behind each convention.
+See `ROADMAP.md §6 (ADRs)` for the rationale behind each convention.
