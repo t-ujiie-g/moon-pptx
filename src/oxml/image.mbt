@@ -136,7 +136,7 @@ pub(all) struct ImageDimensions {
 ///|
 pub impl Show for ImageDimensions with fn output(self, logger) {
   logger.write_string("ImageDimensions(")
-  self.format.output(logger)
+  logger.write_object(self.format)
   logger.write_string(" ")
   logger.write_string(self.width_px.to_string())
   logger.write_string("x")

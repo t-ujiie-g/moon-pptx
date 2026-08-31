@@ -351,6 +351,9 @@ pub impl Show for FillError with fn output(self, logger) {
 }
 
 ///|
+extend FillError with Show::{to_string}
+
+///|
 /// Parse a fill-choice element. `name` is the consumed StartElement's
 /// QName; `attrs` are its attributes; `r` is positioned just after the
 /// StartElement and is consumed through the matching EndElement.

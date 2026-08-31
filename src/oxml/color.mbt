@@ -268,6 +268,9 @@ pub impl Show for ColorError with fn output(self, logger) {
 }
 
 ///|
+extend ColorError with Show::{to_string}
+
+///|
 /// Parse one colour-element start tag (e.g. `<a:srgbClr val="FF0000"`)
 /// plus its body into a `Color`. `name` is the QName from the consumed
 /// StartElement, `attrs` are the attributes of that element, and `r`

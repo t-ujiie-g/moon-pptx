@@ -197,7 +197,7 @@ pub fn resolve_target(
   if segments.is_empty() {
     return "/"
   }
-  let buf = StringBuilder::new(size_hint=64)
+  let buf = StringBuilder(size_hint=64)
   for seg in segments {
     buf.write_char('/')
     buf.write_view(seg)
@@ -218,7 +218,7 @@ pub fn rels_path_for(source : String) -> String {
   // basename gains a `.rels` suffix.
   let segs = source.split("/").collect()
   guard segs.length() > 1 else { return "/_rels/" + source + ".rels" }
-  let buf = StringBuilder::new(size_hint=source.length() + 12)
+  let buf = StringBuilder(size_hint=source.length() + 12)
   for i in 0..<(segs.length() - 1) {
     buf..write_view(segs[i]).write_char('/')
   }
