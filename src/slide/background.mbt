@@ -42,7 +42,7 @@ pub(all) struct BackgroundProperties {
 /// Build a `<p:bgPr>` background from a fill (no effects, `shadeToTitle`
 /// unset) — the common case behind `Slide::with_background`.
 pub fn BackgroundProperties::of_fill(fill : @oxml.Fill) -> BackgroundProperties {
-  { fill: Some(fill), shade_to_title: false, effects: None, extension: [] }
+  { fill: Some(fill), shade_to_title: false, effects: None, extension: [], }
 }
 
 // --- Slide builders (immutable, ADR-003) ---
@@ -51,7 +51,7 @@ pub fn BackgroundProperties::of_fill(fill : @oxml.Fill) -> BackgroundProperties 
 /// Return a new `Slide` with a solid-fill background of the given colour.
 /// The most common case — e.g. a full-bleed brand colour behind a slide.
 pub fn Slide::with_background(self : Slide, fill : @oxml.Fill) -> Slide {
-  { ..self, background: Some(Properties(BackgroundProperties::of_fill(fill))) }
+  { ..self, background: Some(Properties(BackgroundProperties::of_fill(fill))), }
 }
 
 ///|
@@ -64,12 +64,12 @@ pub fn Slide::with_background_ref(
   idx : Int,
   color : @oxml.Color,
 ) -> Slide {
-  { ..self, background: Some(StyleReference(idx, color)) }
+  { ..self, background: Some(StyleReference(idx, color)), }
 }
 
 ///|
 /// Return a new `Slide` with no explicit background — it inherits the
 /// layout / master background. Clears any previously set `background`.
 pub fn Slide::without_background(self : Slide) -> Slide {
-  { ..self, background: None }
+  { ..self, background: None, }
 }

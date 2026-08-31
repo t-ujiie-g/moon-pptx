@@ -57,7 +57,7 @@ pub fn ContentTypes::clone(self : ContentTypes) -> ContentTypes {
   for kv in self.overrides {
     new_overrides.push(kv)
   }
-  { defaults: new_defaults, overrides: new_overrides }
+  { defaults: new_defaults, overrides: new_overrides, }
 }
 
 ///|
@@ -70,5 +70,5 @@ pub fn Package::clone(self : Package) -> Package {
   for p in self.parts {
     new_parts.push(p.clone())
   }
-  { parts: new_parts, content_types: self.content_types.clone() }
+  { parts: new_parts, content_types: self.content_types.clone(), }
 }

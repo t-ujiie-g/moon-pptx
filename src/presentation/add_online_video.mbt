@@ -176,7 +176,7 @@ fn youtube_embed_url(url : String) -> String? {
 /// Return the prefix of `s` up to (but not including) the first URL delimiter
 /// (`&`, `?`, `/`, `#`) — used to peel a clean video id off a URL fragment.
 fn cut_at_url_delimiter(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c == '&' || c == '?' || c == '/' || c == '#' {
       break

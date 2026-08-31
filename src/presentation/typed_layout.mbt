@@ -89,7 +89,7 @@ pub fn[L : HasTitle] LayoutSlide::title(
   text : String,
 ) -> LayoutSlide[L] {
   let spec = self.marker.title_spec()
-  { ..self, slide: self.slide.with_placeholder(spec.kind, spec.idx, text~) }
+  { ..self, slide: self.slide.with_placeholder(spec.kind, spec.idx, text~), }
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn[L : HasSubtitle] LayoutSlide::subtitle(
   text : String,
 ) -> LayoutSlide[L] {
   let spec = self.marker.subtitle_spec()
-  { ..self, slide: self.slide.with_placeholder(spec.kind, spec.idx, text~) }
+  { ..self, slide: self.slide.with_placeholder(spec.kind, spec.idx, text~), }
 }
 
 ///|
@@ -109,7 +109,7 @@ pub fn[L : HasBody] LayoutSlide::body(
   text : String,
 ) -> LayoutSlide[L] {
   let spec = self.marker.body_spec()
-  { ..self, slide: self.slide.with_placeholder(spec.kind, spec.idx, text~) }
+  { ..self, slide: self.slide.with_placeholder(spec.kind, spec.idx, text~), }
 }
 
 ///|
@@ -143,19 +143,19 @@ fn[L : LayoutType + LayoutPlaceholders] Presentation::add_typed_slide(
   let slide = @slide.Slide::parse(part.bytes) catch {
     e => raise SlideFailure(e.to_string())
   }
-  { prs: self, slide_name, slide, marker }
+  { prs: self, slide_name, slide, marker, }
 }
 
 ///|
 fn specs_to_defs(specs : Array[PlaceholderSpec]) -> Array[PlaceholderDef] {
-  specs.map(s => { kind: s.kind, position: s.position, default_text: None })
+  specs.map(s => { kind: s.kind, position: s.position, default_text: None, })
 }
 
 // --- standard placeholder specs (4:3 deck geometry, ~PowerPoint defaults) ---
 
 ///|
 fn emu_rect(x : Int64, y : Int64, cx : Int64, cy : Int64) -> @slide.Transform {
-  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(y) }, extent={
+  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(y), }, extent={
     cx: @units.Emu(cx),
     cy: @units.Emu(cy),
   })
@@ -311,7 +311,7 @@ pub impl LayoutPlaceholders for BlankSlide with fn placeholders(_) {
 pub fn Presentation::add_title_slide_mut(
   self : Presentation,
 ) -> LayoutSlide[TitleSlide] raise PptxError {
-  self.add_typed_slide(TitleSlide::{  })
+  self.add_typed_slide(TitleSlide::{ })
 }
 
 ///|
@@ -319,7 +319,7 @@ pub fn Presentation::add_title_slide_mut(
 pub fn Presentation::add_title_content_slide_mut(
   self : Presentation,
 ) -> LayoutSlide[TitleAndContent] raise PptxError {
-  self.add_typed_slide(TitleAndContent::{  })
+  self.add_typed_slide(TitleAndContent::{ })
 }
 
 ///|
@@ -327,7 +327,7 @@ pub fn Presentation::add_title_content_slide_mut(
 pub fn Presentation::add_section_header_slide_mut(
   self : Presentation,
 ) -> LayoutSlide[SectionHeader] raise PptxError {
-  self.add_typed_slide(SectionHeader::{  })
+  self.add_typed_slide(SectionHeader::{ })
 }
 
 ///|
@@ -335,7 +335,7 @@ pub fn Presentation::add_section_header_slide_mut(
 pub fn Presentation::add_title_only_slide_mut(
   self : Presentation,
 ) -> LayoutSlide[TitleOnly] raise PptxError {
-  self.add_typed_slide(TitleOnly::{  })
+  self.add_typed_slide(TitleOnly::{ })
 }
 
 ///|
@@ -343,5 +343,5 @@ pub fn Presentation::add_title_only_slide_mut(
 pub fn Presentation::add_blank_typed_slide_mut(
   self : Presentation,
 ) -> LayoutSlide[BlankSlide] raise PptxError {
-  self.add_typed_slide(BlankSlide::{  })
+  self.add_typed_slide(BlankSlide::{ })
 }

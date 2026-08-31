@@ -25,7 +25,7 @@ fn ev_kind(e : @xml.XmlEvent) -> String {
 
 ///|
 fn kinds(events : Array[@xml.XmlEvent]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for e in events {
     buf.write_string(ev_kind(e))
   }

@@ -136,7 +136,7 @@ pub(all) struct ImageDimensions {
 ///|
 pub impl Show for ImageDimensions with fn output(self, logger) {
   logger.write_string("ImageDimensions(")
-  self.format.output(logger)
+  logger.write_object(self.format)
   logger.write_string(" ")
   logger.write_string(self.width_px.to_string())
   logger.write_string("x")
@@ -223,7 +223,7 @@ fn detect_png_dimensions(bytes : FixedArray[Byte]) -> ImageDimensions? {
     }
     i = i + 8 + chunk_len + 4
   }
-  Some({ format: Png, width_px: w, height_px: h, dpi_x, dpi_y })
+  Some({ format: Png, width_px: w, height_px: h, dpi_x, dpi_y, })
 }
 
 ///|
@@ -278,7 +278,7 @@ fn detect_jpeg_dimensions(bytes : FixedArray[Byte]) -> ImageDimensions? {
       // After length(2): precision(1), height(2), width(2).
       let h = u16_be(bytes, i + 3)
       let w = u16_be(bytes, i + 5)
-      return Some({ format: Jpeg, width_px: w, height_px: h, dpi_x, dpi_y })
+      return Some({ format: Jpeg, width_px: w, height_px: h, dpi_x, dpi_y, })
     }
     // APP0 (E0) JFIF segment — read DPI.
     if marker == b'\xE0' && seg_len >= 14 {
@@ -318,7 +318,7 @@ fn detect_gif_dimensions(bytes : FixedArray[Byte]) -> ImageDimensions? {
   }
   let w = u16_le(bytes, 6)
   let h = u16_le(bytes, 8)
-  Some({ format: Gif, width_px: w, height_px: h, dpi_x: 96.0, dpi_y: 96.0 })
+  Some({ format: Gif, width_px: w, height_px: h, dpi_x: 96.0, dpi_y: 96.0, })
 }
 
 ///|
@@ -347,7 +347,7 @@ fn detect_bmp_dimensions(bytes : FixedArray[Byte]) -> ImageDimensions? {
       dpi_y = ppm_y.to_double() * 0.0254
     }
   }
-  Some({ format: Bmp, width_px: w, height_px: h, dpi_x, dpi_y })
+  Some({ format: Bmp, width_px: w, height_px: h, dpi_x, dpi_y, })
 }
 
 ///|
@@ -431,7 +431,7 @@ fn detect_tiff_dimensions(bytes : FixedArray[Byte]) -> ImageDimensions? {
     }
     // res_unit == 1 means "no absolute unit"; defaults stay.
   }
-  Some({ format: Tiff, width_px: width, height_px: height, dpi_x, dpi_y })
+  Some({ format: Tiff, width_px: width, height_px: height, dpi_x, dpi_y, })
 }
 
 // --- byte readers ---

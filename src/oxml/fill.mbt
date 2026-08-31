@@ -351,6 +351,9 @@ pub impl Show for FillError with fn output(self, logger) {
 }
 
 ///|
+extend FillError with Show::{to_string}
+
+///|
 /// Parse a fill-choice element. `name` is the consumed StartElement's
 /// QName; `attrs` are its attributes; `r` is positioned just after the
 /// StartElement and is consumed through the matching EndElement.
@@ -475,7 +478,7 @@ fn parse_gradient_fill(
   if stops.is_empty() {
     raise MalformedFill("gradFill has no gradient stops")
   }
-  { stops, direction, rotate_with_shape, flip, extension }
+  { stops, direction, rotate_with_shape, flip, extension, }
 }
 
 ///|
@@ -496,7 +499,7 @@ fn parse_gradient_stops(
             None => raise MalformedFill("gs pos is not an integer: " + pos_raw)
           }
           let color = parse_first_color(r, "gradient stop")
-          out.push({ position, color })
+          out.push({ position, color, })
         } else {
           skip_subtree(r) catch {
             e => raise MalformedFill(e.to_string())
@@ -546,7 +549,7 @@ fn parse_pattern_fill(
     }
   }
   match (fg, bg) {
-    (Some(f), Some(b)) => { preset, fg: f, bg: b, extension }
+    (Some(f), Some(b)) => { preset, fg: f, bg: b, extension, }
     _ => raise MalformedFill("pattFill is missing fgClr or bgClr (need both)")
   }
 }
@@ -614,7 +617,7 @@ fn parse_blip_fill(r : @xml.XmlReader) -> BlipFill raise FillError {
   if embed_id.is_empty() && link_id.is_empty() {
     raise MalformedFill("blipFill is missing both r:embed and r:link")
   }
-  { embed_id, link_id, src_rect, fill_mode, extension }
+  { embed_id, link_id, src_rect, fill_mode, extension, }
 }
 
 ///|

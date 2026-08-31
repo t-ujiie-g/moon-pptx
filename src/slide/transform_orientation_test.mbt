@@ -77,8 +77,8 @@ test "parse: xfrm without orientation defaults to unrotated / un-flipped" {
 ///|
 test "Transform::new defaults + with_rotation / with_flip" {
   let t = @slide.Transform::new(
-    offset={ x: @units.Emu(0L), y: @units.Emu(0L) },
-    extent={ cx: @units.Emu(1L), cy: @units.Emu(1L) },
+    offset={ x: @units.Emu(0L), y: @units.Emu(0L), },
+    extent={ cx: @units.Emu(1L), cy: @units.Emu(1L), },
   )
   assert_true(t.rotation is None)
   assert_eq(t.flip_h, false)
@@ -173,7 +173,7 @@ test "GroupShape::with_rotation + with_flip set the transform" {
     id: 4,
     name: "G",
     transform: Some(
-      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L), }, extent={
         cx: @units.Emu(10L),
         cy: @units.Emu(10L),
       }),
@@ -200,13 +200,13 @@ test "GroupShape: rotated group emits orientation and round-trips" {
     id: 5,
     name: "G",
     transform: Some(
-      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L), }, extent={
         cx: @units.Emu(100L),
         cy: @units.Emu(100L),
       }),
     ),
-    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
-    child_extent: Some({ cx: @units.Emu(100L), cy: @units.Emu(100L) }),
+    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L), }),
+    child_extent: Some({ cx: @units.Emu(100L), cy: @units.Emu(100L), }),
     children: [],
     hyperlink: None,
     extension: [],

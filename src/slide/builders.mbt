@@ -17,7 +17,7 @@
 /// formatting. Used as the building block for `TextBody::of_text`
 /// and any other "I just need text" path.
 pub fn Paragraph::of_text(text : String) -> Paragraph {
-  let run : Run = { properties: RunProperties::default(), text, extension: [] }
+  let run : Run = { properties: RunProperties::default(), text, extension: [], }
   {
     properties: ParagraphProperties::default(),
     content: [RunContent(run)],
@@ -33,7 +33,7 @@ pub fn Paragraph::of_styled_text(
   text : String,
   run_properties : RunProperties,
 ) -> Paragraph {
-  let run : Run = { properties: run_properties, text, extension: [] }
+  let run : Run = { properties: run_properties, text, extension: [], }
   {
     properties: ParagraphProperties::default(),
     content: [RunContent(run)],
@@ -59,7 +59,7 @@ pub fn Paragraph::with_alignment(
   self : Paragraph,
   align : TextAlignment,
 ) -> Paragraph {
-  { ..self, properties: { ..self.properties, alignment: Some(align) } }
+  { ..self, properties: { ..self.properties, alignment: Some(align), }, }
 }
 
 ///|
@@ -70,7 +70,7 @@ pub fn Paragraph::with_line_spacing(
   self : Paragraph,
   spacing : TextSpacing,
 ) -> Paragraph {
-  { ..self, properties: { ..self.properties, line_spacing: Some(spacing) } }
+  { ..self, properties: { ..self.properties, line_spacing: Some(spacing), }, }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn Paragraph::with_space_before(
   self : Paragraph,
   spacing : TextSpacing,
 ) -> Paragraph {
-  { ..self, properties: { ..self.properties, space_before: Some(spacing) } }
+  { ..self, properties: { ..self.properties, space_before: Some(spacing), }, }
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn Paragraph::with_space_after(
   self : Paragraph,
   spacing : TextSpacing,
 ) -> Paragraph {
-  { ..self, properties: { ..self.properties, space_after: Some(spacing) } }
+  { ..self, properties: { ..self.properties, space_after: Some(spacing), }, }
 }
 
 ///|
@@ -141,7 +141,7 @@ pub fn RunProperties::with_font_size(
   self : RunProperties,
   pt : @units.Pt,
 ) -> RunProperties {
-  { ..self, font_size: Some(pt) }
+  { ..self, font_size: Some(pt), }
 }
 
 ///|
@@ -151,19 +151,19 @@ pub fn RunProperties::with_character_spacing(
   self : RunProperties,
   pt : @units.Pt,
 ) -> RunProperties {
-  { ..self, character_spacing: Some(pt) }
+  { ..self, character_spacing: Some(pt), }
 }
 
 ///|
 /// Mark the run as bold.
 pub fn RunProperties::with_bold(self : RunProperties) -> RunProperties {
-  { ..self, bold: Some(true) }
+  { ..self, bold: Some(true), }
 }
 
 ///|
 /// Mark the run as italic.
 pub fn RunProperties::with_italic(self : RunProperties) -> RunProperties {
-  { ..self, italic: Some(true) }
+  { ..self, italic: Some(true), }
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn RunProperties::with_color(
   self : RunProperties,
   rgb : @units.RgbColor,
 ) -> RunProperties {
-  { ..self, fill: Some(SolidFill(@oxml.Color::srgb(rgb))) }
+  { ..self, fill: Some(SolidFill(@oxml.Color::srgb(rgb))), }
 }
 
 ///|
@@ -183,7 +183,7 @@ pub fn RunProperties::with_text_fill(
   self : RunProperties,
   fill : @oxml.Fill,
 ) -> RunProperties {
-  { ..self, fill: Some(fill) }
+  { ..self, fill: Some(fill), }
 }
 
 ///|
@@ -193,7 +193,7 @@ pub fn RunProperties::with_kerning(
   self : RunProperties,
   pt : @units.Pt,
 ) -> RunProperties {
-  { ..self, kerning: Some(pt) }
+  { ..self, kerning: Some(pt), }
 }
 
 ///|
@@ -202,7 +202,7 @@ pub fn RunProperties::with_highlight(
   self : RunProperties,
   rgb : @units.RgbColor,
 ) -> RunProperties {
-  { ..self, highlight: Some(@oxml.Color::srgb(rgb)) }
+  { ..self, highlight: Some(@oxml.Color::srgb(rgb)), }
 }
 
 ///|
@@ -212,7 +212,7 @@ pub fn RunProperties::with_text_outline(
   self : RunProperties,
   outline : @oxml.Stroke,
 ) -> RunProperties {
-  { ..self, outline: Some(outline) }
+  { ..self, outline: Some(outline), }
 }
 
 ///|
@@ -222,7 +222,7 @@ pub fn RunProperties::with_text_effects(
   self : RunProperties,
   effects : @oxml.EffectList,
 ) -> RunProperties {
-  { ..self, text_effects: Some(effects) }
+  { ..self, text_effects: Some(effects), }
 }
 
 ///|
@@ -231,7 +231,7 @@ pub fn RunProperties::with_font(
   self : RunProperties,
   font_name : String,
 ) -> RunProperties {
-  { ..self, latin: Some(font_name) }
+  { ..self, latin: Some(font_name), }
 }
 
 ///|
@@ -297,7 +297,7 @@ pub fn AutoShape::of_preset(
     id,
     name,
     placeholder: None,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     geometry: Some(Preset(preset, [])),
     fill: None,
     stroke: None,
@@ -407,7 +407,7 @@ pub fn AutoShape::textbox(
   text : String,
 ) -> AutoShape {
   let s = AutoShape::of_preset(id, name, PresetShape::Rect, x, y, cx, cy)
-  { ..s, text_body: Some(TextBody::of_text(text)) }
+  { ..s, text_body: Some(TextBody::of_text(text)), }
 }
 
 // --- AutoShape fluent setters ----------------------------------------------
@@ -416,7 +416,7 @@ pub fn AutoShape::textbox(
 /// Replace the fill of an existing `AutoShape`. Returns a new
 /// value; the original is unchanged.
 pub fn AutoShape::with_fill(self : AutoShape, fill : @oxml.Fill) -> AutoShape {
-  { ..self, fill: Some(fill) }
+  { ..self, fill: Some(fill), }
 }
 
 ///|
@@ -424,7 +424,7 @@ pub fn AutoShape::with_fill(self : AutoShape, fill : @oxml.Fill) -> AutoShape {
 /// instead of relying on placeholder / theme inheritance. Useful on
 /// top of the geometric builders to opt out of their default fill.
 pub fn AutoShape::with_no_fill(self : AutoShape) -> AutoShape {
-  { ..self, fill: Some(@oxml.NoFill) }
+  { ..self, fill: Some(@oxml.NoFill), }
 }
 
 ///|
@@ -433,14 +433,14 @@ pub fn AutoShape::with_stroke(
   self : AutoShape,
   stroke : @oxml.Stroke,
 ) -> AutoShape {
-  { ..self, stroke: Some(stroke) }
+  { ..self, stroke: Some(stroke), }
 }
 
 ///|
 /// Drop the outline — emits no `<a:ln>` so the shape inherits its
 /// border from the layout / theme (typically: none).
 pub fn AutoShape::with_no_stroke(self : AutoShape) -> AutoShape {
-  { ..self, stroke: None }
+  { ..self, stroke: None, }
 }
 
 ///|
@@ -462,7 +462,7 @@ pub fn AutoShape::with_text_body(
   self : AutoShape,
   body : TextBody,
 ) -> AutoShape {
-  { ..self, text_body: Some(body) }
+  { ..self, text_body: Some(body), }
 }
 
 ///|
@@ -474,7 +474,7 @@ pub fn AutoShape::with_rotation(
   self : AutoShape,
   angle : @units.Angle,
 ) -> AutoShape {
-  { ..self, transform: self.transform.map(t => t.with_rotation(angle)) }
+  { ..self, transform: self.transform.map(t => t.with_rotation(angle)), }
 }
 
 ///|
@@ -486,7 +486,7 @@ pub fn AutoShape::with_flip(
   h? : Bool = false,
   v? : Bool = false,
 ) -> AutoShape {
-  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
+  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)), }
 }
 
 ///|
@@ -495,7 +495,7 @@ pub fn AutoShape::with_flip(
 /// allocates the slide-rels rId at serialisation time (like the run-level
 /// `RunProperties::with_hyperlink`).
 pub fn AutoShape::with_hyperlink(self : AutoShape, url~ : String) -> AutoShape {
-  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)), }
 }
 
 ///|
@@ -505,7 +505,7 @@ pub fn AutoShape::with_hyperlink_to_slide(
   self : AutoShape,
   slide_idx~ : Int,
 ) -> AutoShape {
-  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)), }
 }
 
 // --- Picture builder -------------------------------------------------------
@@ -536,7 +536,7 @@ pub fn Picture::of_image(
   {
     id,
     name,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     geometry: Some(Preset(PresetShape::Rect, [])),
     stroke: None,
     effects: None,
@@ -576,7 +576,7 @@ pub fn Picture::of_svg_image(
   {
     id,
     name,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     geometry: Some(Preset(PresetShape::Rect, [])),
     stroke: None,
     effects: None,
@@ -601,15 +601,15 @@ pub fn Picture::with_crop(
   right? : @units.Percentage = @units.Percentage(0.0),
   bottom? : @units.Percentage = @units.Percentage(0.0),
 ) -> Picture {
-  let rect : @oxml.SrcRect = { left, top, right, bottom }
-  { ..self, blip_fill: { ..self.blip_fill, src_rect: Some(rect) } }
+  let rect : @oxml.SrcRect = { left, top, right, bottom, }
+  { ..self, blip_fill: { ..self.blip_fill, src_rect: Some(rect), }, }
 }
 
 ///|
 /// Rotate the picture clockwise by `angle` about its centre. No-op when
 /// the picture has no explicit transform.
 pub fn Picture::with_rotation(self : Picture, angle : @units.Angle) -> Picture {
-  { ..self, transform: self.transform.map(t => t.with_rotation(angle)) }
+  { ..self, transform: self.transform.map(t => t.with_rotation(angle)), }
 }
 
 ///|
@@ -620,14 +620,14 @@ pub fn Picture::with_flip(
   h? : Bool = false,
   v? : Bool = false,
 ) -> Picture {
-  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
+  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)), }
 }
 
 ///|
 /// Attach a whole-picture hyperlink to an external URL — e.g. a clickable
 /// image. Stored unresolved; resolved by `Presentation::update_slide_mut`.
 pub fn Picture::with_hyperlink(self : Picture, url~ : String) -> Picture {
-  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)), }
 }
 
 ///|
@@ -637,7 +637,7 @@ pub fn Picture::with_hyperlink_to_slide(
   self : Picture,
   slide_idx~ : Int,
 ) -> Picture {
-  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)), }
 }
 
 // --- GroupShape orientation builders ---------------------------------------
@@ -649,7 +649,7 @@ pub fn GroupShape::with_rotation(
   self : GroupShape,
   angle : @units.Angle,
 ) -> GroupShape {
-  { ..self, transform: self.transform.map(t => t.with_rotation(angle)) }
+  { ..self, transform: self.transform.map(t => t.with_rotation(angle)), }
 }
 
 ///|
@@ -660,7 +660,7 @@ pub fn GroupShape::with_flip(
   h? : Bool = false,
   v? : Bool = false,
 ) -> GroupShape {
-  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)) }
+  { ..self, transform: self.transform.map(t => t.with_flip(h~, v~)), }
 }
 
 // --- shape-level hyperlinks on the remaining kinds ------------------
@@ -673,7 +673,7 @@ pub fn GroupShape::with_hyperlink(
   self : GroupShape,
   url~ : String,
 ) -> GroupShape {
-  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)), }
 }
 
 ///|
@@ -683,14 +683,14 @@ pub fn GroupShape::with_hyperlink_to_slide(
   self : GroupShape,
   slide_idx~ : Int,
 ) -> GroupShape {
-  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)), }
 }
 
 ///|
 /// Attach a connector-level hyperlink to an external URL. Stored
 /// unresolved; resolved by `Presentation::update_slide_mut`.
 pub fn Connector::with_hyperlink(self : Connector, url~ : String) -> Connector {
-  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)), }
 }
 
 ///|
@@ -700,7 +700,7 @@ pub fn Connector::with_hyperlink_to_slide(
   self : Connector,
   slide_idx~ : Int,
 ) -> Connector {
-  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)), }
 }
 
 ///|
@@ -711,7 +711,7 @@ pub fn GraphicFrame::with_hyperlink(
   self : GraphicFrame,
   url~ : String,
 ) -> GraphicFrame {
-  { ..self, hyperlink: Some(ShapeHyperlink::external(url)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::external(url)), }
 }
 
 ///|
@@ -721,7 +721,7 @@ pub fn GraphicFrame::with_hyperlink_to_slide(
   self : GraphicFrame,
   slide_idx~ : Int,
 ) -> GraphicFrame {
-  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)) }
+  { ..self, hyperlink: Some(ShapeHyperlink::to_slide(slide_idx)), }
 }
 
 // --- Slide::with_shape ---
@@ -736,5 +736,5 @@ pub fn Slide::with_shape(self : Slide, shape : Shape) -> Slide {
     new_shapes.push(s)
   }
   new_shapes.push(shape)
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }

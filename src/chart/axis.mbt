@@ -477,7 +477,7 @@ fn parse_scaling(el : @xml.XmlElement) -> Scaling {
       _ => ()
     }
   }
-  { log_base, orientation, max, min, extension }
+  { log_base, orientation, max, min, extension, }
 }
 
 ///|
@@ -495,7 +495,7 @@ fn parse_num_fmt(el : @xml.XmlElement) -> NumFmt {
       }
     }
   }
-  { format_code, source_linked }
+  { format_code, source_linked, }
 }
 
 // --- writing -----------------------------------------------------------------

@@ -114,12 +114,12 @@ pub fn build_sample_deck() -> FixedArray[Byte] raise @presentation.PptxError {
   // Slide sections — the named groups PowerPoint shows in the slide
   // panel. Each starts at its slide index and runs to the next start.
   prs.set_sections_mut([
-    { title: "Introduction", start: 0 },
-    { title: "Text, shapes & tables", start: 2 },
-    { title: "Charts & backgrounds", start: 7 },
-    { title: "Graphics, media & motion", start: 13 },
-    { title: "Release highlights", start: 19 },
-    { title: "Templates & closing", start: 22 },
+    { title: "Introduction", start: 0, },
+    { title: "Text, shapes & tables", start: 2, },
+    { title: "Charts & backgrounds", start: 7, },
+    { title: "Graphics, media & motion", start: 13, },
+    { title: "Release highlights", start: 19, },
+    { title: "Templates & closing", start: 22, },
   ])
   prs.save()
 }
@@ -521,10 +521,10 @@ fn sample_shapes_slide(
     id: 6,
     name: "FlowArrow",
     transform: Some(
-      @slide.Transform::new(offset={ x: prs.pct_w(27.0), y: prs.pct_h(28.0) }, extent={
-        cx: prs.pct_w(13.0),
-        cy: @units.Emu(0L),
-      }),
+      @slide.Transform::new(
+        offset={ x: prs.pct_w(27.0), y: prs.pct_h(28.0), },
+        extent={ cx: prs.pct_w(13.0), cy: @units.Emu(0L), },
+      ),
     ),
     geometry: Some(
       @slide.Geometry::Preset(@slide.PresetShape::StraightConnector1, []),
@@ -546,7 +546,7 @@ fn sample_shapes_slide(
     name: "GroupedRect1",
     placeholder: None,
     transform: Some(
-      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L), }, extent={
         cx: @units.Emu(4000L),
         cy: @units.Emu(10000L),
       }),
@@ -569,8 +569,8 @@ fn sample_shapes_slide(
     placeholder: None,
     transform: Some(
       @slide.Transform::new(
-        offset={ x: @units.Emu(6000L), y: @units.Emu(0L) },
-        extent={ cx: @units.Emu(4000L), cy: @units.Emu(10000L) },
+        offset={ x: @units.Emu(6000L), y: @units.Emu(0L), },
+        extent={ cx: @units.Emu(4000L), cy: @units.Emu(10000L), },
       ),
     ),
     geometry: Some(@slide.Geometry::Preset(@slide.PresetShape::Rect, [])),
@@ -591,8 +591,8 @@ fn sample_shapes_slide(
     placeholder: None,
     transform: Some(
       @slide.Transform::new(
-        offset={ x: @units.Emu(2500L), y: @units.Emu(2500L) },
-        extent={ cx: @units.Emu(5000L), cy: @units.Emu(5000L) },
+        offset={ x: @units.Emu(2500L), y: @units.Emu(2500L), },
+        extent={ cx: @units.Emu(5000L), cy: @units.Emu(5000L), },
       ),
     ),
     geometry: Some(@slide.Geometry::Preset(@slide.PresetShape::Ellipse, [])),
@@ -611,13 +611,13 @@ fn sample_shapes_slide(
     id: 30,
     name: "DemoGroup",
     transform: Some(
-      @slide.Transform::new(offset={ x: prs.pct_w(30.0), y: prs.pct_h(55.0) }, extent={
-        cx: group_w,
-        cy: group_h,
-      }),
+      @slide.Transform::new(
+        offset={ x: prs.pct_w(30.0), y: prs.pct_h(55.0), },
+        extent={ cx: group_w, cy: group_h, },
+      ),
     ),
-    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
-    child_extent: Some({ cx: @units.Emu(10000L), cy: @units.Emu(10000L) }),
+    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L), }),
+    child_extent: Some({ cx: @units.Emu(10000L), cy: @units.Emu(10000L), }),
     children: [
       @slide.AutoShape(child_rect_1),
       @slide.AutoShape(child_rect_2),
@@ -711,10 +711,10 @@ fn sample_custom_geom_slide(
     name: "Star",
     placeholder: None,
     transform: Some(
-      @slide.Transform::new(offset={ x: prs.pct_w(33.0), y: prs.pct_h(20.0) }, extent={
-        cx: prs.pct_w(34.0),
-        cy: prs.pct_h(70.0),
-      }),
+      @slide.Transform::new(
+        offset={ x: prs.pct_w(33.0), y: prs.pct_h(20.0), },
+        extent={ cx: prs.pct_w(34.0), cy: prs.pct_h(70.0), },
+      ),
     ),
     geometry: Some(@slide.Geometry::Custom(star_geom)),
     fill: Some(
@@ -827,7 +827,7 @@ fn sample_table_slide(
     "Quarterly results (USD millions)",
     grid_span=3,
   )
-  let header = { ..header, properties: Some(header_props) }
+  let header = { ..header, properties: Some(header_props), }
   let row_header = @slide.TableRow::of_cells(
     [
       header,

@@ -32,6 +32,10 @@ MoonBit backend.
   [`hustcer/fzip`](https://mooncakes.io/docs/hustcer/fzip) for
   ZIP/DEFLATE. No FFI, works on Native / Wasm-GC / JS / Wasm.
 
+See [Comparison with python-pptx and PptxGenJS](#comparison-with-python-pptx-and-pptxgenjs)
+for a feature-by-feature matrix, including the places those libraries
+are still ahead.
+
 ## Install
 
 ```bash
@@ -176,9 +180,131 @@ Two entry points live under [`examples/`](examples/):
   data, a complete pitch deck end-to-end).
 - [`examples/sample-deck/`](examples/sample-deck/) — a standalone
   MoonBit module that depends on moon-pptx exactly the way a
-  downstream consumer would. It builds a 12-slide demonstration
+  downstream consumer would. It builds a 26-slide demonstration
   deck exercising every typed feature. Run it via
   `moon -C examples/sample-deck run main --target native | tail -1 | xxd -r -p > out/sample.pptx`.
+
+## Comparison with python-pptx and PptxGenJS
+
+Compared against **python-pptx 1.0.2** and **PptxGenJS 4.0.1** (checked
+2026-09-01). moon-pptx column reflects **0.7.2**.
+
+Legend: ✅ supported · △ partial, XML-level, or preserved-but-not-buildable · ❌ not supported
+
+### At a glance
+
+| | python-pptx | PptxGenJS | moon-pptx |
+|---|---|---|---|
+| Read existing `.pptx` | ✅ | ❌ generator only | ✅ lossless |
+| Write `.pptx` | ✅ | ✅ | ✅ |
+| Runs on | Python | JS (Node + browser) | Native · Wasm-GC · JS · Wasm |
+| Chart families creatable | 8 plot families | 10 | **16 standard + 9 chartEx = 25** |
+| SmartArt | △ identify only | ❌ | ✅ build, all 8 families |
+| Animations / transitions | △ raw XML | ❌ | ✅ typed DSL |
+| Unknown-XML preservation | △ partial | n/a | ✅ every node (ADR-004) |
+| Units | raw int | raw number | distinct types, checked at compile time |
+
+### Where moon-pptx goes further
+
+1. **Chart coverage** — 25 buildable families. waterfall, treemap,
+   sunburst, funnel, boxWhisker, paretoLine, regionMap, histogram and
+   clusteredColumn (the Microsoft 2016 `chartEx` set) are not creatable
+   in either competitor. python-pptx's `XL_CHART_TYPE` lists surface /
+   stock / of-pie, but they have no plot implementation behind them.
+2. **Lossless preservation** — every model node carries
+   `extension : Array[XmlElement]`, so third-party files round-trip with
+   zero data loss even through features moon-pptx doesn't model.
+3. **Type-safe units** — confusing `Emu` with `Pt` fails to compile.
+   Integer/float dimensions elsewhere invite silent unit-mix bugs.
+4. **Exhaustive ADT matching** — a new shape / fill / stroke / chart
+   option the writer hasn't handled is a compile error, not a silently
+   dropped element.
+5. **Multi-backend from one source** — server (Native), browser
+   (Wasm-GC), Node (JS). Neither competitor spans this.
+6. **SmartArt creation** — all eight families emit a full five-part
+   DiagramML graphic; the nesting families ship recursive
+   hierRoot/hierChild layout definitions, so PowerPoint lays out the
+   whole tree with connectors. python-pptx can only *identify* SmartArt;
+   PptxGenJS cannot touch it.
+7. **Compile-time placeholder schema** — `LayoutSlide[L]` makes accessing
+   a placeholder the layout doesn't have a compile error.
+8. **Immutable + `_mut` duality** — pure transforms when you want them,
+   in-place edits when you don't.
+
+### Where the others go further
+
+Kept deliberately honest — these are the reasons to pick something else:
+
+| Gap | Who has it | Status here |
+|---|---|---|
+| **RTL / bidi text** | PptxGenJS | ❌ not supported — the clearest gap vs PptxGenJS |
+| Asian-script font fallback | PptxGenJS | △ `complex_script` field, no per-run resolution |
+| Ecosystem maturity — tutorials, StackOverflow answers, years of production use | both | moon-pptx is young; the surrounding MoonBit ecosystem is younger still |
+| WMF / EMF images | python-pptx | △ preserved on read, not creatable |
+| Animated GIF | PptxGenJS | △ embeds as a normal image |
+| Browser-side "download this deck" one-liner | PptxGenJS | you get bytes; wiring the download is yours |
+
+### Feature matrix
+
+Rows where all three are equivalent (text bodies, runs, paragraphs, bold
+/ italic / size / colour, tables, pictures, speaker notes, …) are
+omitted — assume parity unless listed.
+
+**Slides, masters, layouts**
+
+| Feature | python-pptx | PptxGenJS | moon-pptx |
+|---|---|---|---|
+| Slide delete / reorder / duplicate | ✅ / △ / △ | ❌ generator only | ✅ / ✅ / ✅ |
+| `defineSlideMaster`-style high-level API | △ low-level | ✅ | ✅ `define_master` |
+| Compile-time placeholder schema | ❌ | ❌ | ✅ `LayoutSlide[L]` |
+| Slide sections | △ | ✅ | ✅ typed `Section` |
+| Headers / footers / slide number | ✅ | ✅ | ✅ |
+
+**Shapes and text**
+
+| Feature | python-pptx | PptxGenJS | moon-pptx |
+|---|---|---|---|
+| AutoShape preset geometry | ✅ | ✅ | ✅ 187 variants |
+| Custom geometry (`<a:custGeom>`) | △ XML | △ | ✅ typed AST |
+| Rotation / flip | ✅ | ✅ | ✅ |
+| Shape-level hyperlink | ✅ | ✅ | ✅ all 5 shape kinds |
+| SVG pictures | ❌ | ✅ | ✅ |
+| Character spacing / kerning | ✅ / △ | ✅ / △ | ✅ / ✅ |
+| Text highlight / outline / glow / shadow | ❌ / △ / ❌ / ❌ | ✅ | ✅ |
+| Non-solid text fill (gradient / pattern) | △ | △ | ✅ full `Fill` ADT |
+| Line spacing, absolute + percent | ✅ | ✅ | ✅ `TextSpacing` ADT |
+| RTL / bidi | △ | ✅ | ❌ |
+| WordArt / preset text warp | ❌ | △ | △ preserved only |
+| 3-D bevel / scene3d | △ | △ | △ preserved only |
+
+**Charts**
+
+| Feature | python-pptx | PptxGenJS | moon-pptx |
+|---|---|---|---|
+| Bar / line / pie / scatter / bubble / area / radar / doughnut | ✅ | ✅ | ✅ |
+| Stock / surface / of-pie | △ enum only | ❌ | ✅ |
+| 3-D bar / line / pie / area | ✅ | △ bar3d / bubble3d | ✅ |
+| Extended chartEx (waterfall, treemap, sunburst, funnel, boxWhisker, paretoLine, regionMap, histogram, clusteredColumn) | ❌ | ❌ | ✅ |
+| Combo chart + secondary axis | △ | ✅ | ✅ |
+| Trendlines | ✅ | ❌ | ✅ |
+| Data labels with per-point overrides | ✅ | ✅ | ✅ |
+| Embedded xlsx data cache (PowerPoint "Edit Data") | ✅ | ❌ | ✅ opt-in `embed_data` |
+
+**Multimedia, navigation, advanced**
+
+| Feature | python-pptx | PptxGenJS | moon-pptx |
+|---|---|---|---|
+| Audio / video embed | ✅ | ✅ | ✅ |
+| YouTube / URL video | ❌ | ✅ | ✅ |
+| Comments | ✅ | ❌ | ✅ read + write |
+| Animations | △ raw XML | ❌ | ✅ typed `Timeline` |
+| Slide transitions | △ raw XML | ❌ | ✅ typed |
+| SmartArt build | ❌ | ❌ | ✅ all 8 families |
+| Percentage / relative positioning | ❌ | ✅ | ✅ |
+| Document properties (core + app) | ✅ | ✅ | ✅ typed, both parts |
+| Table style by gallery ID | ✅ | ✅ | ✅ 74 built-in styles by name |
+| Lossless diff-write (untouched parts byte-identical) | ❌ | n/a | ✅ inherent in `save()` |
+| Streaming write for huge decks | ❌ | ❌ | ❌ |
 
 ## Compatibility
 

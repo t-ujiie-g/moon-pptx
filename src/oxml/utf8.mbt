@@ -43,7 +43,7 @@ pub impl Show for Utf8Error with fn output(self, logger) {
 /// further up the stack expect to receive whatever bytes the underlying
 /// OPC package gave us; tighter validation is a future hardening pass.
 pub fn bytes_to_string(bytes : FixedArray[Byte]) -> String raise Utf8Error {
-  let buf = StringBuilder::new(size_hint=bytes.length())
+  let buf = StringBuilder(size_hint=bytes.length())
   let mut i = 0
   while i < bytes.length() {
     let b0 = bytes[i].to_int().land(0xFF)

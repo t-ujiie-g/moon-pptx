@@ -30,7 +30,7 @@ pub struct XmlWriter {
 /// Construct a new streaming XML writer with an empty buffer.
 pub fn XmlWriter::new() -> XmlWriter {
   {
-    buf: StringBuilder::new(size_hint=256),
+    buf: StringBuilder(size_hint=256),
     prefix_for_uri: Map([]),
     stack: [],
     in_start_tag: false,

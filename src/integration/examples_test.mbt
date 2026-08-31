@@ -122,7 +122,7 @@ test "example 6: tables with merged cells and styled borders" {
     .with_anchor(@slide.Anchor::AnchorCenter)
     .with_borders(top=red_stroke, bottom=red_stroke)
   let header = @slide.TableCell::merged_origin("Quarter results", grid_span=2)
-  let header = { ..header, properties: Some(header_props) }
+  let header = { ..header, properties: Some(header_props), }
   let row0 = @slide.TableRow::of_cells(
     [header, @slide.TableCell::h_merge_covered()],
     height=@units.Emu(457_200L),
@@ -491,17 +491,17 @@ test "example 18: slide sections" {
     let _ = prs.add_slide_mut(0)
   }
   prs.set_sections_mut([
-    { title: "Introduction", start: 0 },
-    { title: "Content", start: 1 },
-    { title: "Conclusion", start: 3 },
+    { title: "Introduction", start: 0, },
+    { title: "Content", start: 1, },
+    { title: "Conclusion", start: 3, },
   ])
   prs.add_section_mut(title="Details", start=2)
   // Sections partition the deck in slide order and survive save → reopen.
   let reopened = @presentation.Presentation::open(prs.save())
   let sections = reopened.sections()
   assert_eq(sections.length(), 4)
-  assert_true(sections[1] == { title: "Content", start: 1 })
-  assert_true(sections[2] == { title: "Details", start: 2 })
+  assert_true(sections[1] == { title: "Content", start: 1, })
+  assert_true(sections[2] == { title: "Details", start: 2, })
   // Removal:
   prs.set_sections_mut([])
   assert_eq(prs.sections().length(), 0)

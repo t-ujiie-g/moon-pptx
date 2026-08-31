@@ -19,13 +19,13 @@ pub(all) struct QName {
 ///|
 /// Construct a qualified name in `uri`.
 pub fn QName::new(uri : String, local_name : String) -> QName {
-  { uri, local_name }
+  { uri, local_name, }
 }
 
 ///|
 /// Construct an unqualified name (no namespace).
 pub fn QName::unqualified(local_name : String) -> QName {
-  { uri: "", local_name }
+  { uri: "", local_name, }
 }
 
 ///|

@@ -32,7 +32,7 @@ fn parse_text_body(r : @xml.XmlReader) -> TextBody raise SlideError {
       _ => ()
     }
   }
-  { body_properties, list_style, paragraphs, extension }
+  { body_properties, list_style, paragraphs, extension, }
 }
 
 ///|
@@ -141,7 +141,7 @@ fn parse_list_style(r : @xml.XmlReader) -> ListStyle raise SlideError {
       _ => ()
     }
   }
-  { default_props, level_props, extension }
+  { default_props, level_props, extension, }
 }
 
 ///|
@@ -191,7 +191,7 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
       _ => ()
     }
   }
-  { properties, content, extension }
+  { properties, content, extension, }
 }
 
 ///|
@@ -333,7 +333,7 @@ fn parse_bu_blip(r : @xml.XmlReader) -> Bullet raise SlideError {
 ///|
 /// Parse `<a:r>` body — `<a:rPr>?` plus one or more `<a:t>` text runs.
 fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
-  let buf = StringBuilder::new(size_hint=32)
+  let buf = StringBuilder(size_hint=32)
   let mut properties = RunProperties::default()
   let extension : Array[@xml.XmlElement] = []
   while true {
@@ -353,7 +353,7 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
       _ => ()
     }
   }
-  { properties, text: buf.to_string(), extension }
+  { properties, text: buf.to_string(), extension, }
 }
 
 ///|
@@ -587,7 +587,7 @@ fn parse_field(
 ) -> Field raise SlideError {
   let id = optional_attr(attrs, "id")
   let field_type = optional_attr(attrs, "type")
-  let buf = StringBuilder::new(size_hint=16)
+  let buf = StringBuilder(size_hint=16)
   let mut properties = RunProperties::default()
   let extension : Array[@xml.XmlElement] = []
   while true {
@@ -607,5 +607,5 @@ fn parse_field(
       _ => ()
     }
   }
-  { id, field_type, properties, text: buf.to_string(), extension }
+  { id, field_type, properties, text: buf.to_string(), extension, }
 }

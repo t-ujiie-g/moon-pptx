@@ -422,7 +422,7 @@ test "Paragraph::of_styled_text + with_properties" {
     _ => fail("expected a run")
   }
   // with_properties replaces the paragraph-level properties wholesale.
-  let props = { ..@slide.ParagraphProperties::default(), level: 2 }
+  let props = { ..@slide.ParagraphProperties::default(), level: 2, }
   let levelled = para.with_properties(props)
   assert_eq(levelled.properties.level, 2)
   assert_eq(para.properties.level, 0) // original unchanged

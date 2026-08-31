@@ -276,7 +276,7 @@ fn angle_attr_or_zero(
 fn parse_blur(attrs : Array[(@xml.QName, String)]) -> Blur {
   let rad = emu_attr_or_zero(attrs, "rad")
   let grow = bool_attr_opt(attrs, "grow")
-  { rad, grow }
+  { rad, grow, }
 }
 
 ///|
@@ -286,7 +286,7 @@ fn parse_glow(
 ) -> Glow raise EffectError {
   let rad = emu_attr_or_zero(attrs, "rad")
   let color = read_first_color(r, "glow")
-  { rad, color }
+  { rad, color, }
 }
 
 ///|
@@ -298,7 +298,7 @@ fn parse_inner_shadow(
   let dist = emu_attr_or_zero(attrs, "dist")
   let dir = angle_attr_or_zero(attrs, "dir")
   let color = read_first_color(r, "innerShdw")
-  { blur_rad, dist, dir, color }
+  { blur_rad, dist, dir, color, }
 }
 
 ///|
@@ -316,7 +316,7 @@ fn parse_outer_shadow(
   let alignment = enum_attr_opt(attrs, "algn", RectAlignment::from_xml)
   let rotate_with_shape = bool_attr_opt(attrs, "rotWithShape")
   let color = read_first_color(r, "outerShdw")
-  { blur_rad, dist, dir, sx, sy, kx, ky, alignment, rotate_with_shape, color }
+  { blur_rad, dist, dir, sx, sy, kx, ky, alignment, rotate_with_shape, color, }
 }
 
 ///|
@@ -330,7 +330,7 @@ fn parse_preset_shadow(
   let dist = emu_attr_or_zero(attrs, "dist")
   let dir = angle_attr_or_zero(attrs, "dir")
   let color = read_first_color(r, "prstShdw")
-  { preset, dist, dir, color }
+  { preset, dist, dir, color, }
 }
 
 ///|

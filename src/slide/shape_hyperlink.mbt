@@ -32,7 +32,7 @@ pub(all) struct ShapeHyperlink {
 /// A shape hyperlink to an external URL (`https://`, `mailto:`, …).
 /// Unresolved until `Presentation::update_slide_mut` allocates its rId.
 pub fn ShapeHyperlink::external(url : String) -> ShapeHyperlink {
-  { target: Some(ExternalUrl(url)), click: None, action: None }
+  { target: Some(ExternalUrl(url)), click: None, action: None, }
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn ShapeHyperlink::external(url : String) -> ShapeHyperlink {
 /// in `Presentation::slides()`). Resolved to an `rt_slide` relationship +
 /// `action="ppaction://hlinksldjump"`.
 pub fn ShapeHyperlink::to_slide(slide_idx : Int) -> ShapeHyperlink {
-  { target: Some(InternalSlide(slide_idx)), click: None, action: None }
+  { target: Some(InternalSlide(slide_idx)), click: None, action: None, }
 }
 
 ///|

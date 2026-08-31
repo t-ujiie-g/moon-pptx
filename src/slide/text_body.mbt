@@ -523,7 +523,7 @@ pub(all) struct Paragraph {
 /// Convenience: concatenate every run/field text inside a paragraph,
 /// inserting `\n` for each `<a:br>`. Skips formatting entirely.
 pub fn Paragraph::plain_text(self : Paragraph) -> String {
-  let buf = StringBuilder::new(size_hint=64)
+  let buf = StringBuilder(size_hint=64)
   for item in self.content {
     match item {
       RunContent(r) => buf.write_string(r.text)
@@ -681,7 +681,7 @@ pub fn ListStyle::empty() -> ListStyle {
     None,
     None,
   ]
-  { default_props: None, level_props, extension: [] }
+  { default_props: None, level_props, extension: [], }
 }
 
 ///|
@@ -707,7 +707,7 @@ pub(all) struct TextBody {
 /// with `\n`. Useful for quick `text_body.plain_text().contains("…")`
 /// queries without inspecting the typed tree.
 pub fn TextBody::plain_text(self : TextBody) -> String {
-  let buf = StringBuilder::new(size_hint=128)
+  let buf = StringBuilder(size_hint=128)
   for i, p in self.paragraphs {
     if i > 0 {
       buf.write_char('\n')

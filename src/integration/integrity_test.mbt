@@ -123,7 +123,7 @@ fn integrity_issues(pkg : @opc.Package) -> Array[IntegrityIssue] {
 /// Render issues into a stable multi-line string so a failing `assert_eq`
 /// against `""` prints exactly what broke.
 fn format_issues(issues : Array[IntegrityIssue]) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for it in issues {
     sb.write_string("[\{it.kind}] \{it.part}: \{it.detail}\n")
   }

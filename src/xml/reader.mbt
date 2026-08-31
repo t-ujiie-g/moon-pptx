@@ -352,7 +352,7 @@ fn XmlReader::read_cdata(self : XmlReader) -> XmlEvent raise XmlError {
 
 ///|
 fn XmlReader::read_text(self : XmlReader) -> String raise XmlError {
-  let buf = StringBuilder::new(size_hint=32)
+  let buf = StringBuilder(size_hint=32)
   let mut all_space = true
   while self.pos < self.chars.length() {
     let c = self.chars[self.pos]
@@ -387,7 +387,7 @@ fn XmlReader::read_attr_value(self : XmlReader) -> String raise XmlError {
     raise Malformed("expected attribute value to start with a quote")
   }
   self.advance()
-  let buf = StringBuilder::new(size_hint=16)
+  let buf = StringBuilder(size_hint=16)
   while self.pos < self.chars.length() && self.chars[self.pos] != quote {
     let c = self.chars[self.pos]
     if c == '&' {
@@ -476,7 +476,7 @@ fn XmlReader::resolve_qname(
   is_attribute~ : Bool,
 ) -> QName raise XmlError {
   // Split on the *first* colon: `a:b:c` is prefix `a`, local name `b:c`.
-  let prefix_buf = StringBuilder::new()
+  let prefix_buf = StringBuilder()
   let after_colon = for rest = prefixed[:] {
     match rest {
       [':', .. tail] => break Some(tail)
@@ -546,7 +546,7 @@ fn XmlReader::resolve_attrs(
 
 ///|
 fn chars_to_string(chars : Array[Char], start : Int, stop : Int) -> String {
-  let buf = StringBuilder::new(size_hint=stop - start)
+  let buf = StringBuilder(size_hint=stop - start)
   for i in start..<stop {
     buf.write_char(chars[i])
   }

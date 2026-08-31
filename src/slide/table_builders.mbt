@@ -129,7 +129,7 @@ pub fn TableRow::of_cells(
   cells : Array[TableCell],
   height~ : @units.Emu,
 ) -> TableRow {
-  { height, cells, extension: [] }
+  { height, cells, extension: [], }
 }
 
 ///|
@@ -187,7 +187,7 @@ pub fn GraphicFrame::of_table(
   {
     id,
     name,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     content: TableContent(table),
     hyperlink: None,
     extension: [],
@@ -212,7 +212,7 @@ pub fn GraphicFrame::of_chart_ref(
   {
     id,
     name,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     content: ChartContent(embed_rid),
     hyperlink: None,
     extension: [],
@@ -234,7 +234,7 @@ pub fn GraphicFrame::of_chart_ex_ref(
   {
     id,
     name,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     content: ChartExContent(embed_rid),
     hyperlink: None,
     extension: [],

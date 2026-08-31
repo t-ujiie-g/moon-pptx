@@ -14,7 +14,7 @@ caught exactly that way — late. The Open XML SDK validator runs the same famil
 of schema + semantic checks PowerPoint runs on open, so a clean run here is a
 high-confidence, automatable proxy for **"opens without repair."**
 
-This is **Tier 2** of the verification pyramid (TODO.md ADR-011). Tier 1 is the
+This is **Tier 2** of the verification pyramid (ROADMAP.md ADR-011). Tier 1 is the
 in-repo MoonBit structural-integrity + round-trip tests (`src/integration/`);
 Tier 3 is opening in real PowerPoint / LibreOffice / Keynote at release time.
 

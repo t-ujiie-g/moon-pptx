@@ -169,7 +169,7 @@ fn parse_chart_legend(el : @xml.XmlElement) -> ChartLegend raise ChartError {
       _ => ()
     }
   }
-  { legend_pos, legend_entries, layout, overlay, sp_pr, tx_pr, extension }
+  { legend_pos, legend_entries, layout, overlay, sp_pr, tx_pr, extension, }
 }
 
 ///|
@@ -198,7 +198,7 @@ fn parse_legend_entry(el : @xml.XmlElement) -> LegendEntry raise ChartError {
     Some(n) => n
     None => raise Malformed("<c:legendEntry> is missing required <c:idx>")
   }
-  { idx: id, delete, tx_pr, extension }
+  { idx: id, delete, tx_pr, extension, }
 }
 
 // --- writing -----------------------------------------------------------------

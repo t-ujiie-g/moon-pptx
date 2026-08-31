@@ -46,7 +46,7 @@ pub fn WriteCtx::with_well_known_prefixes() -> WriteCtx {
   m[drawing_ns] = "a"
   m[presentation_ns] = "p"
   m[office_relationships_ns] = "r"
-  { known_prefixes: m, next_ext: 0 }
+  { known_prefixes: m, next_ext: 0, }
 }
 
 ///|

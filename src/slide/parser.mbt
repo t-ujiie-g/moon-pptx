@@ -137,7 +137,7 @@ fn parse_transition(
       _ => ()
     }
   }
-  { kind, speed, advance_on_click, advance_after, extension }
+  { kind, speed, advance_on_click, advance_after, extension, }
 }
 
 ///|
@@ -300,7 +300,7 @@ fn parse_bg_pr(
       _ => ()
     }
   }
-  Properties({ fill, shade_to_title, effects, extension })
+  Properties({ fill, shade_to_title, effects, extension, })
 }
 
 ///|
@@ -535,7 +535,7 @@ fn parse_cxn_sp_locks(
 fn parse_connection_end(
   attrs : Array[(@xml.QName, String)],
 ) -> ConnectionEnd raise SlideError {
-  { shape_id: parse_int_attr(attrs, "id"), idx: parse_int_attr(attrs, "idx") }
+  { shape_id: parse_int_attr(attrs, "id"), idx: parse_int_attr(attrs, "idx"), }
 }
 
 // --- GroupShape (recursive) ---
@@ -686,7 +686,7 @@ fn parse_group_xfrm(
   }
   let transform = match (offset, extent) {
     (Some(o), Some(e)) =>
-      Some({ offset: o, extent: e, rotation, flip_h, flip_v })
+      Some({ offset: o, extent: e, rotation, flip_h, flip_v, })
     _ => None
   }
   (transform, child_offset, child_extent)
@@ -1134,7 +1134,7 @@ fn parse_av_lst(
         if child.uri == @oxml.drawing_ns && child.local_name == "gd" {
           let name = require_attr(attrs, "name")
           let fmla = require_attr(attrs, "fmla")
-          out.push({ name, fmla })
+          out.push({ name, fmla, })
           skip_subtree(r) // <a:gd> is a leaf
         } else {
           parent_extension.push(collect_subtree_unknown(r, child, attrs))
@@ -1202,7 +1202,7 @@ fn parse_xfrm(
     }
   }
   match (offset, extent) {
-    (Some(o), Some(e)) => { offset: o, extent: e, rotation, flip_h, flip_v }
+    (Some(o), Some(e)) => { offset: o, extent: e, rotation, flip_h, flip_v, }
     _ =>
       raise Malformed("<a:xfrm> on <p:sp> must have both <a:off> and <a:ext>")
   }

@@ -41,7 +41,7 @@ pub fn XmlElement::new(
   attributes : Array[(QName, String)],
   children : Array[XmlNode],
 ) -> XmlElement {
-  { name, attributes, children }
+  { name, attributes, children, }
 }
 
 ///|

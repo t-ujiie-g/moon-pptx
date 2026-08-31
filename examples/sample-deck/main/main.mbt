@@ -72,7 +72,7 @@ fn emit_split() -> Unit {
 /// byte, lowercase, no spaces or separators — the canonical input
 /// form for `xxd -r -p`.
 fn bytes_to_hex(bytes : FixedArray[Byte]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for b in bytes {
     let n = b.to_int()
     buf.write_char(hex_digit(n / 16))

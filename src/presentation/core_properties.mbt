@@ -80,7 +80,7 @@ pub fn CoreProperties::with_title(
   self : CoreProperties,
   title : String,
 ) -> CoreProperties {
-  { ..self, title: Some(title) }
+  { ..self, title: Some(title), }
 }
 
 ///|
@@ -89,7 +89,7 @@ pub fn CoreProperties::with_creator(
   self : CoreProperties,
   creator : String,
 ) -> CoreProperties {
-  { ..self, creator: Some(creator) }
+  { ..self, creator: Some(creator), }
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn CoreProperties::with_author(
   self : CoreProperties,
   author : String,
 ) -> CoreProperties {
-  { ..self, creator: Some(author) }
+  { ..self, creator: Some(author), }
 }
 
 ///|
@@ -108,7 +108,7 @@ pub fn CoreProperties::with_subject(
   self : CoreProperties,
   subject : String,
 ) -> CoreProperties {
-  { ..self, subject: Some(subject) }
+  { ..self, subject: Some(subject), }
 }
 
 ///|
@@ -117,7 +117,7 @@ pub fn CoreProperties::with_keywords(
   self : CoreProperties,
   keywords : String,
 ) -> CoreProperties {
-  { ..self, keywords: Some(keywords) }
+  { ..self, keywords: Some(keywords), }
 }
 
 ///|
@@ -126,7 +126,7 @@ pub fn CoreProperties::with_description(
   self : CoreProperties,
   description : String,
 ) -> CoreProperties {
-  { ..self, description: Some(description) }
+  { ..self, description: Some(description), }
 }
 
 ///|
@@ -135,7 +135,7 @@ pub fn CoreProperties::with_category(
   self : CoreProperties,
   category : String,
 ) -> CoreProperties {
-  { ..self, category: Some(category) }
+  { ..self, category: Some(category), }
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn CoreProperties::with_content_status(
   self : CoreProperties,
   content_status : String,
 ) -> CoreProperties {
-  { ..self, content_status: Some(content_status) }
+  { ..self, content_status: Some(content_status), }
 }
 
 ///|
@@ -154,7 +154,7 @@ pub fn CoreProperties::with_created(
   self : CoreProperties,
   created : String,
 ) -> CoreProperties {
-  { ..self, created: Some(created) }
+  { ..self, created: Some(created), }
 }
 
 ///|
@@ -163,7 +163,7 @@ pub fn CoreProperties::with_modified(
   self : CoreProperties,
   modified : String,
 ) -> CoreProperties {
-  { ..self, modified: Some(modified) }
+  { ..self, modified: Some(modified), }
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn CoreProperties::with_last_printed(
   self : CoreProperties,
   last_printed : String,
 ) -> CoreProperties {
-  { ..self, last_printed: Some(last_printed) }
+  { ..self, last_printed: Some(last_printed), }
 }
 
 ///|
@@ -181,7 +181,7 @@ pub fn CoreProperties::with_last_modified_by(
   self : CoreProperties,
   last_modified_by : String,
 ) -> CoreProperties {
-  { ..self, last_modified_by: Some(last_modified_by) }
+  { ..self, last_modified_by: Some(last_modified_by), }
 }
 
 ///|
@@ -190,7 +190,7 @@ pub fn CoreProperties::with_revision(
   self : CoreProperties,
   revision : String,
 ) -> CoreProperties {
-  { ..self, revision: Some(revision) }
+  { ..self, revision: Some(revision), }
 }
 
 ///|
@@ -199,7 +199,7 @@ pub fn CoreProperties::with_identifier(
   self : CoreProperties,
   identifier : String,
 ) -> CoreProperties {
-  { ..self, identifier: Some(identifier) }
+  { ..self, identifier: Some(identifier), }
 }
 
 ///|
@@ -208,7 +208,7 @@ pub fn CoreProperties::with_language(
   self : CoreProperties,
   language : String,
 ) -> CoreProperties {
-  { ..self, language: Some(language) }
+  { ..self, language: Some(language), }
 }
 
 ///|
@@ -217,7 +217,7 @@ pub fn CoreProperties::with_version(
   self : CoreProperties,
   version : String,
 ) -> CoreProperties {
-  { ..self, version: Some(version) }
+  { ..self, version: Some(version), }
 }
 
 ///|
@@ -332,22 +332,22 @@ fn parse_core_properties(xml : String) -> CoreProperties raise PptxError {
         let dc = @oxml.dublin_core_ns
         let dcterms = @oxml.dublin_core_terms_ns
         props = match (child.uri, child.local_name) {
-          (u, "title") if u == dc => { ..props, title: value }
-          (u, "creator") if u == dc => { ..props, creator: value }
-          (u, "subject") if u == dc => { ..props, subject: value }
-          (u, "description") if u == dc => { ..props, description: value }
-          (u, "identifier") if u == dc => { ..props, identifier: value }
-          (u, "language") if u == dc => { ..props, language: value }
-          (u, "keywords") if u == cp => { ..props, keywords: value }
+          (u, "title") if u == dc => { ..props, title: value, }
+          (u, "creator") if u == dc => { ..props, creator: value, }
+          (u, "subject") if u == dc => { ..props, subject: value, }
+          (u, "description") if u == dc => { ..props, description: value, }
+          (u, "identifier") if u == dc => { ..props, identifier: value, }
+          (u, "language") if u == dc => { ..props, language: value, }
+          (u, "keywords") if u == cp => { ..props, keywords: value, }
           (u, "lastModifiedBy") if u == cp =>
-            { ..props, last_modified_by: value }
-          (u, "revision") if u == cp => { ..props, revision: value }
-          (u, "lastPrinted") if u == cp => { ..props, last_printed: value }
-          (u, "category") if u == cp => { ..props, category: value }
-          (u, "contentStatus") if u == cp => { ..props, content_status: value }
-          (u, "version") if u == cp => { ..props, version: value }
-          (u, "created") if u == dcterms => { ..props, created: value }
-          (u, "modified") if u == dcterms => { ..props, modified: value }
+            { ..props, last_modified_by: value, }
+          (u, "revision") if u == cp => { ..props, revision: value, }
+          (u, "lastPrinted") if u == cp => { ..props, last_printed: value, }
+          (u, "category") if u == cp => { ..props, category: value, }
+          (u, "contentStatus") if u == cp => { ..props, content_status: value, }
+          (u, "version") if u == cp => { ..props, version: value, }
+          (u, "created") if u == dcterms => { ..props, created: value, }
+          (u, "modified") if u == dcterms => { ..props, modified: value, }
           // Unknown child — its text was already consumed; ignore.
           _ => props
         }

@@ -226,7 +226,7 @@ pub(all) struct MotionPath {
 /// An empty motion path. Add segments with `move_to` / `line_to` / `curve_to` /
 /// `close`.
 pub fn MotionPath::new() -> MotionPath {
-  { commands: [] }
+  { commands: [], }
 }
 
 ///|
@@ -244,7 +244,7 @@ pub fn MotionPath::move_to(
   x : Double,
   y : Double,
 ) -> MotionPath {
-  self.add(MoveTo({ x, y }))
+  self.add(MoveTo({ x, y, }))
 }
 
 ///|
@@ -254,7 +254,7 @@ pub fn MotionPath::line_to(
   x : Double,
   y : Double,
 ) -> MotionPath {
-  self.add(LineTo({ x, y }))
+  self.add(LineTo({ x, y, }))
 }
 
 ///|
@@ -269,7 +269,7 @@ pub fn MotionPath::curve_to(
   x3 : Double,
   y3 : Double,
 ) -> MotionPath {
-  self.add(CurveTo({ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }))
+  self.add(CurveTo({ x: x1, y: y1, }, { x: x2, y: y2, }, { x: x3, y: y3, }))
 }
 
 ///|
@@ -377,7 +377,7 @@ let anim_default_duration_ms : Int = 500
 /// An empty timeline. Add steps with `on_click` / `with_previous` /
 /// `after_previous`.
 pub fn Timeline::new() -> Timeline {
-  { steps: [] }
+  { steps: [], }
 }
 
 ///|
@@ -391,7 +391,7 @@ fn Timeline::add(
   paragraph : Int?,
 ) -> Timeline {
   let steps = self.steps.copy()
-  steps.push({ effect, target_shape_id, start, duration_ms, paragraph })
+  steps.push({ effect, target_shape_id, start, duration_ms, paragraph, })
   { steps, }
 }
 
@@ -442,14 +442,14 @@ pub fn Timeline::after_previous(
 /// deck round-trips its timing there) so the typed timeline is the single
 /// source — the writer never double-emits `<p:timing>`.
 pub fn Slide::with_animations(self : Slide, timeline : Timeline) -> Slide {
-  { ..self, timing: Some(timeline), extension: without_timing(self.extension) }
+  { ..self, timing: Some(timeline), extension: without_timing(self.extension), }
 }
 
 ///|
 /// Return a new `Slide` with no animation timeline. Clears both the typed field
 /// and any captured `<p:timing>` in `extension`.
 pub fn Slide::without_animations(self : Slide) -> Slide {
-  { ..self, timing: None, extension: without_timing(self.extension) }
+  { ..self, timing: None, extension: without_timing(self.extension), }
 }
 
 ///|

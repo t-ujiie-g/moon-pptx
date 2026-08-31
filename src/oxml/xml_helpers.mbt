@@ -41,6 +41,9 @@ pub impl Show for XmlReadError with fn output(self, logger) {
   logger.write_string(")")
 }
 
+///|
+extend XmlReadError with Show::{to_string}
+
 // --- event helpers ---
 
 ///|

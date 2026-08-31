@@ -142,7 +142,7 @@ pub fn TableCellProperties::with_margins(
   top? : @units.Emu? = None,
   bottom? : @units.Emu? = None,
 ) -> TableCellProperties {
-  { ..self, margin_l: left, margin_r: right, margin_t: top, margin_b: bottom }
+  { ..self, margin_l: left, margin_r: right, margin_t: top, margin_b: bottom, }
 }
 
 ///|
@@ -151,7 +151,7 @@ pub fn TableCellProperties::with_fill(
   self : TableCellProperties,
   fill : @oxml.Fill,
 ) -> TableCellProperties {
-  { ..self, fill: Some(fill) }
+  { ..self, fill: Some(fill), }
 }
 
 ///|
@@ -160,7 +160,7 @@ pub fn TableCellProperties::with_anchor(
   self : TableCellProperties,
   anchor : Anchor,
 ) -> TableCellProperties {
-  { ..self, anchor: Some(anchor) }
+  { ..self, anchor: Some(anchor), }
 }
 
 ///|
@@ -186,7 +186,7 @@ pub fn TableCellProperties::with_border_left(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
 ) -> TableCellProperties {
-  { ..self, border_left: Some(stroke) }
+  { ..self, border_left: Some(stroke), }
 }
 
 ///|
@@ -195,7 +195,7 @@ pub fn TableCellProperties::with_border_right(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
 ) -> TableCellProperties {
-  { ..self, border_right: Some(stroke) }
+  { ..self, border_right: Some(stroke), }
 }
 
 ///|
@@ -204,7 +204,7 @@ pub fn TableCellProperties::with_border_top(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
 ) -> TableCellProperties {
-  { ..self, border_top: Some(stroke) }
+  { ..self, border_top: Some(stroke), }
 }
 
 ///|
@@ -213,7 +213,7 @@ pub fn TableCellProperties::with_border_bottom(
   self : TableCellProperties,
   stroke : @oxml.Stroke,
 ) -> TableCellProperties {
-  { ..self, border_bottom: Some(stroke) }
+  { ..self, border_bottom: Some(stroke), }
 }
 
 ///|

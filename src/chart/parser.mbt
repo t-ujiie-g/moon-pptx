@@ -79,7 +79,7 @@ fn parse_chart_space(r : @xml.XmlReader) -> Chart raise ChartError {
     Some(c) => c
     None => raise Malformed("<c:chartSpace> is missing required <c:chart>")
   }
-  { date1904, lang, rounded_corners, style, chart, extension }
+  { date1904, lang, rounded_corners, style, chart, extension, }
 }
 
 ///|
@@ -211,7 +211,7 @@ fn parse_plot_area(r : @xml.XmlReader) -> PlotArea raise ChartError {
       _ => ()
     }
   }
-  { layout, plots, axes, data_table, sp_pr, extension }
+  { layout, plots, axes, data_table, sp_pr, extension, }
 }
 
 ///|

@@ -107,7 +107,7 @@ pub fn SlideSizeKind::size_type(self : SlideSizeKind) -> String {
 /// Convert to a typed `SlideSize` value (cx, cy, size_type).
 pub fn SlideSizeKind::to_slide_size(self : SlideSizeKind) -> SlideSize {
   let (cx, cy) = self.dimensions()
-  { cx, cy, size_type: self.size_type() }
+  { cx, cy, size_type: self.size_type(), }
 }
 
 ///|

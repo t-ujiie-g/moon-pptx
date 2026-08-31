@@ -150,7 +150,7 @@ test "update_shape_by_id_mut: renames the targeted shape, survives reopen" {
   let prs = prs_with_one_rect()
   prs.update_shape_by_id_mut(0, 2, s => {
     match s {
-      AutoShape(a) => AutoShape({ ..a, name: "Renamed" })
+      AutoShape(a) => AutoShape({ ..a, name: "Renamed", })
       other => other
     }
   })
@@ -176,7 +176,7 @@ test "map_slide_shapes_mut: applies to every shape on the slide" {
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(rect2)))
   prs.map_slide_shapes_mut(0, s => {
     match s {
-      AutoShape(a) => AutoShape({ ..a, name: "All" })
+      AutoShape(a) => AutoShape({ ..a, name: "All", })
       other => other
     }
   })

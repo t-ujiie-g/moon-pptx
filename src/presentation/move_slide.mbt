@@ -68,7 +68,7 @@ pub fn Presentation::move_slide_mut(
     }
   }
   reordered.insert(to, moved)
-  let new_pres = { ..pres, sld_ids: reordered }
+  let new_pres = { ..pres, sld_ids: reordered, }
   self.replace_part_bytes(
     pres_name,
     new_pres.serialize(),

@@ -119,7 +119,7 @@ test "TableStylePreset: 74 styles, distinct well-formed GUIDs" {
 ///|
 test "TableProperties::with_style: sets the id, keeps everything else" {
   let p = @slide.TableProperties::default()
-  let styled = { ..p, first_row: Some(true) }.with_style(LightStyle2Accent3)
+  let styled = { ..p, first_row: Some(true), }.with_style(LightStyle2Accent3)
   assert_eq(
     styled.table_style_id.unwrap(),
     @slide.TableStylePreset::LightStyle2Accent3.guid(),

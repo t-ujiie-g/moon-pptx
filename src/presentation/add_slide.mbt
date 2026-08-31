@@ -112,7 +112,7 @@ fn Presentation::attach_slide_to_presentation(
       )
   }
   let next_id = next_slide_id(pres.sld_ids)
-  pres.sld_ids.push({ id: next_id, r_id: new_slide_rid })
+  pres.sld_ids.push({ id: next_id, r_id: new_slide_rid, })
   self.replace_part_bytes(pres_name, pres.serialize(), @oxml.ct_presentation)
   let pres_rels = self.pkg.relationships_for(pres_name) catch {
     e => raise OpcFailure(e.to_string())
@@ -275,7 +275,7 @@ fn relative_target(source_part : String, target_part : String) -> String {
   }
   // Number of "../" hops.
   let ups = src_dir_comps.length() - common
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for _ in 0..<ups {
     buf.write_string("../")
   }
@@ -295,7 +295,7 @@ fn parent_dir(part : String) -> String {
   if segs.length() <= 2 {
     return "/"
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i in 0..<(segs.length() - 1) {
     if i > 0 {
       buf.write_char('/')

@@ -347,7 +347,7 @@ pub fn Transition::with_on_click(
   self : Transition,
   on_click : Bool,
 ) -> Transition {
-  { ..self, advance_on_click: on_click }
+  { ..self, advance_on_click: on_click, }
 }
 
 ///|
@@ -357,14 +357,14 @@ pub fn Transition::with_advance_after(
   self : Transition,
   ms : Int,
 ) -> Transition {
-  { ..self, advance_after: Some(ms) }
+  { ..self, advance_after: Some(ms), }
 }
 
 ///|
 /// Return a copy with any timed auto-advance removed (the slide advances only
 /// on click again).
 pub fn Transition::without_advance_after(self : Transition) -> Transition {
-  { ..self, advance_after: None }
+  { ..self, advance_after: None, }
 }
 
 // --- Slide builders (immutable, ADR-003) ---
@@ -372,12 +372,12 @@ pub fn Transition::without_advance_after(self : Transition) -> Transition {
 ///|
 /// Return a new `Slide` with the given transition. Replaces any existing one.
 pub fn Slide::with_transition(self : Slide, transition : Transition) -> Slide {
-  { ..self, transition: Some(transition) }
+  { ..self, transition: Some(transition), }
 }
 
 ///|
 /// Return a new `Slide` with no transition — it shows with no entrance effect.
 /// Clears any previously set transition.
 pub fn Slide::without_transition(self : Slide) -> Slide {
-  { ..self, transition: None }
+  { ..self, transition: None, }
 }

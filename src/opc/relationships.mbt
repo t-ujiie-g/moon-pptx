@@ -75,7 +75,7 @@ pub(all) struct Relationships {
 /// Construct an empty `Relationships` set for `source` (the
 /// part the relationships belong to).
 pub fn Relationships::new(source : String) -> Relationships {
-  { source, items: [] }
+  { source, items: [], }
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn Relationships::with_relationship(
     next.push(r)
   }
   next.push(rel)
-  { source: self.source, items: next }
+  { source: self.source, items: next, }
 }
 
 ///|
@@ -197,7 +197,7 @@ pub fn resolve_target(
   if segments.is_empty() {
     return "/"
   }
-  let buf = StringBuilder::new(size_hint=64)
+  let buf = StringBuilder(size_hint=64)
   for seg in segments {
     buf.write_char('/')
     buf.write_view(seg)
@@ -218,7 +218,7 @@ pub fn rels_path_for(source : String) -> String {
   // basename gains a `.rels` suffix.
   let segs = source.split("/").collect()
   guard segs.length() > 1 else { return "/_rels/" + source + ".rels" }
-  let buf = StringBuilder::new(size_hint=source.length() + 12)
+  let buf = StringBuilder(size_hint=source.length() + 12)
   for i in 0..<(segs.length() - 1) {
     buf..write_view(segs[i]).write_char('/')
   }
@@ -270,7 +270,7 @@ fn parse_relationships_xml(
               other =>
                 raise MalformedPackage("unknown TargetMode value: " + other)
             }
-            items.push({ id, rel_type, target, target_mode })
+            items.push({ id, rel_type, target, target_mode, })
           }
           other =>
             raise MalformedPackage("unexpected element in .rels: " + other)
@@ -285,7 +285,7 @@ fn parse_relationships_xml(
   if !saw_root {
     raise MalformedPackage("relationships XML missing <Relationships> root")
   }
-  { source, items }
+  { source, items, }
 }
 
 ///|

@@ -56,7 +56,10 @@ pub fn Presentation::add_chart_mut(
       }
       // The chart part's rels are created below with the workbook as
       // their only entry, so rId1 is the reference by construction.
-      { ..chart, extension: [..chart.extension, external_data_element("rId1")] }
+      {
+        ..chart,
+        extension: [..chart.extension, external_data_element("rId1")],
+      }
     }
     None => chart
   }

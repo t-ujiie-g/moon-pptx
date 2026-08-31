@@ -27,7 +27,7 @@ pub fn HslColor::new(
   saturation : Double,
   lightness : Double,
 ) -> HslColor {
-  { hue, saturation, lightness }
+  { hue, saturation, lightness, }
 }
 
 // --- conversions ---
@@ -43,7 +43,7 @@ pub fn RgbColor::to_hsl(self : RgbColor) -> HslColor {
   let min = min3(r, g, b)
   let l = (max + min) / 2.0
   if max == min {
-    return { hue: 0.0, saturation: 0.0, lightness: l * 100.0 }
+    return { hue: 0.0, saturation: 0.0, lightness: l * 100.0, }
   }
   let delta = max - min
   let s = if l <= 0.5 { delta / (max + min) } else { delta / (2.0 - max - min) }
@@ -55,7 +55,7 @@ pub fn RgbColor::to_hsl(self : RgbColor) -> HslColor {
     (r - g) / delta + 4.0
   }
   let h = h_raw * 60.0
-  { hue: h, saturation: s * 100.0, lightness: l * 100.0 }
+  { hue: h, saturation: s * 100.0, lightness: l * 100.0, }
 }
 
 ///|
@@ -67,7 +67,7 @@ pub fn HslColor::to_rgb(self : HslColor) -> RgbColor {
   let l = clamp01(self.lightness / 100.0)
   if s == 0.0 {
     let v = round_byte(l * 255.0)
-    return { r: v, g: v, b: v }
+    return { r: v, g: v, b: v, }
   }
   let chroma = (1.0 - (2.0 * l - 1.0).abs()) * s
   let h60 = h / 60.0

@@ -350,5 +350,5 @@ fn parse_arrow_end(attrs : Array[(@xml.QName, String)]) -> ArrowEnd {
   }
   let width = enum_attr_opt(attrs, "w", ArrowSize::from_xml)
   let length = enum_attr_opt(attrs, "len", ArrowSize::from_xml)
-  { arrow_type, width, length }
+  { arrow_type, width, length, }
 }

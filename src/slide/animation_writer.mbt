@@ -89,11 +89,11 @@ fn group_anim_steps(steps : Array[AnimStep]) -> Array[AnimGroup] {
   let groups : Array[AnimGroup] = []
   for step in steps {
     match step.start {
-      OnClick => groups.push({ is_click: true, steps: [step] })
-      AfterPrevious => groups.push({ is_click: false, steps: [step] })
+      OnClick => groups.push({ is_click: true, steps: [step], })
+      AfterPrevious => groups.push({ is_click: false, steps: [step], })
       WithPrevious =>
         if groups.is_empty() {
-          groups.push({ is_click: true, steps: [step] })
+          groups.push({ is_click: true, steps: [step], })
         } else {
           groups[groups.length() - 1].steps.push(step)
         }
@@ -414,7 +414,7 @@ fn anim_seq_cond(name : String, evt : String) -> @xml.XmlNode {
 ///|
 /// Build the full `<p:timing>` element for a timeline.
 fn timing_element(timeline : Timeline) -> @xml.XmlElement {
-  let gen : IdGen = { n: 0 }
+  let gen : IdGen = { n: 0, }
   let groups = group_anim_steps(timeline.steps)
   // Shapes with a by-paragraph effect, in first-seen order; each gets a build
   // group id (its index + 1, so they never collide with the default group 0).
