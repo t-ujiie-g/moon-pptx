@@ -259,6 +259,43 @@ pub fn RunProperties::with_font(
 }
 
 ///|
+/// Set the East Asian typeface (`<a:ea>`) — the face PowerPoint renders
+/// Japanese, Chinese, and Korean characters with. `with_font` only sets the
+/// Latin slot, so CJK text keeps the theme font until this is set too.
+pub fn RunProperties::with_east_asian_font(
+  self : RunProperties,
+  font_name : String,
+) -> RunProperties {
+  { ..self, east_asian: Some(font_name), }
+}
+
+///|
+/// Set the complex-script typeface (`<a:cs>`) — Arabic, Hebrew, Thai, and the
+/// Indic scripts.
+pub fn RunProperties::with_complex_script_font(
+  self : RunProperties,
+  font_name : String,
+) -> RunProperties {
+  { ..self, complex_script: Some(font_name), }
+}
+
+///|
+/// Set the same typeface for all three script slots (`<a:latin>` / `<a:ea>` /
+/// `<a:cs>`) — the one-liner for "render this run in Meiryo whatever the
+/// script is", which `with_font` alone cannot do.
+pub fn RunProperties::with_font_for_all_scripts(
+  self : RunProperties,
+  font_name : String,
+) -> RunProperties {
+  {
+    ..self,
+    latin: Some(font_name),
+    east_asian: Some(font_name),
+    complex_script: Some(font_name),
+  }
+}
+
+///|
 /// Attach an external hyperlink to this run. The URL is stored
 /// **unresolved** in `hyperlink_target`; `Presentation::update_slide_mut`
 /// allocates the slide-rels rId and writes the final

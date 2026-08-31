@@ -664,6 +664,59 @@ master, while `false` pins the paragraph to left-to-right.
 
 ---
 
+## 21. Japanese / CJK text and font resolution
+
+`with_font` only sets the Latin slot (`<a:latin>`), so CJK characters keep
+whatever the theme picks for them — which in an Office theme is usually
+nothing. Set all three script slots instead:
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+let rp = @slide.RunProperties::default()
+  .with_font_size(@units.Pt(28.0))
+  .with_font_for_all_scripts("Meiryo")   // <a:latin> + <a:ea> + <a:cs>
+
+let body = @slide.TextBody::of_styled_text("日本語のテキスト", rp)
+let shape = @slide.AutoShape::textbox(
+  2, "JP",
+  prs.pct_w(10.0), prs.pct_h(30.0),
+  prs.pct_w(80.0), prs.pct_h(25.0),
+  "",
+).with_text_body(body)
+
+prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(shape)))
+let _bytes = prs.save()
+```
+
+Use `with_east_asian_font` / `with_complex_script_font` when the scripts
+should differ — Latin in Calibri, Japanese in Meiryo.
+
+### Reading a font back
+
+A run in an existing deck usually does *not* name its font: PowerPoint
+writes theme references, and CJK faces live in the theme's per-script list
+rather than on the run. So ask the resolver, not the field:
+
+```moonbit nocheck
+let scheme = prs.themes()[0].font_scheme
+
+// `rp.latin` here is the literal string "+mn-lt", not a font.
+@slide.resolve_run_fonts(rp, scheme).latin        // -> "Calibri"
+
+// What Japanese text in this run actually renders with. Prefers the
+// theme's <a:font script="Jpan"> entry, because Office themes ship
+// <a:ea typeface=""/> and keep the real face there.
+@slide.resolve_run_font_for_script(rp, scheme, "Jpan")   // -> "ＭＳ Ｐゴシック"
+```
+
+Pass `major=true` for heading text, which resolves against `<a:majorFont>`.
+The script argument is an ISO-15924 tag — `"Jpan"`, `"Hans"`, `"Hant"`,
+`"Hang"`, `"Arab"`, `"Thai"`, and so on.
+
+---
+
 ## Where to next?
 
 - [README.md](../README.md#comparison-with-python-pptx-and-pptxgenjs) — full feature comparison vs python-pptx + PptxGenJS.

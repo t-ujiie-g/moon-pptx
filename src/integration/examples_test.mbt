@@ -583,3 +583,43 @@ test "example 20: right-to-left text and paragraph-mark formatting" {
   // Unset direction stays unset rather than becoming left-to-right.
   assert_eq(paras[1].properties.rtl, None)
 }
+
+///|
+test "example 21: Japanese / CJK text and font resolution" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let rp = @slide.RunProperties::default()
+    .with_font_size(@units.Pt(28.0))
+    .with_font_for_all_scripts("Meiryo")
+  let body = @slide.TextBody::of_styled_text("日本語のテキスト", rp)
+  let shape = @slide.AutoShape::textbox(
+    2,
+    "JP",
+    prs.pct_w(10.0),
+    prs.pct_h(30.0),
+    prs.pct_w(80.0),
+    prs.pct_h(25.0),
+    "",
+  ).with_text_body(body)
+  prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(shape)))
+  let reopened = @presentation.Presentation::open(prs.save())
+  let run_props = match reopened.slides()[0].shapes[0] {
+    AutoShape(sp) =>
+      match sp.text_body.unwrap().paragraphs[0].content[0] {
+        RunContent(r) => r.properties
+        _ => abort("expected a run")
+      }
+    _ => abort("expected the AutoShape back")
+  }
+  // All three slots survive the round-trip, which is what makes the CJK
+  // characters render in Meiryo rather than the theme default.
+  assert_eq(run_props.latin, Some("Meiryo"))
+  assert_eq(run_props.east_asian, Some("Meiryo"))
+  assert_eq(run_props.complex_script, Some("Meiryo"))
+  // And the resolver agrees, against the deck's own theme.
+  let scheme = reopened.themes()[0].font_scheme
+  assert_eq(
+    @slide.resolve_run_font_for_script(run_props, scheme, "Jpan"),
+    "Meiryo",
+  )
+}

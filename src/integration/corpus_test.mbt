@@ -212,6 +212,32 @@ test "corpus with_japanese: CJK and surrogate-pair text survive UTF round-trips"
 }
 
 ///|
+test "corpus with_japanese: the theme names the font CJK actually renders in" {
+  // The file's runs carry `<a:latin typeface="+mn-lt"/>`-style theme
+  // references and an empty `<a:ea typeface=""/>`, so neither the run nor the
+  // `ea` slot names the face Japanese text uses — only the `script="Jpan"`
+  // entry does. This is the case G2 exists for, checked against a real file.
+  let pkg = @opc.Package::open(corpus_with_japanese())
+  let theme = @theme.Theme::parse(
+    pkg.require_part("/ppt/theme/theme1.xml").bytes,
+  )
+  let scheme = theme.font_scheme
+  assert_eq(scheme.minor_font.ea, "")
+  assert_eq(
+    scheme.minor_font.typeface_for_script("Jpan"),
+    "ＭＳ Ｐゴシック",
+  )
+  assert_eq(scheme.minor_font.typeface_for_script("Hans"), "宋体")
+  // A run following the theme resolves through it rather than yielding "+mn-lt".
+  let themed = @slide.RunProperties::default().with_font("+mn-lt")
+  assert_eq(@slide.resolve_run_fonts(themed, scheme).latin, "Calibri")
+  assert_eq(
+    @slide.resolve_run_font_for_script(themed, scheme, "Jpan"),
+    "ＭＳ Ｐゴシック",
+  )
+}
+
+///|
 test "corpus testPPT: app.xml merge preserves the vt subtrees" {
   let prs = @presentation.Presentation::open(corpus_testppt())
   // The real Office part carries statistics and vt: vectors we must

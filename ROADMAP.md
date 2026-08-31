@@ -131,7 +131,6 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 
 | # | Gap | State | Why it is open | Size |
 |---|---|---|---|---|
-| G2 | **Asian-script font fallback** (`<a:ea>` / `<a:cs>` font resolution) | △ | `complex_script` exists as a field but nothing resolves east-asian vs complex-script fonts per run | S–M |
 | G3 | **WordArt / preset text warp** (`<a:prstTxWarp>`) | △ | Typed warp presets over the existing `bodyPr`; 40-odd preset names | M |
 | G4 | **3-D shape effects** (`<a:scene3d>` camera/light, `<a:sp3d>` bevel/extrusion) | △ | Typed builder; large surface, low demand so far | M–L |
 | G6 | **Equation editor** (Office Math, `<m:oMathPara>`) | △ | A whole second markup vocabulary; only worth it with a concrete consumer | L |
@@ -139,9 +138,9 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
 
-G1 (RTL / bidi text) and G5 (`endParaRPr`) closed in the 0.7.2+ cycle; the
-IDs are retired rather than reused so older references still resolve. Of
-what is left, G8 and G2 are the smallest.
+G1 (RTL / bidi text), G5 (`endParaRPr`) and G2 (Asian-script fonts) closed
+in the 0.7.2+ cycle; the IDs are retired rather than reused so older
+references still resolve. Of what is left, G8 is the smallest.
 
 ### 3.2 Verification gaps
 
@@ -181,13 +180,13 @@ in. Suggested order, highest value first:
 1. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-2. **G2 Asian-script font fallback** — the last row where PptxGenJS is
-   ahead on text handling, and it pairs naturally with the RTL support
-   that just landed.
-3. **H1 sample-deck split** — forced eventually by the toolchain; cheap
+2. **H1 sample-deck split** — forced eventually by the toolchain; cheap
    to do before it becomes an error.
-4. **G8 p14 extended transitions** — small, and the base transition model
+3. **G8 p14 extended transitions** — small, and the base transition model
    is already typed.
+4. **A theme builder** (§5) — font resolution now reads the theme, but
+   nothing can *write* one, so "make this whole deck Japanese" still means
+   setting fonts run by run.
 
 ### 4.2 The v1.0.0 gate
 
