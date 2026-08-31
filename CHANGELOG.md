@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] — 2026-09-01
+
+Maintenance: no API change, no behaviour change. The tree was swept for
+the forms `moon 0.1.20260827` deprecated.
+
+### Changed
+
+- **Deprecated forms removed for `moon 0.1.20260827`.** No public API
+  change — `moon info` reports zero `.mbti` drift, and 1178 tests stay
+  green on all four backends.
+  - `StringBuilder::new(…)` → `StringBuilder(…)` (17 sites). `new` is now
+    a deprecated alias of the `StringBuilder(size_hint? : Int)`
+    constructor.
+  - **Implicit trait-method promotion**, now deprecated, removed at 62
+    call sites. Types whose `Show` comes from a `pub impl Show for T`
+    block gained an `extend T with Show::{to_string}` declaration next to
+    that impl — `XmlReadError`, `ColorError`, `FillError` — which keeps
+    `.to_string()` working at every call site. `ImageFormat`'s single
+    internal `.output(logger)` became `logger.write_object(…)`.
+- **Reformatted by the current `moon fmt`**, which now emits a trailing
+  comma inside single-line struct literals (`{ r, g, b }` →
+  `{ r, g, b, }`). Formatting only, across 85 files.
+
+### Compatibility
+
+- **Minimum toolchain raised to `moon 0.1.20260827`.** The tree now uses
+  the `StringBuilder(…)` constructor form and `extend … with Show::{…}`
+  declarations, neither of which the previous `0.1.20260729` floor has.
+- Source-compatible for consumers: the public surface carries no
+  declaration change from 0.7.1.
+
 ## [0.7.1] — 2026-08-05
 
 A maintenance release: no API change, no behaviour change. The tree was

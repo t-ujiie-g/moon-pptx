@@ -17,7 +17,7 @@ status touches this file.
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.7.1` (2026-08-05 — maintenance: MoonBit-idiom sweep, no API change) |
+| Current version | `0.7.2` (2026-09-01 — maintenance: deprecation sweep for `moon 0.1.20260827`, no API change) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see §4) |
 | Test suite | 1178 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
@@ -35,16 +35,18 @@ status touches this file.
 - Generated decks open in PowerPoint Online without repair prompts; the bundled blank template emits every part ECMA-376 marks as required.
 - 795 tests × 4 backends (Native / Wasm-GC / JS / Wasm); 100 % public-API doc coverage.
 
-### Where we are now (2026-08-05)
+### Where we are now (2026-09-01)
 - v0.2.0 → v0.7.1 all shipped (summary table in §4.0); 1178 tests × 4
   backends; 100 % public-API doc coverage.
 - **Feature-complete for the core mission, breaking budget spent** —
   the §1 vision goals are delivered and the v0.6.0 breaking pass has
   landed, so everything from here to 1.0 is additive-only. The §4.2
   v0.7.x additive cycle shipped as **v0.7.0** (2026-07-12), followed by
-  the **v0.7.1** maintenance release (2026-08-05 — MoonBit-idiom sweep,
-  no API change); beyond that: fresh §5 ideas as demand appears, and the
-  v1.0 gate (§4.3) — which fires when the MoonBit toolchain reaches v1.0.
+  the **v0.7.1** (2026-08-05 — MoonBit-idiom sweep) and **v0.7.2**
+  (2026-09-01 — deprecation sweep for `moon 0.1.20260827`) maintenance
+  releases, neither of which changed the API; beyond that: fresh §5 ideas
+  as demand appears, and the v1.0 gate (§4.3) — which fires when the
+  MoonBit toolchain reaches v1.0.
 
 ### What it does not yet do
 See **§3** (feature comparison vs python-pptx + PptxGenJS) and **§4**
@@ -288,7 +290,7 @@ API freeze rides the language's own stability milestone. Until then,
 
 Status legend: 🔴 not started · 🟡 in progress · 🟢 done.
 
-### 4.0 Shipped cycles (v0.2.0 – v0.7.1) — summary
+### 4.0 Shipped cycles (v0.2.0 – v0.7.2) — summary
 
 Item-by-item design detail (deviations, test counts, rationale) lives in
 §11 (living changelog) and `CHANGELOG.md`; this table is the map.
@@ -306,6 +308,7 @@ Item-by-item design detail (deviations, test counts, rationale) lives in
 | v0.6.0 (2026-07-06) | Pre-1.0 breaking pass | F3-b non-solid text fill · F4 paragraph-spacing `TextSpacing` ADT (+ real parser bug fixed) · D1-b SmartArt recursive hierarchy layoutDef + connectors ⭐ · API pass 1 (33 internals privatized) — breaking budget fully spent |
 | v0.7.0 (2026-07-12) | Additive parity + ergonomics | Tier-1 corpus embedding · F5-b hyperlinks on all 5 shape kinds · fill convenience constructors · SmartArt per-node colours · `TableStylePreset` (74 styles) · slide sections · F2-b app.xml properties · B3 embedded chart-data workbooks |
 | v0.7.1 (2026-08-05) | Maintenance | MoonBit-idiom sweep — deprecated forms removed, hand-rolled string/UTF-8/substring code replaced by the stdlib (−541 lines); toolchain floor raised to `0.1.20260729`; no public declaration change |
+| v0.7.2 (2026-09-01) | Maintenance | Deprecation sweep for `moon 0.1.20260827` — `StringBuilder::new` → `StringBuilder(…)`, implicit trait-method promotion replaced by `extend T with Show::{to_string}`; toolchain floor raised to `0.1.20260827`; no public declaration change |
 
 ---
 
@@ -835,6 +838,7 @@ Run all four before committing. CI enforces them.
 
 ## 11. Living changelog (high-level)
 
+- **2026-09-01** — **v0.7.2 release pass.** Version bumped to 0.7.2 (root `moon.mod` + sample-deck dep + its README dep sample), CHANGELOG entry written for the deprecation sweep below. A **maintenance** release: no API change, no behaviour change, no public declaration changed vs 0.7.1 (`moon info` reports zero `.mbti` drift) — the one consumer-visible line is the **minimum toolchain moving to `moon 0.1.20260827`** (the tree now uses the `StringBuilder(size_hint=…)` constructor form and `extend T with Show::{to_string}` declarations, neither of which the old `0.1.20260729` floor has). §0 version row + "where we are now" + §4.0 table and heading range gain the v0.7.2 rows. The PR splits the work into a reviewable `fix:` commit (15 files, 28 insertions) and a `style:` commit carrying the 79-file formatter churn, so the deprecation change can be read on its own. Suite at release: 1178 × 4 backends.
 - **2026-09-01** — **Deprecation sweep for `moon 0.1.20260827`.** The toolchain moved again and deprecated two forms the tree used everywhere. **`StringBuilder::new(…)` → `StringBuilder(…)`** (17 sites; `new` is now an `#alias(new, deprecated)` on the `StringBuilder::StringBuilder(size_hint? : Int)` constructor), plus the one site in the sample-deck example. **Implicit trait-method promotion is deprecated** — calling `.to_string()` / `.output()` on a type whose `Show` comes from a `pub impl Show for T` block no longer resolves silently; 62 call sites warned. Fixed at the *type* rather than the call site: `extend XmlReadError with Show::{to_string}` (57 sites), and the same for `ColorError` (3) and `FillError` (1) — one declaration next to each `impl Show` keeps method-call syntax working everywhere. The lone `ImageFormat` case was an internal `self.format.output(logger)` inside `Show for ImageDimensions`; that became `logger.write_object(self.format)`, matching the neighbouring lines. Note the compiler's suggested `Show::{to_string, ..}` spelling is a *placeholder* — the literal `..` is a parse error (E3002/E4039); the real syntax lists the methods. **These warnings only surface under `moon test` / `moon build`, not `moon check`** — `moon check --deny-warn` was green while CI's `moon test --deny-warn` would have failed, so the repo was latently red on the current toolchain. `moon fmt` on this version also rewrites single-line struct literals to a trailing comma (`{ r, g, b }` → `{ r, g, b, }`), which is the bulk of the diff — 85 files, formatter-only, idempotent, and enforced by CI's `moon fmt && git diff --exit-code` against an unpinned `hustcer/setup-moonbit@v1`. No API change: `moon info` reports zero `.mbti` drift; 1178 tests green on all four backends. **Deferred, not done** — `examples/sample-deck` now warns that *main packages will stop generating blackbox tests in a future release*; splitting its 2 000-line `main` into a library package plus a thin entrypoint is a structural change to the example, logged in §5 rather than folded into a syntax sweep.
 - **2026-08-05** — **v0.7.1 release pass.** Version bumped to 0.7.1 (root `moon.mod` + sample-deck dep + its README dep sample), CHANGELOG entry written for the idiom sweep below. A **maintenance** release: no API change, no behaviour change, no public declaration changed vs 0.7.0 (the regenerated `.mbti` differ only by a trailing blank line the newer `moon info` drops) — the one consumer-visible line is the **minimum toolchain moving to `moon 0.1.20260729`** (the tree now uses `String::contains`/`find`, view slicing, and `StringView` patterns, which the old `0.1.20260522` floor lacks). §0 version row + "where we are now" + §4.0 table gain the v0.7.1 rows; §4.0's heading range and its stale "`v0.5.3` tag not pushed yet" note fixed (every tag through `v0.7.0` is on the remote). Suite at release: 1178 × 4 backends.
 - **2026-08-03** — **MoonBit-idiom modernisation sweep (CLAUDE.md §7, all five lenses).** Toolchain moved on (`moon 0.1.20260729` vs the 0.1.20260522 floor in §0) and brought both new deprecations and a much richer `String` / `StringView` API; the tree was swept to match. **Deprecated forms removed**: dot-syntax trait-method calls on multi-bound type params (`marker.layout_type()` → `LayoutType::layout_type(marker)`), `fn(x) { … }` lambdas → `x => …` (53 sites), `not(…)` → `!…`, `Array::new()` → `[]`, `String::from_array`, `.view(start_offset=…, end_offset=…)` → slicing `s[a:b]`. **Hand-rolled string code deleted in favour of the stdlib** — this is where the line count went: six copies of a naive substring search (`char_index_of` / `index_of` / `has` / `has_substring` / `str_index`, each carrying a now-false "String has no `contains`/`index_of`" comment) → `String::contains` / `find`; five copies of the UTF-8 encoder and four copies of an ASCII fixture encoder in test files → the one public `@oxml.string_to_bytes` (`notes` gained a test-scoped `oxml` import for it); OPC path handling (`resolve_target`, `rels_path_for`, `parent_dir`, `path_components`, `extension_of`) rewritten on `split` + views; `parse_signed_int`/`_int64`, `parse_uint64_decimal`, `RgbColor::parse_hex`, `decode_numeric_entity`, `resolve_qname`, `validate_part_name` rewritten on `StringView` patterns (`s is ['-', .. rest]`, `[.."xmlns:", .. prefix]`, `guard s is [a, b, c, d, e, f]`); `contains_cdata_terminator` is now a one-line `s.contains("]]>")`. `.length() == 0` / `> 0` → `.is_empty()` (44 sites); index-counting `while` loops → range / functional `for`. **Deliberate deviation, now documented in the code**: `XmlReader.chars` stays `Array[Char]` — the lexer indexes by *code point*, and `String`/`StringView` indexing yields UTF-16 code units, which would split astral-plane XML name characters. Net −541 lines, and **no public declaration changed** (only private helpers went — the regenerated `.mbti` differ solely by a trailing blank line the newer `moon info` no longer emits), 1178 tests green on Native / Wasm-GC / JS / Wasm, `moon check --deny-warn` clean. **Follow-up noted, not done**: `examples/sample-deck`'s `main` package warns that "Main packages will stop generating blackbox tests in a future release" — fixing it means splitting the deck's showcase code out of `main/`, which is a new-file change outside this sweep's scope.

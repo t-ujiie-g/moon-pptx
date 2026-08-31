@@ -7,7 +7,7 @@ description = "Runnable sample deck for moon-pptx — demonstrates every feature
 license = "Apache-2.0"
 
 import {
-  "t-ujiie-g/moon-pptx@0.7.1",
+  "t-ujiie-g/moon-pptx@0.7.2",
 }
 
 source = "main"
