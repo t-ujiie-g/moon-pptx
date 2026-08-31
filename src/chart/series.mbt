@@ -36,33 +36,34 @@
 /// The body of a `<c:ser>` element for chart families that use
 /// category + value data sources (bar / line / pie / doughnut /
 /// area / radar / stock / surface / ofPie, plus the 3D variants).
+///
+/// - `idx` (`<c:idx val="…"/>`) — series index. Used as the key in
+///   combination charts and for `<c:dPt>` overrides. REQUIRED.
+/// - `order` (`<c:order val="…"/>`) — render order. REQUIRED.
+/// - `tx` (`<c:tx>`) — series title. Captured XmlElement until the typed
+///   `SeriesText` AST lands.
+/// - `sp_pr` (`<c:spPr>`) — series-level shape properties (fill / stroke /
+///   effect). Captured XmlElement until the existing `<p:spPr>`-style parser
+///   is rewired here.
+/// - `trendlines` — `<c:trendline>` fitted-curve overlays in source order.
+///   Pie-/doughnut-/radar-family parsers never push into this array since
+///   trendlines don't apply to those chart kinds.
+/// - `cat` (`<c:cat>`) — category axis data source. Captured XmlElement;
+///   typed `AxDataSource` is a future slice.
+/// - `val` (`<c:val>`) — value data source. Captured XmlElement; typed
+///   `NumDataSource` is a future slice.
+/// - `extension` — Family-specific unmodelled children (`<c:dLbls>`,
+///   `<c:dPt>`, `<c:errBars>`, `<c:marker>`, `<c:smooth>`, `<c:explosion>`,
+///   `<c:invertIfNegative>`, `<c:pictureOptions>`, `<c:shape>`, `<c:extLst>`,
+///   foreign-namespace siblings).
 pub(all) struct ChartSeriesCore {
-  /// `<c:idx val="…"/>` — series index. Used as the key in
-  /// combination charts and for `<c:dPt>` overrides. REQUIRED.
   idx : Int
-  /// `<c:order val="…"/>` — render order. REQUIRED.
   order : Int
-  /// `<c:tx>` — series title. Captured XmlElement until the typed
-  /// `SeriesText` AST lands.
   tx : @xml.XmlElement?
-  /// `<c:spPr>` — series-level shape properties (fill / stroke /
-  /// effect). Captured XmlElement until the existing
-  /// `<p:spPr>`-style parser is rewired here.
   sp_pr : @xml.XmlElement?
-  /// `<c:trendline>` fitted-curve overlays in source order.
-  /// Pie-/doughnut-/radar-family parsers never push into this array
-  /// since trendlines don't apply to those chart kinds.
   trendlines : Array[Trendline]
-  /// `<c:cat>` — category axis data source. Captured XmlElement;
-  /// typed `AxDataSource` is a future slice.
   cat : @xml.XmlElement?
-  /// `<c:val>` — value data source. Captured XmlElement; typed
-  /// `NumDataSource` is a future slice.
   val : @xml.XmlElement?
-  /// Family-specific unmodelled children (`<c:dLbls>`, `<c:dPt>`,
-  /// `<c:errBars>`, `<c:marker>`, `<c:smooth>`, `<c:explosion>`,
-  /// `<c:invertIfNegative>`, `<c:pictureOptions>`, `<c:shape>`,
-  /// `<c:extLst>`, foreign-namespace siblings).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -76,16 +77,17 @@ pub impl Show for ChartSeriesCore with fn output(self, logger) {
 ///|
 /// The body of a `<c:ser>` element for the scatter chart family.
 /// Scatter has two value axes — both data sources are numeric.
+///
+/// - `trendlines` — `<c:trendline>` fitted-curve overlays in source order.
+/// - `x_val` (`<c:xVal>`) — X-axis numeric data source.
+/// - `y_val` (`<c:yVal>`) — Y-axis numeric data source.
 pub(all) struct ScatterSeriesCore {
   idx : Int
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
-  /// `<c:trendline>` fitted-curve overlays in source order.
   trendlines : Array[Trendline]
-  /// `<c:xVal>` — X-axis numeric data source.
   x_val : @xml.XmlElement?
-  /// `<c:yVal>` — Y-axis numeric data source.
   y_val : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
@@ -101,17 +103,18 @@ pub impl Show for ScatterSeriesCore with fn output(self, logger) {
 /// The body of a `<c:ser>` element for the bubble chart family.
 /// Adds a third numeric data source `<c:bubbleSize>` on top of
 /// scatter's X / Y.
+///
+/// - `trendlines` — `<c:trendline>` fitted-curve overlays in source order.
+/// - `bubble_size` (`<c:bubbleSize>`) — third numeric data source mapping
+///   bubble area / width.
 pub(all) struct BubbleSeriesCore {
   idx : Int
   order : Int
   tx : @xml.XmlElement?
   sp_pr : @xml.XmlElement?
-  /// `<c:trendline>` fitted-curve overlays in source order.
   trendlines : Array[Trendline]
   x_val : @xml.XmlElement?
   y_val : @xml.XmlElement?
-  /// `<c:bubbleSize>` — third numeric data source mapping bubble
-  /// area / width.
   bubble_size : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

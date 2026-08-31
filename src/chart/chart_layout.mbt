@@ -30,10 +30,10 @@
 ///|
 /// Body of a `<c:layout>` element. Optionally wraps a
 /// `<c:manualLayout>` with explicit positioning.
+///
+/// - `manual_layout` (`<c:manualLayout>`) — explicit positioning override.
 pub(all) struct Layout {
-  /// `<c:manualLayout>` — explicit positioning override.
   manual_layout : ManualLayout?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -45,29 +45,29 @@ pub impl Show for Layout with fn output(self, logger) {
 
 ///|
 /// Manual-layout coordinates (CT_ManualLayout).
+///
+/// - `layout_target` (`<c:layoutTarget val="…"/>`) — whether the rect targets
+///   the inner (plot) or outer (chart area) box. Default `outer`.
+/// - `x_mode` (`<c:xMode val="…"/>`) — coordinate interpretation for x.
+///   Default `factor` (relative to the chart area).
+/// - `y_mode` (`<c:yMode val="…"/>`) — coordinate interpretation for y.
+/// - `w_mode` (`<c:wMode val="…"/>`) — width interpretation.
+/// - `h_mode` (`<c:hMode val="…"/>`) — height interpretation.
+/// - `x` (`<c:x val="…"/>`) — left position. Stored as `String?` to preserve
+///   the source token (avoids float-format drift).
+/// - `y` (`<c:y val="…"/>`) — top position.
+/// - `w` (`<c:w val="…"/>`) — width.
+/// - `h` (`<c:h val="…"/>`) — height.
 pub(all) struct ManualLayout {
-  /// `<c:layoutTarget val="…"/>` — whether the rect targets the
-  /// inner (plot) or outer (chart area) box. Default `outer`.
   layout_target : LayoutTarget?
-  /// `<c:xMode val="…"/>` — coordinate interpretation for x.
-  /// Default `factor` (relative to the chart area).
   x_mode : LayoutMode?
-  /// `<c:yMode val="…"/>` — coordinate interpretation for y.
   y_mode : LayoutMode?
-  /// `<c:wMode val="…"/>` — width interpretation.
   w_mode : LayoutMode?
-  /// `<c:hMode val="…"/>` — height interpretation.
   h_mode : LayoutMode?
-  /// `<c:x val="…"/>` — left position. Stored as `String?` to
-  /// preserve the source token (avoids float-format drift).
   x : String?
-  /// `<c:y val="…"/>` — top position.
   y : String?
-  /// `<c:w val="…"/>` — width.
   w : String?
-  /// `<c:h val="…"/>` — height.
   h : String?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -79,11 +79,13 @@ pub impl Show for ManualLayout with fn output(self, logger) {
 
 ///|
 /// `<c:layoutTarget val="…"/>` (ST_LayoutTarget).
+///
+/// - `LayoutInner` (`val="inner"`) — coordinates are relative to the plot
+///   area.
+/// - `LayoutOuter` (`val="outer"`) — coordinates are relative to the chart
+///   area (default).
 pub(all) enum LayoutTarget {
-  /// `val="inner"` — coordinates are relative to the plot area.
   LayoutInner
-  /// `val="outer"` — coordinates are relative to the chart area
-  /// (default).
   LayoutOuter
 } derive(Eq, Debug)
 
@@ -118,11 +120,13 @@ pub fn LayoutTarget::to_xml(self : LayoutTarget) -> String {
 ///|
 /// `<c:xMode val="…"/>` / `<c:yMode val="…"/>` / `<c:wMode val="…"/>` /
 /// `<c:hMode val="…"/>` (ST_LayoutMode).
+///
+/// - `LayoutEdge` (`val="edge"`) — the coordinate names an absolute edge
+///   position.
+/// - `LayoutFactor` (`val="factor"`) — the coordinate is a fraction of the
+///   chart-area dimension (default).
 pub(all) enum LayoutMode {
-  /// `val="edge"` — the coordinate names an absolute edge position.
   LayoutEdge
-  /// `val="factor"` — the coordinate is a fraction of the chart-area
-  /// dimension (default).
   LayoutFactor
 } derive(Eq, Debug)
 

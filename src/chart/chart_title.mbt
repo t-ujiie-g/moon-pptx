@@ -25,23 +25,22 @@
 ///|
 /// Body of a `<c:title>` element. Used by both `ChartBody.title`
 /// (chart-level title) and `AxisCore.title` (per-axis title).
+///
+/// - `tx` — `<c:tx>` (CT_Tx) — title text. Either a `<c:rich>` rich-text body
+///   or a `<c:strRef>` reference to a cell. Captured verbatim until typed.
+/// - `layout` — `<c:layout>` (CT_Layout) — positioning. Captured.
+/// - `overlay` (`<c:overlay val="…"/>`) — when `true`, the title overlays the
+///   plot area instead of reserving space outside it.
+/// - `sp_pr` — `<c:spPr>` (CT_ShapeProperties) — title-box fill / stroke /
+///   effect. Captured.
+/// - `tx_pr` — `<c:txPr>` (CT_TextBody) — default text run styling for the
+///   title. Captured.
 pub(all) struct ChartTitle {
-  /// `<c:tx>` (CT_Tx) — title text. Either a `<c:rich>` rich-text
-  /// body or a `<c:strRef>` reference to a cell. Captured verbatim
-  /// until typed.
   tx : @xml.XmlElement?
-  /// `<c:layout>` (CT_Layout) — positioning. Captured.
   layout : Layout?
-  /// `<c:overlay val="…"/>` — when `true`, the title overlays the
-  /// plot area instead of reserving space outside it.
   overlay : Bool?
-  /// `<c:spPr>` (CT_ShapeProperties) — title-box fill / stroke /
-  /// effect. Captured.
   sp_pr : @xml.XmlElement?
-  /// `<c:txPr>` (CT_TextBody) — default text run styling for the
-  /// title. Captured.
   tx_pr : @xml.XmlElement?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

@@ -56,20 +56,23 @@ pub impl Show for XmlEvent with fn output(self, logger) {
 
 ///|
 /// Streaming XML reader.
+///
+/// - `chars` — Decoded code points, not a `StringView`: the lexer indexes by
+///   *code point* (`peek_at`, `starts_with(pos, …)`), and
+///   `String`/`StringView` indexing yields UTF-16 code units, which would
+///   split astral-plane name characters.
+/// - `ns_stack` — One Map per open element. `ns_stack[0]` holds bindings
+///   declared on the root element. Lookups walk from top to bottom
+///   (most-recent wins).
+/// - `element_stack` — Element name stack for matching end tags and emitting
+///   EndElement after a self-closing start.
+/// - `pending` — Queued events from a previous step (e.g. EndElement after a
+///   self-close, or both StartElement and EndElement of an empty self-close).
 pub struct XmlReader {
-  // Decoded code points, not a `StringView`: the lexer indexes by *code point*
-  // (`peek_at`, `starts_with(pos, …)`), and `String`/`StringView` indexing
-  // yields UTF-16 code units, which would split astral-plane name characters.
   chars : Array[Char]
   mut pos : Int
-  // One Map per open element. `ns_stack[0]` holds bindings declared on the
-  // root element. Lookups walk from top to bottom (most-recent wins).
   ns_stack : Array[Map[String, String]]
-  // Element name stack for matching end tags and emitting EndElement after
-  // a self-closing start.
   element_stack : Array[QName]
-  // Queued events from a previous step (e.g. EndElement after a self-close,
-  // or both StartElement and EndElement of an empty self-close).
   pending : Array[XmlEvent]
 }
 

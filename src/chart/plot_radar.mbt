@@ -24,12 +24,14 @@ pub impl Show for RadarChartBody with fn output(self, logger) {
 
 ///|
 /// `<c:radarStyle val="…"/>` (CT_RadarStyle). Three-value enum.
+///
+/// - `Standard` (`val="standard"`) — unfilled lines connecting category
+///   points.
+/// - `Marker` (`val="marker"`) — same as standard plus markers at points.
+/// - `Filled` (`val="filled"`) — filled-area radar.
 pub(all) enum RadarStyle {
-  /// `val="standard"` — unfilled lines connecting category points.
   Standard
-  /// `val="marker"` — same as standard plus markers at points.
   Marker
-  /// `val="filled"` — filled-area radar.
   Filled
 } derive(Eq, Debug)
 

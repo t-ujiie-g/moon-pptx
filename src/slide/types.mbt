@@ -31,15 +31,16 @@ pub(all) struct Size {
 /// (default `false`). Build them with `Transform::new` (the optional
 /// args default to the unrotated, un-flipped case) or layer them on with
 /// `Transform::with_rotation` / `with_flip`.
+///
+/// - `rotation` (`rot`) — clockwise rotation about the shape centre. `None`
+///   emits no `rot` attribute (PowerPoint treats that as `0`).
+/// - `flip_h` (`flipH`) — mirror horizontally.
+/// - `flip_v` (`flipV`) — mirror vertically.
 pub(all) struct Transform {
   offset : Point
   extent : Size
-  /// `rot` — clockwise rotation about the shape centre. `None` emits no
-  /// `rot` attribute (PowerPoint treats that as `0`).
   rotation : @units.Angle?
-  /// `flipH` — mirror horizontally.
   flip_h : Bool
-  /// `flipV` — mirror vertically.
   flip_v : Bool
 } derive(Eq, Debug)
 
@@ -99,18 +100,19 @@ pub(all) struct Placeholder {
 /// `<p:contentPart>` extension shapes). Per ADR-004 the variant
 /// carries the full captured element so unknown shapes survive a
 /// read → write round-trip verbatim.
+///
+/// - `GraphicFrame` — `<p:graphicFrame>` hosting a table / chart / chartEx /
+///   OLE payload. The `content` field discriminates among them; see
+///   `GraphicFrameContent`.
+/// - `Unknown` — The full XML subtree of an unmodelled shape kind. Typically
+///   `<p:contentPart>` extension shapes; new shape kinds start here and
+///   graduate to a typed variant when added.
 pub(all) enum Shape {
   AutoShape(AutoShape)
   Picture(Picture)
   Connector(Connector)
   Group(GroupShape)
-  /// `<p:graphicFrame>` hosting a table / chart / chartEx / OLE
-  /// payload. The `content` field discriminates among them; see
-  /// `GraphicFrameContent`.
   GraphicFrame(GraphicFrame)
-  /// The full XML subtree of an unmodelled shape kind. Typically
-  /// `<p:contentPart>` extension shapes; new shape kinds start here
-  /// and graduate to a typed variant when added.
   Unknown(@xml.XmlElement)
 } derive(Eq, Debug)
 
@@ -122,72 +124,64 @@ pub(all) enum Shape {
 /// `<a:prstGeom>` (e.g. when the shape inherits geometry from a layout
 /// placeholder); we don't synthesise a default — `None` means "the part
 /// did not specify".
+///
+/// - `fill` — `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` /
+///   `<a:blipFill>` / `<a:noFill>` parsed off `<p:spPr>`. `None` means
+///   "inherit from the placeholder / theme defaults" — which, for
+///   non-placeholder shapes, renders as a fully transparent shape in
+///   PowerPoint / LibreOffice. Builders therefore default to
+///   `Some(SolidFill(…))`.
+/// - `stroke` — `<a:ln>` outline parsed off `<p:spPr>`. `None` means "inherit
+///   from the placeholder / theme defaults".
+/// - `effects` — `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
+/// - `hyperlink` (`<p:cNvPr><a:hlinkClick>`) — a hyperlink / click action on
+///   the whole shape. Build-only: set by `with_hyperlink` /
+///   `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
+///   `None` for a parsed shape (its `<a:hlinkClick>` round-trips via the
+///   captured `<p:cNvPr>` in `extension`).
 pub(all) struct AutoShape {
   id : Int
   name : String
   placeholder : Placeholder?
   transform : Transform?
   geometry : Geometry?
-  /// `<a:solidFill>` / `<a:gradFill>` / `<a:pattFill>` / `<a:blipFill>`
-  /// / `<a:noFill>` parsed off `<p:spPr>`. `None` means "inherit from
-  /// the placeholder / theme defaults" — which, for non-placeholder
-  /// shapes, renders as a fully transparent shape in PowerPoint /
-  /// LibreOffice. Builders therefore default to `Some(SolidFill(…))`.
   fill : @oxml.Fill?
-  /// `<a:ln>` outline parsed off `<p:spPr>`. `None` means "inherit
-  /// from the placeholder / theme defaults".
   stroke : @oxml.Stroke?
-  /// `<a:effectLst>` parsed off `<p:spPr>` — shadow / glow / etc.
   effects : @oxml.EffectList?
   text_body : TextBody?
-  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
-  /// shape. Build-only: set by `with_hyperlink` /
-  /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
-  /// `None` for a parsed shape (its `<a:hlinkClick>` round-trips via the
-  /// captured `<p:cNvPr>` in `extension`).
   hyperlink : ShapeHyperlink?
-  /// Lossless preservation (ADR-004): unmodelled `<p:sp>` siblings
-  /// (`<p:style>`, `<p:extLst>`, foreign-namespace extensions, …)
-  /// captured verbatim for round-trip writers.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
 /// A parsed slide.
+///
+/// - `name` — `name` from `<p:cSld name="…">`. Empty if the attribute is
+///   absent (which is the common case — slides are usually unnamed).
+/// - `background` (`<p:cSld><p:bg>`) — the slide background. `None` means the
+///   slide inherits its background from the layout / master (the common
+///   case). Lifted out of `extension` into a typed field; see
+///   `background.mbt`.
+/// - `shapes` — Top-level shapes inside `<p:spTree>` in source order. The
+///   root group's own metadata (`<p:nvGrpSpPr>` / `<p:grpSpPr>`) is captured
+///   into `extension` for round-trip preservation.
+/// - `clr_map_override` — Per ECMA-376, slides may carry a `<p:clrMapOvr>`
+///   exactly like slide layouts do. Reuses the layout's enum so the
+///   inheritance resolver works uniformly.
+/// - `transition` (`<p:transition>`) — the slide's entrance transition.
+///   `None` means the slide has no transition effect (the common case).
+///   Lifted out of `extension` into a typed field; see `transition.mbt`.
+/// - `timing` (`<p:timing>`) — the slide's animation timeline. `None` means
+///   the slide has no animations (the common case). **Build-only**: set by
+///   `with_animations` and emitted by the writer; on *parse* an existing
+///   `<p:timing>` round-trips through `extension` (ADR-004) and this stays
+///   `None`. See `animation.mbt` / `animation_writer.mbt`.
 pub(all) struct Slide {
-  /// `name` from `<p:cSld name="…">`. Empty if the attribute is absent
-  /// (which is the common case — slides are usually unnamed).
   name : String
-  /// `<p:cSld><p:bg>` — the slide background. `None` means
-  /// the slide inherits its background from the layout / master (the
-  /// common case). Lifted out of `extension` into a typed field; see
-  /// `background.mbt`.
   background : Background?
-  /// Top-level shapes inside `<p:spTree>` in source order. The root
-  /// group's own metadata (`<p:nvGrpSpPr>` / `<p:grpSpPr>`) is captured
-  /// into `extension` for round-trip preservation.
   shapes : Array[Shape]
-  /// Per ECMA-376, slides may carry a `<p:clrMapOvr>` exactly like slide
-  /// layouts do. Reuses the layout's enum so the inheritance resolver
-  /// works uniformly.
   clr_map_override : @slide_master.ClrMapOverride
-  /// `<p:transition>` — the slide's entrance transition. `None`
-  /// means the slide has no transition effect (the common case). Lifted out
-  /// of `extension` into a typed field; see `transition.mbt`.
   transition : Transition?
-  /// `<p:timing>` — the slide's animation timeline. `None` means
-  /// the slide has no animations (the common case). **Build-only**: set by
-  /// `with_animations` and emitted by the writer; on *parse* an existing
-  /// `<p:timing>` round-trips through `extension` (ADR-004) and this stays
-  /// `None`. See `animation.mbt` / `animation_writer.mbt`.
   timing : Timeline?
-  /// Lossless preservation (ADR-004): unmodelled `<p:sld>` children
-  /// (`<p:timing>`, `<p:custDataLst>`, `<p:extLst>`),
-  /// unmodelled `<p:cSld>` children (`<p:controls>`, …; `<p:bg>` is now
-  /// the typed `background` field), and unmodelled
-  /// `<p:spTree>` siblings (root group metadata, foreign-namespace
-  /// extensions). Source order is preserved within the array; cross-
-  /// section ordering is *not* — writers re-emit each captured
-  /// element under its original parent based on the element's name.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

@@ -30,11 +30,12 @@
 /// value (matching ADR-003 throughout the codebase). The arrays are
 /// not deep-cloned on each call — callers shouldn't mutate the
 /// arrays they pass in.
+///
+/// - `categories` — Category labels, in display order.
+/// - `series` — Each series carries its own label and a parallel array of
+///   numeric values (one entry per category).
 pub(all) struct ChartData {
-  /// Category labels, in display order.
   categories : Array[String]
-  /// Each series carries its own label and a parallel array of
-  /// numeric values (one entry per category).
   series : Array[ChartSeries]
 } derive(Eq, Debug)
 
@@ -50,11 +51,12 @@ pub impl Show for ChartData with fn output(self, logger) {
 ///|
 /// One series in a `ChartData` value: a display label plus a value
 /// per category.
+///
+/// - `label` — Display label — used as the series legend entry.
+/// - `values` — Numeric values in category order. Shorter arrays are padded
+///   with zeros at emit time; longer arrays are truncated.
 pub(all) struct ChartSeries {
-  /// Display label — used as the series legend entry.
   label : String
-  /// Numeric values in category order. Shorter arrays are padded
-  /// with zeros at emit time; longer arrays are truncated.
   values : Array[Double]
 } derive(Eq, Debug)
 
@@ -782,10 +784,11 @@ pub fn Chart::of_stock(data : ChartData, kind? : StockKind = HLC) -> Chart {
 /// Stock-chart schema variant. The OOXML `<c:stockChart>` element
 /// admits exactly three (high-low-close) or four
 /// (open-high-low-close) series.
+///
+/// - `HLC` — High, Low, Close — three series in that order.
+/// - `OHLC` — Open, High, Low, Close — four series in that order.
 pub(all) enum StockKind {
-  /// High, Low, Close — three series in that order.
   HLC
-  /// Open, High, Low, Close — four series in that order.
   OHLC
 } derive(Eq, Debug)
 

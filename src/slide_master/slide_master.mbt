@@ -27,13 +27,14 @@ pub(all) struct SlideLayoutRef {
 ///
 /// `color_mapping` is required by the spec and always present after a
 /// successful parse. `layout_refs` lists the layouts in source order.
+///
+/// - `extension` — unmodelled `<p:sldMaster>` children (`<p:cSld>`,
+///   `<p:txStyles>`, `<p:hf>`, `<p:transition>`, `<p:timing>`, `<p:extLst>`,
+///   foreign-namespace siblings). Once those subdomains gain typed parsers
+///   their entries will graduate off this field.
 pub(all) struct SlideMaster {
   color_mapping : ColorMapping
   layout_refs : Array[SlideLayoutRef]
-  /// Lossless preservation (ADR-004): unmodelled `<p:sldMaster>` children
-  /// (`<p:cSld>`, `<p:txStyles>`, `<p:hf>`, `<p:transition>`, `<p:timing>`,
-  /// `<p:extLst>`, foreign-namespace siblings). Once those subdomains
-  /// gain typed parsers their entries will graduate off this field.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

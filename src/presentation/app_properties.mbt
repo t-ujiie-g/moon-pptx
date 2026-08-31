@@ -17,15 +17,15 @@ let app_part_name : String = "/docProps/app.xml"
 /// is `String?`: on read, `None` means the element is absent; on
 /// write (`set_app_properties_mut`), `None` means "leave whatever the
 /// part currently has".
+///
+/// - `application` (`<Application>`) — the producing application's name.
+/// - `app_version` (`<AppVersion>`) — Office expects the `XX.YYYY` shape
+///   (e.g. `"16.0000"`).
+/// Direct attribute mappings: `company`, `manager`.
 pub(all) struct AppProperties {
-  /// `<Company>`.
   company : String?
-  /// `<Manager>`.
   manager : String?
-  /// `<Application>` — the producing application's name.
   application : String?
-  /// `<AppVersion>` — Office expects the `XX.YYYY` shape (e.g.
-  /// `"16.0000"`).
   app_version : String?
 } derive(Eq, Debug)
 

@@ -31,14 +31,15 @@ pub impl Show for AreaChartBody with fn output(self, logger) {
 ///|
 /// Body of `<c:area3DChart>` (CT_Area3DChart). 3-D area charts
 /// add a series-axis (third `axId`) plus an optional `gapDepth`.
+///
+/// - `gap_depth` (`<c:gapDepth val="…"/>`) — depth of the gap between data
+///   series along the depth axis as a percentage of bar width.
 pub(all) struct Area3DChartBody {
   grouping : Grouping?
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
   d_lbls : DLbls?
   drop_lines : @xml.XmlElement?
-  /// `<c:gapDepth val="…"/>` — depth of the gap between data
-  /// series along the depth axis as a percentage of bar width.
   gap_depth : Int?
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]

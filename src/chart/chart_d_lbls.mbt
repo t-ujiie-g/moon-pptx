@@ -38,38 +38,40 @@
 /// Data-labels styling (`<c:dLbls>`, CT_DLbls) attached to a
 /// chart family. Carries the default styling plus an array of
 /// per-data-point overrides.
+///
+/// - `d_lbl` — `<c:dLbl>` per-data-point overrides. Each entry targets a
+///   single point by `idx`.
+/// - `num_fmt` — `<c:numFmt>` (CT_NumFmt) — number-format string +
+///   sourceLinked. Reuses the axis-side `NumFmt` since the schema is
+///   identical.
+/// - `sp_pr` — `<c:spPr>` (CT_ShapeProperties). Captured.
+/// - `tx_pr` — `<c:txPr>` (CT_TextBody). Captured.
+/// - `d_lbl_pos` (`<c:dLblPos val="…"/>`) — label placement relative to the
+///   data point.
+/// - `show_legend_key` (`<c:showLegendKey val="…"/>`) — show colour swatch
+///   next to label.
+/// - `show_val` (`<c:showVal val="…"/>`) — show the numeric value.
+/// - `show_cat_name` (`<c:showCatName val="…"/>`) — show the category name.
+/// - `show_ser_name` (`<c:showSerName val="…"/>`) — show the series name.
+/// - `show_percent` (`<c:showPercent val="…"/>`) — show the percentage (pie
+///   only).
+/// - `show_bubble_size` (`<c:showBubbleSize val="…"/>`) — show the bubble
+///   size value (bubble only).
+/// - `separator` — `<c:separator>` (text content) — string used to separate
+///   concatenated label parts (e.g. "Value: 42 (50%)").
 pub(all) struct DLbls {
-  /// `<c:dLbl>` per-data-point overrides. Each entry targets a
-  /// single point by `idx`.
   d_lbl : Array[DLbl]
-  /// `<c:numFmt>` (CT_NumFmt) — number-format string + sourceLinked.
-  /// Reuses the axis-side `NumFmt` since the schema is identical.
   num_fmt : NumFmt?
-  /// `<c:spPr>` (CT_ShapeProperties). Captured.
   sp_pr : @xml.XmlElement?
-  /// `<c:txPr>` (CT_TextBody). Captured.
   tx_pr : @xml.XmlElement?
-  /// `<c:dLblPos val="…"/>` — label placement relative to the data
-  /// point.
   d_lbl_pos : DLblPos?
-  /// `<c:showLegendKey val="…"/>` — show colour swatch next to label.
   show_legend_key : Bool?
-  /// `<c:showVal val="…"/>` — show the numeric value.
   show_val : Bool?
-  /// `<c:showCatName val="…"/>` — show the category name.
   show_cat_name : Bool?
-  /// `<c:showSerName val="…"/>` — show the series name.
   show_ser_name : Bool?
-  /// `<c:showPercent val="…"/>` — show the percentage (pie only).
   show_percent : Bool?
-  /// `<c:showBubbleSize val="…"/>` — show the bubble size value
-  /// (bubble only).
   show_bubble_size : Bool?
-  /// `<c:separator>` (text content) — string used to separate
-  /// concatenated label parts (e.g. "Value: 42 (50%)").
   separator : String?
-  /// `<c:extLst>` plus pie-family-only `<c:showLeaderLines>` /
-  /// `<c:leaderLines>` and any foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -82,24 +84,25 @@ pub impl Show for DLbls with fn output(self, logger) {
 
 ///|
 /// `<c:dLblPos val="…"/>` (ST_DLblPos).
+///
+/// - `DLblBestFit` (`val="bestFit"`) — let the renderer decide.
+/// - `DLblBottom` (`val="b"`) — below the data point.
+/// - `DLblCenter` (`val="ctr"`) — centred on the data point.
+/// - `DLblInBase` (`val="inBase"`) — inside the base of the bar.
+/// - `DLblInEnd` (`val="inEnd"`) — inside the end of the bar / wedge.
+/// - `DLblLeft` (`val="l"`) — to the left.
+/// - `DLblOutEnd` (`val="outEnd"`) — outside the end of the bar / wedge.
+/// - `DLblRight` (`val="r"`) — to the right.
+/// - `DLblTop` (`val="t"`) — above the data point.
 pub(all) enum DLblPos {
-  /// `val="bestFit"` — let the renderer decide.
   DLblBestFit
-  /// `val="b"` — below the data point.
   DLblBottom
-  /// `val="ctr"` — centred on the data point.
   DLblCenter
-  /// `val="inBase"` — inside the base of the bar.
   DLblInBase
-  /// `val="inEnd"` — inside the end of the bar / wedge.
   DLblInEnd
-  /// `val="l"` — to the left.
   DLblLeft
-  /// `val="outEnd"` — outside the end of the bar / wedge.
   DLblOutEnd
-  /// `val="r"` — to the right.
   DLblRight
-  /// `val="t"` — above the data point.
   DLblTop
 } derive(Eq, Debug)
 

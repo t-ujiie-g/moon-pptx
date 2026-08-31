@@ -9,14 +9,16 @@
 ///|
 /// Body of `<c:doughnutChart>` (CT_DoughnutChart). Like pie, but
 /// with an inner radius (`holeSize`, 1–90 %).
+///
+/// - `first_slice_ang` (`<c:firstSliceAng val="…"/>`) — integer degrees
+///   0..360.
+/// - `hole_size` (`<c:holeSize val="…"/>`) — integer percentage 10..90 in
+///   practice (schema says 1..90).
 pub(all) struct DoughnutChartBody {
   vary_colors : Bool?
   series : Array[ChartSeriesCore]
   d_lbls : DLbls?
-  /// `<c:firstSliceAng val="…"/>` — integer degrees 0..360.
   first_slice_ang : Int?
-  /// `<c:holeSize val="…"/>` — integer percentage 10..90 in
-  /// practice (schema says 1..90).
   hole_size : Int?
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

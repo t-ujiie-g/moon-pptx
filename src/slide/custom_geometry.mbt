@@ -49,10 +49,11 @@
 /// references a `<a:gd name="…"/>` formula declared in `gdLst` or
 /// `avLst`; resolving the reference requires evaluating the OOXML
 /// guide-formula DSL, which we defer to consumers (or a later phase).
+///
+/// - `Literal` — A literal EMU value (`ST_Coordinate`).
+/// - `GuideRef` — A reference to a named guide formula (`ST_GeomGuideName`).
 pub(all) enum AdjCoordinate {
-  /// A literal EMU value (`ST_Coordinate`).
   Literal(@units.Emu)
-  /// A reference to a named guide formula (`ST_GeomGuideName`).
   GuideRef(String)
 } derive(Eq, Debug)
 
@@ -80,21 +81,23 @@ pub(all) struct PathPoint {
 /// `ArcTo`'s parameter order matches the XML attributes:
 /// `wR` (x-radius), `hR` (y-radius), `stAng` (start angle), `swAng`
 /// (sweep angle, signed — positive sweeps clockwise in DrawingML).
+///
+/// - `MoveTo` (`<a:moveTo>`) — pen-up move to the listed point.
+///   Conventionally the first command of each `<a:path>`.
+/// - `LnTo` (`<a:lnTo>`) — straight line to the listed point.
+/// - `CubicBezTo` (`<a:cubicBezTo>`) — cubic Bézier with two control points
+///   and an end point, in that source order.
+/// - `QuadBezTo` (`<a:quadBezTo>`) — quadratic Bézier with one control point
+///   and an end point.
+/// - `ArcTo` (`<a:arcTo>`) — elliptical arc. `(wR, hR, stAng, swAng)`.
+/// - `Close` (`<a:close/>`) — close the current subpath back to the last
+///   `MoveTo`.
 pub(all) enum PathCommand {
-  /// `<a:moveTo>` — pen-up move to the listed point. Conventionally the
-  /// first command of each `<a:path>`.
   MoveTo(PathPoint)
-  /// `<a:lnTo>` — straight line to the listed point.
   LnTo(PathPoint)
-  /// `<a:cubicBezTo>` — cubic Bézier with two control points and an end
-  /// point, in that source order.
   CubicBezTo(PathPoint, PathPoint, PathPoint)
-  /// `<a:quadBezTo>` — quadratic Bézier with one control point and an
-  /// end point.
   QuadBezTo(PathPoint, PathPoint)
-  /// `<a:arcTo>` — elliptical arc. `(wR, hR, stAng, swAng)`.
   ArcTo(AdjCoordinate, AdjCoordinate, AdjAngle, AdjAngle)
-  /// `<a:close/>` — close the current subpath back to the last `MoveTo`.
   Close
 } derive(Eq, Debug)
 
@@ -103,19 +106,20 @@ pub(all) enum PathCommand {
 /// case — fill with the shape's fill style. The `lighten*` / `darken*`
 /// variants tint the fill, used by some preset shapes for highlights /
 /// shadows in stylised geometry.
+///
+/// - `PathFillNone` (`none`) — do not fill this subpath. Used when a
+///   `<a:path>` is stroke-only.
+/// - `PathFillNorm` (`norm`) — fill with the shape's `<a:solidFill>` / etc.
+/// - `PathFillLighten` — `lighten`
+/// - `PathFillLightenLess` — `lightenLess`
+/// - `PathFillDarken` — `darken`
+/// - `PathFillDarkenLess` — `darkenLess`
 pub(all) enum PathFillMode {
-  /// `none` — do not fill this subpath. Used when a `<a:path>` is
-  /// stroke-only.
   PathFillNone
-  /// `norm` — fill with the shape's `<a:solidFill>` / etc.
   PathFillNorm
-  /// `lighten`
   PathFillLighten
-  /// `lightenLess`
   PathFillLightenLess
-  /// `darken`
   PathFillDarken
-  /// `darkenLess`
   PathFillDarkenLess
 } derive(Eq, Debug)
 
@@ -156,21 +160,20 @@ pub fn PathFillMode::to_xml(self : PathFillMode) -> String {
 /// which effectively makes the path collapse to a point; we surface
 /// that as an `@units.Emu(0L)` rather than `Option` since the spec
 /// itself names a default.
+///
+/// - `w` — `w` attribute (default `0`).
+/// - `h` — `h` attribute (default `0`).
+/// - `fill` — `fill` attribute (default `norm`).
+/// - `stroke` — `stroke` attribute (default `true`).
+/// - `extrusion_ok` — `extrusionOk` attribute (default `true`).
+/// - `commands` — Draw commands in source order.
 pub(all) struct Path {
-  /// `w` attribute (default `0`).
   w : @units.Emu
-  /// `h` attribute (default `0`).
   h : @units.Emu
-  /// `fill` attribute (default `norm`).
   fill : PathFillMode
-  /// `stroke` attribute (default `true`).
   stroke : Bool
-  /// `extrusionOk` attribute (default `true`).
   extrusion_ok : Bool
-  /// Draw commands in source order.
   commands : Array[PathCommand]
-  /// Lossless preservation (ADR-004): unmodelled `<a:path>` children
-  /// — none defined by the spec today, but kept for forward-compat.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -190,12 +193,13 @@ pub(all) struct GeomRect {
 /// `<a:cxn>` — one connection site on a custom shape. Connectors that
 /// bind to this shape use the `idx` (the connection site's index in
 /// source order inside `<a:cxnLst>`) to refer back to this site.
+///
+/// - `ang` — `ang` attribute — the surface-normal angle at the site.
+/// - `pos` — `<a:pos x="…" y="…"/>` child — site position in path
+///   coordinates.
 pub(all) struct ConnectionSite {
-  /// `ang` attribute — the surface-normal angle at the site.
   ang : AdjAngle
-  /// `<a:pos x="…" y="…"/>` child — site position in path coordinates.
   pos : PathPoint
-  /// Lossless preservation (ADR-004): unmodelled children of `<a:cxn>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -209,25 +213,24 @@ pub(all) struct ConnectionSite {
 /// the same in both lists — but the two-list split matches how Office
 /// classifies them, which downstream consumers (e.g. shape editors)
 /// rely on.  Both reuse `ShapeAdjustValue` (`{ name, fmla }`).
+///
+/// - `adjust_values` (`<a:avLst>`) — adjustable guides, user-tunable per
+///   shape instance.
+/// - `guides` (`<a:gdLst>`) — derived guides, formulas referencing `avLst`
+///   and reserved names (`w`, `h`, `l`, `t`, `r`, `b`, …).
+/// - `connection_sites` (`<a:cxnLst>`) — connection sites, ordered (the index
+///   is the join key from `<a:stCxn idx="…"/>` / `<a:endCxn idx="…"/>` on
+///   connectors).
+/// - `rect` (`<a:rect>`) — text-fit rectangle. Optional; absent means
+///   PowerPoint inscribes the rect at the path's bounding box.
+/// - `paths` (`<a:pathLst>`) — one or more paths. Required by the spec; we
+///   keep it as `Array[Path]` so the typical single-path case carries no
+///   allocation overhead beyond the array.
 pub(all) struct CustomGeometry {
-  /// `<a:avLst>` — adjustable guides, user-tunable per shape instance.
   adjust_values : Array[ShapeAdjustValue]
-  /// `<a:gdLst>` — derived guides, formulas referencing `avLst` and
-  /// reserved names (`w`, `h`, `l`, `t`, `r`, `b`, …).
   guides : Array[ShapeAdjustValue]
-  /// `<a:cxnLst>` — connection sites, ordered (the index is the join
-  /// key from `<a:stCxn idx="…"/>` / `<a:endCxn idx="…"/>` on
-  /// connectors).
   connection_sites : Array[ConnectionSite]
-  /// `<a:rect>` — text-fit rectangle. Optional; absent means PowerPoint
-  /// inscribes the rect at the path's bounding box.
   rect : GeomRect?
-  /// `<a:pathLst>` — one or more paths.  Required by the spec; we keep
-  /// it as `Array[Path]` so the typical single-path case carries no
-  /// allocation overhead beyond the array.
   paths : Array[Path]
-  /// Lossless preservation (ADR-004): `<a:ahLst>` (adjust handles —
-  /// rare and deeply nested, deferred), `<a:extLst>`, and any
-  /// foreign-namespace children of `<a:custGeom>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

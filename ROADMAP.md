@@ -161,6 +161,7 @@ in CI over generated decks plus the 7-file real-world corpus.
 |---|---|---|
 | H1 | Split `examples/sample-deck/main` into a library package + thin entrypoint | `moon check` warns that main packages will stop generating blackbox tests in a future MoonBit release; the deck's tests live in `main/showcase_test.mbt` |
 | H2 | `XmlReader` over `StringView` instead of `Array[Char]` | Would drop a full code-point copy of every part at parse time. Blocked on wanting code-point (not UTF-16 code-unit) indexing; revisit if V2 shows parse allocation hurting |
+| H3 | Five XML helpers (`skip_subtree`, `next_event`, `collect_subtree_unknown`, `optional_attr`, `require_attr`) are duplicated across six packages | `@oxml` exports public equivalents; each package keeps a copy so the helper raises *its* suberror instead of `XmlReadError`. Deduplicating means either giving up per-subdomain error typing or finding a generic-over-error formulation. Accepted for now — logged so it is not mistaken for an oversight |
 
 ---
 

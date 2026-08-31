@@ -29,23 +29,24 @@
 ///|
 /// Body of `<c:legend>` (CT_Legend) — chart legend positioning
 /// and per-entry overrides.
+///
+/// - `legend_pos` (`<c:legendPos val="…"/>`) — where the legend sits.
+/// - `legend_entries` (`<c:legendEntry>`) — per-entry visibility / formatting
+///   overrides.
+/// - `layout` — `<c:layout>` (CT_Layout). Captured.
+/// - `overlay` (`<c:overlay val="…"/>`) — when `true`, the legend overlays
+///   the plot area instead of reserving space outside it.
+/// - `sp_pr` — `<c:spPr>` (CT_ShapeProperties) — legend-box fill / stroke /
+///   effect. Captured.
+/// - `tx_pr` — `<c:txPr>` (CT_TextBody) — default text styling for legend
+///   entries. Captured.
 pub(all) struct ChartLegend {
-  /// `<c:legendPos val="…"/>` — where the legend sits.
   legend_pos : LegendPos?
-  /// `<c:legendEntry>` — per-entry visibility / formatting overrides.
   legend_entries : Array[LegendEntry]
-  /// `<c:layout>` (CT_Layout). Captured.
   layout : Layout?
-  /// `<c:overlay val="…"/>` — when `true`, the legend overlays the
-  /// plot area instead of reserving space outside it.
   overlay : Bool?
-  /// `<c:spPr>` (CT_ShapeProperties) — legend-box fill / stroke /
-  /// effect. Captured.
   sp_pr : @xml.XmlElement?
-  /// `<c:txPr>` (CT_TextBody) — default text styling for legend
-  /// entries. Captured.
   tx_pr : @xml.XmlElement?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -58,16 +59,17 @@ pub impl Show for ChartLegend with fn output(self, logger) {
 
 ///|
 /// `<c:legendPos val="…"/>` (ST_LegendPos).
+///
+/// - `LegendBottom` (`val="b"`) — bottom.
+/// - `LegendTopRight` (`val="tr"`) — top-right (corner placement).
+/// - `LegendLeft` (`val="l"`) — left.
+/// - `LegendRight` (`val="r"`) — right (default in PowerPoint).
+/// - `LegendTop` (`val="t"`) — top.
 pub(all) enum LegendPos {
-  /// `val="b"` — bottom.
   LegendBottom
-  /// `val="tr"` — top-right (corner placement).
   LegendTopRight
-  /// `val="l"` — left.
   LegendLeft
-  /// `val="r"` — right (default in PowerPoint).
   LegendRight
-  /// `val="t"` — top.
   LegendTop
 } derive(Eq, Debug)
 
@@ -118,16 +120,16 @@ pub fn LegendPos::to_xml(self : LegendPos) -> String {
 ///
 /// Both are stored optional so the source choice round-trips
 /// faithfully (in practice only one is present at a time).
+///
+/// - `idx` (`<c:idx val="…"/>`) — REQUIRED. Identifies which legend slot this
+///   entry targets.
+/// - `delete` (`<c:delete val="…"/>`) — when present and `true`, hide the
+///   entry.
+/// - `tx_pr` — `<c:txPr>` (CT_TextBody) — per-entry text override. Captured.
 pub(all) struct LegendEntry {
-  /// `<c:idx val="…"/>` — REQUIRED. Identifies which legend slot
-  /// this entry targets.
   idx : Int
-  /// `<c:delete val="…"/>` — when present and `true`, hide the
-  /// entry.
   delete : Bool?
-  /// `<c:txPr>` (CT_TextBody) — per-entry text override. Captured.
   tx_pr : @xml.XmlElement?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

@@ -32,22 +32,23 @@
 /// schema offers two choices: hide this point's label via
 /// `delete=true`, or override the full styling — both branches
 /// are stored optional so the writer round-trips whatever is set.
+///
+/// - `idx` (`<c:idx val="…"/>`) — REQUIRED. Identifies which data point.
+/// - `delete` (`<c:delete val="…"/>`) — EG_DLblChoice branch 1.
+/// - `layout` — `<c:layout>` (CT_Layout). Captured.
+/// - `tx` — `<c:tx>` (CT_Tx) — per-point label text override. Captured.
+/// - `num_fmt` — `<c:numFmt>` (CT_NumFmt) — number-format override.
+/// - `sp_pr` — `<c:spPr>` (CT_ShapeProperties). Captured.
+/// - `tx_pr` — `<c:txPr>` (CT_TextBody). Captured.
+/// - `d_lbl_pos` (`<c:dLblPos val="…"/>`) — per-point label placement.
 pub(all) struct DLbl {
-  /// `<c:idx val="…"/>` — REQUIRED. Identifies which data point.
   idx : Int
-  /// `<c:delete val="…"/>` — EG_DLblChoice branch 1.
   delete : Bool?
-  /// `<c:layout>` (CT_Layout). Captured.
   layout : Layout?
-  /// `<c:tx>` (CT_Tx) — per-point label text override. Captured.
   tx : @xml.XmlElement?
-  /// `<c:numFmt>` (CT_NumFmt) — number-format override.
   num_fmt : NumFmt?
-  /// `<c:spPr>` (CT_ShapeProperties). Captured.
   sp_pr : @xml.XmlElement?
-  /// `<c:txPr>` (CT_TextBody). Captured.
   tx_pr : @xml.XmlElement?
-  /// `<c:dLblPos val="…"/>` — per-point label placement.
   d_lbl_pos : DLblPos?
   show_legend_key : Bool?
   show_val : Bool?
@@ -56,7 +57,6 @@ pub(all) struct DLbl {
   show_percent : Bool?
   show_bubble_size : Bool?
   separator : String?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

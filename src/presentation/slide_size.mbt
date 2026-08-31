@@ -14,29 +14,31 @@
 ///|
 /// Common slide-size presets. The spec's `ST_SlideSizeType` has
 /// 17 values; we surface the practical subset plus `Custom`.
+///
+/// - `ScreenFourByThree` — 10" × 7.5" — classic 4:3 aspect ratio.
+///   `Presentation::new()`'s default. ST_SlideSizeType `screen4x3`.
+/// - `ScreenSixteenByNine` — 10" × 5.625" — 16:9 narrow widescreen.
+///   ST_SlideSizeType `screen16x9`.
+/// - `ScreenSixteenByTen` — 10" × 6.25" — 16:10 widescreen. ST_SlideSizeType
+///   `screen16x10`.
+/// - `Widescreen` — 13.333" × 7.5" — modern PowerPoint default since 2013
+///   ("Widescreen" in the Design tab). Stored as ST_SlideSizeType `custom`
+///   because the spec doesn't have a dedicated enum value for this ratio.
+/// - `Letter` — 10" × 7.5" — US Letter landscape. ST_SlideSizeType `letter`.
+/// - `A4` — 11.69" × 8.27" — ISO A4 landscape. ST_SlideSizeType `A4`.
+/// - `ThirtyFiveMm` — 12.5" × 8.33" — 35 mm slide. ST_SlideSizeType `35mm`.
+/// - `Banner` — 8" × 1" — banner. ST_SlideSizeType `banner`.
+/// - `Custom` — Arbitrary EMU dimensions (cx, cy). Stored with
+///   ST_SlideSizeType `custom`.
 pub(all) enum SlideSizeKind {
-  /// 10" × 7.5" — classic 4:3 aspect ratio. `Presentation::new()`'s
-  /// default. ST_SlideSizeType `screen4x3`.
   ScreenFourByThree
-  /// 10" × 5.625" — 16:9 narrow widescreen. ST_SlideSizeType
-  /// `screen16x9`.
   ScreenSixteenByNine
-  /// 10" × 6.25" — 16:10 widescreen. ST_SlideSizeType `screen16x10`.
   ScreenSixteenByTen
-  /// 13.333" × 7.5" — modern PowerPoint default since 2013 ("Widescreen"
-  /// in the Design tab). Stored as ST_SlideSizeType `custom` because
-  /// the spec doesn't have a dedicated enum value for this ratio.
   Widescreen
-  /// 10" × 7.5" — US Letter landscape. ST_SlideSizeType `letter`.
   Letter
-  /// 11.69" × 8.27" — ISO A4 landscape. ST_SlideSizeType `A4`.
   A4
-  /// 12.5" × 8.33" — 35 mm slide. ST_SlideSizeType `35mm`.
   ThirtyFiveMm
-  /// 8" × 1" — banner. ST_SlideSizeType `banner`.
   Banner
-  /// Arbitrary EMU dimensions (cx, cy). Stored with
-  /// ST_SlideSizeType `custom`.
   Custom(@units.Emu, @units.Emu)
 } derive(Eq, Debug)
 

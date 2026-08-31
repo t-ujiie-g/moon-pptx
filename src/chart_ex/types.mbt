@@ -27,15 +27,13 @@
 
 ///|
 /// A parsed extended-chart part (`/ppt/charts/chartExN.xml`).
+///
+/// - `chart_data` (`<cx:chartData>`) — the data dimensions block. Captured
+///   XmlElement; typed dimensions can lift in a later slice.
+/// - `chart` (`<cx:chart>`) — REQUIRED chart definition body.
 pub(all) struct ChartEx {
-  /// `<cx:chartData>` — the data dimensions block. Captured
-  /// XmlElement; typed dimensions can lift in a later slice.
   chart_data : @xml.XmlElement?
-  /// `<cx:chart>` — REQUIRED chart definition body.
   chart : ChartExBody
-  /// chartSpace-level unmodelled children: clrMapOvr / spPr /
-  /// txPr / externalData / extLst / foreign-namespace siblings.
-  /// ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -47,14 +45,15 @@ pub impl Show for ChartEx with fn output(self, logger) {
 
 ///|
 /// `<cx:chart>` body.
+///
+/// - `title` — `<cx:title>` (CT_Title). Optional. Captured XmlElement.
+/// - `plot_area` (`<cx:plotArea>`) — REQUIRED.
+/// - `legend` — `<cx:legend>`. Optional. Captured XmlElement.
+/// - `extension` — `<cx:extLst>` plus any foreign-namespace siblings.
 pub(all) struct ChartExBody {
-  /// `<cx:title>` (CT_Title). Optional. Captured XmlElement.
   title : @xml.XmlElement?
-  /// `<cx:plotArea>` — REQUIRED.
   plot_area : ChartExPlotArea
-  /// `<cx:legend>`. Optional. Captured XmlElement.
   legend : @xml.XmlElement?
-  /// `<cx:extLst>` plus any foreign-namespace siblings.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -67,13 +66,15 @@ pub impl Show for ChartExBody with fn output(self, logger) {
 ///|
 /// `<cx:plotArea>` — contains exactly one plot-area region plus
 /// zero or more axes.
+///
+/// - `plot_area_region` (`<cx:plotAreaRegion>`) — REQUIRED, exactly one per
+///   schema.
+/// - `axes` (`<cx:axis id="…">*`) — zero or more axes. Captured XmlElement
+///   until a later slice types them.
+/// - `extension` — Unmodelled children.
 pub(all) struct ChartExPlotArea {
-  /// `<cx:plotAreaRegion>` — REQUIRED, exactly one per schema.
   plot_area_region : ChartExPlotAreaRegion
-  /// `<cx:axis id="…">*` — zero or more axes. Captured
-  /// XmlElement until a later slice types them.
   axes : Array[@xml.XmlElement]
-  /// Unmodelled children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -86,14 +87,15 @@ pub impl Show for ChartExPlotArea with fn output(self, logger) {
 ///|
 /// `<cx:plotAreaRegion>` — wraps the series and optional plot
 /// surface inside the plot area.
+///
+/// - `plot_surface` (`<cx:plotSurface>`) — optional surface formatting hints.
+///   Captured XmlElement.
+/// - `series` (`<cx:series>+`) — one or more series, each tagged with its
+///   `layoutId` chart kind.
+/// - `extension` — Unmodelled children.
 pub(all) struct ChartExPlotAreaRegion {
-  /// `<cx:plotSurface>` — optional surface formatting hints.
-  /// Captured XmlElement.
   plot_surface : @xml.XmlElement?
-  /// `<cx:series>+` — one or more series, each tagged with its
-  /// `layoutId` chart kind.
   series : Array[ChartExSeries]
-  /// Unmodelled children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -106,22 +108,24 @@ pub impl Show for ChartExPlotAreaRegion with fn output(self, logger) {
 ///|
 /// `<cx:series layoutId="…" formatIdx="…">` — one series in an
 /// extended chart. The `layoutId` discriminates the chart kind.
+///
+/// - `layout_id` (`layoutId`) — chart-kind discriminator. Required by the
+///   schema.
+/// - `format_idx` (`formatIdx`) — series style index in the chart's format
+///   pool. Optional in the schema; we surface as `Int?`.
+/// - `hidden` — `hidden` flag — optional, default false. Surfaced as `Bool?`
+///   to distinguish absent from present-false.
+/// - `owner_idx` (`ownerIdx`) — reference into the owning combo chart series
+///   pool. Optional.
+/// - `body` — The captured `<cx:series>` body, including children like
+///   `<cx:tx>`, `<cx:dataLabels>`, `<cx:dataPt>`, `<cx:dataId>`,
+///   `<cx:layoutPr>`, etc. The full subtree is preserved verbatim; only the
+///   discriminator and the wrapper attributes lift.
 pub(all) struct ChartExSeries {
-  /// `layoutId` — chart-kind discriminator. Required by the schema.
   layout_id : ChartExKind
-  /// `formatIdx` — series style index in the chart's format
-  /// pool. Optional in the schema; we surface as `Int?`.
   format_idx : Int?
-  /// `hidden` flag — optional, default false. Surfaced as `Bool?`
-  /// to distinguish absent from present-false.
   hidden : Bool?
-  /// `ownerIdx` — reference into the owning combo chart series
-  /// pool. Optional.
   owner_idx : Int?
-  /// The captured `<cx:series>` body, including children like
-  /// `<cx:tx>`, `<cx:dataLabels>`, `<cx:dataPt>`, `<cx:dataId>`,
-  /// `<cx:layoutPr>`, etc. The full subtree is preserved verbatim;
-  /// only the discriminator and the wrapper attributes lift.
   body : @xml.XmlElement
 } derive(Eq, Debug)
 
@@ -138,27 +142,28 @@ pub impl Show for ChartExSeries with fn output(self, logger) {
 /// vocabulary; we model every spec'd value, and route anything
 /// unknown into `Other(name)` so future Microsoft extensions
 /// round-trip.
+///
+/// - `BoxWhisker` (`layoutId="boxWhisker"`) — box-and-whisker.
+/// - `ClusteredColumn` (`layoutId="clusteredColumn"`) — used as the secondary
+///   plot in paretoLine combinations.
+/// - `Funnel` — `layoutId="funnel"`
+/// - `ParetoLine` — `layoutId="paretoLine"`
+/// - `RegionMap` — `layoutId="regionMap"`
+/// - `Sunburst` — `layoutId="sunburst"`
+/// - `Treemap` — `layoutId="treemap"`
+/// - `Waterfall` — `layoutId="waterfall"`
+/// - `Histogram` — `layoutId="histogram"`
+/// - `Other` — Unknown / future layout id, kept verbatim for round-trip.
 pub(all) enum ChartExKind {
-  /// `layoutId="boxWhisker"` — box-and-whisker.
   BoxWhisker
-  /// `layoutId="clusteredColumn"` — used as the secondary plot in
-  /// paretoLine combinations.
   ClusteredColumn
-  /// `layoutId="funnel"`
   Funnel
-  /// `layoutId="paretoLine"`
   ParetoLine
-  /// `layoutId="regionMap"`
   RegionMap
-  /// `layoutId="sunburst"`
   Sunburst
-  /// `layoutId="treemap"`
   Treemap
-  /// `layoutId="waterfall"`
   Waterfall
-  /// `layoutId="histogram"`
   Histogram
-  /// Unknown / future layout id, kept verbatim for round-trip.
   Other(String)
 } derive(Eq, Debug)
 

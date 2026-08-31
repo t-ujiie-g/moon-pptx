@@ -96,16 +96,18 @@ pub impl Show for ThemeColor with fn output(self, logger) {
 ///
 /// Modeled after the most common children of OOXML `CT_SchemeColor`. The
 /// transforms are applied in the order they appear in the `transforms` array.
+///
+/// - `Tint` — Lighten toward white. `Percentage(50.0)` blends 50% with white.
+/// - `Shade` — Darken toward black. `Percentage(50.0)` blends 50% with black.
+/// - `SatMod` — Modulate (multiply) the saturation. `Percentage(75.0)` scales
+///   sat to 75%.
+/// - `LumMod` — Modulate (multiply) the luminance.
+/// - `Alpha` — Set the opacity. `Percentage(50.0)` is half-transparent.
 pub(all) enum ColorTransform {
-  /// Lighten toward white. `Percentage(50.0)` blends 50% with white.
   Tint(Percentage)
-  /// Darken toward black. `Percentage(50.0)` blends 50% with black.
   Shade(Percentage)
-  /// Modulate (multiply) the saturation. `Percentage(75.0)` scales sat to 75%.
   SatMod(Percentage)
-  /// Modulate (multiply) the luminance.
   LumMod(Percentage)
-  /// Set the opacity. `Percentage(50.0)` is half-transparent.
   Alpha(Percentage)
 } derive(Eq, Debug)
 

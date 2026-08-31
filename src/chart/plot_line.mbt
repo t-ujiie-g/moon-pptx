@@ -19,31 +19,33 @@
 
 ///|
 /// Typed `<c:lineChart>` body.
+///
+/// - `grouping` (`<c:grouping>`) — REQUIRED. Three-value enum shared with the
+///   area-chart family (CT_Grouping).
+/// - `vary_colors` (`<c:varyColors>`) — optional bool.
+/// - `series` — `<c:ser>` series in source order — captured `<XmlElement>`.
+/// - `d_lbls` (`<c:dLbls>`) — optional. Captured verbatim.
+/// - `drop_lines` — `<c:dropLines>` (CT_ChartLines) — optional. Vertical drop
+///   indicators on the chart. Captured verbatim.
+/// - `hi_low_lines` — `<c:hiLowLines>` (CT_ChartLines) — optional. Captured
+///   verbatim.
+/// - `up_down_bars` — `<c:upDownBars>` (CT_UpDownBars) — optional. Captured
+///   verbatim.
+/// - `marker` (`<c:marker>`) — optional bool. Whether series markers are
+///   rendered.
+/// - `smooth` (`<c:smooth>`) — optional bool. Whether the line is smoothed.
+/// - `ax_ids` — `<c:axId>` references — REQUIRED, exactly two per schema.
 pub(all) struct LineChartBody {
-  /// `<c:grouping>` — REQUIRED. Three-value enum shared with the
-  /// area-chart family (CT_Grouping).
   grouping : Grouping
-  /// `<c:varyColors>` — optional bool.
   vary_colors : Bool?
-  /// `<c:ser>` series in source order — captured `<XmlElement>`.
   series : Array[ChartSeriesCore]
-  /// `<c:dLbls>` — optional. Captured verbatim.
   d_lbls : DLbls?
-  /// `<c:dropLines>` (CT_ChartLines) — optional. Vertical drop
-  /// indicators on the chart. Captured verbatim.
   drop_lines : @xml.XmlElement?
-  /// `<c:hiLowLines>` (CT_ChartLines) — optional. Captured verbatim.
   hi_low_lines : @xml.XmlElement?
-  /// `<c:upDownBars>` (CT_UpDownBars) — optional. Captured verbatim.
   up_down_bars : @xml.XmlElement?
-  /// `<c:marker>` — optional bool. Whether series markers are
-  /// rendered.
   marker : Bool?
-  /// `<c:smooth>` — optional bool. Whether the line is smoothed.
   smooth : Bool?
-  /// `<c:axId>` references — REQUIRED, exactly two per schema.
   ax_ids : Array[Int]
-  /// ADR-004 tail.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -62,12 +64,13 @@ pub impl Show for LineChartBody with fn output(self, logger) {
 /// `CT_Grouping` — shared by `<c:lineChart>`, `<c:areaChart>`, and
 /// `<c:line3DChart>` / `<c:area3DChart>`. Three values, distinct
 /// from the bar family's four-value `BarGrouping`.
+///
+/// - `Standard` — `val="standard"`
+/// - `Stacked` — `val="stacked"`
+/// - `PercentStacked` — `val="percentStacked"`
 pub(all) enum Grouping {
-  /// `val="standard"`
   Standard
-  /// `val="stacked"`
   Stacked
-  /// `val="percentStacked"`
   PercentStacked
 } derive(Eq, Debug)
 

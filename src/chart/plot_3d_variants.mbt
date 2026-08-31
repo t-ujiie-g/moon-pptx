@@ -14,6 +14,9 @@
 
 ///|
 /// Body of `<c:bar3DChart>` (CT_Bar3DChart).
+///
+/// - `shape` (`<c:shape val="…"/>`) — bar shape. Optional per schema.
+/// - `ax_ids` — Three axIds for 3D charts (category / value / series axis).
 pub(all) struct Bar3DChartBody {
   bar_dir : BarDir
   grouping : BarGrouping?
@@ -22,9 +25,7 @@ pub(all) struct Bar3DChartBody {
   d_lbls : DLbls?
   gap_width : Int?
   gap_depth : Int?
-  /// `<c:shape val="…"/>` — bar shape. Optional per schema.
   shape : BarShape?
-  /// Three axIds for 3D charts (category / value / series axis).
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
@@ -76,18 +77,20 @@ pub impl Show for Pie3DChartBody with fn output(self, logger) {
 ///|
 /// `<c:shape val="…"/>` (CT_Shape). Six-value enum used by 3-D bar
 /// charts to choose the bar silhouette.
+///
+/// - `Box` (`val="box"`) — rectangular bars (default).
+/// - `Cone` (`val="cone"`) — full conical bars.
+/// - `ConeToMax` (`val="coneToMax"`) — conical bars tapering to the maximum
+///   height.
+/// - `Cylinder` — `val="cylinder"`
+/// - `Pyramid` — `val="pyramid"`
+/// - `PyramidToMax` — `val="pyramidToMax"`
 pub(all) enum BarShape {
-  /// `val="box"` — rectangular bars (default).
   Box
-  /// `val="cone"` — full conical bars.
   Cone
-  /// `val="coneToMax"` — conical bars tapering to the maximum height.
   ConeToMax
-  /// `val="cylinder"`
   Cylinder
-  /// `val="pyramid"`
   Pyramid
-  /// `val="pyramidToMax"`
   PyramidToMax
 } derive(Eq, Debug)
 

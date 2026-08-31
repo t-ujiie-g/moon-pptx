@@ -29,22 +29,20 @@
 
 ///|
 /// A parsed chart part (`/ppt/charts/chartN.xml`).
+///
+/// - `date1904` (`<c:date1904>`) — workbook epoch flag. `None` when absent.
+/// - `lang` (`<c:lang>`) — natural language identifier (e.g. `en-US`). `None`
+///   when absent.
+/// - `rounded_corners` (`<c:roundedCorners>`) — `None` when absent.
+/// - `style` (`<c:style>`) — preset style index (1..48 in practice). `None`
+///   when absent.
+/// - `chart` (`<c:chart>`) — REQUIRED chart definition body.
 pub(all) struct Chart {
-  /// `<c:date1904>` — workbook epoch flag. `None` when absent.
   date1904 : Bool?
-  /// `<c:lang>` — natural language identifier (e.g. `en-US`).
-  /// `None` when absent.
   lang : String?
-  /// `<c:roundedCorners>` — `None` when absent.
   rounded_corners : Bool?
-  /// `<c:style>` — preset style index (1..48 in practice). `None`
-  /// when absent.
   style : Int?
-  /// `<c:chart>` — REQUIRED chart definition body.
   chart : ChartBody
-  /// chartSpace-level unmodelled children: clrMapOvr / pivotSource /
-  /// protection / spPr / txPr / externalData / printSettings /
-  /// userShapes / extLst plus any foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -65,38 +63,43 @@ pub impl Show for Chart with fn output(self, logger) {
 /// later slices type them. The scalar / enum-valued leaves
 /// (`autoTitleDeleted`, `plotVisOnly`, `dispBlanksAs`,
 /// `showDLblsOverMax`) are typed.
+///
+/// - `title` — `<c:title>` (CT_Title) — typed body. Optional.
+/// - `auto_title_deleted` — `<c:autoTitleDeleted val="…"/>`. Optional Bool.
+/// - `pivot_fmts` — `<c:pivotFmts>` (CT_PivotFmts). Optional. Captured
+///   verbatim.
+/// - `view3d` — `<c:view3D>` (CT_View3D). Optional. Captured verbatim — only
+///   emitted by 3-D chart variants.
+/// - `floor` — `<c:floor>` (CT_Surface). Optional. Captured verbatim (3-D).
+/// - `side_wall` — `<c:sideWall>` (CT_Surface). Optional. Captured verbatim
+///   (3-D).
+/// - `back_wall` — `<c:backWall>` (CT_Surface). Optional. Captured verbatim
+///   (3-D).
+/// - `plot_area` — `<c:plotArea>` (CT_PlotArea). REQUIRED. The structural
+///   skeleton is typed; axis bodies and currently-untyped plot kinds stay as
+///   captured `XmlElement` payloads inside their respective enums.
+/// - `legend` — `<c:legend>` (CT_Legend) — typed body. Optional.
+/// - `plot_vis_only` (`<c:plotVisOnly val="…"/>`) — show only data on visible
+///   cells.
+/// - `disp_blanks_as` (`<c:dispBlanksAs val="…"/>`) — how to render gaps.
+///   Three-value enum: `span` / `gap` / `zero`.
+/// - `show_d_lbls_over_max` (`<c:showDLblsOverMax val="…"/>`) — show data
+///   labels past chart scale max.
+/// - `extension` (`<c:chart>`) — level unmodelled children (`<c:extLst>`,
+///   foreign-namespace).
 pub(all) struct ChartBody {
-  /// `<c:title>` (CT_Title) — typed body. Optional.
   title : ChartTitle?
-  /// `<c:autoTitleDeleted val="…"/>`. Optional Bool.
   auto_title_deleted : Bool?
-  /// `<c:pivotFmts>` (CT_PivotFmts). Optional. Captured verbatim.
   pivot_fmts : @xml.XmlElement?
-  /// `<c:view3D>` (CT_View3D). Optional. Captured verbatim — only
-  /// emitted by 3-D chart variants.
   view3d : @xml.XmlElement?
-  /// `<c:floor>` (CT_Surface). Optional. Captured verbatim (3-D).
   floor : @xml.XmlElement?
-  /// `<c:sideWall>` (CT_Surface). Optional. Captured verbatim (3-D).
   side_wall : @xml.XmlElement?
-  /// `<c:backWall>` (CT_Surface). Optional. Captured verbatim (3-D).
   back_wall : @xml.XmlElement?
-  /// `<c:plotArea>` (CT_PlotArea). REQUIRED. The structural skeleton
-  /// is typed; axis bodies and currently-untyped plot kinds stay as
-  /// captured `XmlElement` payloads inside their respective enums.
   plot_area : PlotArea
-  /// `<c:legend>` (CT_Legend) — typed body. Optional.
   legend : ChartLegend?
-  /// `<c:plotVisOnly val="…"/>` — show only data on visible cells.
   plot_vis_only : Bool?
-  /// `<c:dispBlanksAs val="…"/>` — how to render gaps. Three-value
-  /// enum: `span` / `gap` / `zero`.
   disp_blanks_as : DisplayBlanksAs?
-  /// `<c:showDLblsOverMax val="…"/>` — show data labels past chart
-  /// scale max.
   show_d_lbls_over_max : Bool?
-  /// `<c:chart>`-level unmodelled children (`<c:extLst>`,
-  /// foreign-namespace).
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -109,12 +112,13 @@ pub impl Show for ChartBody with fn output(self, logger) {
 ///|
 /// `<c:dispBlanksAs val="…"/>` (CT_DispBlanksAs). How blank cells in
 /// the source range render on the chart.
+///
+/// - `Span` (`val="span"`) — interpolate across the gap.
+/// - `Gap` (`val="gap"`) — leave the gap visible (default).
+/// - `Zero` (`val="zero"`) — treat blank as zero.
 pub(all) enum DisplayBlanksAs {
-  /// `val="span"` — interpolate across the gap.
   Span
-  /// `val="gap"` — leave the gap visible (default).
   Gap
-  /// `val="zero"` — treat blank as zero.
   Zero
 } derive(Eq, Debug)
 
@@ -172,24 +176,25 @@ pub fn DisplayBlanksAs::to_xml(self : DisplayBlanksAs) -> String {
 /// (where the chart family has been lifted) or the captured
 /// `<XmlElement>` so the content round-trips losslessly. Untyped
 /// variants are migrated to typed bodies incrementally.
+///
+/// - `layout` — `<c:layout>` (CT_Layout) — typed body.
+/// - `plots` — Plot-type children in source order. PowerPoint combination
+///   charts can carry multiple — e.g. a `barChart` overlaid on a `lineChart`
+///   — so this is an array, not an `Option`.
+/// - `axes` — Axes in source order. Charts typically carry two (catAx +
+///   valAx, or two valAx for scatter / bubble), but a deck can encode any
+///   combination.
+/// - `data_table` — `<c:dTable>` (CT_DTable). Captured verbatim — typed
+///   later.
+/// - `sp_pr` — `<c:spPr>` shape-properties for the plot-area background.
+///   Captured verbatim — typed later when the plot-area styling builder
+///   lands.
 pub(all) struct PlotArea {
-  /// `<c:layout>` (CT_Layout) — typed body.
   layout : Layout?
-  /// Plot-type children in source order. PowerPoint combination
-  /// charts can carry multiple — e.g. a `barChart` overlaid on a
-  /// `lineChart` — so this is an array, not an `Option`.
   plots : Array[Plot]
-  /// Axes in source order. Charts typically carry two (catAx +
-  /// valAx, or two valAx for scatter / bubble), but a deck can
-  /// encode any combination.
   axes : Array[Axis]
-  /// `<c:dTable>` (CT_DTable). Captured verbatim — typed later.
   data_table : @xml.XmlElement?
-  /// `<c:spPr>` shape-properties for the plot-area background.
-  /// Captured verbatim — typed later when the plot-area styling
-  /// builder lands.
   sp_pr : @xml.XmlElement?
-  /// Unmodelled children (`<c:extLst>`, foreign-namespace). ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -205,38 +210,39 @@ pub impl Show for PlotArea with fn output(self, logger) {
 /// been typed carry a `<Family>ChartBody` value; the remaining
 /// variants wrap the captured `<XmlElement>` so the body round-trips
 /// losslessly until typed.
+///
+/// - `AreaChart` (`<c:areaChart>`) — typed body.
+/// - `Area3DChart` (`<c:area3DChart>`) — typed body.
+/// - `LineChart` (`<c:lineChart>`) — typed body.
+/// - `Line3DChart` (`<c:line3DChart>`) — typed body.
+/// - `StockChart` (`<c:stockChart>`) — typed body.
+/// - `RadarChart` (`<c:radarChart>`) — typed body.
+/// - `ScatterChart` (`<c:scatterChart>`) — typed body.
+/// - `PieChart` (`<c:pieChart>`) — typed body.
+/// - `Pie3DChart` (`<c:pie3DChart>`) — typed body.
+/// - `DoughnutChart` (`<c:doughnutChart>`) — typed body.
+/// - `BarChart` (`<c:barChart>`) — typed body.
+/// - `Bar3DChart` (`<c:bar3DChart>`) — typed body.
+/// - `OfPieChart` (`<c:ofPieChart>`) — typed body.
+/// - `SurfaceChart` (`<c:surfaceChart>`) — typed body.
+/// - `Surface3DChart` (`<c:surface3DChart>`) — typed body.
+/// - `BubbleChart` (`<c:bubbleChart>`) — typed body.
 pub(all) enum Plot {
-  /// `<c:areaChart>` — typed body.
   AreaChart(AreaChartBody)
-  /// `<c:area3DChart>` — typed body.
   Area3DChart(Area3DChartBody)
-  /// `<c:lineChart>` — typed body.
   LineChart(LineChartBody)
-  /// `<c:line3DChart>` — typed body.
   Line3DChart(Line3DChartBody)
-  /// `<c:stockChart>` — typed body.
   StockChart(StockChartBody)
-  /// `<c:radarChart>` — typed body.
   RadarChart(RadarChartBody)
-  /// `<c:scatterChart>` — typed body.
   ScatterChart(ScatterChartBody)
-  /// `<c:pieChart>` — typed body.
   PieChart(PieChartBody)
-  /// `<c:pie3DChart>` — typed body.
   Pie3DChart(Pie3DChartBody)
-  /// `<c:doughnutChart>` — typed body.
   DoughnutChart(DoughnutChartBody)
-  /// `<c:barChart>` — typed body.
   BarChart(BarChartBody)
-  /// `<c:bar3DChart>` — typed body.
   Bar3DChart(Bar3DChartBody)
-  /// `<c:ofPieChart>` — typed body.
   OfPieChart(OfPieChartBody)
-  /// `<c:surfaceChart>` — typed body.
   SurfaceChart(SurfaceChartBody)
-  /// `<c:surface3DChart>` — typed body.
   Surface3DChart(Surface3DChartBody)
-  /// `<c:bubbleChart>` — typed body.
   BubbleChart(BubbleChartBody)
 } derive(Eq, Debug)
 
@@ -276,14 +282,15 @@ pub fn Plot::local_name(self : Plot) -> String {
 /// a typed `AxisCore` (the shared CT_AxBase body). Per-axis-kind
 /// extras (CatAx's `lblOffset`, ValAx's `crossBetween`, etc.) ride
 /// on `AxisCore.extension` until later slices type them.
+///
+/// - `ValAx` — `<c:valAx>` (CT_ValAx) — value axis.
+/// - `CatAx` — `<c:catAx>` (CT_CatAx) — category axis.
+/// - `DateAx` — `<c:dateAx>` (CT_DateAx) — date axis.
+/// - `SerAx` — `<c:serAx>` (CT_SerAx) — series axis.
 pub(all) enum Axis {
-  /// `<c:valAx>` (CT_ValAx) — value axis.
   ValAx(AxisCore)
-  /// `<c:catAx>` (CT_CatAx) — category axis.
   CatAx(AxisCore)
-  /// `<c:dateAx>` (CT_DateAx) — date axis.
   DateAx(AxisCore)
-  /// `<c:serAx>` (CT_SerAx) — series axis.
   SerAx(AxisCore)
 } derive(Eq, Debug)
 

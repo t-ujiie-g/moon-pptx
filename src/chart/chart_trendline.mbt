@@ -39,36 +39,37 @@
 /// CT_Trendline). Applies to bar / line / area / scatter /
 /// bubble series; pie / doughnut / radar / surface series do
 /// not support trendlines.
+///
+/// - `name` — `<c:name>` text content — display name shown in legend /
+///   labels.
+/// - `sp_pr` — `<c:spPr>` (CT_ShapeProperties) — stroke / fill styling for
+///   the trendline curve. Captured.
+/// - `trendline_type` (`<c:trendlineType val="…"/>`) — REQUIRED.
+/// - `order` (`<c:order val="…"/>`) — polynomial order (only meaningful for
+///   `poly`). Schema default is 2; stored optional so we don't synthesise the
+///   default.
+/// - `period` (`<c:period val="…"/>`) — moving-average period (only
+///   meaningful for `movingAvg`). Schema default is 2.
+/// - `forward` (`<c:forward val="…"/>`) — forecast forward (periods). Stored
+///   as String? to preserve the source token.
+/// - `backward` (`<c:backward val="…"/>`) — forecast backward (periods).
+/// - `intercept` (`<c:intercept val="…"/>`) — explicit Y-intercept.
+/// - `disp_r_sqr` (`<c:dispRSqr val="…"/>`) — show R² on the chart.
+/// - `disp_eq` (`<c:dispEq val="…"/>`) — show the fitted equation.
+/// - `trendline_lbl` — `<c:trendlineLbl>` (CT_TrendlineLbl). Captured until
+///   later typing.
 pub(all) struct Trendline {
-  /// `<c:name>` text content — display name shown in legend / labels.
   name : String?
-  /// `<c:spPr>` (CT_ShapeProperties) — stroke / fill styling for the
-  /// trendline curve. Captured.
   sp_pr : @xml.XmlElement?
-  /// `<c:trendlineType val="…"/>` — REQUIRED.
   trendline_type : TrendlineType
-  /// `<c:order val="…"/>` — polynomial order (only meaningful for
-  /// `poly`). Schema default is 2; stored optional so we don't
-  /// synthesise the default.
   order : Int?
-  /// `<c:period val="…"/>` — moving-average period (only meaningful
-  /// for `movingAvg`). Schema default is 2.
   period : Int?
-  /// `<c:forward val="…"/>` — forecast forward (periods). Stored as
-  /// String? to preserve the source token.
   forward : String?
-  /// `<c:backward val="…"/>` — forecast backward (periods).
   backward : String?
-  /// `<c:intercept val="…"/>` — explicit Y-intercept.
   intercept : String?
-  /// `<c:dispRSqr val="…"/>` — show R² on the chart.
   disp_r_sqr : Bool?
-  /// `<c:dispEq val="…"/>` — show the fitted equation.
   disp_eq : Bool?
-  /// `<c:trendlineLbl>` (CT_TrendlineLbl). Captured until later
-  /// typing.
   trendline_lbl : @xml.XmlElement?
-  /// `<c:extLst>` and foreign-namespace siblings. ADR-004.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -81,18 +82,20 @@ pub impl Show for Trendline with fn output(self, logger) {
 
 ///|
 /// `<c:trendlineType val="…"/>` (ST_TrendlineType).
+///
+/// - `TrendlineExp` (`val="exp"`) — exponential fit.
+/// - `TrendlineLinear` (`val="linear"`) — straight-line least-squares.
+/// - `TrendlineLog` (`val="log"`) — logarithmic fit.
+/// - `TrendlineMovingAvg` (`val="movingAvg"`) — moving average (uses
+///   `period`).
+/// - `TrendlinePoly` (`val="poly"`) — polynomial fit (uses `order`).
+/// - `TrendlinePower` (`val="power"`) — power-law fit.
 pub(all) enum TrendlineType {
-  /// `val="exp"` — exponential fit.
   TrendlineExp
-  /// `val="linear"` — straight-line least-squares.
   TrendlineLinear
-  /// `val="log"` — logarithmic fit.
   TrendlineLog
-  /// `val="movingAvg"` — moving average (uses `period`).
   TrendlineMovingAvg
-  /// `val="poly"` — polynomial fit (uses `order`).
   TrendlinePoly
-  /// `val="power"` — power-law fit.
   TrendlinePower
 } derive(Eq, Debug)
 

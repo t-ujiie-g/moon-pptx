@@ -244,6 +244,16 @@ was not there when the code landed.
   rules ("`h` is required per ECMA-376"), non-obvious *why* ("PowerPoint
   needs `action=` to recognise the jump"), invariants, and deliberate
   deviations. Doc comments (`///`) on public APIs stay mandatory.
+- **Never put comments between the members of a `struct` or `enum`.** The
+  body stays a clean list of declarations. Per-field / per-variant
+  documentation goes in the type's own doc comment as a bullet list —
+  ``/// - `margin_left` (`marL`) — left margin in EMU.`` — which keeps it
+  in `moon ide doc` output while leaving the declaration readable. This
+  also applies to section markers inside long enums: name the groups in
+  the type doc, not between the variants.
+- **Keep comments short.** A doc comment should be proportionate to the
+  thing it documents. When several fields share one mechanism, explain the
+  mechanism once in a short paragraph instead of repeating it per field.
 - When trimming an over-written comment, keep the informative core and cut
   the provenance framing.
 

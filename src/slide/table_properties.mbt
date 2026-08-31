@@ -23,31 +23,30 @@
 
 ///|
 /// Typed body of `<a:tblPr>`.
+///
+/// - `first_row` — `firstRow` attribute — style first row differently
+///   (header).
+/// - `first_col` — `firstCol` attribute.
+/// - `last_row` — `lastRow` attribute.
+/// - `last_col` — `lastCol` attribute.
+/// - `band_row` — `bandRow` attribute — alternating row banding.
+/// - `band_col` — `bandCol` attribute.
+/// - `rtl` — `rtl` attribute — right-to-left text direction.
+/// - `fill` — Optional fill choice (`<a:noFill>` / `<a:solidFill>` / etc.)
+///   applied to the whole table background.
+/// - `table_style_id` — `<a:tableStyleId>` body — a `{GUID}` referencing a
+///   style in the `tableStyles.xml` part. PowerPoint Office Theme defaults to
+///   `{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}`.
 pub(all) struct TableProperties {
-  /// `firstRow` attribute — style first row differently (header).
   first_row : Bool?
-  /// `firstCol` attribute.
   first_col : Bool?
-  /// `lastRow` attribute.
   last_row : Bool?
-  /// `lastCol` attribute.
   last_col : Bool?
-  /// `bandRow` attribute — alternating row banding.
   band_row : Bool?
-  /// `bandCol` attribute.
   band_col : Bool?
-  /// `rtl` attribute — right-to-left text direction.
   rtl : Bool?
-  /// Optional fill choice (`<a:noFill>` / `<a:solidFill>` / etc.)
-  /// applied to the whole table background.
   fill : @oxml.Fill?
-  /// `<a:tableStyleId>` body — a `{GUID}` referencing a style in
-  /// the `tableStyles.xml` part. PowerPoint Office Theme defaults
-  /// to `{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}`.
   table_style_id : String?
-  /// ADR-004 preservation: `<a:tableStyle>` inline-style body
-  /// (rare), `<a:extLst>`, and any future / foreign-namespace
-  /// children of `<a:tblPr>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
@@ -71,39 +70,40 @@ pub fn TableProperties::default() -> TableProperties {
 
 ///|
 /// Typed body of `<a:tcPr>`.
+///
+/// - `margin_l` — `marL` attribute — left margin in EMU.
+/// - `margin_r` — `marR` attribute — right margin.
+/// - `margin_t` — `marT` attribute — top margin.
+/// - `margin_b` — `marB` attribute — bottom margin.
+/// - `anchor` — `anchor` attribute — vertical text anchor. Reuses the same
+///   `Anchor` enum as `BodyProperties.anchor`.
+/// - `anchor_ctr` — `anchorCtr` attribute — centred horizontally inside the
+///   cell.
+/// - `vertical_text` — `vert` attribute — vertical text direction. Reuses the
+///   same `VerticalText` enum as `BodyProperties.vertical_text`.
+/// - `border_tl_to_br` (`<a:lnTlToBr>`) — top-left to bottom-right diagonal
+///   border.
+/// - `border_bl_to_tr` (`<a:lnBlToTr>`) — bottom-left to top-right diagonal
+///   border.
+/// - `fill` — Cell fill (`<a:noFill>` / `<a:solidFill>` / etc.).
+/// Direct attribute mappings: `border_left`→`<a:lnL>`,
+/// `border_right`→`<a:lnR>`, `border_top`→`<a:lnT>`,
+/// `border_bottom`→`<a:lnB>`.
 pub(all) struct TableCellProperties {
-  /// `marL` attribute — left margin in EMU.
   margin_l : @units.Emu?
-  /// `marR` attribute — right margin.
   margin_r : @units.Emu?
-  /// `marT` attribute — top margin.
   margin_t : @units.Emu?
-  /// `marB` attribute — bottom margin.
   margin_b : @units.Emu?
-  /// `anchor` attribute — vertical text anchor.  Reuses the same
-  /// `Anchor` enum as `BodyProperties.anchor`.
   anchor : Anchor?
-  /// `anchorCtr` attribute — centred horizontally inside the cell.
   anchor_ctr : Bool?
-  /// `vert` attribute — vertical text direction.  Reuses the same
-  /// `VerticalText` enum as `BodyProperties.vertical_text`.
   vertical_text : VerticalText?
-  /// `<a:lnL>` — left border.
   border_left : @oxml.Stroke?
-  /// `<a:lnR>` — right border.
   border_right : @oxml.Stroke?
-  /// `<a:lnT>` — top border.
   border_top : @oxml.Stroke?
-  /// `<a:lnB>` — bottom border.
   border_bottom : @oxml.Stroke?
-  /// `<a:lnTlToBr>` — top-left to bottom-right diagonal border.
   border_tl_to_br : @oxml.Stroke?
-  /// `<a:lnBlToTr>` — bottom-left to top-right diagonal border.
   border_bl_to_tr : @oxml.Stroke?
-  /// Cell fill (`<a:noFill>` / `<a:solidFill>` / etc.).
   fill : @oxml.Fill?
-  /// ADR-004 preservation: `<a:cell3D>`, `<a:headers>`,
-  /// `<a:extLst>`, foreign-namespace children of `<a:tcPr>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

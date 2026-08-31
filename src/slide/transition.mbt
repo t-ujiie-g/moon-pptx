@@ -238,20 +238,18 @@ pub(all) enum TransitionKind {
 /// A slide transition, lifted from `<p:transition>` (CT_SlideTransition). A
 /// slide with no transition is `Slide.transition == None` (the common case —
 /// most slides have no entrance effect).
+///
+/// - `kind` — The transition effect (the choice child element).
+/// - `speed` (`spd`) — the transition speed. Schema default `Fast`.
+/// - `advance_on_click` (`advClick`) — whether a mouse click advances the
+///   slide. Schema default `true`.
+/// - `advance_after` (`advTm`) — auto-advance after this many milliseconds.
+///   `None` means the slide advances only on click (the attribute is absent).
 pub(all) struct Transition {
-  /// The transition effect (the choice child element).
   kind : TransitionKind
-  /// `spd` — the transition speed. Schema default `Fast`.
   speed : TransitionSpeed
-  /// `advClick` — whether a mouse click advances the slide. Schema default
-  /// `true`.
   advance_on_click : Bool
-  /// `advTm` — auto-advance after this many milliseconds. `None` means the
-  /// slide advances only on click (the attribute is absent).
   advance_after : Int?
-  /// Lossless preservation (ADR-004): `<p:sndAc>` (transition sound),
-  /// `<p:extLst>` (e.g. the `p14:` extended-transition definition), and any
-  /// other unmodelled `<p:transition>` children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

@@ -14,6 +14,9 @@
 /// `Other(String)` keeps any unrecognised value verbatim for forward
 /// compatibility (mirrors `@chart_ex.ChartExKind::Other`), so `kind()` never
 /// raises and round-trips even schema-extending tools.
+///
+/// - `Other` — Any `ST_PlaceholderType` value we don't model — preserved
+///   verbatim.
 pub(all) enum PlaceholderType {
   Title // "title"
   Body // "body"
@@ -31,7 +34,6 @@ pub(all) enum PlaceholderType {
   Media // "media"
   SldImg // "sldImg"   — slide image (notes)
   Pic // "pic"
-  /// Any `ST_PlaceholderType` value we don't model — preserved verbatim.
   Other(String)
 } derive(Eq, Debug)
 

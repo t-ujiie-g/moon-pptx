@@ -17,12 +17,13 @@
 
 ///|
 /// Streaming XML writer. Emits well-formed XML to an internal buffer.
+///
+/// True while we are inside a just-opened start tag (the `>` has not yet been
+/// emitted, so attributes are still allowed and the element can self-close).
 pub struct XmlWriter {
   buf : StringBuilder
   prefix_for_uri : Map[String, String]
   stack : Array[QName]
-  // True while we are inside a just-opened start tag (the `>` has not yet been
-  // emitted, so attributes are still allowed and the element can self-close).
   mut in_start_tag : Bool
 }
 

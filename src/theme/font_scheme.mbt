@@ -31,26 +31,27 @@ pub impl Show for ScriptFont with fn output(self, logger) {
 ///|
 /// A theme font family — the three baseline typefaces plus optional
 /// per-script overrides.
+///
+/// - `latin` (`<a:latin typeface="…"/>`) — Latin script. Required.
+/// - `ea` (`<a:ea typeface="…"/>`) — East Asian. May be empty.
+/// - `cs` (`<a:cs typeface="…"/>`) — Complex Script. May be empty.
+/// - `scripts` — `<a:font script="…" typeface="…"/>` overrides, in source
+///   order.
 pub(all) struct FontCollection {
-  /// `<a:latin typeface="…"/>` — Latin script. Required.
   latin : String
-  /// `<a:ea typeface="…"/>` — East Asian. May be empty.
   ea : String
-  /// `<a:cs typeface="…"/>` — Complex Script. May be empty.
   cs : String
-  /// `<a:font script="…" typeface="…"/>` overrides, in source order.
   scripts : Array[ScriptFont]
-  /// Lossless preservation (ADR-004): per-typeface decoration children
-  /// (`<a:fill>`, `<a:effectLst>`, …) and unmodelled siblings.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
 ///|
 /// The major (heading) and minor (body) font families.
+///
+/// - `extension` — `<a:extLst>` etc. on `<a:fontScheme>`.
 pub(all) struct FontScheme {
   name : String
   major_font : FontCollection
   minor_font : FontCollection
-  /// Lossless preservation (ADR-004): `<a:extLst>` etc. on `<a:fontScheme>`.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

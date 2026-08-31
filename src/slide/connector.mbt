@@ -31,25 +31,24 @@ pub(all) struct ConnectionEnd {
 /// `start` and `end` are present only when the connector is bound to
 /// other shapes; free-floating connectors (drawn between coordinates
 /// alone) have both as `None`.
+///
+/// - `stroke` — `<a:ln>` outline parsed off `<p:spPr>`. Connectors almost
+///   always carry one (they're a line by definition).
+/// - `effects` — `<a:effectLst>` parsed off `<p:spPr>`.
+/// - `hyperlink` (`<p:cNvPr><a:hlinkClick>`) — a hyperlink / click action on
+///   the whole connector. Build-only: set by `with_hyperlink` /
+///   `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
+///   `None` for a parsed connector (its `<a:hlinkClick>` round-trips via the
+///   captured `<p:cNvPr>` in `extension`).
 pub(all) struct Connector {
   id : Int
   name : String
   transform : Transform?
   geometry : Geometry?
-  /// `<a:ln>` outline parsed off `<p:spPr>`. Connectors almost always
-  /// carry one (they're a line by definition).
   stroke : @oxml.Stroke?
-  /// `<a:effectLst>` parsed off `<p:spPr>`.
   effects : @oxml.EffectList?
   start : ConnectionEnd?
   end : ConnectionEnd?
-  /// `<p:cNvPr><a:hlinkClick>` — a hyperlink / click action on the whole
-  /// connector. Build-only: set by `with_hyperlink` /
-  /// `with_hyperlink_to_slide`, resolved by `Presentation::update_slide_mut`.
-  /// `None` for a parsed connector (its `<a:hlinkClick>` round-trips via the
-  /// captured `<p:cNvPr>` in `extension`).
   hyperlink : ShapeHyperlink?
-  /// Lossless preservation (ADR-004): unmodelled `<p:cxnSp>` siblings
-  /// (`<p:style>`, `<p:extLst>`, …) captured verbatim.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

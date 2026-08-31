@@ -10,31 +10,31 @@
 /// A slide background, lifted from `<p:cSld><p:bg>` (CT_Background,
 /// ECMA-376 §19.3.1.1). A slide with no `<p:bg>` inherits its background
 /// from the layout / master, modelled as `Slide.background == None`.
+///
+/// - `Properties` (`<p:bgPr>`) — an explicit fill, optionally with effects.
+/// - `StyleReference` (`<p:bgRef>`) — a reference into the theme's
+///   `bgFillStyleLst` (the `Int` `idx`, one-based) plus a colour that
+///   resolves the referenced style's `phClr` placeholder. This is the form
+///   `Presentation::new()` emits on its slide master.
 pub(all) enum Background {
-  /// `<p:bgPr>` — an explicit fill, optionally with effects.
   Properties(BackgroundProperties)
-  /// `<p:bgRef>` — a reference into the theme's `bgFillStyleLst` (the `Int`
-  /// `idx`, one-based) plus a colour that resolves the referenced style's
-  /// `phClr` placeholder. This is the form `Presentation::new()` emits on
-  /// its slide master.
   StyleReference(Int, @oxml.Color)
 } derive(Eq, Debug)
 
 ///|
 /// `<p:bgPr>` body (CT_BackgroundProperties, ECMA-376 §19.3.1.2).
+///
+/// - `fill` — The fill — `<a:solidFill>` / `<a:gradFill>` / `<a:blipFill>` /
+///   `<a:pattFill>` / `<a:noFill>`. The schema requires a fill, but it is
+///   `Option` (like `AutoShape.fill`) so the rare `<a:grpFill>` form, which
+///   `@oxml.Fill` doesn't model, round-trips via `extension` rather than
+///   being dropped.
+/// - `shade_to_title` — The `shadeToTitle` attribute (default `false`).
+/// - `effects` — `<a:effectLst>` if present.
 pub(all) struct BackgroundProperties {
-  /// The fill — `<a:solidFill>` / `<a:gradFill>` / `<a:blipFill>` /
-  /// `<a:pattFill>` / `<a:noFill>`. The schema requires a fill, but it is
-  /// `Option` (like `AutoShape.fill`) so the rare `<a:grpFill>` form, which
-  /// `@oxml.Fill` doesn't model, round-trips via `extension` rather than
-  /// being dropped.
   fill : @oxml.Fill?
-  /// The `shadeToTitle` attribute (default `false`).
   shade_to_title : Bool
-  /// `<a:effectLst>` if present.
   effects : @oxml.EffectList?
-  /// Lossless preservation (ADR-004): `<a:effectDag>`, `<a:grpFill>`,
-  /// `<a:extLst>`, and any other unmodelled `<p:bgPr>` children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

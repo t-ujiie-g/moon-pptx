@@ -35,18 +35,19 @@ pub impl Show for ScatterChartBody with fn output(self, logger) {
 
 ///|
 /// `<c:scatterStyle val="…"/>` (CT_ScatterStyle). Six-value enum.
+///
+/// - `Line` (`val="line"`) — connecting lines, no markers.
+/// - `LineMarker` (`val="lineMarker"`) — connecting lines plus markers.
+/// - `Marker` (`val="marker"`) — markers only.
+/// - `None_` (`val="none"`) — neither lines nor markers (rare).
+/// - `Smooth` (`val="smooth"`) — smoothed connecting lines.
+/// - `SmoothMarker` (`val="smoothMarker"`) — smoothed lines plus markers.
 pub(all) enum ScatterStyle {
-  /// `val="line"` — connecting lines, no markers.
   Line
-  /// `val="lineMarker"` — connecting lines plus markers.
   LineMarker
-  /// `val="marker"` — markers only.
   Marker
-  /// `val="none"` — neither lines nor markers (rare).
   None_
-  /// `val="smooth"` — smoothed connecting lines.
   Smooth
-  /// `val="smoothMarker"` — smoothed lines plus markers.
   SmoothMarker
 } derive(Eq, Debug)
 

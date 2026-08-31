@@ -42,20 +42,22 @@ pub impl Show for SysColor with fn output(self, logger) {
 /// One of the six DrawingML colour element kinds. Carries the raw value
 /// off the element's start tag; modifiers attach via the enclosing
 /// `Color` wrapper.
+///
+/// - `Srgb` (`<a:srgbClr val="FF0000"/>`) — literal 24-bit RGB.
+/// - `Hsl` (`<a:hslClr hue="..." sat="..." lum="..."/>`) —
+///   hue/saturation/lightness.
+/// - `Sys` — `<a:sysClr val="..." lastClr="..."/>`.
+/// - `Scheme` (`<a:schemeClr val="..."/>`) — reference to a theme color slot.
+/// - `Preset` (`<a:prstClr val="..."/>`) — named preset colour (e.g. `"red"`,
+///   `"slateGray"`). We keep the string because the preset palette is large
+///   and rarely the deciding factor in fidelity.
+/// - `Scrgb` (`<a:scrgbClr r="..." g="..." b="..."/>`) — percentage RGB.
 pub(all) enum ColorBase {
-  /// `<a:srgbClr val="FF0000"/>` — literal 24-bit RGB.
   Srgb(@units.RgbColor)
-  /// `<a:hslClr hue="..." sat="..." lum="..."/>` — hue/saturation/lightness.
   Hsl(@units.HslColor)
-  /// `<a:sysClr val="..." lastClr="..."/>`.
   Sys(SysColor)
-  /// `<a:schemeClr val="..."/>` — reference to a theme color slot.
   Scheme(@units.ThemeColor)
-  /// `<a:prstClr val="..."/>` — named preset colour (e.g. `"red"`,
-  /// `"slateGray"`). We keep the string because the preset palette is
-  /// large and rarely the deciding factor in fidelity.
   Preset(String)
-  /// `<a:scrgbClr r="..." g="..." b="..."/>` — percentage RGB.
   Scrgb(@units.Percentage, @units.Percentage, @units.Percentage)
 } derive(Eq, Debug)
 
@@ -110,14 +112,15 @@ pub impl Show for ColorBase with fn output(self, logger) {
 /// Alpha); long-tail modifiers (hueMod, redMod, comp, inv, gamma,
 /// gray, …) are accepted by the parser but currently dropped — widen
 /// `@units.ColorTransform` when a real PPTX exposes them.
+///
+/// - `extension` — colour-modifier children that the model does not yet type
+///   — `hueMod`, `redMod`, `greenMod`, `blueMod`, `comp`, `inv`, `gamma`,
+///   `gray`, … — and any foreign-namespace children. Modeled modifiers
+///   (`tint`, `shade`, `satMod`, `lumMod`, `alpha`) live in `transforms` and
+///   do NOT duplicate here.
 pub(all) struct Color {
   base : ColorBase
   transforms : Array[@units.ColorTransform]
-  /// Lossless preservation (ADR-004): colour-modifier children that the
-  /// model does not yet type — `hueMod`, `redMod`, `greenMod`, `blueMod`,
-  /// `comp`, `inv`, `gamma`, `gray`, … — and any foreign-namespace
-  /// children. Modeled modifiers (`tint`, `shade`, `satMod`, `lumMod`,
-  /// `alpha`) live in `transforms` and do NOT duplicate here.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

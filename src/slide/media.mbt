@@ -17,13 +17,15 @@ pub(all) enum MediaKind {
 
 ///|
 /// The media references attached to a media `<p:pic>`.
+///
+/// - `link_id` — `r:link` on `<a:videoFile>` / `<a:audioFile>` — the media
+///   part via the `video` / `audio` relationship.
+/// - `embed_id` — `r:embed` on `<p14:media>` — the same media part via the
+///   Office 2007+ `media` relationship (marks the clip as embedded, not
+///   linked).
 pub(all) struct MediaInfo {
   kind : MediaKind
-  /// `r:link` on `<a:videoFile>` / `<a:audioFile>` — the media part via the
-  /// `video` / `audio` relationship.
   link_id : String
-  /// `r:embed` on `<p14:media>` — the same media part via the Office 2007+
-  /// `media` relationship (marks the clip as embedded, not linked).
   embed_id : String
 } derive(Eq, Debug)
 

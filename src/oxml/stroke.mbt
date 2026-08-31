@@ -187,30 +187,29 @@ pub(all) struct ArrowEnd {
 /// inherited (shape line → theme → master → defaults); a `None` means
 /// "inherit from the next layer up". The inheritance resolver lives a
 /// layer above this parser.
+///
+/// - `width` (`w`) — line width in EMU.
+/// - `cap` — line end cap.
+/// - `compound` (`cmpd`) — compound line type.
+/// - `alignment` (`algn`) — pen alignment.
+/// - `fill` — Line fill (`<a:noFill>` / `<a:solidFill>` / `<a:gradFill>` /
+///   `<a:pattFill>` — `<a:blipFill>` is legal but virtually never used on
+///   lines). Reuses the unified `@oxml.Fill` from 3e2.
+/// - `dash` — `<a:prstDash val="…"/>`. The rarely-seen `<a:custDash>` variant
+///   is silently skipped for now.
+/// - `join` — Line-join geometry.
+/// - `head_end` (`<a:headEnd …/>`) — arrow on the start point.
+/// - `tail_end` (`<a:tailEnd …/>`) — arrow on the end point.
 pub(all) struct Stroke {
-  /// `w` — line width in EMU.
   width : @units.Emu?
-  /// `cap` — line end cap.
   cap : LineCap?
-  /// `cmpd` — compound line type.
   compound : CompoundLine?
-  /// `algn` — pen alignment.
   alignment : PenAlignment?
-  /// Line fill (`<a:noFill>` / `<a:solidFill>` / `<a:gradFill>` /
-  /// `<a:pattFill>` — `<a:blipFill>` is legal but virtually never used
-  /// on lines). Reuses the unified `@oxml.Fill` from 3e2.
   fill : Fill?
-  /// `<a:prstDash val="…"/>`. The rarely-seen `<a:custDash>` variant is
-  /// silently skipped for now.
   dash : DashStyle?
-  /// Line-join geometry.
   join : LineJoin?
-  /// `<a:headEnd …/>` — arrow on the start point.
   head_end : ArrowEnd?
-  /// `<a:tailEnd …/>` — arrow on the end point.
   tail_end : ArrowEnd?
-  /// Lossless preservation (ADR-004): `<a:custDash>`, `<a:extLst>`, and
-  /// foreign-namespace `<a:ln>` children.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 
