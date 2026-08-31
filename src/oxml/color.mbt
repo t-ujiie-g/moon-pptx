@@ -141,7 +141,7 @@ pub impl Show for Color with fn output(self, logger) {
 ///|
 /// Construct a colour with no modifiers.
 pub fn Color::of(base : ColorBase) -> Color {
-  { base, transforms: [], extension: [] }
+  { base, transforms: [], extension: [], }
 }
 
 ///|
@@ -325,7 +325,7 @@ pub fn parse_color_element(
         }
         None => None
       }
-      Sys({ val, last_clr })
+      Sys({ val, last_clr, })
     }
     "schemeClr" => {
       let raw = require_attr(attrs, "val", "schemeClr") catch {
@@ -400,7 +400,7 @@ pub fn parse_color_element(
       None => raise MalformedColor("unexpected end of input inside colour body")
     }
   }
-  { base, transforms, extension }
+  { base, transforms, extension, }
 }
 
 ///|

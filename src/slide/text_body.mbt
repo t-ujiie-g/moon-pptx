@@ -681,7 +681,7 @@ pub fn ListStyle::empty() -> ListStyle {
     None,
     None,
   ]
-  { default_props: None, level_props, extension: [] }
+  { default_props: None, level_props, extension: [], }
 }
 
 ///|

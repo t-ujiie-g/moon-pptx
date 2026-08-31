@@ -45,7 +45,7 @@ fn parse_comment_author_list_xml(
       _ => ()
     }
   }
-  { authors, extension }
+  { authors, extension, }
 }
 
 ///|
@@ -70,7 +70,7 @@ fn parse_comment_author(
       _ => ()
     }
   }
-  { id, name, initials, last_idx, clr_idx, extension }
+  { id, name, initials, last_idx, clr_idx, extension, }
 }
 
 // --- Comments ---
@@ -107,7 +107,7 @@ fn parse_comment_list_xml(xml : String) -> CommentList raise CommentsError {
       _ => ()
     }
   }
-  { comments, extension }
+  { comments, extension, }
 }
 
 ///|
@@ -146,7 +146,7 @@ fn parse_comment(
     Some(p) => p
     None => raise Malformed("<p:cm> is missing required <p:pos>")
   }
-  { author_id, dt, idx, pos: p, text, extension }
+  { author_id, dt, idx, pos: p, text, extension, }
 }
 
 ///|

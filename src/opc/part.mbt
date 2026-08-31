@@ -26,7 +26,7 @@ pub fn Part::new(
   bytes : FixedArray[Byte],
 ) -> Part raise OpcError {
   validate_part_name(name)
-  { name, content_type, bytes }
+  { name, content_type, bytes, }
 }
 
 ///|

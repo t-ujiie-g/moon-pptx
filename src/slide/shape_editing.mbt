@@ -49,7 +49,7 @@ pub fn Slide::map_shapes(self : Slide, f : (Shape) -> Shape) -> Slide {
   for s in self.shapes {
     new_shapes.push(f(s))
   }
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }
 
 ///|
@@ -77,7 +77,7 @@ pub fn Slide::with_shape_at(
       new_shapes.push(s)
     }
   }
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }
 
 ///|
@@ -105,7 +105,7 @@ pub fn Slide::with_shape_mapped(
       new_shapes.push(s)
     }
   }
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }
 
 ///|
@@ -135,7 +135,7 @@ pub fn Slide::with_shape_by_id(
   if !found {
     raise Malformed("with_shape_by_id: no shape with id " + id.to_string())
   }
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }
 
 ///|
@@ -160,7 +160,7 @@ pub fn Slide::without_shape(
       new_shapes.push(s)
     }
   }
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }
 
 ///|
@@ -181,5 +181,5 @@ pub fn Slide::without_shape_by_id(
   if !found {
     raise Malformed("without_shape_by_id: no shape with id " + id.to_string())
   }
-  { ..self, shapes: new_shapes }
+  { ..self, shapes: new_shapes, }
 }

@@ -62,7 +62,7 @@ fn parse_chart_space(r : @xml.XmlReader) -> ChartEx raise ChartExError {
     Some(c) => c
     None => raise Malformed("<cx:chartSpace> is missing required <cx:chart>")
   }
-  { chart_data, chart, extension }
+  { chart_data, chart, extension, }
 }
 
 ///|
@@ -93,7 +93,7 @@ fn parse_chart_body(r : @xml.XmlReader) -> ChartExBody raise ChartExError {
     Some(p) => p
     None => raise Malformed("<cx:chart> is missing required <cx:plotArea>")
   }
-  { title, plot_area: pa, legend, extension }
+  { title, plot_area: pa, legend, extension, }
 }
 
 ///|
@@ -124,7 +124,7 @@ fn parse_plot_area(r : @xml.XmlReader) -> ChartExPlotArea raise ChartExError {
     None =>
       raise Malformed("<cx:plotArea> is missing required <cx:plotAreaRegion>")
   }
-  { plot_area_region: region, axes, extension }
+  { plot_area_region: region, axes, extension, }
 }
 
 ///|
@@ -152,7 +152,7 @@ fn parse_plot_area_region(
       _ => ()
     }
   }
-  { plot_surface, series, extension }
+  { plot_surface, series, extension, }
 }
 
 ///|
@@ -173,7 +173,7 @@ fn parse_series(
   // children stay opaque for round-trip until a later slice types
   // them.
   let body = collect_subtree_unknown(r, name, attrs)
-  { layout_id, format_idx, hidden, owner_idx, body }
+  { layout_id, format_idx, hidden, owner_idx, body, }
 }
 
 // --- attribute helpers ---

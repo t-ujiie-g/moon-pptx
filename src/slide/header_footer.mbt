@@ -68,7 +68,7 @@ fn placeholder_shape(
   {
     id,
     name,
-    placeholder: Some({ ph_type, idx }),
+    placeholder: Some({ ph_type, idx, }),
     transform: None,
     geometry: None,
     fill: None,
@@ -116,7 +116,7 @@ fn Slide::without_placeholder_kind(
       kept.push(s)
     }
   }
-  { ..self, shapes: kept }
+  { ..self, shapes: kept, }
 }
 
 ///|

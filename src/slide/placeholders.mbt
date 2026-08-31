@@ -191,7 +191,7 @@ pub fn Slide::with_placeholder(
       kept.push(s)
     }
   }
-  let cleared = { ..self, shapes: kept }
+  let cleared = { ..self, shapes: kept, }
   let body : TextBody? = match text {
     Some(t) => Some(TextBody::of_text(t))
     None => None
@@ -199,7 +199,7 @@ pub fn Slide::with_placeholder(
   let sp : AutoShape = {
     id: cleared.next_shape_id(),
     name: kind.to_xml() + " Placeholder",
-    placeholder: Some({ ph_type: kind.to_xml(), idx }),
+    placeholder: Some({ ph_type: kind.to_xml(), idx, }),
     transform: None,
     geometry: None,
     fill: None,

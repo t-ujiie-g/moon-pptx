@@ -82,7 +82,7 @@ fn parse_chart_title(el : @xml.XmlElement) -> ChartTitle {
       _ => ()
     }
   }
-  { tx, layout, overlay, sp_pr, tx_pr, extension }
+  { tx, layout, overlay, sp_pr, tx_pr, extension, }
 }
 
 // --- writing -----------------------------------------------------------------

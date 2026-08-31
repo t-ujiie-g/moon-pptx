@@ -225,7 +225,7 @@ fn Presentation::ensure_notes_master(
     // only `r:id` on this element); we leave it at 0 so round-trip
     // comparisons stay clean.
     ,
-    notes_master_id: Some({ id: 0L, r_id: nm_rid }),
+    notes_master_id: Some({ id: 0L, r_id: nm_rid, }),
   }
   let new_pres_bytes = new_pres.serialize()
   self.replace_part_bytes(pres_name, new_pres_bytes, @oxml.ct_presentation)
@@ -298,7 +298,7 @@ fn build_notes_slide(text : String) -> @notes.NotesSlide {
   let placeholder_shape : @slide.AutoShape = {
     id: 2,
     name: "Notes Placeholder 1",
-    placeholder: Some({ ph_type: "body", idx: 1 }),
+    placeholder: Some({ ph_type: "body", idx: 1, }),
     transform: None,
     geometry: None,
     fill: None,

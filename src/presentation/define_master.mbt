@@ -60,8 +60,8 @@ pub fn MasterDefinition::with_placeholder(
   for p in self.placeholders {
     phs.push(p)
   }
-  phs.push({ kind, position, default_text })
-  { ..self, placeholders: phs }
+  phs.push({ kind, position, default_text, })
+  { ..self, placeholders: phs, }
 }
 
 ///|
@@ -70,7 +70,7 @@ pub fn MasterDefinition::with_background(
   self : MasterDefinition,
   bg : @slide.Background,
 ) -> MasterDefinition {
-  { ..self, background: Some(bg) }
+  { ..self, background: Some(bg), }
 }
 
 ///|
@@ -79,7 +79,7 @@ pub fn MasterDefinition::with_slide_number(
   self : MasterDefinition,
   visible : Bool,
 ) -> MasterDefinition {
-  { ..self, slide_number: visible }
+  { ..self, slide_number: visible, }
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn MasterDefinition::with_footer(
   self : MasterDefinition,
   text : String,
 ) -> MasterDefinition {
-  { ..self, footer_text: Some(text) }
+  { ..self, footer_text: Some(text), }
 }
 
 ///|
@@ -97,7 +97,7 @@ pub fn MasterDefinition::with_date(
   self : MasterDefinition,
   visible : Bool,
 ) -> MasterDefinition {
-  { ..self, date: visible }
+  { ..self, date: visible, }
 }
 
 // --- the builder ---
@@ -205,7 +205,7 @@ pub fn Presentation::define_master(
   }
   self.write_rels_for_part(pres_name, updated)
   // 6. presentation.xml — push a <p:sldMasterId>.
-  pres.sld_master_ids.push({ id: master_id, r_id: master_rid })
+  pres.sld_master_ids.push({ id: master_id, r_id: master_rid, })
   self.replace_part_bytes(pres_name, pres.serialize(), @oxml.ct_presentation)
   // 7. Content types.
   let ct = self.pkg
@@ -307,7 +307,7 @@ fn build_placeholder_csld(
 /// A bottom-band header/footer rectangle at horizontal offset `x` (EMU),
 /// sized like PowerPoint's default master hf placeholders.
 fn hf_rect(x : Int64) -> @slide.Transform {
-  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(6356350L) }, extent={
+  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(6356350L), }, extent={
     cx: @units.Emu(2438400L),
     cy: @units.Emu(365125L),
   })
@@ -325,7 +325,7 @@ fn master_placeholder(
   {
     id,
     name: ph_type + " placeholder",
-    placeholder: Some({ ph_type, idx }),
+    placeholder: Some({ ph_type, idx, }),
     transform: Some(position),
     geometry: None,
     fill: None,

@@ -31,7 +31,7 @@ pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
   let parts : Array[Part] = Array::new(capacity=entries.length())
   for entry in entries {
     let name = zip_name_to_opc(entry.0)
-    parts.push({ name, content_type: "", bytes: entry.1 })
+    parts.push({ name, content_type: "", bytes: entry.1, })
   }
   // Locate [Content_Types].xml and parse it.
   let mut ct_bytes : FixedArray[Byte]? = None
@@ -60,14 +60,14 @@ pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
       None => () // unresolved — leave empty; callers can detect with `is_empty`
     }
   }
-  { parts, content_types }
+  { parts, content_types, }
 }
 
 ///|
 /// Construct an empty package with no parts and an empty content-types
 /// catalog. Useful as a starting point for builder code or tests.
 pub fn Package::new() -> Package {
-  { parts: [], content_types: ContentTypes::new() }
+  { parts: [], content_types: ContentTypes::new(), }
 }
 
 ///|
@@ -94,13 +94,17 @@ pub fn Package::regenerate_content_types_part(
   let mut found = false
   for i in 0..<self.parts.length() {
     if self.parts[i].name == content_types_part_name {
-      self.parts[i] = { name: content_types_part_name, content_type: "", bytes }
+      self.parts[i] = {
+        name: content_types_part_name,
+        content_type: "",
+        bytes,
+      }
       found = true
       break
     }
   }
   if !found {
-    self.parts.push({ name: content_types_part_name, content_type: "", bytes })
+    self.parts.push({ name: content_types_part_name, content_type: "", bytes, })
   }
 }
 

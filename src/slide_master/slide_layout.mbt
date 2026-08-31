@@ -233,7 +233,7 @@ fn parse_slide_layout_xml(xml : String) -> SlideLayout raise SlideMasterError {
       _ => ()
     }
   }
-  { name, layout_type, clr_map_override, extension }
+  { name, layout_type, clr_map_override, extension, }
 }
 
 ///|

@@ -114,11 +114,14 @@ fn apply_chart_option(chart : Chart, option : ChartOption) -> Chart {
     TitleDeleted =>
       {
         ..chart,
-        chart: { ..body, title: None, auto_title_deleted: Some(true) },
+        chart: { ..body, title: None, auto_title_deleted: Some(true), },
       }
     Legend(pos) =>
-      { ..chart, chart: { ..body, legend: Some(legend_at(body.legend, pos)) } }
-    LegendHidden => { ..chart, chart: { ..body, legend: None } }
+      {
+        ..chart,
+        chart: { ..body, legend: Some(legend_at(body.legend, pos)), },
+      }
+    LegendHidden => { ..chart, chart: { ..body, legend: None, }, }
     DataLabels(pos) =>
       {
         ..chart,
@@ -150,10 +153,12 @@ fn apply_chart_option(chart : Chart, option : ChartOption) -> Chart {
           },
         },
       }
-    Style(n) => { ..chart, style: Some(n) }
-    RoundedCorners(b) => { ..chart, rounded_corners: Some(b) }
-    PlotVisibleOnly(b) => { ..chart, chart: { ..body, plot_vis_only: Some(b) } }
-    DisplayBlanks(d) => { ..chart, chart: { ..body, disp_blanks_as: Some(d) } }
+    Style(n) => { ..chart, style: Some(n), }
+    RoundedCorners(b) => { ..chart, rounded_corners: Some(b), }
+    PlotVisibleOnly(b) =>
+      { ..chart, chart: { ..body, plot_vis_only: Some(b), }, }
+    DisplayBlanks(d) =>
+      { ..chart, chart: { ..body, disp_blanks_as: Some(d), }, }
   }
 }
 
@@ -202,7 +207,7 @@ fn title_of_text(text : String) -> ChartTitle {
 /// layout, styling) or starting a fresh legend when none is present.
 fn legend_at(existing : ChartLegend?, pos : LegendPos) -> ChartLegend {
   match existing {
-    Some(lg) => { ..lg, legend_pos: Some(pos) }
+    Some(lg) => { ..lg, legend_pos: Some(pos), }
     None =>
       {
         legend_pos: Some(pos),
@@ -239,7 +244,7 @@ fn d_lbls_at(pos : DLblPos) -> DLbls {
 ///|
 /// Set (or clear) the plot-level data labels on every plot in the plot area.
 fn plot_area_with_d_lbls(pa : PlotArea, dlbls : DLbls?) -> PlotArea {
-  { ..pa, plots: pa.plots.map(p => plot_with_d_lbls(p, dlbls)) }
+  { ..pa, plots: pa.plots.map(p => plot_with_d_lbls(p, dlbls)), }
 }
 
 ///|
@@ -249,20 +254,20 @@ fn plot_area_with_d_lbls(pa : PlotArea, dlbls : DLbls?) -> PlotArea {
 /// Adding a new plot family without handling it here is a compile error.
 fn plot_with_d_lbls(plot : Plot, dlbls : DLbls?) -> Plot {
   match plot {
-    AreaChart(b) => AreaChart({ ..b, d_lbls: dlbls })
-    Area3DChart(b) => Area3DChart({ ..b, d_lbls: dlbls })
-    LineChart(b) => LineChart({ ..b, d_lbls: dlbls })
-    Line3DChart(b) => Line3DChart({ ..b, d_lbls: dlbls })
-    StockChart(b) => StockChart({ ..b, d_lbls: dlbls })
-    RadarChart(b) => RadarChart({ ..b, d_lbls: dlbls })
-    ScatterChart(b) => ScatterChart({ ..b, d_lbls: dlbls })
-    PieChart(b) => PieChart({ ..b, d_lbls: dlbls })
-    Pie3DChart(b) => Pie3DChart({ ..b, d_lbls: dlbls })
-    DoughnutChart(b) => DoughnutChart({ ..b, d_lbls: dlbls })
-    BarChart(b) => BarChart({ ..b, d_lbls: dlbls })
-    Bar3DChart(b) => Bar3DChart({ ..b, d_lbls: dlbls })
-    OfPieChart(b) => OfPieChart({ ..b, d_lbls: dlbls })
-    BubbleChart(b) => BubbleChart({ ..b, d_lbls: dlbls })
+    AreaChart(b) => AreaChart({ ..b, d_lbls: dlbls, })
+    Area3DChart(b) => Area3DChart({ ..b, d_lbls: dlbls, })
+    LineChart(b) => LineChart({ ..b, d_lbls: dlbls, })
+    Line3DChart(b) => Line3DChart({ ..b, d_lbls: dlbls, })
+    StockChart(b) => StockChart({ ..b, d_lbls: dlbls, })
+    RadarChart(b) => RadarChart({ ..b, d_lbls: dlbls, })
+    ScatterChart(b) => ScatterChart({ ..b, d_lbls: dlbls, })
+    PieChart(b) => PieChart({ ..b, d_lbls: dlbls, })
+    Pie3DChart(b) => Pie3DChart({ ..b, d_lbls: dlbls, })
+    DoughnutChart(b) => DoughnutChart({ ..b, d_lbls: dlbls, })
+    BarChart(b) => BarChart({ ..b, d_lbls: dlbls, })
+    Bar3DChart(b) => Bar3DChart({ ..b, d_lbls: dlbls, })
+    OfPieChart(b) => OfPieChart({ ..b, d_lbls: dlbls, })
+    BubbleChart(b) => BubbleChart({ ..b, d_lbls: dlbls, })
     // CT_SurfaceChart / CT_Surface3DChart have no <c:dLbls> child.
     SurfaceChart(_) | Surface3DChart(_) => plot
   }

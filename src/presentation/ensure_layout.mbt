@@ -78,7 +78,7 @@ fn Presentation::ensure_layout_of_type(
   let master = @slide_master.SlideMaster::parse(master_part.bytes) catch {
     e => raise SlideMasterFailure(e.to_string())
   }
-  master.layout_refs.push({ id: self.next_layout_id(), r_id: layout_rid })
+  master.layout_refs.push({ id: self.next_layout_id(), r_id: layout_rid, })
   let master_bytes = master.serialize() catch {
     e => raise SlideMasterFailure(e.to_string())
   }

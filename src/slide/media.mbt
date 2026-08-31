@@ -49,7 +49,7 @@ pub fn Picture::of_media(
   {
     id,
     name,
-    transform: Some(Transform::new(offset={ x, y }, extent={ cx, cy })),
+    transform: Some(Transform::new(offset={ x, y, }, extent={ cx, cy, })),
     geometry: Some(Preset(PresetShape::Rect, [])),
     stroke: None,
     effects: None,
@@ -60,7 +60,7 @@ pub fn Picture::of_media(
       fill_mode: Stretch(None),
       extension: [],
     },
-    media: Some({ kind, link_id, embed_id: media_embed_id }),
+    media: Some({ kind, link_id, embed_id: media_embed_id, }),
     hyperlink: None,
     extension: [],
   }

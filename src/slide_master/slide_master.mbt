@@ -79,7 +79,7 @@ fn parse_slide_master_xml(xml : String) -> SlideMaster raise SlideMasterError {
     }
   }
   match color_mapping {
-    Some(cm) => { color_mapping: cm, layout_refs, extension }
+    Some(cm) => { color_mapping: cm, layout_refs, extension, }
     None => raise Malformed("slide master is missing required <p:clrMap>")
   }
 }
@@ -127,7 +127,7 @@ fn parse_layout_id_lst(
         } else {
           let id = parse_id_attr(attrs)
           let r_id = require_r_id(attrs)
-          out.push({ id, r_id })
+          out.push({ id, r_id, })
           skip_subtree(r)
         }
       EndElement(_) => break

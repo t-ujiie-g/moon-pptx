@@ -104,7 +104,7 @@ pub fn Presentation::remove_slide_mut(
       kept_ids.push(s)
     }
   }
-  let new_pres = { ..pres, sld_ids: kept_ids }
+  let new_pres = { ..pres, sld_ids: kept_ids, }
   self.replace_part_bytes(
     pres_name,
     new_pres.serialize(),
@@ -118,7 +118,7 @@ pub fn Presentation::remove_slide_mut(
       kept_rels.push(r)
     }
   }
-  self.write_rels_for_part(pres_name, { ..pres_rels, items: kept_rels })
+  self.write_rels_for_part(pres_name, { ..pres_rels, items: kept_rels, })
 
   // 5. Drop the slide part, its .rels, and its content-type Override.
   let _ = self.pkg.remove_part(target_name)

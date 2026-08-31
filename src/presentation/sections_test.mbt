@@ -25,15 +25,15 @@ fn saved_part_xml(
 test "set_sections_mut: partitions the deck and reads back" {
   let prs = deck_with_slides(4)
   prs.set_sections_mut([
-    { title: "Introduction", start: 0 },
-    { title: "Content", start: 1 },
-    { title: "Conclusion", start: 3 },
+    { title: "Introduction", start: 0, },
+    { title: "Content", start: 1, },
+    { title: "Conclusion", start: 3, },
   ])
   let sections = prs.sections()
   assert_eq(sections.length(), 3)
-  assert_true(sections[0] == { title: "Introduction", start: 0 })
-  assert_true(sections[1] == { title: "Content", start: 1 })
-  assert_true(sections[2] == { title: "Conclusion", start: 3 })
+  assert_true(sections[0] == { title: "Introduction", start: 0, })
+  assert_true(sections[1] == { title: "Content", start: 1, })
+  assert_true(sections[2] == { title: "Conclusion", start: 3, })
   // The raw XML carries the fixed ext URI, the p14 section list, and
   // one sldId per slide, matching <p:sldIdLst>.
   let xml = saved_part_xml(prs, "/ppt/presentation.xml")
@@ -58,8 +58,8 @@ test "set_sections_mut: partitions the deck and reads back" {
 test "sections survive save -> reopen" {
   let prs = deck_with_slides(2)
   prs.set_sections_mut([
-    { title: "冒頭", start: 0 },
-    { title: "本編", start: 1 },
+    { title: "冒頭", start: 0, },
+    { title: "本編", start: 1, },
   ])
   let reopened = @presentation.Presentation::open(prs.save())
   let sections = reopened.sections()
@@ -71,8 +71,8 @@ test "sections survive save -> reopen" {
 ///|
 test "set_sections_mut: setting again replaces, never duplicates" {
   let prs = deck_with_slides(2)
-  prs.set_sections_mut([{ title: "First", start: 0 }])
-  prs.set_sections_mut([{ title: "Second", start: 0 }])
+  prs.set_sections_mut([{ title: "First", start: 0, }])
+  prs.set_sections_mut([{ title: "Second", start: 0, }])
   let sections = prs.sections()
   assert_eq(sections.length(), 1)
   assert_eq(sections[0].title, "Second")
@@ -87,7 +87,7 @@ test "set_sections_mut: setting again replaces, never duplicates" {
 ///|
 test "set_sections_mut: empty array removes all sections" {
   let prs = deck_with_slides(2)
-  prs.set_sections_mut([{ title: "All", start: 0 }])
+  prs.set_sections_mut([{ title: "All", start: 0, }])
   prs.set_sections_mut([])
   assert_eq(prs.sections().length(), 0)
   assert_true(
@@ -102,13 +102,13 @@ test "set_sections_mut: empty array removes all sections" {
 test "set_sections_mut: an empty section (equal starts) is representable" {
   let prs = deck_with_slides(2)
   prs.set_sections_mut([
-    { title: "Empty", start: 0 },
-    { title: "Everything", start: 0 },
+    { title: "Empty", start: 0, },
+    { title: "Everything", start: 0, },
   ])
   let sections = prs.sections()
   assert_eq(sections.length(), 2)
-  assert_true(sections[0] == { title: "Empty", start: 0 })
-  assert_true(sections[1] == { title: "Everything", start: 0 })
+  assert_true(sections[0] == { title: "Empty", start: 0, })
+  assert_true(sections[1] == { title: "Everything", start: 0, })
 }
 
 ///|
@@ -128,7 +128,7 @@ test "add_section_mut: inserts in slide order" {
 test "set_sections_mut: validation errors" {
   let prs = deck_with_slides(2)
   // First section must start at slide 0.
-  try prs.set_sections_mut([{ title: "Late", start: 1 }]) catch {
+  try prs.set_sections_mut([{ title: "Late", start: 1, }]) catch {
     @presentation.PptxError::Malformed(_) => ()
     _ => fail("expected Malformed for a non-zero first start")
   } noraise {
@@ -137,9 +137,9 @@ test "set_sections_mut: validation errors" {
   // Starts must be non-decreasing.
   try
     prs.set_sections_mut([
-      { title: "A", start: 0 },
-      { title: "B", start: 1 },
-      { title: "C", start: 0 },
+      { title: "A", start: 0, },
+      { title: "B", start: 1, },
+      { title: "C", start: 0, },
     ])
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -149,7 +149,7 @@ test "set_sections_mut: validation errors" {
   }
   // Starts must be within the deck.
   try
-    prs.set_sections_mut([{ title: "A", start: 0 }, { title: "B", start: 3 }])
+    prs.set_sections_mut([{ title: "A", start: 0, }, { title: "B", start: 3, }])
   catch {
     @presentation.PptxError::Malformed(_) => ()
     _ => fail("expected Malformed for an out-of-range start")
@@ -163,7 +163,7 @@ test "set_sections_mut: validation errors" {
 ///|
 test "with_sections: immutable counterpart leaves the original untouched" {
   let prs = deck_with_slides(1)
-  let sectioned = prs.with_sections([{ title: "Only", start: 0 }])
+  let sectioned = prs.with_sections([{ title: "Only", start: 0, }])
   assert_eq(prs.sections().length(), 0)
   assert_eq(sectioned.sections().length(), 1)
 }

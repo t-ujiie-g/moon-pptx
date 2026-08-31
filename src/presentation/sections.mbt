@@ -189,7 +189,7 @@ pub fn Presentation::set_sections_mut(
       ),
     )
   }
-  let new_pres = { ..pres, extension: new_extension }
+  let new_pres = { ..pres, extension: new_extension, }
   self.replace_part_bytes(
     pres_name,
     new_pres.serialize(),
@@ -215,7 +215,7 @@ pub fn Presentation::add_section_mut(
       break
     }
   }
-  current.insert(at, { title, start })
+  current.insert(at, { title, start, })
   self.set_sections_mut(current)
 }
 
@@ -283,7 +283,7 @@ pub fn Presentation::sections(
               }
             }
           }
-          out.push({ title, start })
+          out.push({ title, start, })
           start = start + count
         }
       }

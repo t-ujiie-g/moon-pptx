@@ -75,7 +75,7 @@ pub(all) struct Relationships {
 /// Construct an empty `Relationships` set for `source` (the
 /// part the relationships belong to).
 pub fn Relationships::new(source : String) -> Relationships {
-  { source, items: [] }
+  { source, items: [], }
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn Relationships::with_relationship(
     next.push(r)
   }
   next.push(rel)
-  { source: self.source, items: next }
+  { source: self.source, items: next, }
 }
 
 ///|
@@ -270,7 +270,7 @@ fn parse_relationships_xml(
               other =>
                 raise MalformedPackage("unknown TargetMode value: " + other)
             }
-            items.push({ id, rel_type, target, target_mode })
+            items.push({ id, rel_type, target, target_mode, })
           }
           other =>
             raise MalformedPackage("unexpected element in .rels: " + other)
@@ -285,7 +285,7 @@ fn parse_relationships_xml(
   if !saw_root {
     raise MalformedPackage("relationships XML missing <Relationships> root")
   }
-  { source, items }
+  { source, items, }
 }
 
 ///|

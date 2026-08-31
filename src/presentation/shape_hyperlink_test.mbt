@@ -136,7 +136,7 @@ fn test_connector(id : Int) -> @slide.Connector {
     id,
     name: "conn",
     transform: Some(
-      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L), }, extent={
         cx: @units.Emu(1_000_000L),
         cy: @units.Emu(0L),
       }),
@@ -175,12 +175,12 @@ test "group with_hyperlink_to_slide: rt_slide rel + ppaction jump" {
     id: 2,
     name: "grp",
     transform: Some(
-      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L) }, extent={
+      @slide.Transform::new(offset={ x: @units.Emu(0L), y: @units.Emu(0L), }, extent={
         cx: @units.Emu(1_000_000L),
         cy: @units.Emu(1_000_000L),
       }),
     ),
-    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L) }),
+    child_offset: Some({ x: @units.Emu(0L), y: @units.Emu(0L), }),
     child_extent: Some({
       cx: @units.Emu(1_000_000L),
       cy: @units.Emu(1_000_000L),

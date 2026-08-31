@@ -53,7 +53,7 @@ fn parse_custom_geometry(r : @xml.XmlReader) -> CustomGeometry raise SlideError 
       _ => ()
     }
   }
-  { adjust_values, guides, connection_sites, rect, paths, extension }
+  { adjust_values, guides, connection_sites, rect, paths, extension, }
 }
 
 ///|
@@ -103,7 +103,7 @@ fn parse_cxn(
     Some(p) => p
     None => raise Malformed("<a:cxn> is missing required <a:pos>")
   }
-  { ang, pos: p, extension }
+  { ang, pos: p, extension, }
 }
 
 ///|
@@ -201,7 +201,7 @@ fn parse_path(
       _ => ()
     }
   }
-  { w, h, fill, stroke, extrusion_ok, commands, extension }
+  { w, h, fill, stroke, extrusion_ok, commands, extension, }
 }
 
 ///|
@@ -298,7 +298,7 @@ fn parse_arc_to(
 fn parse_pt_attrs(
   attrs : Array[(@xml.QName, String)],
 ) -> PathPoint raise SlideError {
-  { x: parse_adj_coord_attr(attrs, "x"), y: parse_adj_coord_attr(attrs, "y") }
+  { x: parse_adj_coord_attr(attrs, "x"), y: parse_adj_coord_attr(attrs, "y"), }
 }
 
 ///|

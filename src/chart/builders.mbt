@@ -71,7 +71,7 @@ pub impl Show for ChartSeries with fn output(self, logger) {
 /// Empty chart-data value. Use `with_category` / `with_series` to
 /// populate it.
 pub fn ChartData::new() -> ChartData {
-  { categories: [], series: [] }
+  { categories: [], series: [], }
 }
 
 ///|
@@ -83,7 +83,7 @@ pub fn ChartData::with_category(self : ChartData, c : String) -> ChartData {
     cats.push(x)
   }
   cats.push(c)
-  { categories: cats, series: self.series }
+  { categories: cats, series: self.series, }
 }
 
 ///|
@@ -98,8 +98,8 @@ pub fn ChartData::with_series(
   for x in self.series {
     s.push(x)
   }
-  s.push({ label, values })
-  { categories: self.categories, series: s }
+  s.push({ label, values, })
+  { categories: self.categories, series: s, }
 }
 
 // --- ScatterData / BubbleData ---
@@ -139,7 +139,7 @@ pub impl Show for ScatterSeries with fn output(self, logger) {
 /// Construct an empty `ScatterData`. Use `with_series` to add
 /// XY series.
 pub fn ScatterData::new() -> ScatterData {
-  { series: [] }
+  { series: [], }
 }
 
 ///|
@@ -155,8 +155,8 @@ pub fn ScatterData::with_series(
   for v in self.series {
     s.push(v)
   }
-  s.push({ label, x, y })
-  { series: s }
+  s.push({ label, x, y, })
+  { series: s, }
 }
 
 ///|
@@ -194,7 +194,7 @@ pub impl Show for BubbleSeries with fn output(self, logger) {
 /// Construct an empty `BubbleData`. Use `with_series` to add
 /// XYS series.
 pub fn BubbleData::new() -> BubbleData {
-  { series: [] }
+  { series: [], }
 }
 
 ///|
@@ -210,8 +210,8 @@ pub fn BubbleData::with_series(
   for v in self.series {
     s.push(v)
   }
-  s.push({ label, x, y, size })
-  { series: s }
+  s.push({ label, x, y, size, })
+  { series: s, }
 }
 
 // --- Combo charts ---
@@ -261,7 +261,7 @@ pub fn Chart::of_combo(
       }),
       // Secondary category axis: present so the secondary value axis has a
       // crossing partner, but deleted so it doesn't render.
-      CatAx({ ..simple_axis_core("catAx", 3, 4), delete: Some(true) }),
+      CatAx({ ..simple_axis_core("catAx", 3, 4), delete: Some(true), }),
     ]
   } else {
     [
@@ -819,10 +819,10 @@ fn normalize_stock_series(data : ChartData, required : Int) -> ChartData {
       for _ in 0..<data.categories.length() {
         zeros.push(0.0)
       }
-      s.push({ label: "", values: zeros })
+      s.push({ label: "", values: zeros, })
     }
   }
-  { categories: data.categories, series: s }
+  { categories: data.categories, series: s, }
 }
 
 ///|
@@ -1165,7 +1165,7 @@ fn simple_axis_core(
 fn val_attr_element(local_name : String, value : String) -> @xml.XmlElement {
   let qname = @xml.QName::new(@oxml.chart_ns, local_name)
   let val_attr = (@xml.QName::unqualified("val"), value)
-  { name: qname, attributes: [val_attr], children: [] }
+  { name: qname, attributes: [val_attr], children: [], }
 }
 
 ///|

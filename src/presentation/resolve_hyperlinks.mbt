@@ -50,7 +50,7 @@ fn Presentation::resolve_slide_hyperlinks(
   if ctx.changed {
     self.write_rels_for_part(slide_name, ctx.rels)
   }
-  { ..slide, shapes: new_shapes }
+  { ..slide, shapes: new_shapes, }
 }
 
 ///|
@@ -146,18 +146,18 @@ fn resolve_shape_hyperlinks(
         Some(tb) => Some(resolve_text_body_hyperlinks(tb, ctx))
         None => None
       }
-      AutoShape({ ..a, hyperlink: new_hyperlink, text_body: new_text_body })
+      AutoShape({ ..a, hyperlink: new_hyperlink, text_body: new_text_body, })
     }
     Picture(p) =>
       match p.hyperlink {
         Some(h) =>
-          Picture({ ..p, hyperlink: Some(resolve_shape_hyperlink(h, ctx)) })
+          Picture({ ..p, hyperlink: Some(resolve_shape_hyperlink(h, ctx)), })
         None => shape
       }
     Connector(c) =>
       match c.hyperlink {
         Some(h) =>
-          Connector({ ..c, hyperlink: Some(resolve_shape_hyperlink(h, ctx)) })
+          Connector({ ..c, hyperlink: Some(resolve_shape_hyperlink(h, ctx)), })
         None => shape
       }
     GraphicFrame(gf) =>
@@ -178,7 +178,7 @@ fn resolve_shape_hyperlinks(
       for c in g.children {
         new_children.push(resolve_shape_hyperlinks(c, ctx))
       }
-      Group({ ..g, hyperlink: new_hyperlink, children: new_children })
+      Group({ ..g, hyperlink: new_hyperlink, children: new_children, })
     }
     _ => shape
   }
@@ -195,9 +195,9 @@ fn resolve_text_body_hyperlinks(
     for c in p.content {
       new_content.push(resolve_paragraph_content(c, ctx))
     }
-    new_paragraphs.push({ ..p, content: new_content })
+    new_paragraphs.push({ ..p, content: new_content, })
   }
-  { ..tb, paragraphs: new_paragraphs }
+  { ..tb, paragraphs: new_paragraphs, }
 }
 
 ///|
@@ -208,12 +208,12 @@ fn resolve_paragraph_content(
   match c {
     RunContent(r) => {
       let new_props = resolve_run_properties(r.properties, ctx)
-      RunContent({ ..r, properties: new_props })
+      RunContent({ ..r, properties: new_props, })
     }
     Break(rp) => Break(resolve_run_properties(rp, ctx))
     FieldContent(f) => {
       let new_props = resolve_run_properties(f.properties, ctx)
-      FieldContent({ ..f, properties: new_props })
+      FieldContent({ ..f, properties: new_props, })
     }
   }
 }
@@ -302,7 +302,7 @@ fn resolve_shape_hyperlink(
     None => hl
     Some(target) => {
       let (rid, action) = allocate_hyperlink(ctx, target)
-      { target: None, click: Some(rid), action }
+      { target: None, click: Some(rid), action, }
     }
   }
 }

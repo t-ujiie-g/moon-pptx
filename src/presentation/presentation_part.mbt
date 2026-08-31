@@ -186,7 +186,7 @@ fn parse_id_list_into(
             None => raise Malformed("sldMasterId id is not an integer")
           }
           let r_id = require_r_id(attrs)
-          out.push({ id, r_id })
+          out.push({ id, r_id, })
         }
         skip_subtree(r)
       }
@@ -212,7 +212,7 @@ fn parse_slide_id_list_into(
             None => raise Malformed("sldId id is not an integer")
           }
           let r_id = require_r_id(attrs)
-          out.push({ id, r_id })
+          out.push({ id, r_id, })
         }
         skip_subtree(r)
       }
@@ -246,7 +246,7 @@ fn parse_single_id_list(
             None => 0L
           }
           let r_id = require_r_id(attrs)
-          out = Some({ id, r_id })
+          out = Some({ id, r_id, })
         }
         skip_subtree(r)
       }
@@ -275,7 +275,7 @@ fn parse_slide_size(
     Some(s) => s
     None => ""
   }
-  { cx, cy, size_type }
+  { cx, cy, size_type, }
 }
 
 ///|
@@ -292,7 +292,7 @@ fn parse_notes_size(
     Some(n) => @units.Emu(n)
     None => raise Malformed("notesSz cy is not an integer")
   }
-  { cx, cy }
+  { cx, cy, }
 }
 
 // --- writer ---

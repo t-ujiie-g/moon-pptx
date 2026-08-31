@@ -65,7 +65,7 @@ fn parse_theme_xml(xml : String) -> Theme raise ThemeError {
   }
   match (color_scheme, font_scheme) {
     (Some(cs), Some(fs)) =>
-      { name, color_scheme: cs, font_scheme: fs, extension }
+      { name, color_scheme: cs, font_scheme: fs, extension, }
     (None, _) => raise MalformedTheme("theme is missing <a:clrScheme>")
     (_, None) => raise MalformedTheme("theme is missing <a:fontScheme>")
   }
@@ -233,7 +233,7 @@ fn parse_font_scheme(
     }
   }
   match (major, minor) {
-    (Some(mj), Some(mn)) => { name, major_font: mj, minor_font: mn, extension }
+    (Some(mj), Some(mn)) => { name, major_font: mj, minor_font: mn, extension, }
     (None, _) => raise MalformedTheme("fontScheme missing majorFont")
     (_, None) => raise MalformedTheme("fontScheme missing minorFont")
   }
@@ -272,7 +272,7 @@ fn parse_font_collection(
             "font" => {
               let script = require_attr(attrs, "script")
               let typeface = require_attr(attrs, "typeface")
-              scripts.push({ script, typeface })
+              scripts.push({ script, typeface, })
               skip_subtree(r)
             }
             _ => extension.push(collect_subtree_unknown(r, child, attrs))
@@ -282,7 +282,7 @@ fn parse_font_collection(
       _ => ()
     }
   }
-  { latin, ea, cs, scripts, extension }
+  { latin, ea, cs, scripts, extension, }
 }
 
 // --- shared event helpers ---

@@ -56,7 +56,7 @@ pub fn NodeStyle::new(
   line? : @units.RgbColor,
   text_color? : @units.RgbColor,
 ) -> NodeStyle {
-  { fill, line, text_color }
+  { fill, line, text_color, }
 }
 
 ///|
@@ -74,34 +74,34 @@ pub(all) struct Node {
 ///|
 /// A leaf node carrying just `text` (no children).
 pub fn Node::leaf(text : String) -> Node {
-  { text, children: [], style: None }
+  { text, children: [], style: None, }
 }
 
 ///|
 /// A node with `text` and the given `children`.
 pub fn Node::new(text : String, children : Array[Node]) -> Node {
-  { text, children, style: None }
+  { text, children, style: None, }
 }
 
 ///|
 /// This node with its box filled `rgb` (other style aspects unchanged).
 pub fn Node::with_fill(self : Node, rgb : @units.RgbColor) -> Node {
   let s = self.style.unwrap_or(NodeStyle::new())
-  { ..self, style: Some({ ..s, fill: Some(rgb) }) }
+  { ..self, style: Some({ ..s, fill: Some(rgb), }), }
 }
 
 ///|
 /// This node with its box outlined `rgb` (other style aspects unchanged).
 pub fn Node::with_line(self : Node, rgb : @units.RgbColor) -> Node {
   let s = self.style.unwrap_or(NodeStyle::new())
-  { ..self, style: Some({ ..s, line: Some(rgb) }) }
+  { ..self, style: Some({ ..s, line: Some(rgb), }), }
 }
 
 ///|
 /// This node with its text coloured `rgb` (other style aspects unchanged).
 pub fn Node::with_text_color(self : Node, rgb : @units.RgbColor) -> Node {
   let s = self.style.unwrap_or(NodeStyle::new())
-  { ..self, style: Some({ ..s, text_color: Some(rgb) }) }
+  { ..self, style: Some({ ..s, text_color: Some(rgb), }), }
 }
 
 ///|

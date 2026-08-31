@@ -130,7 +130,7 @@ pub(all) struct SchemeColor {
 ///|
 /// Construct a scheme color reference with no transforms.
 pub fn SchemeColor::new(base : ThemeColor) -> SchemeColor {
-  { base, transforms: [] }
+  { base, transforms: [], }
 }
 
 ///|
@@ -145,7 +145,7 @@ pub fn SchemeColor::with_transform(
     combined.push(x)
   }
   combined.push(t)
-  { base: self.base, transforms: combined }
+  { base: self.base, transforms: combined, }
 }
 
 ///|

@@ -112,7 +112,7 @@ fn Presentation::attach_slide_to_presentation(
       )
   }
   let next_id = next_slide_id(pres.sld_ids)
-  pres.sld_ids.push({ id: next_id, r_id: new_slide_rid })
+  pres.sld_ids.push({ id: next_id, r_id: new_slide_rid, })
   self.replace_part_bytes(pres_name, pres.serialize(), @oxml.ct_presentation)
   let pres_rels = self.pkg.relationships_for(pres_name) catch {
     e => raise OpcFailure(e.to_string())

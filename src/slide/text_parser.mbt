@@ -32,7 +32,7 @@ fn parse_text_body(r : @xml.XmlReader) -> TextBody raise SlideError {
       _ => ()
     }
   }
-  { body_properties, list_style, paragraphs, extension }
+  { body_properties, list_style, paragraphs, extension, }
 }
 
 ///|
@@ -141,7 +141,7 @@ fn parse_list_style(r : @xml.XmlReader) -> ListStyle raise SlideError {
       _ => ()
     }
   }
-  { default_props, level_props, extension }
+  { default_props, level_props, extension, }
 }
 
 ///|
@@ -191,7 +191,7 @@ fn parse_paragraph(r : @xml.XmlReader) -> Paragraph raise SlideError {
       _ => ()
     }
   }
-  { properties, content, extension }
+  { properties, content, extension, }
 }
 
 ///|
@@ -353,7 +353,7 @@ fn parse_run(r : @xml.XmlReader) -> Run raise SlideError {
       _ => ()
     }
   }
-  { properties, text: buf.to_string(), extension }
+  { properties, text: buf.to_string(), extension, }
 }
 
 ///|
@@ -607,5 +607,5 @@ fn parse_field(
       _ => ()
     }
   }
-  { id, field_type, properties, text: buf.to_string(), extension }
+  { id, field_type, properties, text: buf.to_string(), extension, }
 }

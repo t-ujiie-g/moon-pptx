@@ -175,7 +175,7 @@ fn parse_layout(el : @xml.XmlElement) -> Layout {
       _ => ()
     }
   }
-  { manual_layout, extension }
+  { manual_layout, extension, }
 }
 
 ///|
@@ -213,7 +213,7 @@ fn parse_manual_layout(el : @xml.XmlElement) -> ManualLayout {
       _ => ()
     }
   }
-  { layout_target, x_mode, y_mode, w_mode, h_mode, x, y, w, h, extension }
+  { layout_target, x_mode, y_mode, w_mode, h_mode, x, y, w, h, extension, }
 }
 
 // --- writing -----------------------------------------------------------------

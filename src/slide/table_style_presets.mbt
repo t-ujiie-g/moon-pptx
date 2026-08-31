@@ -174,7 +174,7 @@ pub fn TableProperties::with_style(
   self : TableProperties,
   preset : TableStylePreset,
 ) -> TableProperties {
-  { ..self, table_style_id: Some(preset.guid()) }
+  { ..self, table_style_id: Some(preset.guid()), }
 }
 
 ///|

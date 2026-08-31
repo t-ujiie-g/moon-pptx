@@ -55,7 +55,7 @@ pub fn Picture::builder(
   cx : @units.Emu,
   cy : @units.Emu,
 ) -> PictureUncropped {
-  { pic: Picture::of_image(id, name, embed_id, x, y, cx, cy) }
+  { pic: Picture::of_image(id, name, embed_id, x, y, cx, cy), }
 }
 
 ///|
@@ -69,7 +69,7 @@ pub fn PictureUncropped::with_crop(
   right? : @units.Percentage = @units.Percentage(0.0),
   bottom? : @units.Percentage = @units.Percentage(0.0),
 ) -> PictureCropped {
-  { pic: self.pic.with_crop(left~, top~, right~, bottom~) }
+  { pic: self.pic.with_crop(left~, top~, right~, bottom~), }
 }
 
 ///|
@@ -81,7 +81,7 @@ pub fn PictureUncropped::with_effects(
   outline? : @oxml.Stroke,
   effects? : @oxml.EffectList,
 ) -> PictureFinal {
-  { pic: apply_picture_effects(self.pic, outline, effects) }
+  { pic: apply_picture_effects(self.pic, outline, effects), }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn PictureCropped::with_effects(
   outline? : @oxml.Stroke,
   effects? : @oxml.EffectList,
 ) -> PictureFinal {
-  { pic: apply_picture_effects(self.pic, outline, effects) }
+  { pic: apply_picture_effects(self.pic, outline, effects), }
 }
 
 ///|
@@ -122,11 +122,11 @@ fn apply_picture_effects(
   effects : @oxml.EffectList?,
 ) -> Picture {
   let with_outline = match outline {
-    Some(s) => { ..pic, stroke: Some(s) }
+    Some(s) => { ..pic, stroke: Some(s), }
     None => pic
   }
   match effects {
-    Some(e) => { ..with_outline, effects: Some(e) }
+    Some(e) => { ..with_outline, effects: Some(e), }
     None => with_outline
   }
 }

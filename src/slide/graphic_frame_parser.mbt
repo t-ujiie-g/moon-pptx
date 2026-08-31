@@ -207,7 +207,7 @@ fn parse_table(tbl : @xml.XmlElement) -> Table raise SlideError {
       _ => ()
     }
   }
-  { properties, grid, rows, extension }
+  { properties, grid, rows, extension, }
 }
 
 ///|
@@ -307,7 +307,7 @@ fn parse_tr(tr : @xml.XmlElement) -> TableRow raise SlideError {
       _ => ()
     }
   }
-  { height, cells, extension }
+  { height, cells, extension, }
 }
 
 ///|
@@ -344,7 +344,7 @@ fn parse_tc(tc : @xml.XmlElement) -> TableCell raise SlideError {
       _ => ()
     }
   }
-  { grid_span, row_span, h_merge, v_merge, text_body, properties, extension }
+  { grid_span, row_span, h_merge, v_merge, text_body, properties, extension, }
 }
 
 ///|

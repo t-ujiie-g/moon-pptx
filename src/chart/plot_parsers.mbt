@@ -168,7 +168,7 @@ fn parse_pie_chart(el : @xml.XmlElement) -> PieChartBody raise ChartError {
       _ => ()
     }
   }
-  { vary_colors, series, d_lbls, first_slice_ang, extension }
+  { vary_colors, series, d_lbls, first_slice_ang, extension, }
 }
 
 // --- area / 3-D variants / doughnut / radar ---
@@ -208,7 +208,7 @@ fn parse_area_chart(el : @xml.XmlElement) -> AreaChartBody raise ChartError {
       _ => ()
     }
   }
-  { grouping, vary_colors, series, d_lbls, drop_lines, ax_ids, extension }
+  { grouping, vary_colors, series, d_lbls, drop_lines, ax_ids, extension, }
 }
 
 ///|
@@ -404,7 +404,7 @@ fn parse_pie_3d_chart(el : @xml.XmlElement) -> Pie3DChartBody raise ChartError {
       _ => ()
     }
   }
-  { vary_colors, series, d_lbls, extension }
+  { vary_colors, series, d_lbls, extension, }
 }
 
 ///|
@@ -436,7 +436,7 @@ fn parse_doughnut_chart(
       _ => ()
     }
   }
-  { vary_colors, series, d_lbls, first_slice_ang, hole_size, extension }
+  { vary_colors, series, d_lbls, first_slice_ang, hole_size, extension, }
 }
 
 ///|
@@ -476,7 +476,7 @@ fn parse_radar_chart(el : @xml.XmlElement) -> RadarChartBody raise ChartError {
     Some(s) => s
     None => raise Malformed("<c:radarChart> is missing required <c:radarStyle>")
   }
-  { radar_style: rs, vary_colors, series, d_lbls, ax_ids, extension }
+  { radar_style: rs, vary_colors, series, d_lbls, ax_ids, extension, }
 }
 
 // --- scatter / bubble / stock / surface / ofPie ---
@@ -521,7 +521,7 @@ fn parse_scatter_chart(
     None =>
       raise Malformed("<c:scatterChart> is missing required <c:scatterStyle>")
   }
-  { scatter_style: ss, vary_colors, series, d_lbls, ax_ids, extension }
+  { scatter_style: ss, vary_colors, series, d_lbls, ax_ids, extension, }
 }
 
 ///|
@@ -609,7 +609,7 @@ fn parse_stock_chart(el : @xml.XmlElement) -> StockChartBody raise ChartError {
       _ => ()
     }
   }
-  { series, d_lbls, drop_lines, hi_low_lines, up_down_bars, ax_ids, extension }
+  { series, d_lbls, drop_lines, hi_low_lines, up_down_bars, ax_ids, extension, }
 }
 
 ///|
@@ -642,7 +642,7 @@ fn parse_surface_chart(
       _ => ()
     }
   }
-  { wireframe, series, band_fmts, ax_ids, extension }
+  { wireframe, series, band_fmts, ax_ids, extension, }
 }
 
 ///|
@@ -675,7 +675,7 @@ fn parse_surface_3d_chart(
       _ => ()
     }
   }
-  { wireframe, series, band_fmts, ax_ids, extension }
+  { wireframe, series, band_fmts, ax_ids, extension, }
 }
 
 ///|

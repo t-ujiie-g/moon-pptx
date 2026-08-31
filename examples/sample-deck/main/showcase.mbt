@@ -315,8 +315,8 @@ fn sample_v06_features_slide(
   // Gradient text fill: navy → teal, top-to-bottom.
   let gradient : @oxml.Fill = @oxml.Fill::GradientFill({
     stops: [
-      { position: @units.Percentage(0.0), color: @oxml.Color::srgb(navy) },
-      { position: @units.Percentage(100.0), color: @oxml.Color::srgb(teal) },
+      { position: @units.Percentage(0.0), color: @oxml.Color::srgb(navy), },
+      { position: @units.Percentage(100.0), color: @oxml.Color::srgb(teal), },
     ],
     direction: Linear(@units.Angle(90.0), true),
     rotate_with_shape: None,
@@ -749,7 +749,7 @@ fn sample_v07_features_slide(
 ///|
 /// A `Transform` (offset + extent) in EMU, for master placeholder rects.
 fn tf(x : Int64, y : Int64, cx : Int64, cy : Int64) -> @slide.Transform {
-  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(y) }, extent={
+  @slide.Transform::new(offset={ x: @units.Emu(x), y: @units.Emu(y), }, extent={
     cx: @units.Emu(cx),
     cy: @units.Emu(cy),
   })

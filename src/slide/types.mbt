@@ -54,7 +54,7 @@ pub fn Transform::new(
   flip_h? : Bool = false,
   flip_v? : Bool = false,
 ) -> Transform {
-  { offset, extent, rotation, flip_h, flip_v }
+  { offset, extent, rotation, flip_h, flip_v, }
 }
 
 ///|
@@ -64,7 +64,7 @@ pub fn Transform::with_rotation(
   self : Transform,
   angle : @units.Angle,
 ) -> Transform {
-  { ..self, rotation: Some(angle) }
+  { ..self, rotation: Some(angle), }
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn Transform::with_flip(
   h? : Bool = false,
   v? : Bool = false,
 ) -> Transform {
-  { ..self, flip_h: h, flip_v: v }
+  { ..self, flip_h: h, flip_v: v, }
 }
 
 ///|

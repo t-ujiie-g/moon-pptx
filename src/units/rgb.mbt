@@ -17,7 +17,7 @@ pub(all) struct RgbColor {
 /// Construct an `RgbColor` from three 0–255 channel values.
 /// Each channel is clamped to `[0, 255]`.
 pub fn RgbColor::new(r : Int, g : Int, b : Int) -> RgbColor {
-  { r, g, b }
+  { r, g, b, }
 }
 
 ///|
@@ -34,7 +34,7 @@ pub fn RgbColor::parse_hex(s : String) -> RgbColor raise UnitsError {
   let r = parse_hex_byte(r_hi, r_lo, s)
   let g = parse_hex_byte(g_hi, g_lo, s)
   let b = parse_hex_byte(b_hi, b_lo, s)
-  { r, g, b }
+  { r, g, b, }
 }
 
 ///|

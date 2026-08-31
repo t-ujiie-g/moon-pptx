@@ -171,7 +171,7 @@ fn parse_chart_series_core(
   // matching PowerPoint / LibreOffice behaviour. On write we always
   // emit both leaves.
   let o = order.unwrap_or(i)
-  { idx: i, order: o, tx, sp_pr, trendlines, cat, val, extension }
+  { idx: i, order: o, tx, sp_pr, trendlines, cat, val, extension, }
 }
 
 ///|
@@ -216,7 +216,7 @@ fn parse_scatter_series_core(
   // matching PowerPoint / LibreOffice behaviour. On write we always
   // emit both leaves.
   let o = order.unwrap_or(i)
-  { idx: i, order: o, tx, sp_pr, trendlines, x_val, y_val, extension }
+  { idx: i, order: o, tx, sp_pr, trendlines, x_val, y_val, extension, }
 }
 
 ///|

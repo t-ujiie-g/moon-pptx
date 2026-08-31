@@ -36,7 +36,7 @@ pub(all) struct ContentTypes {
 ///|
 /// An empty catalog with no Default or Override entries.
 pub fn ContentTypes::new() -> ContentTypes {
-  { defaults: [], overrides: [] }
+  { defaults: [], overrides: [], }
 }
 
 ///|
@@ -100,7 +100,7 @@ pub fn ContentTypes::with_default(
     next.push(kv)
   }
   next.push((extension, content_type))
-  { defaults: next, overrides: self.overrides }
+  { defaults: next, overrides: self.overrides, }
 }
 
 ///|
@@ -118,7 +118,7 @@ pub fn ContentTypes::with_override(
     next.push(kv)
   }
   next.push((part_name, content_type))
-  { defaults: self.defaults, overrides: next }
+  { defaults: self.defaults, overrides: next, }
 }
 
 ///|
@@ -139,7 +139,7 @@ pub fn ContentTypes::without_override(
       next.push(kv)
     }
   }
-  { defaults: self.defaults, overrides: next }
+  { defaults: self.defaults, overrides: next, }
 }
 
 // --- internal ---
@@ -244,7 +244,7 @@ fn parse_content_types_xml(xml : String) -> ContentTypes raise OpcError {
   if !saw_root {
     raise MalformedPackage("content types XML missing <Types> root")
   }
-  { defaults, overrides }
+  { defaults, overrides, }
 }
 
 ///|

@@ -34,7 +34,7 @@ pub(all) struct AppProperties {
 /// the `with_*` builders, or read the current values via
 /// `Presentation::app_properties`.
 pub fn AppProperties::new() -> AppProperties {
-  { company: None, manager: None, application: None, app_version: None }
+  { company: None, manager: None, application: None, app_version: None, }
 }
 
 ///|
@@ -43,7 +43,7 @@ pub fn AppProperties::with_company(
   self : AppProperties,
   company : String,
 ) -> AppProperties {
-  { ..self, company: Some(company) }
+  { ..self, company: Some(company), }
 }
 
 ///|
@@ -52,7 +52,7 @@ pub fn AppProperties::with_manager(
   self : AppProperties,
   manager : String,
 ) -> AppProperties {
-  { ..self, manager: Some(manager) }
+  { ..self, manager: Some(manager), }
 }
 
 ///|
@@ -61,7 +61,7 @@ pub fn AppProperties::with_application(
   self : AppProperties,
   application : String,
 ) -> AppProperties {
-  { ..self, application: Some(application) }
+  { ..self, application: Some(application), }
 }
 
 ///|
@@ -70,7 +70,7 @@ pub fn AppProperties::with_app_version(
   self : AppProperties,
   app_version : String,
 ) -> AppProperties {
-  { ..self, app_version: Some(app_version) }
+  { ..self, app_version: Some(app_version), }
 }
 
 ///|
@@ -200,10 +200,10 @@ pub fn Presentation::app_properties(
     }
     let value = Some(element_text(el))
     props = match el.name.local_name {
-      "Company" => { ..props, company: value }
-      "Manager" => { ..props, manager: value }
-      "Application" => { ..props, application: value }
-      "AppVersion" => { ..props, app_version: value }
+      "Company" => { ..props, company: value, }
+      "Manager" => { ..props, manager: value, }
+      "Application" => { ..props, application: value, }
+      "AppVersion" => { ..props, app_version: value, }
       _ => props
     }
   }

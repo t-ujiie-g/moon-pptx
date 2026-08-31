@@ -45,7 +45,7 @@ test "Slide::map_shapes applies f to every shape" {
   // Rename every AutoShape; leave other kinds untouched.
   let renamed = slide.map_shapes(s => {
     match s {
-      AutoShape(a) => AutoShape({ ..a, name: "X" })
+      AutoShape(a) => AutoShape({ ..a, name: "X", })
       other => other
     }
   })
@@ -72,7 +72,7 @@ test "Slide::with_shape_mapped transforms only the indexed shape" {
   let slide = @slide.Slide::parse(typical_title_slide())
   let edited = slide.with_shape_mapped(1, s => {
     match s {
-      AutoShape(a) => AutoShape({ ..a, name: "Only2" })
+      AutoShape(a) => AutoShape({ ..a, name: "Only2", })
       other => other
     }
   })
@@ -107,7 +107,7 @@ test "Slide::with_shape_by_id transforms the matching shape only" {
   let slide = @slide.Slide::parse(typical_title_slide())
   let edited = slide.with_shape_by_id(3, s => {
     match s {
-      AutoShape(a) => AutoShape({ ..a, name: "ById" })
+      AutoShape(a) => AutoShape({ ..a, name: "ById", })
       other => other
     }
   })
@@ -152,7 +152,7 @@ test "an id-targeted rename round-trips through serialize" {
   let slide = @slide.Slide::parse(typical_title_slide())
   let edited = slide.with_shape_by_id(3, s => {
     match s {
-      AutoShape(a) => AutoShape({ ..a, name: "Persisted" })
+      AutoShape(a) => AutoShape({ ..a, name: "Persisted", })
       other => other
     }
   })
