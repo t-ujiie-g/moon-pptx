@@ -32,14 +32,15 @@ test "ADR-004: BodyProperties captures prstTxWarp / extLst" {
 }
 
 ///|
-test "ADR-004: Paragraph captures endParaRPr" {
+test "Paragraph models endParaRPr rather than preserving it verbatim" {
   let inner = "<a:p><a:r><a:t>hello</a:t></a:r><a:endParaRPr lang=\"en-US\" sz=\"1800\"/></a:p>"
   let slide = @slide.Slide::parse(slide_with_txbody(inner))
   let p = first_auto_shape(slide).text_body.unwrap().paragraphs[0]
-  assert_eq(p.extension.length(), 1)
-  assert_eq(p.extension[0].name.local_name, "endParaRPr")
-  // endParaRPr attributes survive too.
-  assert_eq(p.extension[0].attributes.length(), 2)
+  // It is typed now, so it no longer lands on the ADR-004 escape hatch.
+  assert_eq(p.extension.length(), 0)
+  let end = p.end_run_properties.unwrap()
+  assert_eq(end.lang, "en-US")
+  assert_eq(end.font_size, Some(@units.Pt(18.0)))
 }
 
 ///|

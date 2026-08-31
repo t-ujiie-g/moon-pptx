@@ -187,7 +187,7 @@ Two entry points live under [`examples/`](examples/):
 ## Comparison with python-pptx and PptxGenJS
 
 Compared against **python-pptx 1.0.2** and **PptxGenJS 4.0.1** (checked
-2026-09-01). moon-pptx column reflects **0.7.2**.
+2026-09-01). moon-pptx column reflects the current `main`.
 
 Legend: ✅ supported · △ partial, XML-level, or preserved-but-not-buildable · ❌ not supported
 
@@ -237,7 +237,6 @@ Kept deliberately honest — these are the reasons to pick something else:
 
 | Gap | Who has it | Status here |
 |---|---|---|
-| **RTL / bidi text** | PptxGenJS | ❌ not supported — the clearest gap vs PptxGenJS |
 | Asian-script font fallback | PptxGenJS | △ `complex_script` field, no per-run resolution |
 | Ecosystem maturity — tutorials, StackOverflow answers, years of production use | both | moon-pptx is young; the surrounding MoonBit ecosystem is younger still |
 | WMF / EMF images | python-pptx | △ preserved on read, not creatable |
@@ -272,8 +271,9 @@ omitted — assume parity unless listed.
 | Character spacing / kerning | ✅ / △ | ✅ / △ | ✅ / ✅ |
 | Text highlight / outline / glow / shadow | ❌ / △ / ❌ / ❌ | ✅ | ✅ |
 | Non-solid text fill (gradient / pattern) | △ | △ | ✅ full `Fill` ADT |
+| Paragraph-mark properties (`<a:endParaRPr>`) | △ | ❌ | ✅ typed `end_run_properties` |
 | Line spacing, absolute + percent | ✅ | ✅ | ✅ `TextSpacing` ADT |
-| RTL / bidi | △ | ✅ | ❌ |
+| RTL / bidi paragraph direction | △ | ✅ | ✅ `with_rtl` |
 | WordArt / preset text warp | ❌ | △ | △ preserved only |
 | 3-D bevel / scene3d | △ | △ | △ preserved only |
 

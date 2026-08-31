@@ -287,6 +287,7 @@ fn build_notes_slide(text : String) -> @notes.NotesSlide {
   let para : @slide.Paragraph = {
     properties: @slide.ParagraphProperties::default(),
     content: [@slide.RunContent(run)],
+    end_run_properties: None,
     extension: [],
   }
   let body : @slide.TextBody = {

@@ -345,14 +345,17 @@ pub(all) struct MotionPoint {
 pub(all) struct Paragraph {
   properties : ParagraphProperties
   content : Array[ParagraphContent]
+  end_run_properties : RunProperties?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Paragraph::of_styled_text(String, RunProperties) -> Self
 pub fn Paragraph::of_text(String) -> Self
 pub fn Paragraph::plain_text(Self) -> String
 pub fn Paragraph::with_alignment(Self, TextAlignment) -> Self
+pub fn Paragraph::with_end_run_properties(Self, RunProperties) -> Self
 pub fn Paragraph::with_line_spacing(Self, TextSpacing) -> Self
 pub fn Paragraph::with_properties(Self, ParagraphProperties) -> Self
+pub fn Paragraph::with_rtl(Self, Bool) -> Self
 pub fn Paragraph::with_space_after(Self, TextSpacing) -> Self
 pub fn Paragraph::with_space_before(Self, TextSpacing) -> Self
 
@@ -371,6 +374,7 @@ pub(all) struct ParagraphProperties {
   space_before : TextSpacing?
   space_after : TextSpacing?
   bullet : Bullet?
+  rtl : Bool?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ParagraphProperties::default() -> Self

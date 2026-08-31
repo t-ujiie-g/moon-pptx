@@ -6,9 +6,9 @@ moon-pptx:
 | Where | What | When to use |
 |---|---|---|
 | [`README.md`](README.md) (this file) | Cookbook of focused recipes, one feature per section | Quick reference / copy-paste templates |
-| [`sample-deck/`](sample-deck/) | Standalone MoonBit module — a 23-slide deck built end-to-end (every feature through v0.5) | "Show me a real consumer project" / regenerate `sample.pptx` for verification |
+| [`sample-deck/`](sample-deck/) | Standalone MoonBit module — a 26-slide deck built end-to-end, exercising every typed feature | "Show me a real consumer project" / regenerate `sample.pptx` for verification |
 
-`sample-deck/` is its own MoonBit module (`moon.mod.json`) and depends
+`sample-deck/` is its own MoonBit module (`moon.mod`) and depends
 on `t-ujiie-g/moon-pptx` exactly the way a downstream consumer would.
 The recipes below use the same import shape (`@presentation.*`,
 `@chart.*`, …) so they're copy-pastable into a project that
@@ -621,6 +621,46 @@ prs.set_app_properties_mut(
 `app_properties()` reads the current values back; fields left unset by
 the merge — and everything else in app.xml, word counts and
 `TitlesOfParts` included — are preserved as-is.
+
+---
+
+## 20. Right-to-left text and paragraph-mark formatting
+
+`with_rtl(true)` sets the `rtl` attribute on the paragraph, which is what
+Arabic, Hebrew, and Persian layouts need. Keep the runs in *logical*
+order — PowerPoint does the bidi reordering when it renders.
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+let rp = @slide.RunProperties::default().with_font_size(@units.Pt(28.0))
+let para = @slide.Paragraph::of_styled_text("مرحبا بالعالم", rp).with_rtl(true)
+
+// `end_run_properties` styles the paragraph mark itself: it is what an
+// empty paragraph is sized by, and what the next character typed at the
+// end of the paragraph inherits. Here it gives a blank spacer paragraph
+// a real height without needing a dummy run.
+let spacer = @slide.Paragraph::of_text("").with_end_run_properties(
+  @slide.RunProperties::default().with_font_size(@units.Pt(12.0)),
+)
+
+let body = @slide.TextBody::of_paragraphs([para, spacer])
+let shape = @slide.AutoShape::textbox(
+  2, "Arabic",
+  prs.pct_w(10.0), prs.pct_h(30.0),
+  prs.pct_w(80.0), prs.pct_h(25.0),
+  "",
+).with_text_body(body)
+
+prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(shape)))
+let _bytes = prs.save()
+```
+
+Direction is per paragraph, so a single text box can mix an RTL heading
+with LTR body text. Leaving `with_rtl` off is not the same as
+`with_rtl(false)`: unset inherits direction from the list style and
+master, while `false` pins the paragraph to left-to-right.
 
 ---
 

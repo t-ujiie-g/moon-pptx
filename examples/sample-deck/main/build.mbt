@@ -421,16 +421,11 @@ fn sample_text_slide(
   let bullet_rp = @slide.RunProperties::default()
     .with_font_size(@units.Pt(16.0))
     .with_color(@units.RgbColor::new(0x33, 0x33, 0x33))
+  // Spread from `default()` rather than listing every field: the record
+  // stays valid when the library adds a property.
   let bullet_pp : @slide.ParagraphProperties = {
-    level: 0,
-    alignment: None,
-    margin_left: None,
-    indent: None,
-    line_spacing: None,
-    space_before: None,
-    space_after: None,
+    ..@slide.ParagraphProperties::default(),
     bullet: Some(@slide.AutoNum(@slide.AutoNumType::ArabicPeriod, 1)),
-    extension: [],
   }
   let b1 = @slide.Paragraph::of_styled_text(
     "Numbered list item one (arabicPeriod).", bullet_rp,

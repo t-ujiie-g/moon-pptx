@@ -26,11 +26,16 @@ fn slide_with_ppr(ppr_body : String) -> FixedArray[Byte] {
 }
 
 ///|
-fn ppr_of(s : @slide.Slide) -> @slide.ParagraphProperties {
+fn para_of(s : @slide.Slide) -> @slide.Paragraph {
   match s.shapes[0] {
-    AutoShape(sp) => sp.text_body.unwrap().paragraphs[0].properties
+    AutoShape(sp) => sp.text_body.unwrap().paragraphs[0]
     _ => abort("expected AutoShape")
   }
+}
+
+///|
+fn ppr_of(s : @slide.Slide) -> @slide.ParagraphProperties {
+  para_of(s).properties
 }
 
 // --- attributes ---
@@ -285,4 +290,149 @@ test "AutoNumType::from_xml round-trips a representative spread" {
     assert_true(!(@slide.AutoNumType::from_xml(c) is None))
   }
   assert_true(@slide.AutoNumType::from_xml("notAScheme") is None)
+}
+
+// --- rtl (right-to-left paragraph direction) ---
+
+///|
+test "pPr: rtl accepts both OOXML boolean spellings" {
+  for raw in ["1", "true"] {
+    let slide = @slide.Slide::parse(
+      slide_with_ppr("<a:pPr rtl=\"" + raw + "\"/>"),
+    )
+    assert_eq(ppr_of(slide).rtl, Some(true))
+  }
+  for raw in ["0", "false"] {
+    let slide = @slide.Slide::parse(
+      slide_with_ppr("<a:pPr rtl=\"" + raw + "\"/>"),
+    )
+    assert_eq(ppr_of(slide).rtl, Some(false))
+  }
+}
+
+///|
+test "pPr: absent rtl inherits rather than defaulting to LTR" {
+  let slide = @slide.Slide::parse(slide_with_ppr("<a:pPr lvl=\"1\"/>"))
+  assert_eq(ppr_of(slide).rtl, None)
+}
+
+///|
+test "pPr: rtl round-trips (parse → serialize → parse)" {
+  for want in [true, false] {
+    let raw = if want { "1" } else { "0" }
+    let s1 = @slide.Slide::parse(slide_with_ppr("<a:pPr rtl=\"" + raw + "\"/>"))
+    let s2 = @slide.Slide::parse(s1.serialize())
+    assert_eq(ppr_of(s2).rtl, Some(want))
+    assert_true(ppr_of(s2) == ppr_of(s1))
+  }
+}
+
+///|
+test "pPr: rtl alone is enough to emit a <a:pPr>" {
+  // Guards `needs_p_pr` — a paragraph whose only non-default property is
+  // rtl must still emit the wrapper instead of dropping the attribute.
+  let s0 = @slide.Slide::parse(slide_with_ppr(""))
+  assert_true(ppr_of(s0) == @slide.ParagraphProperties::default())
+  let s1 = s0.map_shapes(sh => {
+    match sh {
+      AutoShape(sp) => {
+        let body = sp.text_body.unwrap()
+        AutoShape(
+          sp.with_text_body({
+            ..body,
+            paragraphs: body.paragraphs.map(p => p.with_rtl(true)),
+          }),
+        )
+      }
+      other => other
+    }
+  })
+  let s2 = @slide.Slide::parse(s1.serialize())
+  assert_eq(ppr_of(s2).rtl, Some(true))
+}
+
+///|
+test "Paragraph::with_rtl sets only the direction" {
+  let p = @slide.Paragraph::of_text("שלום").with_rtl(true)
+  assert_eq(p.properties.rtl, Some(true))
+  // Everything else stays at its default so the builder composes.
+  assert_true(
+    p.properties ==
+    { ..@slide.ParagraphProperties::default(), rtl: Some(true), },
+  )
+  assert_eq(p.with_rtl(false).properties.rtl, Some(false))
+}
+
+// --- endParaRPr (properties of the paragraph mark) ---
+
+///|
+/// A slide with one paragraph: a trivial run followed by `end_para` as
+/// the paragraph's terminal `<a:endParaRPr>` (which is last per the spec,
+/// so `slide_with_ppr` cannot place it).
+fn slide_with_end_para_rpr(end_para : String) -> FixedArray[Byte] {
+  let xml = "<?xml version=\"1.0\"?>" +
+    "<p:sld xmlns:p=\"" +
+    pml_ns +
+    "\" xmlns:a=\"" +
+    dml_ns +
+    "\">" +
+    "<p:cSld><p:spTree>" +
+    "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>" +
+    "<p:sp>" +
+    "<p:nvSpPr><p:cNvPr id=\"2\" name=\"T\"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>" +
+    "<p:spPr/>" +
+    "<p:txBody><a:p><a:r><a:t>x</a:t></a:r>" +
+    end_para +
+    "</a:p></p:txBody>" +
+    "</p:sp>" +
+    "</p:spTree></p:cSld></p:sld>"
+  @oxml.string_to_bytes(xml)
+}
+
+///|
+test "endParaRPr: round-trips through serialize with its formatting" {
+  let s1 = @slide.Slide::parse(
+    slide_with_end_para_rpr(
+      "<a:endParaRPr lang=\"ar-SA\" sz=\"2400\" b=\"1\"/>",
+    ),
+  )
+  let s2 = @slide.Slide::parse(s1.serialize())
+  assert_true(para_of(s2) == para_of(s1))
+  let end = para_of(s2).end_run_properties.unwrap()
+  assert_eq(end.lang, "ar-SA")
+  assert_eq(end.font_size, Some(@units.Pt(24.0)))
+  assert_eq(end.bold, Some(true))
+}
+
+///|
+test "endParaRPr: absent stays None and is not emitted" {
+  let s1 = @slide.Slide::parse(slide_with_ppr("<a:pPr/>"))
+  assert_eq(para_of(s1).end_run_properties, None)
+  let s2 = @slide.Slide::parse(s1.serialize())
+  assert_eq(para_of(s2).end_run_properties, None)
+}
+
+///|
+test "Paragraph::with_end_run_properties round-trips a built paragraph" {
+  let end = @slide.RunProperties::default().with_font_size(@units.Pt(32.0))
+  let s0 = @slide.Slide::parse(slide_with_ppr(""))
+  let s1 = s0.map_shapes(sh => {
+    match sh {
+      AutoShape(sp) => {
+        let body = sp.text_body.unwrap()
+        AutoShape(
+          sp.with_text_body({
+            ..body,
+            paragraphs: body.paragraphs.map(p => p.with_end_run_properties(end)),
+          }),
+        )
+      }
+      other => other
+    }
+  })
+  let s2 = @slide.Slide::parse(s1.serialize())
+  assert_eq(
+    para_of(s2).end_run_properties.unwrap().font_size,
+    Some(@units.Pt(32.0)),
+  )
 }

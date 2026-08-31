@@ -21,6 +21,7 @@ pub fn Paragraph::of_text(text : String) -> Paragraph {
   {
     properties: ParagraphProperties::default(),
     content: [RunContent(run)],
+    end_run_properties: None,
     extension: [],
   }
 }
@@ -37,6 +38,7 @@ pub fn Paragraph::of_styled_text(
   {
     properties: ParagraphProperties::default(),
     content: [RunContent(run)],
+    end_run_properties: None,
     extension: [],
   }
 }
@@ -60,6 +62,28 @@ pub fn Paragraph::with_alignment(
   align : TextAlignment,
 ) -> Paragraph {
   { ..self, properties: { ..self.properties, alignment: Some(align), }, }
+}
+
+///|
+/// Set the paragraph's reading direction (`rtl` on `<a:pPr>`). `true`
+/// lays the paragraph out right-to-left, which is what Arabic, Hebrew,
+/// and Persian text needs; PowerPoint does the bidi reordering itself,
+/// so the runs stay in logical order.
+pub fn Paragraph::with_rtl(self : Paragraph, rtl : Bool) -> Paragraph {
+  { ..self, properties: { ..self.properties, rtl: Some(rtl), }, }
+}
+
+///|
+/// Set `<a:endParaRPr>` — the character properties applied to the
+/// paragraph mark itself. This is what an empty paragraph is styled by,
+/// and what the next character typed at the end of the paragraph
+/// inherits; set it when a blank spacer paragraph needs a specific
+/// height, or when trailing text must not pick up the last run's format.
+pub fn Paragraph::with_end_run_properties(
+  self : Paragraph,
+  properties : RunProperties,
+) -> Paragraph {
+  { ..self, end_run_properties: Some(properties), }
 }
 
 ///|

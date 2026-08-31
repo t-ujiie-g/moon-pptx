@@ -432,6 +432,9 @@ pub(all) struct ParagraphProperties {
   space_after : TextSpacing?
   /// Bullet specification — `None` means "inherit from list style".
   bullet : Bullet?
+  /// `rtl` — right-to-left paragraph direction. `None` inherits from the
+  /// list style / master rather than meaning left-to-right.
+  rtl : Bool?
   /// Lossless preservation (ADR-004): unmodelled `<a:pPr>` children
   /// (`<a:defRPr>`, `<a:tabLst>`, `<a:buFont>`, `<a:buClr>`,
   /// `<a:buSzPct>`, `<a:extLst>`, foreign-namespace siblings).
@@ -464,6 +467,7 @@ pub fn ParagraphProperties::default() -> ParagraphProperties {
     space_before: None,
     space_after: None,
     bullet: None,
+    rtl: None,
     extension: [],
   }
 }
@@ -512,10 +516,14 @@ pub(all) enum ParagraphContent {
 pub(all) struct Paragraph {
   properties : ParagraphProperties
   content : Array[ParagraphContent]
+  /// `<a:endParaRPr>` — the character properties the *next* character
+  /// typed at the end of this paragraph inherits, and what an empty
+  /// paragraph is styled by. PowerPoint writes it on nearly every
+  /// paragraph it saves; `None` means the element was absent.
+  end_run_properties : RunProperties?
   /// Lossless preservation (ADR-004): unmodelled `<a:p>` children that
-  /// are neither `<a:pPr>` nor `<a:r>` / `<a:br>` / `<a:fld>` —
-  /// typically `<a:endParaRPr>` (which we don't model yet) or foreign-
-  /// namespace extensions.
+  /// are neither `<a:pPr>` / `<a:endParaRPr>` nor `<a:r>` / `<a:br>` /
+  /// `<a:fld>` — foreign-namespace extensions.
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
 

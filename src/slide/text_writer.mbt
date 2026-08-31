@@ -180,6 +180,11 @@ fn write_paragraph(
   for ext in p.extension {
     @oxml.write_xml_element(w, ctx, ext)
   }
+  // `<a:endParaRPr>` is the last child of `<a:p>` per ECMA-376.
+  match p.end_run_properties {
+    Some(rpr) => write_run_properties(w, ctx, "endParaRPr", rpr)
+    None => ()
+  }
   w.end_element()
 }
 
@@ -195,6 +200,7 @@ fn needs_p_pr(p : ParagraphProperties) -> Bool {
   p.space_before is Some(_) ||
   p.space_after is Some(_) ||
   p.bullet is Some(_) ||
+  p.rtl is Some(_) ||
   !p.extension.is_empty()
 }
 
@@ -224,6 +230,7 @@ fn write_paragraph_props_with_wrapper(
       w.attribute(@xml.QName::unqualified("algn"), text_alignment_to_xml(a))
     None => ()
   }
+  emit_bool_attr(w, "rtl", p.rtl)
   // Body content: lnSpc, spcBef, spcAft, bullet.
   match p.line_spacing {
     Some(ts) => write_text_spacing(w, "lnSpc", ts)
