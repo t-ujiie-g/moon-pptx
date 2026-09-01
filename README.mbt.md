@@ -187,7 +187,7 @@ Two entry points live under [`examples/`](examples/):
 ## Comparison with python-pptx and PptxGenJS
 
 Compared against **python-pptx 1.0.2** and **PptxGenJS 4.0.1** (checked
-2026-09-01). moon-pptx column reflects the current `main`.
+2026-09-01). moon-pptx column reflects **0.8.0**.
 
 Legend: ✅ supported · △ partial, XML-level, or preserved-but-not-buildable · ❌ not supported
 

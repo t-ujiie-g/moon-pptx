@@ -25,9 +25,9 @@ Two things deliberately live elsewhere:
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.7.2` (2026-09-01 — maintenance: deprecation sweep for `moon 0.1.20260827`, no API change) |
+| Current version | `0.8.0` (2026-09-01 — RTL / bidi, `endParaRPr`, Asian-script fonts + theme font resolution; additive) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012); every release until then is additive-only |
-| Test suite | 1178 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1204 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -139,8 +139,8 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
 
 G1 (RTL / bidi text), G5 (`endParaRPr`) and G2 (Asian-script fonts) closed
-in the 0.7.2+ cycle; the IDs are retired rather than reused so older
-references still resolve. Of what is left, G8 is the smallest.
+in 0.8.0; the IDs are retired rather than reused so older references still
+resolve. Of what is left, G8 is the smallest.
 
 ### 3.2 Verification gaps
 

@@ -5,20 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.0] — 2026-09-01
 
 Closes three gaps from `ROADMAP.md` §3.1 — G1 (RTL / bidi), G5
-(`endParaRPr`) and G2 (Asian-script fonts) — which together retire the last
-rows where python-pptx or PptxGenJS handled text moon-pptx did not. The
-public interface is additive, but see **Compatibility** below for the one
-way that can still bite.
+(`endParaRPr`) and G2 (Asian-script fonts). Together they retire every
+remaining row where python-pptx or PptxGenJS handled text moon-pptx did
+not; what those libraries still have over moon-pptx is now ecosystem
+maturity, WMF/EMF images, animated GIF, and PptxGenJS's browser-side
+download helper.
+
+Additive: the generated `.mbti` differ from 0.7.2 by 37 added lines with
+no removals. See **Compatibility** below for the one way that can still
+bite.
 
 ### Added
 
 - **RTL / bidi paragraph direction** — `ParagraphProperties.rtl : Bool?`
   and `Paragraph::with_rtl(Bool)`, reading and writing the `rtl`
-  attribute on `<a:pPr>`. This was the last feature PptxGenJS supported
-  that moon-pptx did not. `None` means "inherit from the list style /
+  attribute on `<a:pPr>`. `None` means "inherit from the list style /
   master" rather than left-to-right, matching OOXML's cascade. PowerPoint
   performs the bidi reordering itself, so runs stay in logical order.
   (gap G1)
@@ -28,9 +32,7 @@ way that can still bite.
   the next character typed at the end of a paragraph inherits, so a blank
   spacer paragraph can now be given a height without a dummy run.
   (gap G5)
-
-- **Asian-script fonts, and font resolution through the theme.** Closes
-  the last row where PptxGenJS handled text moon-pptx did not. (gap G2)
+- **Asian-script fonts, and font resolution through the theme.** (gap G2)
   - `RunProperties::with_east_asian_font` (`<a:ea>`) and
     `with_complex_script_font` (`<a:cs>`), plus
     `with_font_for_all_scripts` — the one-liner for "render this run in
