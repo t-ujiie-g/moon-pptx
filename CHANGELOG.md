@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Closes the two smallest gaps from `ROADMAP.md` §3.1. The public interface
-is additive — `moon info` reports four new lines and no removals — but see
-**Compatibility** below for the one way that can still bite.
+Closes three gaps from `ROADMAP.md` §3.1 — G1 (RTL / bidi), G5
+(`endParaRPr`) and G2 (Asian-script fonts) — which together retire the last
+rows where python-pptx or PptxGenJS handled text moon-pptx did not. The
+public interface is additive, but see **Compatibility** below for the one
+way that can still bite.
 
 ### Added
 
@@ -26,6 +28,29 @@ is additive — `moon info` reports four new lines and no removals — but see
   the next character typed at the end of a paragraph inherits, so a blank
   spacer paragraph can now be given a height without a dummy run.
   (gap G5)
+
+- **Asian-script fonts, and font resolution through the theme.** Closes
+  the last row where PptxGenJS handled text moon-pptx did not. (gap G2)
+  - `RunProperties::with_east_asian_font` (`<a:ea>`) and
+    `with_complex_script_font` (`<a:cs>`), plus
+    `with_font_for_all_scripts` — the one-liner for "render this run in
+    Meiryo whatever the script is". `with_font` only ever set the Latin
+    slot, so CJK text silently kept the theme font.
+  - `@theme.ThemeFontRef` models the six `typeface="+mn-lt"`-style theme
+    references PowerPoint writes instead of a font name, and
+    `FontScheme::resolve_typeface` follows one to the font it names. A
+    parsed deck's `RunProperties.latin` is usually `"+mn-lt"`; until now
+    that string was all a caller got.
+  - `FontCollection::typeface_for_script` answers for an ISO-15924 tag
+    (`"Jpan"`, `"Hans"`, `"Arab"`), preferring the theme's
+    `<a:font script="…">` entry over the `ea` / `cs` slot — which is where
+    Office themes actually keep the CJK faces, since they ship
+    `<a:ea typeface=""/>`. `@theme.ScriptSlot::of_script` exposes the
+    east-asian / complex / latin classification behind it.
+  - `@slide.resolve_run_fonts` and `resolve_run_font_for_script` combine
+    the two: what typeface does *this run* render *this script* with.
+    Covers the run → theme step; list-style and master layers must be
+    merged in first.
 
 ### Changed
 

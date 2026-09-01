@@ -237,7 +237,6 @@ Kept deliberately honest — these are the reasons to pick something else:
 
 | Gap | Who has it | Status here |
 |---|---|---|
-| Asian-script font fallback | PptxGenJS | △ `complex_script` field, no per-run resolution |
 | Ecosystem maturity — tutorials, StackOverflow answers, years of production use | both | moon-pptx is young; the surrounding MoonBit ecosystem is younger still |
 | WMF / EMF images | python-pptx | △ preserved on read, not creatable |
 | Animated GIF | PptxGenJS | △ embeds as a normal image |
@@ -274,6 +273,8 @@ omitted — assume parity unless listed.
 | Paragraph-mark properties (`<a:endParaRPr>`) | △ | ❌ | ✅ typed `end_run_properties` |
 | Line spacing, absolute + percent | ✅ | ✅ | ✅ `TextSpacing` ADT |
 | RTL / bidi paragraph direction | △ | ✅ | ✅ `with_rtl` |
+| East Asian / complex-script fonts (`<a:ea>` / `<a:cs>`) | △ | ✅ | ✅ typed + `with_font_for_all_scripts` |
+| Resolve a run's font through the theme (`+mn-lt`, `script="Jpan"`) | ❌ | ❌ | ✅ `resolve_run_font_for_script` |
 | WordArt / preset text warp | ❌ | △ | △ preserved only |
 | 3-D bevel / scene3d | △ | △ | △ preserved only |
 

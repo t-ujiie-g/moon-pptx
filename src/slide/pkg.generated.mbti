@@ -5,11 +5,15 @@ import {
   "moonbitlang/core/debug",
   "t-ujiie-g/moon-pptx/oxml",
   "t-ujiie-g/moon-pptx/slide_master",
+  "t-ujiie-g/moon-pptx/theme",
   "t-ujiie-g/moon-pptx/units",
   "t-ujiie-g/moon-pptx/xml",
 }
 
 // Values
+pub fn resolve_run_font_for_script(RunProperties, @theme.FontScheme, String, major? : Bool) -> String
+
+pub fn resolve_run_fonts(RunProperties, @theme.FontScheme, major? : Bool) -> ResolvedFonts
 
 // Errors
 pub(all) suberror SlideError {
@@ -678,6 +682,12 @@ pub(all) enum PresetShape {
 pub fn PresetShape::from_xml(String) -> Self raise SlideError
 pub fn PresetShape::to_xml(Self) -> String
 
+pub(all) struct ResolvedFonts {
+  latin : String
+  east_asian : String
+  complex_script : String
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Run {
   properties : RunProperties
   text : String
@@ -712,7 +722,10 @@ pub fn RunProperties::default() -> Self
 pub fn RunProperties::with_bold(Self) -> Self
 pub fn RunProperties::with_character_spacing(Self, @units.Pt) -> Self
 pub fn RunProperties::with_color(Self, @units.RgbColor) -> Self
+pub fn RunProperties::with_complex_script_font(Self, String) -> Self
+pub fn RunProperties::with_east_asian_font(Self, String) -> Self
 pub fn RunProperties::with_font(Self, String) -> Self
+pub fn RunProperties::with_font_for_all_scripts(Self, String) -> Self
 pub fn RunProperties::with_font_size(Self, @units.Pt) -> Self
 pub fn RunProperties::with_highlight(Self, @units.RgbColor) -> Self
 pub fn RunProperties::with_hyperlink(Self, String, tooltip? : String) -> Self
