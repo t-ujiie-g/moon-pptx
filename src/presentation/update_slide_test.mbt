@@ -9,12 +9,12 @@ test "update_slide_mut: adding a shape survives save → reopen" {
   assert_eq(slide.shapes.length(), 0)
   // Append a rectangle.
   let rect = @slide.AutoShape::rect(
-    2,
-    "MyRect",
-    @units.Emu(100L),
-    @units.Emu(200L),
-    @units.Emu(300L),
-    @units.Emu(400L),
+    id=2,
+    name="MyRect",
+    x=@units.Emu(100L),
+    y=@units.Emu(200L),
+    cx=@units.Emu(300L),
+    cy=@units.Emu(400L),
   )
   let modified = slide.with_shape(@slide.AutoShape(rect))
   prs.update_slide_mut(0, modified)
@@ -44,12 +44,12 @@ test "update_slide_mut: textbox round-trips with its text content" {
   let _ = prs.add_slide_mut(0)
   let slide = prs.slides()[0]
   let tb = @slide.AutoShape::textbox(
-    2,
-    "TB",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914400L),
-    @units.Emu(457200L),
+    id=2,
+    name="TB",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914400L),
+    cy=@units.Emu(457200L),
     "Hello, MoonBit!",
   )
   prs.update_slide_mut(0, slide.with_shape(@slide.AutoShape(tb)))
@@ -94,22 +94,22 @@ test "Presentation::new + add_slide_mut + update_slide_mut: end-to-end builder" 
   // Add an ellipse to slide 0 and a textbox to slide 1.
   let s0 = prs.slides()[0]
   let ellipse = @slide.AutoShape::ellipse(
-    2,
-    "E",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914400L),
-    @units.Emu(914400L),
+    id=2,
+    name="E",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914400L),
+    cy=@units.Emu(914400L),
   )
   prs.update_slide_mut(0, s0.with_shape(@slide.AutoShape(ellipse)))
   let s1 = prs.slides()[1]
   let tb = @slide.AutoShape::textbox(
-    3,
-    "T",
-    @units.Emu(100L),
-    @units.Emu(100L),
-    @units.Emu(914400L),
-    @units.Emu(457200L),
+    id=3,
+    name="T",
+    x=@units.Emu(100L),
+    y=@units.Emu(100L),
+    cx=@units.Emu(914400L),
+    cy=@units.Emu(457200L),
     "Slide 2 text",
   )
   prs.update_slide_mut(1, s1.with_shape(@slide.AutoShape(tb)))
@@ -134,12 +134,12 @@ fn prs_with_one_rect() -> @presentation.Presentation raise {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let rect = @slide.AutoShape::rect(
-    2,
-    "Rect",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=2,
+    name="Rect",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(rect)))
   prs
@@ -166,12 +166,12 @@ test "map_slide_shapes_mut: applies to every shape on the slide" {
   let prs = prs_with_one_rect()
   // Append a second shape so we exercise "every".
   let rect2 = @slide.AutoShape::rect(
-    3,
-    "Rect2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(50L),
-    @units.Emu(50L),
+    id=3,
+    name="Rect2",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(50L),
+    cy=@units.Emu(50L),
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(rect2)))
   prs.map_slide_shapes_mut(0, s => {

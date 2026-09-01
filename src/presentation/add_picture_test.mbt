@@ -49,10 +49,10 @@ test "add_picture_mut: PNG path lands in /ppt/media as image/png" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(2_286_000L),
-    @units.Emu(2_286_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(2_286_000L),
+    cy=@units.Emu(2_286_000L),
   )
   // The package now has a /ppt/media/image1.png part.
   let pkg = prs.pkg
@@ -80,10 +80,10 @@ test "add_picture_mut: JPEG path uses .jpeg extension + image/jpeg" {
   prs.add_picture_mut(
     0,
     jpeg_signature_bytes(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let img = prs.pkg.part_by_name("/ppt/media/image1.jpeg").unwrap()
   assert_eq(img.content_type, "image/jpeg")
@@ -96,10 +96,10 @@ test "add_picture_mut: content_types gains a Default for the extension" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let cts = prs.pkg.content_types()
   let has_png_default = cts.defaults
@@ -115,18 +115,18 @@ test "add_picture_mut: second image gets image2 + a fresh rId" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   assert_true(prs.pkg.part_by_name("/ppt/media/image1.png") is Some(_))
   assert_true(prs.pkg.part_by_name("/ppt/media/image2.png") is Some(_))
@@ -143,10 +143,10 @@ test "add_picture_mut: rejects unknown image format" {
     prs.add_picture_mut(
       0,
       garbage,
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -164,10 +164,10 @@ test "add_picture_mut: rejects out-of-range slide index" {
     prs.add_picture_mut(
       99,
       fake_png(),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -205,8 +205,8 @@ test "add_picture_auto_mut: PNG dimensions derive from header" {
   prs.add_picture_auto_mut(
     0,
     png_96x192(),
-    @units.Emu(914_400L),
-    @units.Emu(0L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(0L),
   )
   let slide = prs.slides()[0]
   assert_eq(slide.shapes.length(), 1)
@@ -229,7 +229,7 @@ test "add_picture_auto_mut: garbage bytes raise Malformed" {
   let _ = prs.add_slide_mut(0)
   let garbage = FixedArray::make(16, b'\x00')
   try
-    prs.add_picture_auto_mut(0, garbage, @units.Emu(0L), @units.Emu(0L))
+    prs.add_picture_auto_mut(0, garbage, x=@units.Emu(0L), y=@units.Emu(0L))
   catch {
     @presentation.PptxError::Malformed(_) => ()
     _ => fail("expected Malformed")
@@ -245,10 +245,10 @@ test "add_picture_mut: produced bytes reopen and round-trip" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(2_286_000L),
-    @units.Emu(2_286_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(2_286_000L),
+    cy=@units.Emu(2_286_000L),
   )
   let bytes = prs.save()
   let prs2 = @presentation.Presentation::open(bytes)
@@ -285,12 +285,12 @@ test "add_svg_picture_mut: wires svg + fallback parts, rels, content types" {
   let _ = prs.add_slide_mut(0)
   prs.add_svg_picture_mut(
     0,
-    fake_svg(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    svg_bytes=fake_svg(),
+    fallback_bytes=fake_png(),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   )
   // Two media parts: the raster fallback (image1.png) and the SVG
   // (image2.svg), each with the right content type.
@@ -324,12 +324,12 @@ test "add_svg_picture_mut: survives save + reopen" {
   let _ = prs.add_slide_mut(0)
   prs.add_svg_picture_mut(
     0,
-    fake_svg(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    svg_bytes=fake_svg(),
+    fallback_bytes=fake_png(),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let prs2 = @presentation.Presentation::open(prs.save())
   // Both media parts survived the zip round-trip.
@@ -351,12 +351,12 @@ test "add_svg_picture_mut: rejects an unrecognised fallback image" {
   try
     prs.add_svg_picture_mut(
       0,
-      fake_svg(),
-      garbage,
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      svg_bytes=fake_svg(),
+      fallback_bytes=garbage,
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -400,12 +400,12 @@ test "add_video_mut: wires media + poster parts, three rels, content types" {
   let _ = prs.add_slide_mut(0)
   prs.add_video_mut(
     0,
-    fake_mp4(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    video_bytes=fake_mp4(),
+    poster_bytes=fake_png(),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   )
   // Media + poster parts with the right content types.
   let media = prs.pkg.part_by_name("/ppt/media/media1.mp4").unwrap()
@@ -433,12 +433,12 @@ test "add_video_mut: survives save → reopen with media bytes intact" {
   let _ = prs.add_slide_mut(0)
   prs.add_video_mut(
     0,
-    fake_mp4(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    video_bytes=fake_mp4(),
+    poster_bytes=fake_png(),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let prs2 = @presentation.Presentation::open(prs.save())
   let media = prs2.pkg.part_by_name("/ppt/media/media1.mp4").unwrap()
@@ -452,12 +452,12 @@ test "add_audio_mut: mp3 lands as audio/mpeg" {
   let _ = prs.add_slide_mut(0)
   prs.add_audio_mut(
     0,
-    fake_mp3(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    audio_bytes=fake_mp3(),
+    poster_bytes=fake_png(),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let media = prs.pkg.part_by_name("/ppt/media/media1.mp3").unwrap()
   assert_eq(media.content_type, "audio/mpeg")
@@ -470,12 +470,12 @@ test "add_video_mut: rejects audio bytes; add_audio_mut rejects video bytes" {
   try
     prs.add_video_mut(
       0,
-      fake_mp3(),
-      fake_png(),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      video_bytes=fake_mp3(),
+      poster_bytes=fake_png(),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -486,12 +486,12 @@ test "add_video_mut: rejects audio bytes; add_audio_mut rejects video bytes" {
   try
     prs.add_audio_mut(
       0,
-      fake_mp4(),
-      fake_png(),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      audio_bytes=fake_mp4(),
+      poster_bytes=fake_png(),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -510,21 +510,21 @@ test "add video + audio on one slide → both <p14:media> namespaces stay in sco
   let _ = prs.add_slide_mut(0)
   prs.add_video_mut(
     0,
-    fake_mp4(),
-    fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    video_bytes=fake_mp4(),
+    poster_bytes=fake_png(),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.add_audio_mut(
     0,
-    fake_mp3(),
-    fake_png(),
-    @units.Emu(200L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    audio_bytes=fake_mp3(),
+    poster_bytes=fake_png(),
+    x=@units.Emu(200L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   // The deck must reopen without an unbound-prefix XML error.
   let reopened = @presentation.Presentation::open(prs.save())

@@ -12,12 +12,12 @@ test "example 1: title slide with styled text" {
     .with_color(@units.RgbColor::new(0x1F, 0x4E, 0x79))
   let body = @slide.TextBody::of_styled_text("Hello, MoonBit", rp)
   let title = @slide.AutoShape::textbox(
-    2,
-    "Title",
-    prs.pct_w(10.0),
-    prs.pct_h(40.0),
-    prs.pct_w(80.0),
-    prs.pct_h(20.0),
+    id=2,
+    name="Title",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(40.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(20.0),
     "",
   ).with_text_body(body)
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(title)))
@@ -48,21 +48,21 @@ test "example 3: external + internal hyperlinks" {
   let tb1 = @slide.TextBody::of_styled_text("moonbitlang.com", link)
   let tb2 = @slide.TextBody::of_styled_text("→ next slide", jump)
   let box1 = @slide.AutoShape::textbox(
-    2,
-    "ExtLink",
-    prs.pct_w(10.0),
-    prs.pct_h(20.0),
-    prs.pct_w(80.0),
-    prs.pct_h(15.0),
+    id=2,
+    name="ExtLink",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(15.0),
     "",
   ).with_text_body(tb1)
   let box2 = @slide.AutoShape::textbox(
-    3,
-    "IntLink",
-    prs.pct_w(10.0),
-    prs.pct_h(50.0),
-    prs.pct_w(80.0),
-    prs.pct_h(15.0),
+    id=3,
+    name="IntLink",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(50.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(15.0),
     "",
   ).with_text_body(tb2)
   let s = prs.slides()[0]
@@ -140,12 +140,12 @@ test "example 6: tables with merged cells and styled borders" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let gf = @slide.GraphicFrame::of_table(
-    10,
-    "Summary",
-    prs.pct_w(10.0),
-    prs.pct_h(20.0),
-    prs.pct_w(60.0),
-    prs.pct_h(50.0),
+    id=10,
+    name="Summary",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(60.0),
+    cy=prs.pct_h(50.0),
     t,
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
@@ -183,10 +183,10 @@ test "example 7: bar chart from data" {
   prs.add_chart_mut(
     0,
     chart,
-    prs.pct_w(10.0),
-    prs.pct_h(15.0),
-    prs.pct_w(80.0),
-    prs.pct_h(70.0),
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(15.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(70.0),
     embed_data=data,
   )
   assert_eq(prs.charts().length(), 1)
@@ -206,12 +206,12 @@ test "example 8: 3-slide pitch deck with widescreen + notes + chart + link" {
     .with_bold()
     .with_color(@units.RgbColor::new(0x1F, 0x4E, 0x79))
   let title = @slide.AutoShape::textbox(
-    2,
-    "Title",
-    prs.pct_w(10.0),
-    prs.pct_h(40.0),
-    prs.pct_w(80.0),
-    prs.pct_h(20.0),
+    id=2,
+    name="Title",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(40.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(20.0),
     "",
   ).with_text_body(@slide.TextBody::of_styled_text("Q4 results", title_rp))
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(title)))
@@ -226,22 +226,22 @@ test "example 8: 3-slide pitch deck with widescreen + notes + chart + link" {
   prs.add_chart_mut(
     1,
     @chart.Chart::of_bar(data),
-    prs.pct_w(10.0),
-    prs.pct_h(15.0),
-    prs.pct_w(80.0),
-    prs.pct_h(70.0),
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(15.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(70.0),
   )
   let _ = prs.add_slide_mut(0)
   let link_rp = @slide.RunProperties::default()
     .with_font_size(@units.Pt(20.0))
     .with_hyperlink_to_slide(0, tooltip="back to title")
   let closing = @slide.AutoShape::textbox(
-    2,
-    "Closing",
-    prs.pct_w(10.0),
-    prs.pct_h(40.0),
-    prs.pct_w(80.0),
-    prs.pct_h(15.0),
+    id=2,
+    name="Closing",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(40.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(15.0),
     "",
   ).with_text_body(@slide.TextBody::of_styled_text("← back", link_rp))
   prs.update_slide_mut(2, prs.slides()[2].with_shape(@slide.AutoShape(closing)))
@@ -304,10 +304,10 @@ test "example 11: ADT-driven chart options" {
   prs.add_chart_mut(
     0,
     chart,
-    prs.pct_w(10.0),
-    prs.pct_h(15.0),
-    prs.pct_w(80.0),
-    prs.pct_h(70.0),
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(15.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(70.0),
   )
   assert_eq(prs.charts().length(), 1)
   assert_true(prs.charts()[0].chart.title is Some(_))
@@ -329,13 +329,13 @@ test "example 12: typed picture builder pipeline" {
   }
   // builder → crop → effects → build. Cropping twice would not compile.
   let pic = @slide.Picture::builder(
-      5,
-      "Logo",
+      id=5,
+      name="Logo",
       "rId2",
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(914_400L),
-      @units.Emu(914_400L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(914_400L),
+      cy=@units.Emu(914_400L),
     )
     .with_crop(left=@units.Percentage(10.0), right=@units.Percentage(10.0))
     .with_effects(outline~)
@@ -371,12 +371,12 @@ test "example 14: entrance animations" {
   let _ = prs.add_slide_mut(0)
   // A shape to animate (shape id 2).
   let box = @slide.AutoShape::textbox(
-    2,
-    "Box",
-    prs.pct_w(10.0),
-    prs.pct_h(30.0),
-    prs.pct_w(40.0),
-    prs.pct_h(20.0),
+    id=2,
+    name="Box",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(30.0),
+    cx=prs.pct_w(40.0),
+    cy=prs.pct_h(20.0),
     "Fly in!",
   )
   let slide = prs.slides()[0].with_shape(@slide.AutoShape(box))
@@ -408,10 +408,10 @@ test "example 15: SmartArt diagram" {
   prs.add_smartart_mut(
     0,
     art,
-    prs.pct_w(10.0),
-    prs.pct_h(15.0),
-    prs.pct_w(80.0),
-    prs.pct_h(70.0),
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(15.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(70.0),
   )
   // The tree families take nested Nodes; the recursive hierarchy layout
   // definition lays the whole tree out in PowerPoint (see
@@ -424,10 +424,10 @@ test "example 15: SmartArt diagram" {
   prs.add_smartart_mut(
     1,
     @smartart.SmartArt::org_chart(ceo),
-    prs.pct_w(10.0),
-    prs.pct_h(15.0),
-    prs.pct_w(80.0),
-    prs.pct_h(70.0),
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(15.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(70.0),
   )
   // Each slide gains one graphic-frame shape; the DiagramML parts survive
   // a save → reopen round-trip.
@@ -453,13 +453,13 @@ test "example 16: YouTube / online video" {
     0,
     "https://youtu.be/dQw4w9WgXcQ",
     minimal_png(),
-    prs.pct_w(10.0),
-    prs.pct_h(10.0),
-    prs.pct_w(80.0),
-    prs.pct_h(80.0),
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(10.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(80.0),
   )
   assert_eq(prs.slides()[0].shapes.length(), 1)
-  // `add_online_video_mut(slide, url, poster, …)` is the general form for any
+  // `add_online_video_mut(slide, url, poster, x=…)` is the general form for any
   // streaming URL.
   let _bytes = prs.save()
 }
@@ -560,12 +560,12 @@ test "example 20: right-to-left text and paragraph-mark formatting" {
   )
   let body = @slide.TextBody::of_paragraphs([para, spacer])
   let shape = @slide.AutoShape::textbox(
-    2,
-    "Arabic",
-    prs.pct_w(10.0),
-    prs.pct_h(30.0),
-    prs.pct_w(80.0),
-    prs.pct_h(25.0),
+    id=2,
+    name="Arabic",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(30.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(25.0),
     "",
   ).with_text_body(body)
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(shape)))
@@ -593,12 +593,12 @@ test "example 21: Japanese / CJK text and font resolution" {
     .with_font_for_all_scripts("Meiryo")
   let body = @slide.TextBody::of_styled_text("日本語のテキスト", rp)
   let shape = @slide.AutoShape::textbox(
-    2,
-    "JP",
-    prs.pct_w(10.0),
-    prs.pct_h(30.0),
-    prs.pct_w(80.0),
-    prs.pct_h(25.0),
+    id=2,
+    name="JP",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(30.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(25.0),
     "",
   ).with_text_body(body)
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(shape)))
@@ -629,12 +629,12 @@ test "example 22: shape ids without keeping a counter" {
   let prs = @presentation.Presentation::new()
   let _ = prs.add_slide_mut(0)
   let box = @slide.AutoShape::textbox(
-    1,
-    "Box",
-    prs.pct_w(10.0),
-    prs.pct_h(20.0),
-    prs.pct_w(35.0),
-    prs.pct_h(20.0),
+    id=1,
+    name="Box",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(35.0),
+    cy=prs.pct_h(20.0),
     "left",
   )
   let slide = prs.slides()[0]

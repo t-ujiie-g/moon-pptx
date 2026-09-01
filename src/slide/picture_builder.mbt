@@ -2,7 +2,7 @@
 //
 // A compile-time-enforced construction pipeline for `Picture`:
 //
-//   Picture::builder(...)   -> PictureUncropped
+//   Picture::builder(id=...)   -> PictureUncropped
 //     .with_crop(...)       -> PictureCropped   (croppable at most once)
 //     .with_effects(...)    -> PictureFinal     (effects at most once, after any crop)
 //     .build()              -> Picture          (the existing flat type)
@@ -17,7 +17,7 @@
 // The builder state types are opaque (`pub struct` with package-private
 // fields): callers move through them only via the methods below.
 //
-// The entry point is a new `Picture::builder(...)` rather than a re-typed
+// The entry point is a new `Picture::builder(id=...)` rather than a re-typed
 // `Picture::of_image`, whose `-> Picture` return type is load-bearing for
 // existing callers and the presentation-level `add_picture_mut` pipeline.
 
@@ -47,15 +47,15 @@ pub struct PictureFinal {
 /// `Picture::of_image` (a stretched fit inside a `prst="rect"`
 /// boundary); `embed_id` is the `r:embed` of the image media part.
 pub fn Picture::builder(
-  id : Int,
-  name : String,
+  id~ : Int,
+  name~ : String,
   embed_id : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> PictureUncropped {
-  { pic: Picture::of_image(id, name, embed_id, x, y, cx, cy), }
+  { pic: Picture::of_image(id~, name~, embed_id, x~, y~, cx~, cy~), }
 }
 
 ///|

@@ -346,13 +346,13 @@ pub fn RunProperties::with_hyperlink_to_slide(
 /// remains the lowest-level builder for callers that want to start
 /// from zero and layer their own styling.
 pub fn AutoShape::of_preset(
-  id : Int,
-  name : String,
+  id~ : Int,
+  name~ : String,
   preset : PresetShape,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> AutoShape {
   {
     id,
@@ -401,14 +401,14 @@ fn default_shape_stroke() -> @oxml.Stroke {
 /// Rectangle shape with the canonical `prst="rect"` preset, the
 /// given placement, and visible default fill + 1pt outline.
 pub fn AutoShape::rect(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> AutoShape {
-  let s = AutoShape::of_preset(id, name, PresetShape::Rect, x, y, cx, cy)
+  let s = AutoShape::of_preset(id~, name~, PresetShape::Rect, x~, y~, cx~, cy~)
   {
     ..s,
     fill: Some(default_shape_fill()),
@@ -419,14 +419,22 @@ pub fn AutoShape::rect(
 ///|
 /// Ellipse shape (`prst="ellipse"`) with visible default fill + outline.
 pub fn AutoShape::ellipse(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> AutoShape {
-  let s = AutoShape::of_preset(id, name, PresetShape::Ellipse, x, y, cx, cy)
+  let s = AutoShape::of_preset(
+    id~,
+    name~,
+    PresetShape::Ellipse,
+    x~,
+    y~,
+    cx~,
+    cy~,
+  )
   {
     ..s,
     fill: Some(default_shape_fill()),
@@ -438,14 +446,22 @@ pub fn AutoShape::ellipse(
 /// Rounded-rectangle (`prst="roundRect"`) with visible default
 /// fill + outline.
 pub fn AutoShape::round_rect(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> AutoShape {
-  let s = AutoShape::of_preset(id, name, PresetShape::RoundRect, x, y, cx, cy)
+  let s = AutoShape::of_preset(
+    id~,
+    name~,
+    PresetShape::RoundRect,
+    x~,
+    y~,
+    cx~,
+    cy~,
+  )
   {
     ..s,
     fill: Some(default_shape_fill()),
@@ -459,15 +475,15 @@ pub fn AutoShape::round_rect(
 /// renders as plain text without a background or border (matching
 /// the typical "TextBox" tool in PowerPoint).
 pub fn AutoShape::textbox(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
   text : String,
 ) -> AutoShape {
-  let s = AutoShape::of_preset(id, name, PresetShape::Rect, x, y, cx, cy)
+  let s = AutoShape::of_preset(id~, name~, PresetShape::Rect, x~, y~, cx~, cy~)
   { ..s, text_body: Some(TextBody::of_text(text)), }
 }
 
@@ -508,7 +524,7 @@ pub fn AutoShape::with_no_stroke(self : AutoShape) -> AutoShape {
 /// Replace the text body of an existing `AutoShape`. Pairs with
 /// `TextBody::of_styled_text` for terse styled-text construction:
 ///
-///   AutoShape::rect(1, "Card", x, y, w, h)
+///   AutoShape::rect(id=1, name="Card", x=x, y=y, cx=w, cy=h)
 ///     .with_fill(@oxml.SolidFill(@oxml.Color::srgb(navy)))
 ///     .with_text_body(
 ///       TextBody::of_styled_text(
@@ -586,13 +602,13 @@ pub fn AutoShape::with_hyperlink_to_slide(
 /// inside a plain `prst="rect"` boundary — the standard "insert
 /// picture" result PowerPoint produces.
 pub fn Picture::of_image(
-  id : Int,
-  name : String,
+  id~ : Int,
+  name~ : String,
   embed_id : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Picture {
   {
     id,
@@ -625,14 +641,14 @@ pub fn Picture::of_image(
 /// extension pointing at the SVG; otherwise identical to
 /// `Picture::of_image` (stretched fit inside a `prst="rect"` boundary).
 pub fn Picture::of_svg_image(
-  id : Int,
-  name : String,
-  png_embed_id : String,
-  svg_embed_id : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  png_embed_id~ : String,
+  svg_embed_id~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Picture {
   {
     id,

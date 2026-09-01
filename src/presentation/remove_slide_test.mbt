@@ -75,10 +75,10 @@ test "remove_slide_mut: garbage-collects a slide-private image" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   assert_true(prs.pkg.part_by_name("/ppt/media/image1.png") is Some(_))
   prs.remove_slide_mut(0)
@@ -97,18 +97,18 @@ test "remove_slide_mut: keeps an image still referenced by another slide" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.add_picture_mut(
     1,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   // slide1 → image1, slide2 → image2.
   prs.remove_slide_mut(0)

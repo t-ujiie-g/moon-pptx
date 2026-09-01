@@ -203,12 +203,12 @@ test "TableCellProperties: builder-produced values survive serialize → reparse
   let row = @slide.TableRow::of_cells([cell], height=@units.Emu(457200L))
   let t = @slide.Table::of_rows([row], col_widths=[@units.Emu(914400L)])
   let gf = @slide.GraphicFrame::of_table(
-    7,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914400L),
-    @units.Emu(457200L),
+    id=7,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914400L),
+    cy=@units.Emu(457200L),
     t,
   )
   let base_xml = "<?xml version=\"1.0\"?>" +

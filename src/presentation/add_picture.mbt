@@ -1,6 +1,6 @@
 // Image-insertion API.
 //
-// `add_picture_mut(slide_idx, bytes, x, y, cx, cy)` is the
+// `add_picture_mut(slide_idx, bytes, x=x, y=y, cx=cx, cy=cy)` is the
 // counterpart of `add_slide_mut` for media: it threads a binary
 // image through every place the package needs to track it.
 //
@@ -33,10 +33,10 @@ pub fn Presentation::add_picture_mut(
   self : Presentation,
   slide_idx : Int,
   bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   // 1. Detect image format from magic bytes.
   let fmt = match @oxml.detect_image_format(bytes) {
@@ -90,13 +90,13 @@ pub fn Presentation::add_picture_mut(
   // 6. Construct the typed Picture shape and append it.
   let pic_id = next_picture_shape_id(slide_part)
   let pic = @slide.Picture::of_image(
-    pic_id,
-    "Picture " + pic_id.to_string(),
+    id=pic_id,
+    name="Picture " + pic_id.to_string(),
     new_rid,
-    x,
-    y,
-    cx,
-    cy,
+    x~,
+    y~,
+    cx~,
+    cy~,
   )
   // Re-parse the slide, append, write back.
   let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
@@ -118,8 +118,8 @@ pub fn Presentation::add_picture_auto_mut(
   self : Presentation,
   slide_idx : Int,
   bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
 ) -> Unit raise PptxError {
   let dims = match @oxml.detect_image_dimensions(bytes) {
     Some(d) => d
@@ -129,7 +129,14 @@ pub fn Presentation::add_picture_auto_mut(
       )
   }
   let (cx, cy) = dims.to_emu()
-  self.add_picture_mut(slide_idx, bytes, x, y, @units.Emu(cx), @units.Emu(cy))
+  self.add_picture_mut(
+    slide_idx,
+    bytes,
+    x~,
+    y~,
+    cx=@units.Emu(cx),
+    cy=@units.Emu(cy),
+  )
 }
 
 ///|
@@ -145,12 +152,12 @@ pub fn Presentation::add_picture_auto_mut(
 pub fn Presentation::add_svg_picture_mut(
   self : Presentation,
   slide_idx : Int,
-  svg_bytes : FixedArray[Byte],
-  fallback_bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  svg_bytes~ : FixedArray[Byte],
+  fallback_bytes~ : FixedArray[Byte],
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   // 1. The fallback must be a recognised raster image.
   let fmt = match @oxml.detect_image_format(fallback_bytes) {
@@ -221,14 +228,14 @@ pub fn Presentation::add_svg_picture_mut(
   // 5. Construct the typed SVG Picture and append it.
   let pic_id = next_picture_shape_id(slide_part)
   let pic = @slide.Picture::of_svg_image(
-    pic_id,
-    "Picture " + pic_id.to_string(),
-    rid_png,
-    rid_svg,
-    x,
-    y,
-    cx,
-    cy,
+    id=pic_id,
+    name="Picture " + pic_id.to_string(),
+    png_embed_id=rid_png,
+    svg_embed_id=rid_svg,
+    x~,
+    y~,
+    cx~,
+    cy~,
   )
   let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
     e => raise SlideFailure(e.to_string())

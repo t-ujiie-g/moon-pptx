@@ -27,12 +27,12 @@ fn build_with_hyperlink(
   }
   let tb = @slide.TextBody::of_styled_text("click me", rp)
   let box = @slide.AutoShape::textbox(
-    2,
-    "tb",
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(4_572_000L),
-    @units.Emu(914_400L),
+    id=2,
+    name="tb",
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(4_572_000L),
+    cy=@units.Emu(914_400L),
     "",
   ).with_text_body(tb)
   let s = prs.slides()[0]
@@ -132,12 +132,12 @@ test "no hyperlinks → no rels mutation, no extra relationship lookups" {
   let rp = @slide.RunProperties::default().with_font_size(@units.Pt(20.0))
   let tb = @slide.TextBody::of_styled_text("hello", rp)
   let box = @slide.AutoShape::textbox(
-    2,
-    "tb",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1L),
-    @units.Emu(1L),
+    id=2,
+    name="tb",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1L),
+    cy=@units.Emu(1L),
     "",
   ).with_text_body(tb)
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
@@ -152,12 +152,12 @@ test "with_hyperlink_to_slide: out-of-range raises Malformed" {
   let rp = @slide.RunProperties::default().with_hyperlink_to_slide(99)
   let tb = @slide.TextBody::of_styled_text("oops", rp)
   let box = @slide.AutoShape::textbox(
-    2,
-    "tb",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1L),
-    @units.Emu(1L),
+    id=2,
+    name="tb",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1L),
+    cy=@units.Emu(1L),
     "",
   ).with_text_body(tb)
   try

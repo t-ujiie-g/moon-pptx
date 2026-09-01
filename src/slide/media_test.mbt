@@ -5,16 +5,16 @@
 ///|
 test "Picture::of_media: builds a video reference + poster blip" {
   let pic = @slide.Picture::of_media(
-    5,
-    "clip.mp4",
+    id=5,
+    name="clip.mp4",
     Video,
-    "rId3", // <a:videoFile r:link>
-    "rId4", // <p14:media r:embed>
-    "rId2", // poster <a:blip r:embed>
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    link_id="rId3", // <a:videoFile r:link>
+    media_embed_id="rId4", // <p14:media r:embed>
+    poster_embed_id="rId2", // poster <a:blip r:embed>
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   )
   // Poster is the blipFill embed.
   assert_eq(pic.blip_fill.embed_id, "rId2")
@@ -31,16 +31,16 @@ test "Picture::of_media: builds a video reference + poster blip" {
 ///|
 test "media picture serialises videoFile + p14:media + media action" {
   let pic = @slide.Picture::of_media(
-    7,
-    "clip.mp4",
+    id=7,
+    name="clip.mp4",
     Video,
-    "rId3",
-    "rId4",
-    "rId2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    link_id="rId3",
+    media_embed_id="rId4",
+    poster_embed_id="rId2",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let xml = @oxml.bytes_to_string(slide_of_picture(pic).serialize())
   assert_true(xml.contains("<a:videoFile"))
@@ -53,16 +53,16 @@ test "media picture serialises videoFile + p14:media + media action" {
 ///|
 test "audio media emits audioFile" {
   let pic = @slide.Picture::of_media(
-    8,
-    "clip.mp3",
+    id=8,
+    name="clip.mp3",
     Audio,
-    "rId3",
-    "rId4",
-    "rId2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    link_id="rId3",
+    media_embed_id="rId4",
+    poster_embed_id="rId2",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let xml = @oxml.bytes_to_string(slide_of_picture(pic).serialize())
   assert_true(xml.contains("<a:audioFile"))
@@ -71,16 +71,16 @@ test "audio media emits audioFile" {
 ///|
 test "media XML round-trips losslessly (re-serialise is stable)" {
   let pic = @slide.Picture::of_media(
-    9,
-    "clip.mp4",
+    id=9,
+    name="clip.mp4",
     Video,
-    "rId3",
-    "rId4",
-    "rId2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    link_id="rId3",
+    media_embed_id="rId4",
+    poster_embed_id="rId2",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   // First serialise (typed media path), then parse — the parser captures the
   // media nv-children into `extension` (media stays None) — then serialise
@@ -103,16 +103,16 @@ test "media XML round-trips losslessly (re-serialise is stable)" {
 /// missed it; this asserts *placement*.
 test "issue #11: media nv-children stay inside <p:nvPr> after round-trip" {
   let pic = @slide.Picture::of_media(
-    9,
-    "clip.mp4",
+    id=9,
+    name="clip.mp4",
     Video,
-    "rId3",
-    "rId4",
-    "rId2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    link_id="rId3",
+    media_embed_id="rId4",
+    poster_embed_id="rId2",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let xml = @oxml.bytes_to_string(
     @slide.Slide::parse(slide_of_picture(pic).serialize()).serialize(),

@@ -41,9 +41,9 @@ let rp = @slide.RunProperties::default()
 let body = @slide.TextBody::of_styled_text("Hello, MoonBit", rp)
 
 let title = @slide.AutoShape::textbox(
-  2, "Title",
-  prs.pct_w(10.0), prs.pct_h(40.0),
-  prs.pct_w(80.0), prs.pct_h(20.0),
+  id=2, name="Title",
+  x=prs.pct_w(10.0), y=prs.pct_h(40.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(20.0),
   "",
 ).with_text_body(body)
 
@@ -93,16 +93,16 @@ let tb1 = @slide.TextBody::of_styled_text("moonbitlang.com", link)
 let tb2 = @slide.TextBody::of_styled_text("→ next slide", jump)
 
 let box1 = @slide.AutoShape::textbox(
-  2, "ExtLink",
-  prs.pct_w(10.0), prs.pct_h(20.0),
-  prs.pct_w(80.0), prs.pct_h(15.0),
+  id=2, name="ExtLink",
+  x=prs.pct_w(10.0), y=prs.pct_h(20.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(15.0),
   "",
 ).with_text_body(tb1)
 
 let box2 = @slide.AutoShape::textbox(
-  3, "IntLink",
-  prs.pct_w(10.0), prs.pct_h(50.0),
-  prs.pct_w(80.0), prs.pct_h(15.0),
+  id=3, name="IntLink",
+  x=prs.pct_w(10.0), y=prs.pct_h(50.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(15.0),
   "",
 ).with_text_body(tb2)
 
@@ -146,14 +146,14 @@ let _ = prs.add_slide_mut(0)
 // header + DPI metadata and computes (cx, cy) for you.
 prs.add_picture_auto_mut(
   0, png_bytes,
-  prs.pct_w(10.0), prs.pct_h(10.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(10.0),
 )
 
 // To crop inside the image, fluently:
 let pic = @slide.Picture::of_image(
-  10, "Cropped", "rId2",
-  prs.pct_w(50.0), prs.pct_h(10.0),
-  prs.pct_w(40.0), prs.pct_h(80.0),
+  id=10, name="Cropped", "rId2",
+  x=prs.pct_w(50.0), y=prs.pct_h(10.0),
+  cx=prs.pct_w(40.0), cy=prs.pct_h(80.0),
 ).with_crop(
   left=@units.Percentage(10.0),
   right=@units.Percentage(10.0),
@@ -161,7 +161,7 @@ let pic = @slide.Picture::of_image(
 ```
 
 For exact sizing, fall back to the explicit `add_picture_mut(slide_idx,
-bytes, x, y, cx, cy)` overload.
+bytes, x=x, y=y, cx=cx, cy=cy)` overload.
 
 ---
 
@@ -201,9 +201,9 @@ let t = @slide.Table::of_rows(
 let prs = @presentation.Presentation::new()
 let _ = prs.add_slide_mut(0)
 let gf = @slide.GraphicFrame::of_table(
-  10, "Summary",
-  prs.pct_w(10.0), prs.pct_h(20.0),
-  prs.pct_w(60.0), prs.pct_h(50.0),
+  id=10, name="Summary",
+  x=prs.pct_w(10.0), y=prs.pct_h(20.0),
+  cx=prs.pct_w(60.0), cy=prs.pct_h(50.0),
   t,
 )
 prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
@@ -241,8 +241,8 @@ let _ = prs.add_slide_mut(0)
 
 prs.add_chart_mut(
   0, chart,
-  prs.pct_w(10.0), prs.pct_h(15.0),
-  prs.pct_w(80.0), prs.pct_h(70.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(15.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(70.0),
 )
 ```
 
@@ -260,8 +260,8 @@ and embedded alongside the chart:
 ```moonbit
 prs.add_chart_mut(
   0, chart,
-  prs.pct_w(10.0), prs.pct_h(15.0),
-  prs.pct_w(80.0), prs.pct_h(70.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(15.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(70.0),
   embed_data=data,
 )
 ```
@@ -281,9 +281,9 @@ let title_rp = @slide.RunProperties::default()
   .with_bold()
   .with_color(@units.RgbColor::new(0x1F, 0x4E, 0x79))
 let title = @slide.AutoShape::textbox(
-  2, "Title",
-  prs.pct_w(10.0), prs.pct_h(40.0),
-  prs.pct_w(80.0), prs.pct_h(20.0),
+  id=2, name="Title",
+  x=prs.pct_w(10.0), y=prs.pct_h(40.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(20.0),
   "",
 ).with_text_body(@slide.TextBody::of_styled_text("Q4 results", title_rp))
 prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(title)))
@@ -296,8 +296,8 @@ let data = @chart.ChartData::new()
   .with_series("Revenue", [100.0, 200.0, 300.0, 450.0])
 prs.add_chart_mut(
   1, @chart.Chart::of_bar(data),
-  prs.pct_w(10.0), prs.pct_h(15.0),
-  prs.pct_w(80.0), prs.pct_h(70.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(15.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(70.0),
 )
 
 // --- Slide 3: closing with link to slide 1 ---
@@ -306,9 +306,9 @@ let link_rp = @slide.RunProperties::default()
   .with_font_size(@units.Pt(20.0))
   .with_hyperlink_to_slide(0, tooltip="back to title")
 let closing = @slide.AutoShape::textbox(
-  2, "Closing",
-  prs.pct_w(10.0), prs.pct_h(40.0),
-  prs.pct_w(80.0), prs.pct_h(15.0),
+  id=2, name="Closing",
+  x=prs.pct_w(10.0), y=prs.pct_h(40.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(15.0),
   "",
 ).with_text_body(@slide.TextBody::of_styled_text("← back", link_rp))
 prs.update_slide_mut(2, prs.slides()[2].with_shape(@slide.AutoShape(closing)))
@@ -395,9 +395,9 @@ twice, or applying effects after `build()`, won't compile.
 
 ```moonbit
 let pic = @slide.Picture::builder(
-    5, "Logo", "rId2",
-    @units.Emu(0L), @units.Emu(0L),
-    @units.Emu(914_400L), @units.Emu(914_400L),
+    id=5, name="Logo", "rId2",
+    x=@units.Emu(0L), y=@units.Emu(0L),
+    cx=@units.Emu(914_400L), cy=@units.Emu(914_400L),
   )
   .with_crop(left=@units.Percentage(10.0), right=@units.Percentage(10.0))
   .with_effects(outline=my_stroke)
@@ -438,8 +438,8 @@ let _ = prs.add_slide_mut(0)
 
 // A shape to animate (shape id 2).
 let box = @slide.AutoShape::textbox(
-  2, "Box",
-  prs.pct_w(10.0), prs.pct_h(30.0), prs.pct_w(40.0), prs.pct_h(20.0),
+  id=2, name="Box",
+  x=prs.pct_w(10.0), y=prs.pct_h(30.0), cx=prs.pct_w(40.0), cy=prs.pct_h(20.0),
   "Fly in!",
 )
 let slide = prs.slides()[0].with_shape(@slide.AutoShape(box))
@@ -473,7 +473,7 @@ let _ = prs.add_slide_mut(0)
 let art = @smartart.SmartArt::process(["Plan", "Build", "Ship"])
 prs.add_smartart_mut(
   0, art,
-  prs.pct_w(10.0), prs.pct_h(15.0), prs.pct_w(80.0), prs.pct_h(70.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(15.0), cx=prs.pct_w(80.0), cy=prs.pct_h(70.0),
 )
 ```
 
@@ -490,7 +490,7 @@ let ceo = @smartart.Node::new("CEO", [
 ])
 prs.add_smartart_mut(
   0, @smartart.SmartArt::org_chart(ceo),
-  prs.pct_w(10.0), prs.pct_h(15.0), prs.pct_w(80.0), prs.pct_h(70.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(15.0), cx=prs.pct_w(80.0), cy=prs.pct_h(70.0),
 )
 ```
 
@@ -534,12 +534,12 @@ let poster : FixedArray[Byte] = read_my_image_file()
 // Any YouTube share/watch/embed/shorts URL is normalised to the embed form.
 prs.add_youtube_video_mut(
   0, "https://youtu.be/dQw4w9WgXcQ", poster,
-  prs.pct_w(10.0), prs.pct_h(10.0), prs.pct_w(80.0), prs.pct_h(80.0),
+  x=prs.pct_w(10.0), y=prs.pct_h(10.0), cx=prs.pct_w(80.0), cy=prs.pct_h(80.0),
 )
 ```
 
 For any other streaming URL, use the general
-`add_online_video_mut(slide_idx, video_url, poster, x, y, cx, cy)`.
+`add_online_video_mut(slide_idx, video_url, poster, x=x, y=y, cx=cx, cy=cy)`.
 
 ---
 
@@ -647,9 +647,9 @@ let spacer = @slide.Paragraph::of_text("").with_end_run_properties(
 
 let body = @slide.TextBody::of_paragraphs([para, spacer])
 let shape = @slide.AutoShape::textbox(
-  2, "Arabic",
-  prs.pct_w(10.0), prs.pct_h(30.0),
-  prs.pct_w(80.0), prs.pct_h(25.0),
+  id=2, name="Arabic",
+  x=prs.pct_w(10.0), y=prs.pct_h(30.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(25.0),
   "",
 ).with_text_body(body)
 
@@ -680,9 +680,9 @@ let rp = @slide.RunProperties::default()
 
 let body = @slide.TextBody::of_styled_text("日本語のテキスト", rp)
 let shape = @slide.AutoShape::textbox(
-  2, "JP",
-  prs.pct_w(10.0), prs.pct_h(30.0),
-  prs.pct_w(80.0), prs.pct_h(25.0),
+  id=2, name="JP",
+  x=prs.pct_w(10.0), y=prs.pct_h(30.0),
+  cx=prs.pct_w(80.0), cy=prs.pct_h(25.0),
   "",
 ).with_text_body(body)
 
@@ -727,9 +727,9 @@ let prs = @presentation.Presentation::new()
 let _ = prs.add_slide_mut(0)
 
 let box = @slide.AutoShape::textbox(
-  1, "Box",                                  // this id is discarded
-  prs.pct_w(10.0), prs.pct_h(20.0),
-  prs.pct_w(35.0), prs.pct_h(20.0),
+  id=1, name="Box",                                  // this id is discarded
+  x=prs.pct_w(10.0), y=prs.pct_h(20.0),
+  cx=prs.pct_w(35.0), cy=prs.pct_h(20.0),
   "left",
 )
 

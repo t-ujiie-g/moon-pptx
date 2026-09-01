@@ -10,7 +10,7 @@
 //   let prs = Presentation::new()
 //   let (prs, _new_slide_name) = prs.with_added_slide(layout_index=0)
 //   let s = prs.slides()[0]
-//   let tb = AutoShape::textbox(2, "T", 0, 0, 914400, 457200, "Hi")
+//   let tb = AutoShape::textbox(id=2, name="T", x=0, y=0, cx=914400, cy=457200, "Hi")
 //   let prs = prs.with_slide_updated(0, s.with_shape(AutoShape(tb)))
 //   let bytes = prs.save()
 //

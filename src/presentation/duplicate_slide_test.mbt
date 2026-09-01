@@ -36,10 +36,10 @@ test "duplicate_slide_mut: clone re-references the source's parts" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let new_name = prs.duplicate_slide_mut(0)
   // Only one image part exists — the clone shares it (Q12: re-reference).
@@ -77,10 +77,10 @@ test "duplicate_slide_mut: shared image survives deleting the original" {
   prs.add_picture_mut(
     0,
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let _ = prs.duplicate_slide_mut(0)
   prs.remove_slide_mut(0)

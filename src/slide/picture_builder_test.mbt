@@ -38,13 +38,13 @@ fn empty_effects() -> @oxml.EffectList {
 ///|
 fn pic_builder() -> @slide.PictureUncropped {
   @slide.Picture::builder(
-    5,
-    "Pic",
+    id=5,
+    name="Pic",
     "rId2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
 }
 
@@ -54,13 +54,13 @@ fn pic_builder() -> @slide.PictureUncropped {
 test "Picture::builder: build with no crop/effects equals of_image" {
   let built = pic_builder().build()
   let flat = @slide.Picture::of_image(
-    5,
-    "Pic",
+    id=5,
+    name="Pic",
     "rId2",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   assert_true(built == flat)
 }

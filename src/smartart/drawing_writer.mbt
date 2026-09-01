@@ -16,8 +16,8 @@
 /// `cx` × `cy` EMU.
 pub fn SmartArt::drawing_xml(
   self : SmartArt,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> FixedArray[Byte] raise SmartArtError {
   let xml = self.serialize_drawing_xml(cx, cy) catch { e => raise wrap_xml(e) }
   @oxml.string_to_bytes(xml)

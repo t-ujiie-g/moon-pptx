@@ -37,16 +37,16 @@ pub(all) struct MediaInfo {
 /// All relationships + parts are wired by
 /// `@presentation.Presentation::add_video_mut` / `add_audio_mut`.
 pub fn Picture::of_media(
-  id : Int,
-  name : String,
+  id~ : Int,
+  name~ : String,
   kind : MediaKind,
-  link_id : String,
-  media_embed_id : String,
-  poster_embed_id : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  link_id~ : String,
+  media_embed_id~ : String,
+  poster_embed_id~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Picture {
   {
     id,

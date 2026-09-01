@@ -19,12 +19,12 @@ fn sample_background_slide(
     .with_shape(
       @slide.AutoShape(
         @slide.AutoShape::textbox(
-          3,
-          "Note",
-          prs.pct_w(8.0),
-          prs.pct_h(40.0),
-          prs.pct_w(84.0),
-          prs.pct_h(15.0),
+          id=3,
+          name="Note",
+          x=prs.pct_w(8.0),
+          y=prs.pct_h(40.0),
+          cx=prs.pct_w(84.0),
+          cy=prs.pct_h(15.0),
           "This slide has a solid light-blue background set with with_background().",
         ),
       ),
@@ -91,10 +91,10 @@ fn sample_combo_chart_slide(
   prs.add_chart_mut(
     idx,
     combo,
-    prs.pct_w(8.0),
-    prs.pct_h(20.0),
-    prs.pct_w(84.0),
-    prs.pct_h(70.0),
+    x=prs.pct_w(8.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(84.0),
+    cy=prs.pct_h(70.0),
     embed_data=edit_data,
   )
 }
@@ -114,12 +114,12 @@ fn sample_svg_slide(
   )
   prs.add_svg_picture_mut(
     idx,
-    feature_svg(),
-    sample_checkerboard_bmp(),
-    prs.pct_w(34.0),
-    prs.pct_h(24.0),
-    prs.pct_w(32.0),
-    prs.pct_h(64.0),
+    svg_bytes=feature_svg(),
+    fallback_bytes=sample_checkerboard_bmp(),
+    x=prs.pct_w(34.0),
+    y=prs.pct_h(24.0),
+    cx=prs.pct_w(32.0),
+    cy=prs.pct_h(64.0),
   )
 }
 
@@ -134,9 +134,9 @@ fn sample_edit_slide(
   let y = prs.pct_h(45.0)
   let cy = prs.pct_h(32.0)
   let cx = prs.pct_w(22.0)
-  let box_a = @slide.AutoShape::rect(10, "Box A", prs.pct_w(8.0), y, cx, cy)
-  let box_b = @slide.AutoShape::rect(11, "Box B", prs.pct_w(39.0), y, cx, cy)
-  let box_c = @slide.AutoShape::rect(12, "Box C", prs.pct_w(70.0), y, cx, cy)
+  let box_a = @slide.AutoShape::rect(id=10, name="Box A", x=prs.pct_w(8.0), y=y, cx=cx, cy=cy)
+  let box_b = @slide.AutoShape::rect(id=11, name="Box B", x=prs.pct_w(39.0), y=y, cx=cx, cy=cy)
+  let box_c = @slide.AutoShape::rect(id=12, name="Box C", x=prs.pct_w(70.0), y=y, cx=cx, cy=cy)
   let green = @oxml.SolidFill(
     @oxml.Color::srgb(@units.RgbColor::new(0x70, 0xAD, 0x47)),
   )
@@ -180,21 +180,21 @@ fn sample_media_slide(
   )
   prs.add_video_mut(
     idx,
-    fake_mp4(),
-    sample_checkerboard_bmp(),
-    prs.pct_w(8.0),
-    prs.pct_h(24.0),
-    prs.pct_w(40.0),
-    prs.pct_h(52.0),
+    video_bytes=fake_mp4(),
+    poster_bytes=sample_checkerboard_bmp(),
+    x=prs.pct_w(8.0),
+    y=prs.pct_h(24.0),
+    cx=prs.pct_w(40.0),
+    cy=prs.pct_h(52.0),
   )
   prs.add_audio_mut(
     idx,
-    fake_mp3(),
-    sample_checkerboard_bmp(),
-    prs.pct_w(54.0),
-    prs.pct_h(24.0),
-    prs.pct_w(38.0),
-    prs.pct_h(52.0),
+    audio_bytes=fake_mp3(),
+    poster_bytes=sample_checkerboard_bmp(),
+    x=prs.pct_w(54.0),
+    y=prs.pct_h(24.0),
+    cx=prs.pct_w(38.0),
+    cy=prs.pct_h(52.0),
   )
 }
 
@@ -231,10 +231,10 @@ fn sample_smartart_slide(
   prs.add_smartart_mut(
     idx,
     art,
-    prs.pct_w(8.0),
-    prs.pct_h(20.0),
-    prs.pct_w(84.0),
-    prs.pct_h(68.0),
+    x=prs.pct_w(8.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(84.0),
+    cy=prs.pct_h(68.0),
   )
 }
 
@@ -247,12 +247,12 @@ fn sample_animation_slide(
   idx : Int,
 ) -> Unit raise @presentation.PptxError {
   let box = @slide.AutoShape::rect(
-    30,
-    "Animated box",
-    prs.pct_w(30.0),
-    prs.pct_h(36.0),
-    prs.pct_w(40.0),
-    prs.pct_h(28.0),
+    id=30,
+    name="Animated box",
+    x=prs.pct_w(30.0),
+    y=prs.pct_h(36.0),
+    cx=prs.pct_w(40.0),
+    cy=prs.pct_h(28.0),
   ).with_text_body(
     @slide.TextBody::of_styled_text(
       "I fly in, then spin",
@@ -290,10 +290,10 @@ fn sample_online_video_slide(
     idx,
     "https://youtu.be/dQw4w9WgXcQ",
     sample_checkerboard_bmp(),
-    prs.pct_w(20.0),
-    prs.pct_h(20.0),
-    prs.pct_w(60.0),
-    prs.pct_h(64.0),
+    x=prs.pct_w(20.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(60.0),
+    cy=prs.pct_h(64.0),
   )
 }
 
@@ -324,12 +324,12 @@ fn sample_v06_features_slide(
     extension: [],
   })
   let grad_box = @slide.AutoShape::textbox(
-    10,
-    "GradientText",
-    prs.pct_w(6.0),
-    prs.pct_h(20.0),
-    prs.pct_w(88.0),
-    prs.pct_h(12.0),
+    id=10,
+    name="GradientText",
+    x=prs.pct_w(6.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(88.0),
+    cy=prs.pct_h(12.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -349,12 +349,12 @@ fn sample_v06_features_slide(
     extension: [],
   })
   let patt_box = @slide.AutoShape::textbox(
-    11,
-    "PatternText",
-    prs.pct_w(6.0),
-    prs.pct_h(33.0),
-    prs.pct_w(88.0),
-    prs.pct_h(11.0),
+    id=11,
+    name="PatternText",
+    x=prs.pct_w(6.0),
+    y=prs.pct_h(33.0),
+    cx=prs.pct_w(88.0),
+    cy=prs.pct_h(11.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -388,12 +388,12 @@ fn sample_v06_features_slide(
     .with_space_before(Points(@units.Pt(18.0))),
   ]
   let spacing_box = @slide.AutoShape::textbox(
-    12,
-    "SpacingDemo",
-    prs.pct_w(6.0),
-    prs.pct_h(48.0),
-    prs.pct_w(88.0),
-    prs.pct_h(44.0),
+    id=12,
+    name="SpacingDemo",
+    x=prs.pct_w(6.0),
+    y=prs.pct_h(48.0),
+    cx=prs.pct_w(88.0),
+    cy=prs.pct_h(44.0),
     "",
   ).with_text_body(@slide.TextBody::of_paragraphs(spacing_paras))
   s = s.with_shape(@slide.AutoShape(spacing_box))
@@ -417,23 +417,23 @@ fn sample_v052_features_slide(
 
   // A rectangle rotated 25° and a right-arrow flipped to point left.
   let rotated = @slide.AutoShape::rect(
-      10,
-      "Rotated",
-      prs.pct_w(6.0),
-      prs.pct_h(22.0),
-      prs.pct_w(15.0),
-      prs.pct_h(14.0),
+      id=10,
+      name="Rotated",
+      x=prs.pct_w(6.0),
+      y=prs.pct_h(22.0),
+      cx=prs.pct_w(15.0),
+      cy=prs.pct_h(14.0),
     )
     .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(navy)))
     .with_rotation(@units.Angle(25.0))
   let flipped = @slide.AutoShape::of_preset(
-      11,
-      "FlippedArrow",
+      id=11,
+      name="FlippedArrow",
       @slide.PresetShape::RightArrow,
-      prs.pct_w(25.0),
-      prs.pct_h(22.0),
-      prs.pct_w(15.0),
-      prs.pct_h(14.0),
+      x=prs.pct_w(25.0),
+      y=prs.pct_h(22.0),
+      cx=prs.pct_w(15.0),
+      cy=prs.pct_h(14.0),
     )
     .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(teal)))
     .with_flip(h=true)
@@ -443,12 +443,12 @@ fn sample_v052_features_slide(
 
   // Highlight + kerning in one run.
   let hl_box = @slide.AutoShape::textbox(
-    12,
-    "Highlight",
-    prs.pct_w(44.0),
-    prs.pct_h(22.0),
-    prs.pct_w(52.0),
-    prs.pct_h(8.0),
+    id=12,
+    name="Highlight",
+    x=prs.pct_w(44.0),
+    y=prs.pct_h(22.0),
+    cx=prs.pct_w(52.0),
+    cy=prs.pct_h(8.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -473,12 +473,12 @@ fn sample_v052_features_slide(
     extension: [],
   }
   let outline_box = @slide.AutoShape::textbox(
-    13,
-    "Outlined",
-    prs.pct_w(44.0),
-    prs.pct_h(32.0),
-    prs.pct_w(52.0),
-    prs.pct_h(10.0),
+    id=13,
+    name="Outlined",
+    x=prs.pct_w(44.0),
+    y=prs.pct_h(32.0),
+    cx=prs.pct_w(52.0),
+    cy=prs.pct_h(10.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -505,12 +505,12 @@ fn sample_v052_features_slide(
     extension: [],
   }
   let glow_box = @slide.AutoShape::textbox(
-    14,
-    "Glow",
-    prs.pct_w(44.0),
-    prs.pct_h(44.0),
-    prs.pct_w(52.0),
-    prs.pct_h(10.0),
+    id=14,
+    name="Glow",
+    x=prs.pct_w(44.0),
+    y=prs.pct_h(44.0),
+    cx=prs.pct_w(52.0),
+    cy=prs.pct_h(10.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -533,23 +533,23 @@ fn sample_v052_features_slide(
     .with_bold()
     .with_color(white)
   let docs_btn = @slide.AutoShape::round_rect(
-      15,
-      "DocsButton",
-      prs.pct_w(6.0),
-      prs.pct_h(74.0),
-      prs.pct_w(30.0),
-      prs.pct_h(12.0),
+      id=15,
+      name="DocsButton",
+      x=prs.pct_w(6.0),
+      y=prs.pct_h(74.0),
+      cx=prs.pct_w(30.0),
+      cy=prs.pct_h(12.0),
     )
     .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(navy)))
     .with_text_body(@slide.TextBody::of_styled_text("Open docs ↗", label_rp))
     .with_hyperlink(url="https://mooncakes.io/docs/t-ujiie-g/moon-pptx")
   let back_btn = @slide.AutoShape::round_rect(
-      16,
-      "BackButton",
-      prs.pct_w(40.0),
-      prs.pct_h(74.0),
-      prs.pct_w(30.0),
-      prs.pct_h(12.0),
+      id=16,
+      name="BackButton",
+      x=prs.pct_w(40.0),
+      y=prs.pct_h(74.0),
+      cx=prs.pct_w(30.0),
+      cy=prs.pct_h(12.0),
     )
     .with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(teal)))
     .with_text_body(@slide.TextBody::of_styled_text("Back to title", label_rp))
@@ -665,12 +665,12 @@ fn sample_v07_features_slide(
     prs.pct_w(14.0),
   ]).with_style(MediumStyle2Accent1)
   let gf = @slide.GraphicFrame::of_table(
-    10,
-    "StyledTable",
-    prs.pct_w(6.0),
-    prs.pct_h(22.0),
-    prs.pct_w(42.0),
-    prs.pct_h(36.0),
+    id=10,
+    name="StyledTable",
+    x=prs.pct_w(6.0),
+    y=prs.pct_h(22.0),
+    cx=prs.pct_w(42.0),
+    cy=prs.pct_h(36.0),
     table,
   )
   s = s.with_shape(@slide.GraphicFrame(gf))
@@ -681,12 +681,12 @@ fn sample_v07_features_slide(
   let cx = prs.pct_w(13.0)
   let cy = prs.pct_h(30.0)
   let solid_box = @slide.AutoShape::round_rect(
-      11,
-      "SolidFill",
-      prs.pct_w(52.0),
-      y,
-      cx,
-      cy,
+      id=11,
+      name="SolidFill",
+      x=prs.pct_w(52.0),
+      y=y,
+      cx=cx,
+      cy=cy,
     )
     .with_fill(@oxml.Fill::solid(navy))
     .with_text_body(
@@ -696,12 +696,12 @@ fn sample_v07_features_slide(
       ),
     )
   let grad_box = @slide.AutoShape::round_rect(
-      12,
-      "GradientFill",
-      prs.pct_w(67.0),
-      y,
-      cx,
-      cy,
+      id=12,
+      name="GradientFill",
+      x=prs.pct_w(67.0),
+      y=y,
+      cx=cx,
+      cy=cy,
     )
     .with_fill(@oxml.Fill::linear_gradient(navy, teal, via=[white]))
     .with_text_body(
@@ -711,12 +711,12 @@ fn sample_v07_features_slide(
       ),
     )
   let patt_box = @slide.AutoShape::round_rect(
-      13,
-      "PatternFill",
-      prs.pct_w(82.0),
-      y,
-      cx,
-      cy,
+      id=13,
+      name="PatternFill",
+      x=prs.pct_w(82.0),
+      y=y,
+      cx=cx,
+      cy=cy,
     )
     .with_fill(@oxml.Fill::pattern("ltUpDiag", fg=teal, bg=white))
     .with_text_body(
@@ -732,12 +732,12 @@ fn sample_v07_features_slide(
 
   // Point at the v0.7 features that live on other slides / deck level.
   let note = @slide.AutoShape::textbox(
-    14,
-    "Note",
-    prs.pct_w(6.0),
-    prs.pct_h(66.0),
-    prs.pct_w(88.0),
-    prs.pct_h(26.0),
+    id=14,
+    name="Note",
+    x=prs.pct_w(6.0),
+    y=prs.pct_h(66.0),
+    cx=prs.pct_w(88.0),
+    cy=prs.pct_h(26.0),
     "Also in this deck from v0.7: slide sections (see the groups in the slide panel), company / manager document properties (File ▸ Info), an embedded data workbook behind the combo chart's Edit Data button, and the red CEO node on the SmartArt slide.",
   )
   s = s.with_shape(@slide.AutoShape(note))

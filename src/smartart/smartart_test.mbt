@@ -56,7 +56,7 @@ test "data_xml carries the node text, connections, and drawing ext" {
 test "drawing_xml lays out one shape per node" {
   let art = @smartart.SmartArt::list(["A", "B", "C"])
   let xml = @oxml.bytes_to_string(
-    art.drawing_xml(@units.Emu(6_000_000L), @units.Emu(3_000_000L)),
+    art.drawing_xml(cx=@units.Emu(6_000_000L), cy=@units.Emu(3_000_000L)),
   )
   assert_true(xml.find("<dsp:drawing") is Some(_))
   assert_eq(count_occurrences(xml, "<dsp:sp "), 3)
@@ -114,7 +114,7 @@ test "org_chart data model: parent/child connections + all nodes drawn" {
   // The cached drawing lays out every node (not just the root) plus one
   // connector line per parent→child edge.
   let drawing = @oxml.bytes_to_string(
-    art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(5_000_000L)),
+    art.drawing_xml(cx=@units.Emu(8_000_000L), cy=@units.Emu(5_000_000L)),
   )
   assert_eq(count_occurrences(drawing, "<dsp:sp "), 7)
   assert_eq(count_occurrences(drawing, "prst=\"line\""), 3)
@@ -172,7 +172,7 @@ test "drawing connector geometry: bounding box + flipH" {
     ]),
   )
   let xml = @oxml.bytes_to_string(
-    art.drawing_xml(@units.Emu(8_000_000L), @units.Emu(4_000_000L)),
+    art.drawing_xml(cx=@units.Emu(8_000_000L), cy=@units.Emu(4_000_000L)),
   )
   assert_eq(count_occurrences(xml, "prst=\"line\""), 2)
   assert_eq(count_occurrences(xml, "flipH=\"1\""), 1)
@@ -215,7 +215,7 @@ test "matrix grid + relationship hub layouts" {
   let m = @smartart.SmartArt::matrix(["Q1", "Q2", "Q3", "Q4"])
   assert_true(m.kind == Matrix)
   let mxml = @oxml.bytes_to_string(
-    m.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
+    m.drawing_xml(cx=@units.Emu(5_000_000L), cy=@units.Emu(5_000_000L)),
   )
   assert_eq(count_occurrences(mxml, "<dsp:sp "), 4)
   assert_true(@oxml.bytes_to_string(m.layout_xml()).find("matrix1") is Some(_))
@@ -231,7 +231,7 @@ test "matrix grid + relationship hub layouts" {
   // One edge from the doc (the hub), three from the hub node (the spokes).
   assert_eq(count_occurrences(rdata, "srcId=\"0\""), 1)
   let rxml = @oxml.bytes_to_string(
-    r.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
+    r.drawing_xml(cx=@units.Emu(5_000_000L), cy=@units.Emu(5_000_000L)),
   )
   // Four boxes + three hub→spoke connector lines.
   assert_eq(count_occurrences(rxml, "<dsp:sp "), 7)
@@ -247,12 +247,12 @@ test "matrix grid + relationship hub layouts" {
 test "cycle / pyramid drawings lay out one box per node" {
   let c = @smartart.SmartArt::cycle(["A", "B", "C", "D"])
   let cxml = @oxml.bytes_to_string(
-    c.drawing_xml(@units.Emu(5_000_000L), @units.Emu(5_000_000L)),
+    c.drawing_xml(cx=@units.Emu(5_000_000L), cy=@units.Emu(5_000_000L)),
   )
   assert_eq(count_occurrences(cxml, "<dsp:sp "), 4)
   let p = @smartart.SmartArt::pyramid(["Top", "Mid", "Base"])
   let pxml = @oxml.bytes_to_string(
-    p.drawing_xml(@units.Emu(5_000_000L), @units.Emu(3_000_000L)),
+    p.drawing_xml(cx=@units.Emu(5_000_000L), cy=@units.Emu(3_000_000L)),
   )
   assert_eq(count_occurrences(pxml, "<dsp:sp "), 3)
   // All generated parts well-formed for the new families too.
@@ -285,7 +285,9 @@ test "all generated parts are well-formed XML" {
   let art = @smartart.SmartArt::process(["Alpha", "Beta < Gamma"])
   assert_well_formed(@oxml.bytes_to_string(art.data_xml("rId1")))
   assert_well_formed(
-    @oxml.bytes_to_string(art.drawing_xml(@units.Emu(100L), @units.Emu(100L))),
+    @oxml.bytes_to_string(
+      art.drawing_xml(cx=@units.Emu(100L), cy=@units.Emu(100L)),
+    ),
   )
   assert_well_formed(@oxml.bytes_to_string(art.layout_xml()))
   assert_well_formed(@oxml.bytes_to_string(art.colors_xml()))
@@ -351,7 +353,7 @@ test "drawing_xml overrides the styled box, keeps quick-style defaults elsewhere
     @smartart.Node::leaf("Plain"),
   ])
   let xml = @oxml.bytes_to_string(
-    art.drawing_xml(@units.Emu(6_000_000L), @units.Emu(3_000_000L)),
+    art.drawing_xml(cx=@units.Emu(6_000_000L), cy=@units.Emu(3_000_000L)),
   )
   // The styled box fills FF0000; the unstyled one keeps accent1.
   assert_true(xml.find("<a:srgbClr val=\"FF0000\"") is Some(_))

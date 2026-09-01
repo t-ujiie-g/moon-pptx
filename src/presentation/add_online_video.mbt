@@ -22,10 +22,10 @@ pub fn Presentation::add_online_video_mut(
   slide_idx : Int,
   video_url : String,
   poster_bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   if video_url == "" {
     raise Malformed("add_online_video_mut: empty video URL")
@@ -102,16 +102,16 @@ pub fn Presentation::add_online_video_mut(
   // Build the media picture (same structure as embedded video) and append it.
   let pic_id = next_picture_shape_id(slide_part)
   let pic = @slide.Picture::of_media(
-    pic_id,
-    "Online Video " + pic_id.to_string(),
+    id=pic_id,
+    name="Online Video " + pic_id.to_string(),
     Video,
-    rid_link,
-    rid_media,
-    rid_poster,
-    x,
-    y,
-    cx,
-    cy,
+    link_id=rid_link,
+    media_embed_id=rid_media,
+    poster_embed_id=rid_poster,
+    x~,
+    y~,
+    cx~,
+    cy~,
   )
   let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
     e => raise SlideFailure(e.to_string())
@@ -132,10 +132,10 @@ pub fn Presentation::add_youtube_video_mut(
   slide_idx : Int,
   youtube_url : String,
   poster_bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   let embed_url = match youtube_embed_url(youtube_url) {
     Some(u) => u
@@ -146,7 +146,15 @@ pub fn Presentation::add_youtube_video_mut(
         "'",
       )
   }
-  self.add_online_video_mut(slide_idx, embed_url, poster_bytes, x, y, cx, cy)
+  self.add_online_video_mut(
+    slide_idx,
+    embed_url,
+    poster_bytes,
+    x~,
+    y~,
+    cx~,
+    cy~,
+  )
 }
 
 ///|

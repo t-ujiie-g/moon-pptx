@@ -36,12 +36,12 @@ test "editing one slide leaves every other part byte-for-byte identical" {
   let _ = prs.add_slide_mut(0)
   // Put real content on slide 1 so `original` is a non-trivial deck.
   let r0 = @slide.AutoShape::rect(
-    2,
-    "A",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=2,
+    name="A",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(r0)))
   let original = prs.save()
@@ -49,12 +49,12 @@ test "editing one slide leaves every other part byte-for-byte identical" {
   // Reopen and edit ONLY slide 2.
   let editing = @presentation.Presentation::open(original)
   let r1 = @slide.AutoShape::rect(
-    2,
-    "B",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(200L),
-    @units.Emu(200L),
+    id=2,
+    name="B",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(200L),
+    cy=@units.Emu(200L),
   )
   editing.update_slide_mut(
     1,

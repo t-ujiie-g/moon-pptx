@@ -156,7 +156,7 @@ pub fn build_sample_chart_isolated(
         .with_category("Site C")
         .with_series("Orders", [120.0, 200.0, 150.0])
         .with_series("Errors", [10.0, 30.0, 15.0])
-      prs.add_chart_mut(1, @chart.Chart::of_bar_3d(data), x, y, w, h)
+      prs.add_chart_mut(1, @chart.Chart::of_bar_3d(data), x=x, y=y, cx=w, cy=h)
     }
     1 => {
       // Stock (HLC).
@@ -167,7 +167,7 @@ pub fn build_sample_chart_isolated(
         .with_series("High", [105.0, 108.0, 112.0])
         .with_series("Low", [98.0, 100.0, 105.0])
         .with_series("Close", [102.0, 106.0, 110.0])
-      prs.add_chart_mut(1, @chart.Chart::of_stock(data, kind=HLC), x, y, w, h)
+      prs.add_chart_mut(1, @chart.Chart::of_stock(data, kind=HLC), x=x, y=y, cx=w, cy=h)
     }
     _ => {
       // of-pie.
@@ -178,7 +178,7 @@ pub fn build_sample_chart_isolated(
         .with_category("Email")
         .with_category("Other")
         .with_series("Traffic", [38.0, 28.0, 15.0, 12.0, 7.0])
-      prs.add_chart_mut(1, @chart.Chart::of_of_pie(data), x, y, w, h)
+      prs.add_chart_mut(1, @chart.Chart::of_of_pie(data), x=x, y=y, cx=w, cy=h)
     }
   }
   prs.save()
@@ -269,12 +269,12 @@ fn heading(
   text : String,
 ) -> @slide.AutoShape {
   @slide.AutoShape::textbox(
-    id,
-    "Heading",
-    prs.pct_w(5.0),
-    prs.pct_h(3.0),
-    prs.pct_w(90.0),
-    prs.pct_h(10.0),
+    id=id,
+    name="Heading",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(3.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(10.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -300,12 +300,12 @@ fn sample_title_slide(
     .with_bold()
     .with_color(@units.RgbColor::new(0x1F, 0x4E, 0x79))
   let title = @slide.AutoShape::textbox(
-    2,
-    "Title",
-    prs.pct_w(5.0),
-    prs.pct_h(35.0),
-    prs.pct_w(90.0),
-    prs.pct_h(20.0),
+    id=2,
+    name="Title",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(35.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(20.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -323,12 +323,12 @@ fn sample_title_slide(
       tooltip="Open the docs",
     )
   let subtitle = @slide.AutoShape::textbox(
-    3,
-    "Subtitle",
-    prs.pct_w(5.0),
-    prs.pct_h(58.0),
-    prs.pct_w(90.0),
-    prs.pct_h(10.0),
+    id=3,
+    name="Subtitle",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(58.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(10.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -378,12 +378,12 @@ fn sample_toc_slide(
       .with_color(@units.RgbColor::new(0x0B, 0x5C, 0xD2))
       .with_hyperlink_to_slide(target_idx, tooltip="Jump to section")
     let line = @slide.AutoShape::textbox(
-      next_id,
-      "TocEntry" + row.to_string(),
-      prs.pct_w(10.0),
-      prs.pct_h(15.0 + row.to_double() * row_h_pct),
-      prs.pct_w(80.0),
-      prs.pct_h(row_h_pct),
+      id=next_id,
+      name="TocEntry" + row.to_string(),
+      x=prs.pct_w(10.0),
+      y=prs.pct_h(15.0 + row.to_double() * row_h_pct),
+      cx=prs.pct_w(80.0),
+      cy=prs.pct_h(row_h_pct),
       "",
     ).with_text_body(@slide.TextBody::of_styled_text(label, rp))
     new_slide = new_slide.with_shape(@slide.AutoShape(line))
@@ -438,12 +438,12 @@ fn sample_text_slide(
   ).with_properties(bullet_pp)
   let body = @slide.TextBody::of_paragraphs([p1, p2, p3, b1, b2, b3])
   let tb = @slide.AutoShape::textbox(
-    3,
-    "Body",
-    prs.pct_w(5.0),
-    prs.pct_h(18.0),
-    prs.pct_w(90.0),
-    prs.pct_h(75.0),
+    id=3,
+    name="Body",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(18.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(75.0),
     "",
   ).with_text_body(body)
   let s = prs.slides()[idx]
@@ -467,28 +467,28 @@ fn sample_shapes_slide(
   let blue = @units.RgbColor::new(0x4C, 0x8C, 0xE6)
   let green = @units.RgbColor::new(0x4C, 0xE6, 0x8C)
   let rect = @slide.AutoShape::rect(
-    3,
-    "Rect",
-    prs.pct_w(7.0),
-    row_y,
-    shape_w,
-    row_h,
+    id=3,
+    name="Rect",
+    x=prs.pct_w(7.0),
+    y=row_y,
+    cx=shape_w,
+    cy=row_h,
   ).with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(red)))
   let ellipse = @slide.AutoShape::ellipse(
-    4,
-    "Ellipse",
-    prs.pct_w(40.0),
-    row_y,
-    shape_w,
-    row_h,
+    id=4,
+    name="Ellipse",
+    x=prs.pct_w(40.0),
+    y=row_y,
+    cx=shape_w,
+    cy=row_h,
   ).with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(blue)))
   let round = @slide.AutoShape::round_rect(
-    5,
-    "RoundRect",
-    prs.pct_w(73.0),
-    row_y,
-    shape_w,
-    row_h,
+    id=5,
+    name="RoundRect",
+    x=prs.pct_w(73.0),
+    y=row_y,
+    cx=shape_w,
+    cy=row_h,
   ).with_fill(@oxml.Fill::SolidFill(@oxml.Color::srgb(green)))
 
   // A free-floating connector — straight line between two points.
@@ -747,8 +747,8 @@ fn sample_picture_slide(
   prs.add_picture_auto_mut(
     idx,
     sample_checkerboard_bmp(),
-    prs.pct_w(8.0),
-    prs.pct_h(20.0),
+    x=prs.pct_w(8.0),
+    y=prs.pct_h(20.0),
   )
 
   // Add a second picture with an explicit larger extent and a 15 % crop on
@@ -756,13 +756,13 @@ fn sample_picture_slide(
   // builder → with_crop → build is compile-time-checked: cropping twice, or
   // applying effects after build, wouldn't compile.
   let cropped = @slide.Picture::builder(
-      20,
-      "CroppedChecker",
+      id=20,
+      name="CroppedChecker",
       "rId2", // rId2 is what `add_picture_auto_mut` allocated above.
-      prs.pct_w(40.0),
-      prs.pct_h(20.0),
-      prs.pct_w(50.0),
-      prs.pct_h(70.0),
+      x=prs.pct_w(40.0),
+      y=prs.pct_h(20.0),
+      cx=prs.pct_w(50.0),
+      cy=prs.pct_h(70.0),
     )
     .with_crop(
       left=@units.Percentage(15.0),
@@ -883,12 +883,12 @@ fn sample_table_slide(
     col_w, col_w, col_w,
   ])
   let frame = @slide.GraphicFrame::of_table(
-    3,
-    "RevenueTable",
-    prs.pct_w(20.0),
-    prs.pct_h(20.0),
-    prs.pct_w(60.0),
-    prs.pct_h(50.0),
+    id=3,
+    name="RevenueTable",
+    x=prs.pct_w(20.0),
+    y=prs.pct_h(20.0),
+    cx=prs.pct_w(60.0),
+    cy=prs.pct_h(50.0),
     table,
   )
   let s = prs.slides()[idx]
@@ -1008,8 +1008,8 @@ fn sample_charts_3_slide(
   let chart_w = prs.pct_w(40.0)
   let chart_h = prs.pct_h(75.0)
   let y = prs.pct_h(18.0)
-  prs.add_chart_mut(idx, scatter, prs.pct_w(7.0), y, chart_w, chart_h)
-  prs.add_chart_mut(idx, bubble, prs.pct_w(53.0), y, chart_w, chart_h)
+  prs.add_chart_mut(idx, scatter, x=prs.pct_w(7.0), y=y, cx=chart_w, cy=chart_h)
+  prs.add_chart_mut(idx, bubble, x=prs.pct_w(53.0), y=y, cx=chart_w, cy=chart_h)
 }
 
 ///|
@@ -1063,12 +1063,12 @@ fn sample_closing_slide(
     .with_bold()
     .with_color(@units.RgbColor::new(0x1F, 0x4E, 0x79))
   let heading_box = @slide.AutoShape::textbox(
-    2,
-    "Heading",
-    prs.pct_w(5.0),
-    prs.pct_h(30.0),
-    prs.pct_w(90.0),
-    prs.pct_h(20.0),
+    id=2,
+    name="Heading",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(30.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(20.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text("Thanks — try it yourself", heading_rp),
@@ -1077,12 +1077,12 @@ fn sample_closing_slide(
     .with_font_size(@units.Pt(20.0))
     .with_color(@units.RgbColor::new(0x55, 0x55, 0x55))
   let body = @slide.AutoShape::textbox(
-    3,
-    "Body",
-    prs.pct_w(5.0),
-    prs.pct_h(55.0),
-    prs.pct_w(90.0),
-    prs.pct_h(15.0),
+    id=3,
+    name="Body",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(55.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(15.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text(
@@ -1097,12 +1097,12 @@ fn sample_closing_slide(
     .with_italic()
     .with_hyperlink_to_slide(0, tooltip="Back to title")
   let back = @slide.AutoShape::textbox(
-    4,
-    "BackLink",
-    prs.pct_w(5.0),
-    prs.pct_h(78.0),
-    prs.pct_w(90.0),
-    prs.pct_h(8.0),
+    id=4,
+    name="BackLink",
+    x=prs.pct_w(5.0),
+    y=prs.pct_h(78.0),
+    cx=prs.pct_w(90.0),
+    cy=prs.pct_h(8.0),
     "",
   ).with_text_body(
     @slide.TextBody::of_styled_text("← Back to title slide", back_rp),
@@ -1133,9 +1133,9 @@ fn three_chart_grid(
   let w = prs.pct_w(28.33)
   let h = prs.pct_h(75.0)
   let y = prs.pct_h(18.0)
-  prs.add_chart_mut(idx, a, prs.pct_w(5.0), y, w, h)
-  prs.add_chart_mut(idx, b, prs.pct_w(35.83), y, w, h)
-  prs.add_chart_mut(idx, c, prs.pct_w(66.66), y, w, h)
+  prs.add_chart_mut(idx, a, x=prs.pct_w(5.0), y=y, cx=w, cy=h)
+  prs.add_chart_mut(idx, b, x=prs.pct_w(35.83), y=y, cx=w, cy=h)
+  prs.add_chart_mut(idx, c, x=prs.pct_w(66.66), y=y, cx=w, cy=h)
 }
 
 // --- synthesized image ---
