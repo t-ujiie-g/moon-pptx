@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+No API change. Two claims the documentation was making are now backed by
+something that runs.
+
+### Changed
+
+- **Legacy Wasm is actually tested in CI.** `README.md` § Compatibility,
+  `ROADMAP.md` §0 and §2 all said the CI matrix covered four backends
+  while `.github/workflows/ci.yml` ran three; the suite passes on
+  `--target wasm`, so the matrix gained it rather than the docs losing a
+  backend. See ADR-014, which supersedes the legacy-Wasm exclusion in
+  ADR-002.
+- **The README's Quickstart snippets are executed.**
+  `src/integration/readme_test.mbt` mirrors all four blocks, in the same
+  arrangement `src/integration/examples_test.mbt` already uses for
+  `examples/README.md`. The blocks keep their `nocheck` marker: `moon
+  0.1.20260827` collects no tests from `.mbt.md` files or `///` doc
+  comments, so dropping it would advertise a check that does not run
+  (tracked as `ROADMAP.md` H4).
+
 ## [0.8.0] — 2026-09-01
 
 Closes three gaps from `ROADMAP.md` §3.1 — G1 (RTL / bidi), G5
