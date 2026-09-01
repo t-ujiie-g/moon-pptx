@@ -34,12 +34,12 @@ test "pct_w / pct_h compose with shape builders" {
   let _ = prs.add_slide_mut(0)
   // 10 % margin, full-bleed banner.
   let tb = @slide.AutoShape::textbox(
-    2,
-    "Banner",
-    prs.pct_w(10.0),
-    prs.pct_h(5.0),
-    prs.pct_w(80.0),
-    prs.pct_h(15.0),
+    id=2,
+    name="Banner",
+    x=prs.pct_w(10.0),
+    y=prs.pct_h(5.0),
+    cx=prs.pct_w(80.0),
+    cy=prs.pct_h(15.0),
     "Hello",
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(tb)))

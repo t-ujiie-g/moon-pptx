@@ -131,12 +131,12 @@ fn add_centered_textbox(
 ) -> Unit raise {
   let s = prs.slides()[slide_idx]
   let tb = @slide.AutoShape::textbox(
-    id,
-    "Title",
-    emu(margin),
-    emu(y_offset),
-    emu(slide_w - margin * 2L),
-    emu(914400L),
+    id~,
+    name="Title",
+    x=emu(margin),
+    y=emu(y_offset),
+    cx=emu(slide_w - margin * 2L),
+    cy=emu(914400L),
     text,
   )
   prs.update_slide_mut(slide_idx, s.with_shape(@slide.AutoShape(tb)))
@@ -153,7 +153,14 @@ fn add_rect_at(
   cy~ : Int64,
 ) -> Unit raise {
   let s = prs.slides()[slide_idx]
-  let r = @slide.AutoShape::rect(id, "Rect", emu(x), emu(y), emu(cx), emu(cy))
+  let r = @slide.AutoShape::rect(
+    id~,
+    name="Rect",
+    x=emu(x),
+    y=emu(y),
+    cx=emu(cx),
+    cy=emu(cy),
+  )
   prs.update_slide_mut(slide_idx, s.with_shape(@slide.AutoShape(r)))
 }
 
@@ -169,12 +176,12 @@ fn add_ellipse_centered(
   let x = (slide_w - cx) / 2L
   let y = 3048000L
   let e = @slide.AutoShape::ellipse(
-    id,
-    "Ellipse",
-    emu(x),
-    emu(y),
-    emu(cx),
-    emu(cy),
+    id~,
+    name="Ellipse",
+    x=emu(x),
+    y=emu(y),
+    cx=emu(cx),
+    cy=emu(cy),
   )
   prs.update_slide_mut(slide_idx, s.with_shape(@slide.AutoShape(e)))
 }

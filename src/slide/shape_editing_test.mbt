@@ -167,12 +167,12 @@ test "an id-targeted rename round-trips through serialize" {
 /// descend into. Group children share the slide's `<p:spTree>` id space.
 fn group_with_child(group_id : Int, child_id : Int) -> @slide.Shape {
   let child = @slide.AutoShape::rect(
-    child_id,
-    "Inner",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    id=child_id,
+    name="Inner",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   )
   let g : @slide.GroupShape = {
     id: group_id,
@@ -222,12 +222,12 @@ test "Slide::with_shape_auto_id renumbers a colliding shape" {
   // Deliberately reuse id 2, which the title already holds.
   let clashing = @slide.AutoShape(
     @slide.AutoShape::rect(
-      2,
-      "Clash",
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(914_400L),
-      @units.Emu(914_400L),
+      id=2,
+      name="Clash",
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(914_400L),
+      cy=@units.Emu(914_400L),
     ),
   )
   assert_true(slide.with_shape(clashing).duplicate_shape_ids() == [2])
@@ -247,12 +247,12 @@ test "Slide::duplicate_shape_ids reports each clashing id once, ascending" {
     .with_shape(
       @slide.AutoShape(
         @slide.AutoShape::rect(
-          3,
-          "Third",
-          @units.Emu(0L),
-          @units.Emu(0L),
-          @units.Emu(914_400L),
-          @units.Emu(914_400L),
+          id=3,
+          name="Third",
+          x=@units.Emu(0L),
+          y=@units.Emu(0L),
+          cx=@units.Emu(914_400L),
+          cy=@units.Emu(914_400L),
         ),
       ),
     )

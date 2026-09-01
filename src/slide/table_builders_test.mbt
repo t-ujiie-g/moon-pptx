@@ -87,12 +87,12 @@ test "GraphicFrame::of_table: id / name / transform / content" {
     row_height=@units.Emu(457200L),
   )
   let gf = @slide.GraphicFrame::of_table(
-    42,
-    "Grid 1",
-    @units.Emu(100L),
-    @units.Emu(200L),
-    @units.Emu(300L),
-    @units.Emu(400L),
+    id=42,
+    name="Grid 1",
+    x=@units.Emu(100L),
+    y=@units.Emu(200L),
+    cx=@units.Emu(300L),
+    cy=@units.Emu(400L),
     t,
   )
   assert_eq(gf.id, 42)
@@ -131,12 +131,12 @@ test "GraphicFrame::of_table: round-trips via Slide::serialize" {
     row_height=@units.Emu(457200L),
   )
   let gf = @slide.GraphicFrame::of_table(
-    7,
-    "Table 1",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1828800L),
-    @units.Emu(914400L),
+    id=7,
+    name="Table 1",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1828800L),
+    cy=@units.Emu(914400L),
     t,
   )
   let s = base.with_shape(@slide.GraphicFrame(gf))
@@ -167,12 +167,12 @@ test "GraphicFrame::of_table: second round-trip is Eq-stable" {
     row_height=@units.Emu(457200L),
   )
   let gf = @slide.GraphicFrame::of_table(
-    7,
-    "Tbl",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914400L),
-    @units.Emu(914400L),
+    id=7,
+    name="Tbl",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914400L),
+    cy=@units.Emu(914400L),
     t,
   )
   let base_xml = "<?xml version=\"1.0\"?>" +

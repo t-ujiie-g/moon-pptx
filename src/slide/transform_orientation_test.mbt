@@ -95,12 +95,12 @@ test "Transform::new defaults + with_rotation / with_flip" {
 test "AutoShape::with_rotation + with_flip emit attrs and round-trip" {
   let base = @slide.Slide::parse(empty_sptree_deck())
   let rect = @slide.AutoShape::rect(
-      2,
-      "R",
-      @units.Emu(100L),
-      @units.Emu(200L),
-      @units.Emu(300L),
-      @units.Emu(400L),
+      id=2,
+      name="R",
+      x=@units.Emu(100L),
+      y=@units.Emu(200L),
+      cx=@units.Emu(300L),
+      cy=@units.Emu(400L),
     )
     .with_rotation(@units.Angle(45.0)) // 45° → 2700000
     .with_flip(h=true)
@@ -126,12 +126,12 @@ test "AutoShape::with_rotation + with_flip emit attrs and round-trip" {
 test "writer: un-rotated transform emits no rot / flipH / flipV" {
   let base = @slide.Slide::parse(empty_sptree_deck())
   let rect = @slide.AutoShape::rect(
-    2,
-    "R",
-    @units.Emu(100L),
-    @units.Emu(200L),
-    @units.Emu(300L),
-    @units.Emu(400L),
+    id=2,
+    name="R",
+    x=@units.Emu(100L),
+    y=@units.Emu(200L),
+    cx=@units.Emu(300L),
+    cy=@units.Emu(400L),
   )
   let s = base.with_shape(@slide.AutoShape(rect))
   let xml = @oxml.bytes_to_string(s.serialize())
@@ -144,13 +144,13 @@ test "writer: un-rotated transform emits no rot / flipH / flipV" {
 test "Picture::with_rotation + with_flip round-trip" {
   let base = @slide.Slide::parse(empty_sptree_deck())
   let pic = @slide.Picture::of_image(
-      3,
-      "Pic",
+      id=3,
+      name="Pic",
       "rId2",
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(914400L),
-      @units.Emu(914400L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(914400L),
+      cy=@units.Emu(914400L),
     )
     .with_rotation(@units.Angle(90.0))
     .with_flip(v=true)

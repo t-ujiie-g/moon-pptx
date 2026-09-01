@@ -9,12 +9,12 @@ test "readme: build a one-slide deck from scratch" {
   let _ = prs.add_slide_mut(0)
   let s = prs.slides()[0]
   let tb = @slide.AutoShape::textbox(
-    2,
-    "Title",
-    @units.Emu(457_200L),
-    @units.Emu(2_438_400L),
-    @units.Emu(8_229_600L),
-    @units.Emu(914_400L),
+    id=2,
+    name="Title",
+    x=@units.Emu(457_200L),
+    y=@units.Emu(2_438_400L),
+    cx=@units.Emu(8_229_600L),
+    cy=@units.Emu(914_400L),
     "Hello, MoonBit",
   )
   prs.update_slide_mut(0, s.with_shape(@slide.AutoShape(tb)))
@@ -46,12 +46,12 @@ test "readme: tables" {
     @units.Emu(2_286_000L),
   ])
   let gf = @slide.GraphicFrame::of_table(
-    10,
-    "Summary",
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(4_572_000L),
-    @units.Emu(914_400L),
+    id=10,
+    name="Summary",
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(4_572_000L),
+    cy=@units.Emu(914_400L),
     t,
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.GraphicFrame(gf)))
@@ -84,10 +84,10 @@ test "readme: charts" {
   prs.add_chart_mut(
     0,
     chart,
-    @units.Emu(914_400L),
-    @units.Emu(1_828_800L),
-    @units.Emu(4_572_000L),
-    @units.Emu(3_429_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(1_828_800L),
+    cx=@units.Emu(4_572_000L),
+    cy=@units.Emu(3_429_000L),
   )
   assert_eq(prs.slides()[0].shapes.length(), 1)
   // The alternate one-liners the README lists next to `of_bar`.
@@ -117,18 +117,18 @@ test "readme: scatter and bubble" {
   prs.add_chart_mut(
     0,
     scatter,
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(4_572_000L),
-    @units.Emu(3_429_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(4_572_000L),
+    cy=@units.Emu(3_429_000L),
   )
   prs.add_chart_mut(
     0,
     bubble,
-    @units.Emu(5_486_400L),
-    @units.Emu(914_400L),
-    @units.Emu(4_572_000L),
-    @units.Emu(3_429_000L),
+    x=@units.Emu(5_486_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(4_572_000L),
+    cy=@units.Emu(3_429_000L),
   )
   assert_eq(prs.slides()[0].shapes.length(), 2)
   assert_true(prs.save().length() > 0)

@@ -17,16 +17,16 @@
 /// layout / quickStyle / colors parts respectively. Pair with
 /// `@presentation.Presentation::add_smartart_mut` for the full OPC plumbing.
 pub fn GraphicFrame::of_diagram_ref(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
-  dm : String,
-  lo : String,
-  qs : String,
-  cs : String,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
+  dm~ : String,
+  lo~ : String,
+  qs~ : String,
+  cs~ : String,
 ) -> GraphicFrame {
   let rel_ids = @xml.XmlElement::new(
     @xml.QName::new(@oxml.diagram_ns, "relIds"),

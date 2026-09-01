@@ -28,10 +28,10 @@ test "add_smartart_mut: wires five diagram parts with content types" {
   prs.add_smartart_mut(
     0,
     art,
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(6_858_000L),
-    @units.Emu(4_572_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(6_858_000L),
+    cy=@units.Emu(4_572_000L),
   )
   // Five parts with the right content types.
   let cases = [
@@ -60,10 +60,10 @@ test "add_smartart_mut: graphicFrame carries the four diagram relIds" {
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::process(["A", "B"]),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(6_000_000L),
-    @units.Emu(2_000_000L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(6_000_000L),
+    cy=@units.Emu(2_000_000L),
   )
   let slide = prs.slides()[0]
   assert_eq(slide.shapes.length(), 1)
@@ -98,10 +98,10 @@ test "add_smartart_mut: data part references the cached drawing" {
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::list(["One"]),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   // The data part's rels point at the drawing via the diagramDrawing rel.
   let data_rels = prs.pkg.relationships_for("/ppt/diagrams/data1.xml")
@@ -124,10 +124,10 @@ test "add_smartart_mut: survives save -> reopen" {
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::list(["Plan", "Build", "Ship"]),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(6_000_000L),
-    @units.Emu(4_000_000L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(6_000_000L),
+    cy=@units.Emu(4_000_000L),
   )
   let prs2 = @presentation.Presentation::open(prs.save())
   // All five parts survive.
@@ -158,10 +158,10 @@ test "add_smartart_mut: escapes node text in data + drawing parts" {
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::list(["A < B & C"]),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let data = prs.pkg.part_by_name("/ppt/diagrams/data1.xml").unwrap()
   let xml = @oxml.bytes_to_string(data.bytes)
@@ -177,18 +177,18 @@ test "add_smartart_mut: second diagram gets index 2 across all parts" {
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::list(["x"]),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::process(["y"]),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   assert_true(prs.pkg.part_by_name("/ppt/diagrams/data2.xml") is Some(_))
   assert_true(prs.pkg.part_by_name("/ppt/drawings/drawing2.xml") is Some(_))
@@ -207,10 +207,10 @@ test "add_smartart_mut: cycle + pyramid wire end-to-end and reopen" {
     prs.add_smartart_mut(
       0,
       art,
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(5_000_000L),
-      @units.Emu(3_000_000L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(5_000_000L),
+      cy=@units.Emu(3_000_000L),
     )
     let prs2 = @presentation.Presentation::open(prs.save())
     assert_true(prs2.pkg.part_by_name("/ppt/diagrams/data1.xml") is Some(_))
@@ -230,10 +230,10 @@ test "add_smartart_mut: org_chart with nested children wires + reopens" {
   prs.add_smartart_mut(
     0,
     @smartart.SmartArt::org_chart(root),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(8_000_000L),
-    @units.Emu(5_000_000L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(8_000_000L),
+    cy=@units.Emu(5_000_000L),
   )
   // The cached drawing draws all four nodes plus one connector line per
   // parent→child edge.
@@ -266,10 +266,10 @@ test "add_smartart_mut: matrix + relationship wire end-to-end and reopen" {
     prs.add_smartart_mut(
       0,
       art,
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(5_000_000L),
-      @units.Emu(5_000_000L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(5_000_000L),
+      cy=@units.Emu(5_000_000L),
     )
     let prs2 = @presentation.Presentation::open(prs.save())
     assert_true(prs2.pkg.part_by_name("/ppt/diagrams/data1.xml") is Some(_))
@@ -285,10 +285,10 @@ test "add_smartart_mut: out-of-range slide_idx raises Malformed" {
     prs.add_smartart_mut(
       5,
       @smartart.SmartArt::list(["x"]),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -306,10 +306,10 @@ test "add_smartart_mut: empty diagram raises Malformed" {
     prs.add_smartart_mut(
       0,
       @smartart.SmartArt::list([]),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()

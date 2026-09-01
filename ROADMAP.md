@@ -26,7 +26,7 @@ Two things deliberately live elsewhere:
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.8.0` (2026-09-01 — RTL / bidi, `endParaRPr`, Asian-script fonts + theme font resolution; additive) |
-| Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012); every release until then is additive-only |
+| Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012). Additive-only, with one scoped exception: the §3.4 API-shape pass in the 0.9.x line (ADR-015) |
 | Test suite | 1215 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
@@ -168,10 +168,17 @@ in CI over generated decks plus the 7-file real-world corpus.
 
 ### 3.4 API finishing (breaking — must land before the 1.0 freeze)
 
-Unlike everything above, these are **not** additive, so they collide with
-the §4 additive-only policy. ADR-012 (1.0 gated on MoonBit reaching 1.0)
-is what buys the room to do them; once 1.0 freezes the surface they are
-permanent.
+Unlike everything above, these are **not** additive. ADR-015 sanctions one
+scoped breaking pass in the `0.9.x` line to land them, because 1.0 would
+otherwise freeze the shape permanently and the 1.0 date is not ours to
+pick (ADR-012).
+
+A2 (labelled geometry arguments) closed in that pass: `id`, `name`, `x`,
+`y`, `cx`, `cy` and every run of two or more same-typed parameters are now
+labelled across 24 public functions, so `x`↔`y` and `cx`↔`cy` swaps —
+and `video_bytes`↔`poster_bytes`, and the three rel-id strings of
+`Picture::of_media` — stop compiling. Behaviour is unchanged; only call
+sites move.
 
 A3 (shape-id allocation) closed without spending any of that budget —
 `Slide::next_shape_id`, `Slide::with_shape_auto_id`,
@@ -183,7 +190,6 @@ still round-trips.
 | # | Item | Why it is open | Size |
 |---|---|---|---|
 | A1 | **`pub(all) struct` audit** — 149 of them against 12 plain `pub struct` | `pub(all) struct` lets downstream code write record literals, so *adding a field is breaking* — 0.8.0's `ParagraphProperties.rtl` already was (see that release's **Compatibility** note). Dropping a type to `pub` makes field additions free, but `pub` is fully read-only from outside: it blocks `{ ..cell, properties: … }` spread construction too, so every downgrade needs `with_*` coverage for the fields callers legitimately set. The work is deciding, per type, whether anything outside the package has to *build* it. The §4.2 `.mbti` diff does not detect this class: a purely additive diff can still break consumers | L |
-| A2 | **Labelled geometry arguments** | `AutoShape::textbox(id, name, x, y, cx, cy, text)` takes four consecutive `@units.Emu`. The unit newtypes catch `Pt` vs `Emu` but not `x`↔`y` or `cx`↔`cy`, which compile silently and land the shape somewhere else. `Table::of_rows(_, col_widths~)` and `TableRow::of_cells(_, height~)` already label theirs, so the tree is inconsistent with itself. 22 public functions across `slide` and `presentation` have the shape — `AutoShape::rect` / `ellipse` / `round_rect` / `of_preset` / `textbox`, the four `GraphicFrame::of_*`, the four `Picture::of_*` / `builder`, and nine `Presentation::add_*_mut` | M |
 
 **Not actionable: the `pub(all) enum` half.** The 93 `pub(all) enum`
 declarations carry the same "adding a variant breaks exhaustive matches"
@@ -200,9 +206,9 @@ consequence to document at 1.0, not a task.
 ## 4. Roadmap
 
 **v1.0.0 ships when the MoonBit toolchain itself reaches v1.0**
-(ADR-012). Until then every release is additive-only, so the version
-number is the only thing waiting on MoonBit — the API is already frozen
-in practice.
+(ADR-012). Releases are additive-only apart from the one scoped API-shape
+pass ADR-015 sanctions for `0.9.x`; after §3.4 closes, the version number
+is the only thing waiting on MoonBit.
 
 ### 4.1 Next (unversioned, additive)
 
@@ -216,10 +222,10 @@ in. Suggested order, highest value first:
 2. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-3. **§3.4 API finishing (A1 / A2)** — the one class of work with a
-   deadline: 1.0 freezes it permanently, and only ADR-012's "wait for
-   MoonBit 1.0" keeps the window open. A2 is mechanical and bounded; A1 is
-   where the judgement is.
+3. **§3.4 A1, the `pub(all) struct` audit** — the last item with a
+   deadline: 1.0 freezes it permanently, and ADR-015's breaking pass is
+   the window. This is where the judgement is — 149 per-type decisions,
+   each needing `with_*` coverage for whatever construction it removes.
 4. **G10 input limits** — small, and the difference between "a library
    that parses decks" and "a library you can point at uploads".
 5. **H1 sample-deck split** — forced eventually by the toolchain; cheap
@@ -236,10 +242,10 @@ DoD: MoonBit toolchain v1.0 is out; API surface frozen; verification
 matrix fully green (Tier 3 included); benchmarks published.
 
 🔴 **API stability review — final pass**
-  - `pkg.generated.mbti` diff vs the last 0.x must be additive only
-    (the breaking budget was spent in v0.6.0).
-  - **§3.4 A1–A3 are settled**, because the `.mbti` diff above cannot
-    settle them: a field added to a `pub(all) struct` shows up as a
+  - `pkg.generated.mbti` diff vs the last 0.x must be additive only,
+    apart from the §3.4 breaks ADR-015 sanctions.
+  - **§3.4 A1 is settled**, because the `.mbti` diff above cannot settle
+    it: a field added to a `pub(all) struct` shows up as a
     purely additive diff and still breaks exhaustive record literals
     downstream. Visibility and argument shape have to be reviewed by
     reading the types, not the diff.
@@ -362,7 +368,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 
 ### ADR-012: v1.0.0 is gated on MoonBit reaching v1.0
 - **Date**: 2026-07-06
-- **Status**: Accepted
+- **Status**: Accepted; the additive-only clause is amended by ADR-015
 - **Context**: The library hit feature-completeness for its core mission well before the language did. Tagging `1.0.0` on a pre-1.0 toolchain would promise an API stability we cannot honour, since a compiler or stdlib break can force our hand at any time.
 - **Decision**: `v1.0.0` ships when the MoonBit toolchain itself reaches v1.0. The pre-1.0 breaking budget was spent in one deliberate pass (v0.6.0); every release after it is additive-only, so the 1.0 tag is a formality whenever the toolchain lands.
 - **Consequences**: The 1.0 date is externally controlled and may sit open a long time — accepted, because consumers get additive-only guarantees *now* rather than at 1.0. Features keep shipping as 0.x meanwhile. Open question Q13 (what counts as "MoonBit v1.0") is unresolved.
@@ -380,6 +386,13 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Context**: ADR-002 excluded legacy Wasm as superseded by Wasm-GC, but §0, §2 and `README.md` § Compatibility all claimed four backends were tested in CI while `.github/workflows/ci.yml` ran three. For a project whose stated principle is that verification outranks claims, that gap had to close in one direction or the other. `moon test --target wasm` passes the full suite locally with no backend-specific code.
 - **Decision**: Add `wasm` to the `test` matrix. The claim in the docs becomes true rather than being walked back, at the cost of two extra CI jobs.
 - **Consequences**: Legacy Wasm is now a supported backend that a regression can block a PR on. If it later diverges enough to cost more than it proves, dropping it means a superseding ADR *and* the same edit to §0, §2 and the README table — the three places that must stay in lockstep with the matrix.
+
+### ADR-015: One more breaking pass before 1.0, scoped to API shape
+- **Date**: 2026-09-02
+- **Status**: Accepted (amends the additive-only clause of ADR-012)
+- **Context**: ADR-012 declared the pre-1.0 breaking budget spent at v0.6.0 and every later release additive-only. §3.4 is the class of problem that promise cannot accommodate: argument shape and type visibility that 1.0 would freeze permanently. A2 — four consecutive `@units.Emu` where `x`↔`y` swaps compile silently — has no additive fix; a parallel labelled constructor beside every positional one would double the surface being frozen. ADR-012's own reasoning cuts this way: the 1.0 date is externally controlled, so an additive-only promise held until an unknown date is worth less than the API being right when the freeze lands.
+- **Decision**: One further breaking pass, scoped to §3.4 (argument labelling and `pub(all)` visibility) and nothing else, lands before 1.0 in the `0.9.x` line. Behaviour, semantics and emitted file bytes do not change — a caller who updates the call sites gets byte-identical output. Every breaking change ships with a CHANGELOG migration note precise enough to apply mechanically. Additive-only resumes once §3.4 closes, and if MoonBit reaches 1.0 while §3.4 is open, §3.4 finishes first.
+- **Consequences**: Consumers pinned to `0.8.x` face one mechanical migration instead of living with the shape permanently. The §4.2 stability gate now has something to check against — "additive since the last 0.x" is no longer the whole test, since ADR-015 sanctions a known set of breaks and nothing outside it.
 
 ---
 

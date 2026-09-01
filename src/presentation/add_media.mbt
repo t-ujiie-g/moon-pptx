@@ -17,12 +17,12 @@
 pub fn Presentation::add_video_mut(
   self : Presentation,
   slide_idx : Int,
-  video_bytes : FixedArray[Byte],
-  poster_bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  video_bytes~ : FixedArray[Byte],
+  poster_bytes~ : FixedArray[Byte],
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   let fmt = match @oxml.detect_media_format(video_bytes) {
     Some(f) => f
@@ -58,12 +58,12 @@ pub fn Presentation::add_video_mut(
 pub fn Presentation::add_audio_mut(
   self : Presentation,
   slide_idx : Int,
-  audio_bytes : FixedArray[Byte],
-  poster_bytes : FixedArray[Byte],
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  audio_bytes~ : FixedArray[Byte],
+  poster_bytes~ : FixedArray[Byte],
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   let fmt = match @oxml.detect_media_format(audio_bytes) {
     Some(f) => f
@@ -193,16 +193,16 @@ fn Presentation::add_media_mut(
   // Build the media picture and append it.
   let pic_id = next_picture_shape_id(slide_part)
   let pic = @slide.Picture::of_media(
-    pic_id,
-    "Media " + pic_id.to_string(),
+    id=pic_id,
+    name="Media " + pic_id.to_string(),
     kind,
-    rid_link,
-    rid_media,
-    rid_poster,
-    x,
-    y,
-    cx,
-    cy,
+    link_id=rid_link,
+    media_embed_id=rid_media,
+    poster_embed_id=rid_poster,
+    x~,
+    y~,
+    cx~,
+    cy~,
   )
   let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
     e => raise SlideFailure(e.to_string())

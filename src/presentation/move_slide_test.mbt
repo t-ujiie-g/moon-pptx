@@ -9,12 +9,12 @@ fn stamp_slide(
   marker : String,
 ) -> Unit raise {
   let tb = @slide.AutoShape::textbox(
-    2,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=2,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
     marker,
   )
   prs.update_slide_mut(idx, prs.slides()[idx].with_shape(@slide.AutoShape(tb)))

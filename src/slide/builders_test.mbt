@@ -3,12 +3,12 @@
 ///|
 test "AutoShape::rect: produces expected preset + transform" {
   let s = @slide.AutoShape::rect(
-    42,
-    "MyRect",
-    @units.Emu(100L),
-    @units.Emu(200L),
-    @units.Emu(300L),
-    @units.Emu(400L),
+    id=42,
+    name="MyRect",
+    x=@units.Emu(100L),
+    y=@units.Emu(200L),
+    cx=@units.Emu(300L),
+    cy=@units.Emu(400L),
   )
   assert_eq(s.id, 42)
   assert_eq(s.name, "MyRect")
@@ -30,24 +30,24 @@ test "AutoShape::rect: produces expected preset + transform" {
 ///|
 test "AutoShape::ellipse / round_rect: vary only the preset enum" {
   let e = @slide.AutoShape::ellipse(
-    1,
-    "E",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1L),
-    @units.Emu(1L),
+    id=1,
+    name="E",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1L),
+    cy=@units.Emu(1L),
   )
   match e.geometry.unwrap() {
     Preset(p, _) => assert_true(p == @slide.PresetShape::Ellipse)
     _ => fail("expected Ellipse")
   }
   let r = @slide.AutoShape::round_rect(
-    2,
-    "R",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1L),
-    @units.Emu(1L),
+    id=2,
+    name="R",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1L),
+    cy=@units.Emu(1L),
   )
   match r.geometry.unwrap() {
     Preset(p, _) => assert_true(p == @slide.PresetShape::RoundRect)
@@ -58,12 +58,12 @@ test "AutoShape::ellipse / round_rect: vary only the preset enum" {
 ///|
 test "AutoShape::textbox: rect geometry + text body" {
   let tb = @slide.AutoShape::textbox(
-    7,
-    "T1",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1L),
-    @units.Emu(1L),
+    id=7,
+    name="T1",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1L),
+    cy=@units.Emu(1L),
     "Hello",
   )
   match tb.geometry.unwrap() {
@@ -140,12 +140,12 @@ test "TextBody::of_paragraphs: passes through" {
 ///|
 test "AutoShape::with_fill / with_stroke / with_no_fill chain" {
   let s = @slide.AutoShape::rect(
-    1,
-    "R",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=1,
+    name="R",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   // rect ships with default fill + stroke; with_no_fill explicitly opts out.
   let bare = s.with_no_fill().with_no_stroke()
@@ -163,12 +163,12 @@ test "AutoShape::with_fill / with_stroke / with_no_fill chain" {
 ///|
 test "AutoShape::with_text_body: attaches styled body" {
   let s = @slide.AutoShape::rect(
-    1,
-    "Card",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(2_000_000L),
-    @units.Emu(500_000L),
+    id=1,
+    name="Card",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(2_000_000L),
+    cy=@units.Emu(500_000L),
   )
   let body = @slide.TextBody::of_styled_text(
     "Header",
@@ -194,12 +194,12 @@ test "Slide::with_shape: appends shape; original unchanged" {
   let original = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   assert_eq(original.shapes.length(), 0)
   let rect = @slide.AutoShape::rect(
-    2,
-    "R",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=2,
+    name="R",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let modified = original.with_shape(@slide.AutoShape(rect))
   assert_eq(modified.shapes.length(), 1)
@@ -231,12 +231,12 @@ test "AutoShape: structural fields survive Slide::serialize" {
     "</p:spTree></p:cSld></p:sld>"
   let base = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   let rect = @slide.AutoShape::rect(
-    2,
-    "R",
-    @units.Emu(100L),
-    @units.Emu(200L),
-    @units.Emu(300L),
-    @units.Emu(400L),
+    id=2,
+    name="R",
+    x=@units.Emu(100L),
+    y=@units.Emu(200L),
+    cx=@units.Emu(300L),
+    cy=@units.Emu(400L),
   )
   let s = base.with_shape(@slide.AutoShape(rect))
   let bytes = s.serialize()
@@ -275,12 +275,12 @@ test "AutoShape: second round-trip is Eq-stable" {
     "</p:spTree></p:cSld></p:sld>"
   let base = @slide.Slide::parse(@oxml.string_to_bytes(xml))
   let rect = @slide.AutoShape::rect(
-    2,
-    "R",
-    @units.Emu(100L),
-    @units.Emu(200L),
-    @units.Emu(300L),
-    @units.Emu(400L),
+    id=2,
+    name="R",
+    x=@units.Emu(100L),
+    y=@units.Emu(200L),
+    cx=@units.Emu(300L),
+    cy=@units.Emu(400L),
   )
   let s_first = @slide.Slide::parse(
     base.with_shape(@slide.AutoShape(rect)).serialize(),
@@ -292,13 +292,13 @@ test "AutoShape: second round-trip is Eq-stable" {
 ///|
 test "Picture::with_crop: applies SrcRect with the given percentages" {
   let pic = @slide.Picture::of_image(
-    1,
-    "Pic",
+    id=1,
+    name="Pic",
     "rId99",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   ).with_crop(
     left=@units.Percentage(5.0),
     top=@units.Percentage(10.0),
@@ -315,13 +315,13 @@ test "Picture::with_crop: applies SrcRect with the given percentages" {
 ///|
 test "Picture::with_crop: defaults to 0% on all edges" {
   let pic = @slide.Picture::of_image(
-    1,
-    "Pic",
+    id=1,
+    name="Pic",
     "rId99",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   ).with_crop(left=@units.Percentage(10.0))
   let rect = pic.blip_fill.src_rect.unwrap()
   assert_eq(rect.left, @units.Percentage(10.0))
@@ -333,13 +333,13 @@ test "Picture::with_crop: defaults to 0% on all edges" {
 ///|
 test "Picture::with_crop: idempotent — second call replaces, not merges" {
   let pic = @slide.Picture::of_image(
-      1,
-      "Pic",
+      id=1,
+      name="Pic",
       "rId99",
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
     .with_crop(left=@units.Percentage(5.0), right=@units.Percentage(5.0))
     .with_crop(top=@units.Percentage(10.0))
@@ -354,13 +354,13 @@ test "Picture::with_crop: idempotent — second call replaces, not merges" {
 ///|
 test "AutoShape::of_preset: carries the chosen preset geometry" {
   let s = @slide.AutoShape::of_preset(
-    7,
-    "Star",
+    id=7,
+    name="Star",
     @slide.PresetShape::Star5,
-    @units.Emu(10L),
-    @units.Emu(20L),
-    @units.Emu(30L),
-    @units.Emu(40L),
+    x=@units.Emu(10L),
+    y=@units.Emu(20L),
+    cx=@units.Emu(30L),
+    cy=@units.Emu(40L),
   )
   assert_eq(s.id, 7)
   assert_eq(s.name, "Star")
@@ -396,13 +396,13 @@ test "AutoShape::with_stroke sets the outline; other fields untouched" {
   }
   // of_preset (unlike rect/ellipse) starts with no fill/stroke.
   let base = @slide.AutoShape::of_preset(
-    1,
-    "R",
+    id=1,
+    name="R",
     @slide.PresetShape::Rect,
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(10L),
-    @units.Emu(10L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(10L),
+    cy=@units.Emu(10L),
   )
   let styled = base.with_stroke(stroke)
   assert_true(styled.stroke == Some(stroke))

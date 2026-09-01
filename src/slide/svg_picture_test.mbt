@@ -19,14 +19,14 @@ fn slide_of_picture(pic : @slide.Picture) -> @slide.Slide {
 ///|
 test "Picture::of_svg_image wires fallback embed + svgBlip extension" {
   let pic = @slide.Picture::of_svg_image(
-    5,
-    "Logo",
-    "rId2", // raster fallback
-    "rId3", // svg
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    id=5,
+    name="Logo",
+    png_embed_id="rId2", // raster fallback
+    svg_embed_id="rId3", // svg
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   )
   // The blip embeds the raster fallback…
   assert_eq(pic.blip_fill.embed_id, "rId2")
@@ -56,14 +56,14 @@ test "Picture::of_svg_image wires fallback embed + svgBlip extension" {
 ///|
 test "SVG blip serialises with the svg namespace and round-trips" {
   let pic = @slide.Picture::of_svg_image(
-    7,
-    "Logo",
-    "rId2",
-    "rId3",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=7,
+    name="Logo",
+    png_embed_id="rId2",
+    svg_embed_id="rId3",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let slide = slide_of_picture(pic)
   let xml = @oxml.bytes_to_string(slide.serialize())

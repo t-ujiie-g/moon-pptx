@@ -26,10 +26,10 @@ test "add_online_video_mut: poster part + external video/media rels, no media pa
     0,
     "https://example.com/clip.mp4",
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   )
   // Poster image part exists; no /ppt/media part is created.
   assert_true(prs.pkg.part_by_name("/ppt/media/image1.png") is Some(_))
@@ -61,10 +61,10 @@ test "add_online_video_mut: survives save -> reopen with external rel intact" {
     0,
     "https://example.com/clip.mp4",
     fake_png(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let prs2 = @presentation.Presentation::open(prs.save())
   let slide_name = "/ppt/slides/slide1.xml"
@@ -88,10 +88,10 @@ test "add_youtube_video_mut: normalises watch / youtu.be / shorts / embed URLs" 
       0,
       url,
       fake_png(),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
     let video_rel = first_rel_of_type(prs, slide_name, @opc.rt_video).unwrap()
     assert_eq(video_rel.target, "https://www.youtube.com/embed/dQw4w9WgXcQ")
@@ -108,10 +108,10 @@ test "add_youtube_video_mut: rejects a URL with no video id" {
       0,
       "https://example.com/not-a-video",
       fake_png(),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -131,10 +131,10 @@ test "add_online_video_mut: rejects empty URL and bad poster" {
       0,
       "",
       fake_png(),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -148,10 +148,10 @@ test "add_online_video_mut: rejects empty URL and bad poster" {
       0,
       "https://example.com/clip.mp4",
       FixedArray::make(4, b'\x00'),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()

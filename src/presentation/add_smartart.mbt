@@ -1,6 +1,6 @@
 // SmartArt-insertion API.
 //
-// `add_smartart_mut(slide_idx, smartart, x, y, cx, cy)` attaches a built
+// `add_smartart_mut(slide_idx, smartart, x=x, y=y, cx=cx, cy=cy)` attaches a built
 // SmartArt diagram to a slide. A diagram is five OPC parts:
 //
 //   /ppt/diagrams/dataN.xml       (<dgm:dataModel>  — nodes + connections)
@@ -24,16 +24,16 @@
 ///
 /// ```
 /// let art = @smartart.SmartArt::list(["Plan", "Build", "Ship"])
-/// prs.add_smartart_mut(0, art, x, y, cx, cy)
+/// prs.add_smartart_mut(0, art, x=x, y=y, cx=cx, cy=cy)
 /// ```
 pub fn Presentation::add_smartart_mut(
   self : Presentation,
   slide_idx : Int,
   smartart : @smartart.SmartArt,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   if smartart.nodes.is_empty() {
     raise Malformed("add_smartart_mut: diagram has no nodes")
@@ -68,7 +68,7 @@ pub fn Presentation::add_smartart_mut(
   let data_bytes = smartart.data_xml(drawing_rid) catch {
     e => raise SmartArtFailure(e.to_string())
   }
-  let drawing_bytes = smartart.drawing_xml(cx, cy) catch {
+  let drawing_bytes = smartart.drawing_xml(cx~, cy~) catch {
     e => raise SmartArtFailure(e.to_string())
   }
   let layout_bytes = smartart.layout_xml()
@@ -127,16 +127,16 @@ pub fn Presentation::add_smartart_mut(
   // Build the graphicFrame and append it.
   let gf_id = next_picture_shape_id(slide_part)
   let gf = @slide.GraphicFrame::of_diagram_ref(
-    gf_id,
-    "Diagram " + gf_id.to_string(),
-    x,
-    y,
-    cx,
-    cy,
-    dm_rid,
-    lo_rid,
-    qs_rid,
-    cs_rid,
+    id=gf_id,
+    name="Diagram " + gf_id.to_string(),
+    x~,
+    y~,
+    cx~,
+    cy~,
+    dm=dm_rid,
+    lo=lo_rid,
+    qs=qs_rid,
+    cs=cs_rid,
   )
   let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
     e => raise SlideFailure(e.to_string())

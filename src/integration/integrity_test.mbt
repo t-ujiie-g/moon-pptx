@@ -153,12 +153,12 @@ test "structural integrity: presentation-builder output is repair-clean" {
   let _ = prs.add_slide_mut(0)
   let s = prs.slides()[0]
   let tb = @slide.AutoShape::textbox(
-    2,
-    "Title",
-    @units.Emu(457_200L),
-    @units.Emu(2_438_400L),
-    @units.Emu(8_229_600L),
-    @units.Emu(914_400L),
+    id=2,
+    name="Title",
+    x=@units.Emu(457_200L),
+    y=@units.Emu(2_438_400L),
+    cx=@units.Emu(8_229_600L),
+    cy=@units.Emu(914_400L),
     "Integrity check",
   )
   prs.update_slide_mut(0, s.with_shape(@slide.AutoShape(tb)))
@@ -175,10 +175,10 @@ test "structural integrity: deck with picture + chart is repair-clean" {
   prs.add_picture_mut(
     0,
     minimal_png(),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(1_828_800L),
-    @units.Emu(1_828_800L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(1_828_800L),
+    cy=@units.Emu(1_828_800L),
   )
   let data = @chart.ChartData::new()
     .with_category("Q1")
@@ -187,10 +187,10 @@ test "structural integrity: deck with picture + chart is repair-clean" {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_bar(data),
-    @units.Emu(3_657_600L),
-    @units.Emu(914_400L),
-    @units.Emu(4_572_000L),
-    @units.Emu(3_429_000L),
+    x=@units.Emu(3_657_600L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(4_572_000L),
+    cy=@units.Emu(3_429_000L),
   )
   let pkg = @opc.Package::open(prs.save())
   assert_eq(format_issues(integrity_issues(pkg)), "")
@@ -216,12 +216,12 @@ test "structural integrity: a duplicate shape id is reported" {
   let clash = id => {
     @slide.AutoShape(
       @slide.AutoShape::textbox(
-        id,
-        "Box \{id}",
-        @units.Emu(457_200L),
-        @units.Emu(457_200L),
-        @units.Emu(914_400L),
-        @units.Emu(914_400L),
+        id~,
+        name="Box \{id}",
+        x=@units.Emu(457_200L),
+        y=@units.Emu(457_200L),
+        cx=@units.Emu(914_400L),
+        cy=@units.Emu(914_400L),
         "x",
       ),
     )

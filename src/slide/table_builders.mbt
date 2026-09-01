@@ -176,12 +176,12 @@ pub fn Table::of_grid(
 /// builders — accepts EMU values directly so the caller stays in
 /// the typed unit world.
 pub fn GraphicFrame::of_table(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
   table : Table,
 ) -> GraphicFrame {
   {
@@ -201,12 +201,12 @@ pub fn GraphicFrame::of_table(
 /// part. Pair with `@presentation.Presentation::add_chart_mut`
 /// for the full OPC plumbing.
 pub fn GraphicFrame::of_chart_ref(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
   embed_rid : String,
 ) -> GraphicFrame {
   {
@@ -223,12 +223,12 @@ pub fn GraphicFrame::of_chart_ref(
 /// Same as `of_chart_ref` but for the Microsoft 2016 extended
 /// chart family (`chartEx`).
 pub fn GraphicFrame::of_chart_ex_ref(
-  id : Int,
-  name : String,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  id~ : Int,
+  name~ : String,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
   embed_rid : String,
 ) -> GraphicFrame {
   {

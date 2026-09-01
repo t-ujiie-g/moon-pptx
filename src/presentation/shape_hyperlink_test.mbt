@@ -15,12 +15,12 @@ test "shape with_hyperlink: external URL → rel + <a:hlinkClick> on cNvPr" {
   let prs = @presentation.Presentation::new()
   let slide_name = prs.add_slide_mut(0)
   let box = @slide.AutoShape::rect(
-    2,
-    "btn",
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(2_000_000L),
-    @units.Emu(800_000L),
+    id=2,
+    name="btn",
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(2_000_000L),
+    cy=@units.Emu(800_000L),
   ).with_hyperlink(url="https://example.com")
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
   // A TargetMode::External hyperlink rel is registered on the slide.
@@ -40,12 +40,12 @@ test "shape with_hyperlink_to_slide: rt_slide rel + ppaction jump" {
   let slide_name = prs.add_slide_mut(0)
   let _ = prs.add_slide_mut(0) // target slide index 1 exists
   let box = @slide.AutoShape::rect(
-    2,
-    "nav",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1_000_000L),
-    @units.Emu(1_000_000L),
+    id=2,
+    name="nav",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1_000_000L),
+    cy=@units.Emu(1_000_000L),
   ).with_hyperlink_to_slide(slide_idx=1)
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
   let rels = prs.pkg.relationships_for(slide_name)
@@ -61,13 +61,13 @@ test "picture with_hyperlink: external URL → rel + hlinkClick" {
   let prs = @presentation.Presentation::new()
   let slide_name = prs.add_slide_mut(0)
   let pic = @slide.Picture::of_image(
-    3,
-    "img",
+    id=3,
+    name="img",
     "rId99",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
   ).with_hyperlink(url="https://pics.example")
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.Picture(pic)))
   let rels = prs.pkg.relationships_for(slide_name)
@@ -83,12 +83,12 @@ test "shape with_hyperlink: survives save → reopen" {
   let prs = @presentation.Presentation::new()
   let slide_name = prs.add_slide_mut(0)
   let box = @slide.AutoShape::rect(
-    2,
-    "btn",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1_000_000L),
-    @units.Emu(1_000_000L),
+    id=2,
+    name="btn",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1_000_000L),
+    cy=@units.Emu(1_000_000L),
   ).with_hyperlink(url="https://saved.example")
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
   let prs2 = @presentation.Presentation::open(prs.save())
@@ -103,12 +103,12 @@ test "shape without hyperlink: no hyperlink rel, no hlinkClick" {
   let prs = @presentation.Presentation::new()
   let slide_name = prs.add_slide_mut(0)
   let box = @slide.AutoShape::rect(
-    2,
-    "plain",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1_000_000L),
-    @units.Emu(1_000_000L),
+    id=2,
+    name="plain",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1_000_000L),
+    cy=@units.Emu(1_000_000L),
   )
   prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(box)))
   let rels = prs.pkg.relationships_for(slide_name)
@@ -214,12 +214,12 @@ test "graphic frame with_hyperlink: a clickable table survives save → reopen" 
     row_height=@units.Emu(370_000L),
   )
   let frame = @slide.GraphicFrame::of_table(
-    2,
-    "tbl",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(2_000_000L),
-    @units.Emu(740_000L),
+    id=2,
+    name="tbl",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(2_000_000L),
+    cy=@units.Emu(740_000L),
     table,
   ).with_hyperlink(url="https://table.example")
   prs.update_slide_mut(
@@ -246,12 +246,12 @@ test "shape hyperlink builders set the unresolved target and leave the original 
   )
   assert_true(conn_jump.hyperlink.unwrap().target == Some(InternalSlide(2)))
   let frame = @slide.GraphicFrame::of_table(
-    1,
-    "t",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(1L),
-    @units.Emu(1L),
+    id=1,
+    name="t",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(1L),
+    cy=@units.Emu(1L),
     @slide.Table::of_grid(
       rows=1,
       cols=1,
@@ -300,10 +300,10 @@ test "picture with_hyperlink_to_slide: rt_slide rel + ppaction jump" {
   prs.add_picture_mut(
     0,
     bmp,
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.update_slide_mut(
     0,

@@ -16,10 +16,10 @@ test "add_chart_mut: bar chart lands as /ppt/charts/chart1.xml" {
   prs.add_chart_mut(
     0,
     chart,
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(6_858_000L),
-    @units.Emu(4_572_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(6_858_000L),
+    cy=@units.Emu(4_572_000L),
   )
   let chart_part = prs.pkg.part_by_name("/ppt/charts/chart1.xml").unwrap()
   assert_eq(chart_part.content_type, @oxml.ct_chart)
@@ -43,10 +43,10 @@ test "add_chart_mut: content_types gains Override for the chart part" {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_pie(small_chart_data()),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   let cts = prs.pkg.content_types()
   let has_chart_override = cts.overrides
@@ -62,18 +62,18 @@ test "add_chart_mut: second chart gets chart2 and a fresh rId" {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_bar(small_chart_data()),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   prs.add_chart_mut(
     0,
     @chart.Chart::of_line(small_chart_data()),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   assert_true(prs.pkg.part_by_name("/ppt/charts/chart1.xml") is Some(_))
   assert_true(prs.pkg.part_by_name("/ppt/charts/chart2.xml") is Some(_))
@@ -88,10 +88,10 @@ test "add_chart_mut: round-trips through save → open" {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_bar(small_chart_data()),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
-    @units.Emu(6_858_000L),
-    @units.Emu(4_572_000L),
+    x=@units.Emu(914_400L),
+    y=@units.Emu(914_400L),
+    cx=@units.Emu(6_858_000L),
+    cy=@units.Emu(4_572_000L),
   )
   let bytes = prs.save()
   let prs2 = @presentation.Presentation::open(bytes)
@@ -115,10 +115,10 @@ test "add_chart_mut: rejects out-of-range slide index" {
     prs.add_chart_mut(
       99,
       @chart.Chart::of_bar(small_chart_data()),
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
     )
   catch {
     @presentation.PptxError::Malformed(_) => ()
@@ -153,10 +153,10 @@ test "add_chart_ex_mut: chartEx part + rels + content type + reopen" {
   prs.add_chart_ex_mut(
     0,
     waterfall_chart_ex(),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(5_000_000L),
-    @units.Emu(3_000_000L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(5_000_000L),
+    cy=@units.Emu(3_000_000L),
   )
   // The chartEx part exists with its content-type override.
   assert_true(prs.pkg.part_by_name("/ppt/charts/chartEx1.xml") is Some(_))
@@ -183,10 +183,10 @@ fn add_bar_with_embed(prs : @presentation.Presentation) -> Unit raise {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_bar(small_chart_data()),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
     embed_data=small_chart_data(),
   )
 }
@@ -279,10 +279,10 @@ test "add_chart_mut embed_data: survives save -> reopen, rides extension" {
     reopened.add_chart_mut(
       1,
       chart,
-      @units.Emu(0L),
-      @units.Emu(0L),
-      @units.Emu(100L),
-      @units.Emu(100L),
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(100L),
+      cy=@units.Emu(100L),
       embed_data=small_chart_data(),
     )
   catch {
@@ -320,10 +320,10 @@ test "add_chart_mut without embed_data: no workbook, no externalData" {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_bar(small_chart_data()),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
   )
   assert_true(
     prs.pkg.part_by_name("/ppt/embeddings/Microsoft_Excel_Worksheet1.xlsx")
@@ -346,10 +346,10 @@ test "add_chart_mut embed_data: 26+ series spill into double-letter columns" {
   prs.add_chart_mut(
     0,
     @chart.Chart::of_bar(data),
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
     embed_data=data,
   )
   let emb = prs.pkg

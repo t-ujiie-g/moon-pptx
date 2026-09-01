@@ -36,6 +36,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING: identity, geometry and same-typed argument runs are now
+  labelled**, across 24 public functions in `slide`, `presentation` and
+  `smartart`. `id`, `name`, `x`, `y`, `cx`, `cy` take labels, as does every
+  run of two or more consecutive parameters of the same type. What stays
+  positional: the receiver, `slide_idx`, and a lone parameter its own type
+  already distinguishes (the text of a `textbox`, the `Table` of an
+  `of_table`, the `Chart` of an `add_chart_mut`).
+
+  ```moonbit
+  // before
+  @slide.AutoShape::textbox(2, "Title", x, y, cx, cy, "Hello")
+  prs.add_chart_mut(0, chart, x, y, cx, cy)
+
+  // after
+  @slide.AutoShape::textbox(id=2, name="Title", x~, y~, cx~, cy~, "Hello")
+  prs.add_chart_mut(0, chart, x~, y~, cx~, cy~)
+  ```
+
+  The unit newtypes already made `Pt` vs `Emu` a compile error, but nothing
+  stopped `x`↔`y` or `cx`↔`cy` — same type, silent swap, shape in the wrong
+  place. The same hazard sat in `add_video_mut(video_bytes, poster_bytes)`,
+  `add_audio_mut`, `add_svg_picture_mut`, `Picture::of_svg_image`'s two
+  embed ids, `Picture::of_media`'s three rel ids, and
+  `GraphicFrame::of_diagram_ref`'s four. `Table::of_rows(_, col_widths~)`
+  and `TableRow::of_cells(_, height~)` were already labelled, so this also
+  ends an inconsistency inside the library.
+
+  Migration is mechanical: add the label names in call order. Behaviour,
+  semantics and emitted bytes are unchanged — the same call produces the
+  same file. Sanctioned by ADR-015, which amends ADR-012's additive-only
+  clause for the §3.4 API-shape pass; closes `ROADMAP.md` §3.4 A2.
 - **Legacy Wasm is actually tested in CI.** `README.md` § Compatibility,
   `ROADMAP.md` §0 and §2 all said the CI matrix covered four backends
   while `.github/workflows/ci.yml` ran three; the suite passes on

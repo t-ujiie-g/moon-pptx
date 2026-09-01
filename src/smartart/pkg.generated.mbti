@@ -41,7 +41,7 @@ pub(all) struct SmartArt {
 pub fn SmartArt::colors_xml(Self) -> FixedArray[Byte]
 pub fn SmartArt::cycle(Array[String]) -> Self
 pub fn SmartArt::data_xml(Self, String) -> FixedArray[Byte] raise SmartArtError
-pub fn SmartArt::drawing_xml(Self, @units.Emu, @units.Emu) -> FixedArray[Byte] raise SmartArtError
+pub fn SmartArt::drawing_xml(Self, cx~ : @units.Emu, cy~ : @units.Emu) -> FixedArray[Byte] raise SmartArtError
 pub fn SmartArt::hierarchy(Array[Node]) -> Self
 pub fn SmartArt::layout_xml(Self) -> FixedArray[Byte]
 pub fn SmartArt::list(Array[String]) -> Self

@@ -1,6 +1,6 @@
 // Chart-insertion API.
 //
-// `add_chart_mut(slide_idx, chart, x, y, cx, cy)` attaches a built
+// `add_chart_mut(slide_idx, chart, x=x, y=y, cx=cx, cy=cy)` attaches a built
 // chart to a slide. The chart's bytes go in as a new
 // `/ppt/charts/chartN.xml` part; a `<p:graphicFrame>` shape on the
 // target slide carries the rId reference to it.
@@ -9,7 +9,7 @@
 // …) to produce a usable PPTX with charts from scratch:
 //
 //   let chart = @chart.Chart::of_bar(data)
-//   prs.add_chart_mut(slide_idx=0, chart, x, y, cx, cy)
+//   prs.add_chart_mut(slide_idx=0, chart, x=x, y=y, cx=cx, cy=cy)
 //
 // Mirrors `add_picture_mut`'s plumbing:
 //   1. Serialise the chart to bytes and allocate a part name.
@@ -37,10 +37,10 @@ pub fn Presentation::add_chart_mut(
   self : Presentation,
   slide_idx : Int,
   chart : @chart.Chart,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
   embed_data? : @chart.ChartData,
 ) -> Unit raise PptxError {
   let chart_name = self.next_chart_part_name("chart")
@@ -138,10 +138,10 @@ pub fn Presentation::add_chart_ex_mut(
   self : Presentation,
   slide_idx : Int,
   chart_ex : @chart_ex.ChartEx,
-  x : @units.Emu,
-  y : @units.Emu,
-  cx : @units.Emu,
-  cy : @units.Emu,
+  x~ : @units.Emu,
+  y~ : @units.Emu,
+  cx~ : @units.Emu,
+  cy~ : @units.Emu,
 ) -> Unit raise PptxError {
   let chart_bytes = chart_ex.serialize() catch {
     e => raise ChartExFailure(e.to_string())
@@ -228,9 +228,25 @@ fn insert_chart_internal(
     "Chart " + gf_id.to_string()
   }
   let gf = if is_chart_ex {
-    @slide.GraphicFrame::of_chart_ex_ref(gf_id, gf_name, x, y, cx, cy, new_rid)
+    @slide.GraphicFrame::of_chart_ex_ref(
+      id=gf_id,
+      name=gf_name,
+      x~,
+      y~,
+      cx~,
+      cy~,
+      new_rid,
+    )
   } else {
-    @slide.GraphicFrame::of_chart_ref(gf_id, gf_name, x, y, cx, cy, new_rid)
+    @slide.GraphicFrame::of_chart_ref(
+      id=gf_id,
+      name=gf_name,
+      x~,
+      y~,
+      cx~,
+      cy~,
+      new_rid,
+    )
   }
   let slide_obj = @slide.Slide::parse(slide_part.bytes) catch {
     e => raise SlideFailure(e.to_string())

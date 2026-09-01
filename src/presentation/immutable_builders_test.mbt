@@ -27,12 +27,12 @@ test "with_slide_updated: original presentation's slide untouched" {
   // The added slide is empty.
   assert_eq(prs1.slides()[0].shapes.length(), 0)
   let tb = @slide.AutoShape::textbox(
-    2,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(100L),
-    @units.Emu(100L),
+    id=2,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(100L),
+    cy=@units.Emu(100L),
     "Hi",
   )
   let s = prs1.slides()[0]
@@ -48,12 +48,12 @@ test "with_added_slide + with_slide_updated: save + reopen round-trips" {
   let (prs, _) = prs.with_added_slide(layout_index=0)
   let s = prs.slides()[0]
   let tb = @slide.AutoShape::textbox(
-    2,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914400L),
-    @units.Emu(457200L),
+    id=2,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914400L),
+    cy=@units.Emu(457200L),
     "Immutable!",
   )
   let prs = prs.with_slide_updated(0, s.with_shape(@slide.AutoShape(tb)))

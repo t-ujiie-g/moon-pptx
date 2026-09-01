@@ -293,12 +293,12 @@ test "builder: with_character_spacing emits spc and round-trips" {
   )
   let body = @slide.TextBody::of_styled_text("tracked", rp)
   let shape = @slide.AutoShape::textbox(
-    2,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    id=2,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
     "",
   ).with_text_body(body)
   // An empty base slide to drop the built shape onto.
@@ -366,12 +366,12 @@ test "builder: with_kerning + with_highlight emit and round-trip" {
     .with_highlight(@units.RgbColor::new(0xFF, 0xCC, 0x00))
   let body = @slide.TextBody::of_styled_text("hi", rp)
   let shape = @slide.AutoShape::textbox(
-    2,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    id=2,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
     "",
   ).with_text_body(body)
   let base_xml = "<?xml version=\"1.0\"?>" +
@@ -442,12 +442,12 @@ test "builder: with_text_outline + with_text_effects emit and round-trip" {
     .with_text_effects(glow_fx)
   let body = @slide.TextBody::of_styled_text("fx", rp)
   let shape = @slide.AutoShape::textbox(
-    2,
-    "T",
-    @units.Emu(0L),
-    @units.Emu(0L),
-    @units.Emu(914_400L),
-    @units.Emu(914_400L),
+    id=2,
+    name="T",
+    x=@units.Emu(0L),
+    y=@units.Emu(0L),
+    cx=@units.Emu(914_400L),
+    cy=@units.Emu(914_400L),
     "",
   ).with_text_body(body)
   let base_xml = "<?xml version=\"1.0\"?>" +
