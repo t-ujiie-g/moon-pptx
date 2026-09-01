@@ -82,20 +82,6 @@ fn placeholder_shape(
 }
 
 ///|
-/// Next free shape id on the slide (max existing + 1, floor 2 — id 1 is the
-/// implicit root group).
-fn Slide::next_shape_id(self : Slide) -> Int {
-  let mut max = 1
-  for s in self.shapes {
-    match s.id() {
-      Some(i) => if i > max { max = i }
-      None => ()
-    }
-  }
-  max + 1
-}
-
-///|
 /// Drop every placeholder shape of `kind` (keeps everything else), so the
 /// header/footer builders are idempotent — calling one twice replaces rather
 /// than duplicates.

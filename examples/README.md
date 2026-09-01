@@ -715,6 +715,40 @@ Pass `major=true` for heading text, which resolves against `<a:majorFont>`.
 The script argument is an ISO-15924 tag — `"Jpan"`, `"Hans"`, `"Hant"`,
 `"Hang"`, `"Arab"`, `"Thai"`, and so on.
 
+## 22. Shape ids without keeping a counter
+
+Every shape builder takes an explicit `<p:cNvPr id>`, and two shapes sharing
+one on the same slide is something PowerPoint may offer to repair the file
+over. `with_shape_auto_id` renumbers the shape as it appends, so nothing has
+to track the next free id:
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+let box = @slide.AutoShape::textbox(
+  1, "Box",                                  // this id is discarded
+  prs.pct_w(10.0), prs.pct_h(20.0),
+  prs.pct_w(35.0), prs.pct_h(20.0),
+  "left",
+)
+
+// Appended twice from the same builder — each copy gets its own id.
+let slide = prs.slides()[0]
+  .with_shape_auto_id(@slide.AutoShape(box))
+  .with_shape_auto_id(@slide.AutoShape(box))
+prs.update_slide_mut(0, slide)
+
+assert_eq(slide.duplicate_shape_ids().length(), 0)
+let _bytes = prs.save()
+```
+
+`next_shape_id()` hands out the same number if you would rather pass it to a
+builder yourself, and `duplicate_shape_ids()` reports the clashes on a slide
+you did not build — it returns them instead of raising, because a deck
+parsed from a third-party file can arrive with duplicates and must still
+round-trip unchanged.
+
 ---
 
 ## Where to next?

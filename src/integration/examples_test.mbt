@@ -623,3 +623,27 @@ test "example 21: Japanese / CJK text and font resolution" {
     "Meiryo",
   )
 }
+
+///|
+test "example 22: shape ids without keeping a counter" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let box = @slide.AutoShape::textbox(
+    1,
+    "Box",
+    prs.pct_w(10.0),
+    prs.pct_h(20.0),
+    prs.pct_w(35.0),
+    prs.pct_h(20.0),
+    "left",
+  )
+  let slide = prs.slides()[0]
+    .with_shape_auto_id(@slide.AutoShape(box))
+    .with_shape_auto_id(@slide.AutoShape(box))
+  prs.update_slide_mut(0, slide)
+  assert_eq(slide.duplicate_shape_ids().length(), 0)
+  // Both copies were built with id 1; the appends renumbered them.
+  assert_eq(slide.shapes[0].id().unwrap(), 2)
+  assert_eq(slide.shapes[1].id().unwrap(), 3)
+  let _bytes = prs.save()
+}

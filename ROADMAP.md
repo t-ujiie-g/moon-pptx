@@ -27,7 +27,7 @@ Two things deliberately live elsewhere:
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.8.0` (2026-09-01 — RTL / bidi, `endParaRPr`, Asian-script fonts + theme font resolution; additive) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012); every release until then is additive-only |
-| Test suite | 1208 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1215 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -173,11 +173,27 @@ the §4 additive-only policy. ADR-012 (1.0 gated on MoonBit reaching 1.0)
 is what buys the room to do them; once 1.0 freezes the surface they are
 permanent.
 
+A3 (shape-id allocation) closed without spending any of that budget —
+`Slide::next_shape_id`, `Slide::with_shape_auto_id`,
+`Slide::duplicate_shape_ids` and `Shape::with_id` are all additions, and
+the duplicate check became a Tier 1 invariant (ADR-011) rather than a
+`serialize` failure, so a third-party deck that already carries duplicates
+still round-trips.
+
 | # | Item | Why it is open | Size |
 |---|---|---|---|
-| A1 | **`pub(all)` audit** — 149 `pub(all) struct` and 93 `pub(all) enum` against 12 plain `pub struct` | `pub(all) struct` lets downstream code write exhaustive record literals, so *adding a field is breaking* — 0.8.0's `ParagraphProperties.rtl` already was (see that release's **Compatibility** note). `pub(all) enum` likewise makes a new variant break exhaustive matches. Model records genuinely need to be matched on; the question is which of them also need to be *constructed* externally rather than through `::default()` + `with_*`. The §4.2 `.mbti` diff does not detect this class: a purely additive diff can still break consumers | L |
-| A2 | **Labelled geometry arguments** | `AutoShape::textbox(id, name, x, y, cx, cy, text)` takes four consecutive `@units.Emu`. The unit newtypes catch `Pt` vs `Emu` but not `x`↔`y` or `cx`↔`cy`, which compile silently and land the shape somewhere else. `Table::of_rows(_, col_widths~)` and `TableRow::of_cells(_, height~)` already label theirs, so the tree is inconsistent with itself. Same shape in `GraphicFrame::of_table` / `of_chart_ref` / `of_chart_ex_ref` / `of_diagram_ref` | M |
-| A3 | **Shape-ID allocation** | Callers pick raw `Int` ids for `<p:cNvPr id>`. A duplicate inside one slide is exactly the kind of thing that triggers a PowerPoint repair prompt, and nothing detects it. `Slide::next_shape_id` already exists at `src/slide/header_footer.mbt:87` but is private. Cheapest useful step is a Tier 1 invariant (ADR-011) that fails the test suite on a duplicate; the API answer is publishing `next_shape_id`, or a `with_shape_auto_id` that never asks | S–M |
+| A1 | **`pub(all) struct` audit** — 149 of them against 12 plain `pub struct` | `pub(all) struct` lets downstream code write record literals, so *adding a field is breaking* — 0.8.0's `ParagraphProperties.rtl` already was (see that release's **Compatibility** note). Dropping a type to `pub` makes field additions free, but `pub` is fully read-only from outside: it blocks `{ ..cell, properties: … }` spread construction too, so every downgrade needs `with_*` coverage for the fields callers legitimately set. The work is deciding, per type, whether anything outside the package has to *build* it. The §4.2 `.mbti` diff does not detect this class: a purely additive diff can still break consumers | L |
+| A2 | **Labelled geometry arguments** | `AutoShape::textbox(id, name, x, y, cx, cy, text)` takes four consecutive `@units.Emu`. The unit newtypes catch `Pt` vs `Emu` but not `x`↔`y` or `cx`↔`cy`, which compile silently and land the shape somewhere else. `Table::of_rows(_, col_widths~)` and `TableRow::of_cells(_, height~)` already label theirs, so the tree is inconsistent with itself. 22 public functions across `slide` and `presentation` have the shape — `AutoShape::rect` / `ellipse` / `round_rect` / `of_preset` / `textbox`, the four `GraphicFrame::of_*`, the four `Picture::of_*` / `builder`, and nine `Presentation::add_*_mut` | M |
+
+**Not actionable: the `pub(all) enum` half.** The 93 `pub(all) enum`
+declarations carry the same "adding a variant breaks exhaustive matches"
+hazard, and nothing in the language answers it. Visibility does not help —
+the breakage is on the *matching* side, which `pub` still allows — and
+`moon 0.1.20260827` has no `#non_exhaustive` equivalent (`#non_exhaustive`,
+`#open` and `#extensible` are all rejected as `unknown attribute`).
+Enums used as builder inputs (`Anchor`, `PresetShape`, …) must stay
+`pub(all)` regardless, since callers construct their variants. This is a
+consequence to document at 1.0, not a task.
 
 ---
 
@@ -200,10 +216,10 @@ in. Suggested order, highest value first:
 2. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-3. **§3.4 API finishing (A1 / A2 / A3)** — the one class of work with a
+3. **§3.4 API finishing (A1 / A2)** — the one class of work with a
    deadline: 1.0 freezes it permanently, and only ADR-012's "wait for
-   MoonBit 1.0" keeps the window open. A3 is the cheapest and removes the
-   easiest way to get a repair prompt out of the library.
+   MoonBit 1.0" keeps the window open. A2 is mechanical and bounded; A1 is
+   where the judgement is.
 4. **G10 input limits** — small, and the difference between "a library
    that parses decks" and "a library you can point at uploads".
 5. **H1 sample-deck split** — forced eventually by the toolchain; cheap
