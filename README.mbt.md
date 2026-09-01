@@ -44,6 +44,12 @@ moon add t-ujiie-g/moon-pptx
 
 ## Quickstart
 
+Every snippet below is mirrored by a test in
+`src/integration/readme_test.mbt`, so it compiles and runs on every CI
+build. The blocks stay `nocheck` because `moon 0.1.20260827` collects no
+tests from `.mbt.md` files or `///` doc comments — the mirrored test is
+what actually keeps these examples honest.
+
 ### Build a one-slide deck from scratch
 
 ```moonbit nocheck

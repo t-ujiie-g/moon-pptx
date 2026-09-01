@@ -27,7 +27,7 @@ Two things deliberately live elsewhere:
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.8.0` (2026-09-01 — RTL / bidi, `endParaRPr`, Asian-script fonts + theme font resolution; additive) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012); every release until then is additive-only |
-| Test suite | 1204 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1208 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -137,6 +137,7 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G7 | **Form fields / ink** (`<p:contentPart>`) | △ | Same shape as G6 — niche, preserved losslessly today | M |
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
+| G10 | **Resource limits on untrusted input** | ❌ | `Package::open` hands the whole archive to `@fzip.unzip_sync` (`src/opc/package.mbt:30`) with no cap on part count or total uncompressed size, so a zip bomb exhausts memory before any moon-pptx code runs. Nothing is written to disk, so zip-slip does not apply. Wants opt-in ceilings surfaced as `OpcError`, which matters the moment anyone parses user-uploaded decks server-side | S–M |
 
 G1 (RTL / bidi text), G5 (`endParaRPr`) and G2 (Asian-script fonts) closed
 in 0.8.0; the IDs are retired rather than reused so older references still
@@ -159,8 +160,24 @@ in CI over generated decks plus the 7-file real-world corpus.
 | # | Item | Note |
 |---|---|---|
 | H1 | Split `examples/sample-deck/main` into a library package + thin entrypoint | `moon check` warns that main packages will stop generating blackbox tests in a future MoonBit release; the deck's tests live in `main/showcase_test.mbt` |
-| H2 | `XmlReader` over `StringView` instead of `Array[Char]` | Would drop a full code-point copy of every part at parse time. Blocked on wanting code-point (not UTF-16 code-unit) indexing; revisit if V2 shows parse allocation hurting |
+| H2 | `XmlReader` over `StringView` instead of `Array[Char]` | `XmlReader::new` copies every part into `Array[Char]` (`src/xml/reader.mbt:83`), so peak memory, not just throughput, scales with part size — which makes this part of the same problem as G10, not only a V2 benchmark question. Blocked on wanting code-point (not UTF-16 code-unit) indexing |
 | H3 | Five XML helpers (`skip_subtree`, `next_event`, `collect_subtree_unknown`, `optional_attr`, `require_attr`) are duplicated across six packages | `@oxml` exports public equivalents; each package keeps a copy so the helper raises *its* suberror instead of `XmlReadError`. Deduplicating means either giving up per-subdomain error typing or finding a generic-over-error formulation. Accepted for now — logged so it is not mistaken for an oversight |
+| H4 | Fold `src/integration/readme_test.mbt` back into `README.mbt.md` | `moon 0.1.20260827` collects no tests from `.mbt.md` files or from `///` doc comments — verified with a deliberately failing probe in both a source package and the test-only package, and `--doc-index 0` reports `no test entry found`. So the `.mbt.md` extension currently buys nothing but the `readme` field in `moon.mod`, and the README's blocks stay `nocheck` with a mirrored test carrying the actual verification. Recheck when the toolchain (or the new TOML `moon.pkg` format) grows markdown/doc tests, then delete the mirror |
+| H5 | Repository discoverability | No GitHub description, no topics, no Releases. `v0.8.0` already has a CHANGELOG entry that can be pasted into a release verbatim. Costs minutes and is the only thing standing between the module and anyone finding it |
+| H6 | A rendered screenshot at the top of `README.md` | The comparison matrix runs ~40 rows without a single image of what the library actually emits. `tools/pptx-validate/gen-pptx.sh` already builds a showcase deck in CI — one rendered slide from it would do more work than the matrix |
+
+### 3.4 API finishing (breaking — must land before the 1.0 freeze)
+
+Unlike everything above, these are **not** additive, so they collide with
+the §4 additive-only policy. ADR-012 (1.0 gated on MoonBit reaching 1.0)
+is what buys the room to do them; once 1.0 freezes the surface they are
+permanent.
+
+| # | Item | Why it is open | Size |
+|---|---|---|---|
+| A1 | **`pub(all)` audit** — 149 `pub(all) struct` and 93 `pub(all) enum` against 12 plain `pub struct` | `pub(all) struct` lets downstream code write exhaustive record literals, so *adding a field is breaking* — 0.8.0's `ParagraphProperties.rtl` already was (see that release's **Compatibility** note). `pub(all) enum` likewise makes a new variant break exhaustive matches. Model records genuinely need to be matched on; the question is which of them also need to be *constructed* externally rather than through `::default()` + `with_*`. The §4.2 `.mbti` diff does not detect this class: a purely additive diff can still break consumers | L |
+| A2 | **Labelled geometry arguments** | `AutoShape::textbox(id, name, x, y, cx, cy, text)` takes four consecutive `@units.Emu`. The unit newtypes catch `Pt` vs `Emu` but not `x`↔`y` or `cx`↔`cy`, which compile silently and land the shape somewhere else. `Table::of_rows(_, col_widths~)` and `TableRow::of_cells(_, height~)` already label theirs, so the tree is inconsistent with itself. Same shape in `GraphicFrame::of_table` / `of_chart_ref` / `of_chart_ex_ref` / `of_diagram_ref` | M |
+| A3 | **Shape-ID allocation** | Callers pick raw `Int` ids for `<p:cNvPr id>`. A duplicate inside one slide is exactly the kind of thing that triggers a PowerPoint repair prompt, and nothing detects it. `Slide::next_shape_id` already exists at `src/slide/header_footer.mbt:87` but is private. Cheapest useful step is a Tier 1 invariant (ADR-011) that fails the test suite on a duplicate; the API answer is publishing `next_shape_id`, or a `with_shape_auto_id` that never asks | S–M |
 
 ---
 
@@ -177,14 +194,23 @@ No dated cycle is committed. Work is pulled from §3 and §5 as demand
 appears; each item ships in whatever `0.7.x` / `0.8.0` release it lands
 in. Suggested order, highest value first:
 
-1. **V2 benchmarks** — they gate the streaming-write decision (G9)
+1. **H5 / H6 reach** — description, topics, a `v0.8.0` Release, one
+   screenshot. Minutes of work, and everything below is worth less while
+   nobody can find the module.
+2. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-2. **H1 sample-deck split** — forced eventually by the toolchain; cheap
+3. **§3.4 API finishing (A1 / A2 / A3)** — the one class of work with a
+   deadline: 1.0 freezes it permanently, and only ADR-012's "wait for
+   MoonBit 1.0" keeps the window open. A3 is the cheapest and removes the
+   easiest way to get a repair prompt out of the library.
+4. **G10 input limits** — small, and the difference between "a library
+   that parses decks" and "a library you can point at uploads".
+5. **H1 sample-deck split** — forced eventually by the toolchain; cheap
    to do before it becomes an error.
-3. **G8 p14 extended transitions** — small, and the base transition model
+6. **G8 p14 extended transitions** — small, and the base transition model
    is already typed.
-4. **A theme builder** (§5) — font resolution now reads the theme, but
+7. **A theme builder** (§5) — font resolution now reads the theme, but
    nothing can *write* one, so "make this whole deck Japanese" still means
    setting fonts run by run.
 
@@ -196,6 +222,11 @@ matrix fully green (Tier 3 included); benchmarks published.
 🔴 **API stability review — final pass**
   - `pkg.generated.mbti` diff vs the last 0.x must be additive only
     (the breaking budget was spent in v0.6.0).
+  - **§3.4 A1–A3 are settled**, because the `.mbti` diff above cannot
+    settle them: a field added to a `pub(all) struct` shows up as a
+    purely additive diff and still breaks exhaustive record literals
+    downstream. Visibility and argument shape have to be reviewed by
+    reading the types, not the diff.
   - Anything still marked experimental is stabilised or cut.
 
 🟡 **Verification matrix** (three-tier pyramid, ADR-011) — V1 / V3 in §3.2.
@@ -236,7 +267,7 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 
 ### ADR-002: Native primary; Wasm-GC + JS verified in CI; LLVM and legacy Wasm excluded
 - **Date**: 2026-05-10
-- **Status**: Accepted
+- **Status**: Superseded by ADR-014 (legacy Wasm is now in the CI matrix)
 - **Context**: "MoonBit-only library" rules out reliance on a JS host. Native gives us file I/O directly; Wasm-GC enables browser embedding; JS is a useful escape hatch. LLVM is nightly-only (per `moonbit-orientation` skill); legacy Wasm is superseded by Wasm-GC.
 - **Decision**: Develop and test against Native first. CI matrix runs `moon test` against `native`, `wasm-gc`, and `js`. Avoid backend-specific features without abstraction. Phase-0 smoke test confirmed all three targets pass.
 - **Consequences**: All file I/O goes through `bytes`-level APIs at the public surface; convenience helpers (`Presentation::open_path`) live behind backend gates. Any feature that cannot be expressed cross-backend requires an ADR before adoption.
@@ -326,6 +357,13 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Context**: ADR-006 made `TODO.md` the one canonical narrative, which was right while the project was being built but produced a 976-line file that was ~60 % history: a per-cycle shipped-item record, a completed-phases list, and a 138-line living changelog, all duplicating `CHANGELOG.md` and git. Newcomers could not tell current direction from settled past, and the file's own feature matrix had drifted two releases stale because it was buried where no user would read it.
 - **Decision**: The file is renamed `ROADMAP.md` and holds only forward-looking material — direction, open gaps, ADRs, open questions, risks, conventions. Release history lives in `CHANGELOG.md`; the narrative record of *how* something was built lives in git history. The feature comparison vs python-pptx / PptxGenJS moves to `README.md`, where its actual audience is. ADR-006's core rule survives intact: **no new planning, decision, or analysis files** — this is still one document, just a smaller one.
 - **Consequences**: Contributors update `ROADMAP.md` for scope and decisions, and `CHANGELOG.md` for what shipped, instead of writing both plus a living-changelog entry. `AGENTS.md` and `CLAUDE.md` point at the new name. The pre-rename history is recoverable with `git log -- TODO.md` (151 commits; deleted paths keep their history) or `git show v0.7.1:TODO.md` for the last full copy. Note `--follow` does *not* bridge the two files — the rewrite was too large for git's rename detection. Risk: the comparison table in `README.md` must be refreshed at each feature release or it drifts again — mitigated by adding it to the release checklist (§9).
+
+### ADR-014: Legacy Wasm joins the CI matrix
+- **Date**: 2026-09-02
+- **Status**: Accepted (supersedes the legacy-Wasm exclusion in ADR-002)
+- **Context**: ADR-002 excluded legacy Wasm as superseded by Wasm-GC, but §0, §2 and `README.md` § Compatibility all claimed four backends were tested in CI while `.github/workflows/ci.yml` ran three. For a project whose stated principle is that verification outranks claims, that gap had to close in one direction or the other. `moon test --target wasm` passes the full suite locally with no backend-specific code.
+- **Decision**: Add `wasm` to the `test` matrix. The claim in the docs becomes true rather than being walked back, at the cost of two extra CI jobs.
+- **Consequences**: Legacy Wasm is now a supported backend that a regression can block a PR on. If it later diverges enough to cost more than it proves, dropping it means a superseding ADR *and* the same edit to §0, §2 and the README table — the three places that must stay in lockstep with the matrix.
 
 ---
 
