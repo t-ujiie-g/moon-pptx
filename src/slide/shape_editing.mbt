@@ -27,6 +27,99 @@ pub fn Shape::id(self : Shape) -> Int? {
 }
 
 ///|
+/// Return the shape with its `<p:cNvPr id>` set to `id`. An `Unknown` shape
+/// carries no typed id and comes back untouched.
+pub fn Shape::with_id(self : Shape, id : Int) -> Shape {
+  match self {
+    AutoShape(s) => AutoShape({ ..s, id, })
+    Picture(p) => Picture({ ..p, id, })
+    Connector(c) => Connector({ ..c, id, })
+    Group(g) => Group({ ..g, id, })
+    GraphicFrame(gf) => GraphicFrame({ ..gf, id, })
+    Unknown(_) => self
+  }
+}
+
+///|
+/// Append every id under `shapes` to `out`, descending into groups — a group's
+/// children live in the same `<p:spTree>` as their parent, so they compete for
+/// the same id space.
+fn collect_shape_ids(shapes : Array[Shape], out : Array[Int]) -> Unit {
+  for s in shapes {
+    match s.id() {
+      Some(i) => out.push(i)
+      None => ()
+    }
+    match s {
+      Group(g) => collect_shape_ids(g.children, out)
+      _ => ()
+    }
+  }
+}
+
+///|
+/// The lowest id no shape on the slide is using (highest in use + 1, never
+/// below 2 — id 1 belongs to the root `<p:spTree>` itself). Group children
+/// count: they share the slide's id space, so an id taken from here is free
+/// against the whole tree, not just the top level.
+///
+/// `<p:cNvPr id>` must be unique within a slide. Every shape builder takes an
+/// explicit id, so this is what a caller assembling shapes one at a time asks
+/// for instead of tracking a counter — or see `with_shape_auto_id`, which
+/// asks on the caller's behalf.
+pub fn Slide::next_shape_id(self : Slide) -> Int {
+  let ids : Array[Int] = []
+  collect_shape_ids(self.shapes, ids)
+  let mut max = 1
+  for i in ids {
+    if i > max {
+      max = i
+    }
+  }
+  max + 1
+}
+
+///|
+/// Append `shape` with its id replaced by `next_shape_id()`, so it cannot
+/// collide with anything already on the slide. Whatever id the builder was
+/// given is discarded. An `Unknown` shape has no id to assign and is appended
+/// unchanged.
+pub fn Slide::with_shape_auto_id(self : Slide, shape : Shape) -> Slide {
+  self.with_shape(shape.with_id(self.next_shape_id()))
+}
+
+///|
+/// Every `<p:cNvPr id>` that more than one shape on the slide claims, each
+/// listed once, ascending. An empty array is the healthy answer — the
+/// attribute is required to be unique within the slide, and a duplicate is
+/// one of the things PowerPoint offers to repair a file over.
+///
+/// This is a query and not a `serialize` failure on purpose: a deck parsed
+/// from a third-party file can arrive with duplicates already in it, and
+/// refusing to write it back would cost the lossless round-trip (ADR-004).
+/// Check it on decks you assemble; leave the ones you are only passing
+/// through alone.
+pub fn Slide::duplicate_shape_ids(self : Slide) -> Array[Int] {
+  let ids : Array[Int] = []
+  collect_shape_ids(self.shapes, ids)
+  let seen : Map[Int, Int] = Map([])
+  for i in ids {
+    seen[i] = match seen.get(i) {
+      Some(n) => n + 1
+      None => 1
+    }
+  }
+  let dups : Array[Int] = []
+  for i in ids {
+    if seen.get(i) is Some(n) && n > 1 && !dups.contains(i) {
+      dups.push(i)
+    }
+  }
+  dups.sort()
+  dups
+}
+
+///|
 /// The shape's name (`<p:cNvPr name>`), or `None` for an `Unknown` shape.
 pub fn Shape::name(self : Shape) -> String? {
   match self {

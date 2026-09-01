@@ -12,7 +12,8 @@
 //   2. every Internal relationship target points at a part that exists;
 //   3. every `r:`-namespaced attribute value (r:id / r:embed / r:link /
 //      r:dm / … — all relationship references) resolves to a relationship id
-//      declared in that part's `.rels`.
+//      declared in that part's `.rels`;
+//   4. no two shapes in a slide share a `<p:cNvPr id>`.
 //
 // (3) is the dangling-`rId` bug that bit the multi-media slide
 // (foreign-namespace prefix scoping) and the kind of reference breakage that a
@@ -65,7 +66,7 @@ fn collect_rel_refs(xml : String) -> Array[String] {
 }
 
 ///|
-/// Run the three integrity invariants over an opened package and return every
+/// Run the four integrity invariants over an opened package and return every
 /// violation (empty array = clean).
 fn integrity_issues(pkg : @opc.Package) -> Array[IntegrityIssue] {
   let issues : Array[IntegrityIssue] = []
@@ -113,6 +114,20 @@ fn integrity_issues(pkg : @opc.Package) -> Array[IntegrityIssue] {
             detail: "r:* attribute references \{ref_id}, absent from the part's .rels",
           })
         }
+      }
+    }
+    // (4) shape ids are unique within a slide. Parse failures are swallowed
+    // for the same reason as (3): schema is the external validator's job.
+    if name.has_prefix("/ppt/slides/slide") && name.has_suffix(".xml") {
+      let dups = @slide.Slide::parse(part.bytes).duplicate_shape_ids() catch {
+        _ => []
+      }
+      for id in dups {
+        issues.push({
+          part: name,
+          kind: "duplicate-shape-id",
+          detail: "<p:cNvPr id=\"\{id}\"> is claimed by more than one shape",
+        })
       }
     }
   }
@@ -190,4 +205,40 @@ test "structural integrity: open -> save -> reopen stays repair-clean" {
   let once = @opc.Package::open(prs.save())
   let twice = @opc.Package::open(once.to_bytes())
   assert_eq(format_issues(integrity_issues(twice)), "")
+}
+
+///|
+test "structural integrity: a duplicate shape id is reported" {
+  // A clean run of invariant (4) proves nothing unless the check can fail, so
+  // this builds the violation on purpose: two shapes sharing `<p:cNvPr id=2>`.
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let clash = id => {
+    @slide.AutoShape(
+      @slide.AutoShape::textbox(
+        id,
+        "Box \{id}",
+        @units.Emu(457_200L),
+        @units.Emu(457_200L),
+        @units.Emu(914_400L),
+        @units.Emu(914_400L),
+        "x",
+      ),
+    )
+  }
+  // `base` stays pristine — `Slide` is immutable (ADR-003), so both arms
+  // below build from the same starting point.
+  let base = prs.slides()[0]
+  prs.update_slide_mut(0, base.with_shape(clash(2)).with_shape(clash(2)))
+  let pkg = @opc.Package::open(prs.save())
+  let issues = integrity_issues(pkg)
+  assert_true(issues.length() == 1)
+  assert_eq(issues[0].kind, "duplicate-shape-id")
+  assert_eq(issues[0].part, "/ppt/slides/slide1.xml")
+  // And `with_shape_auto_id` is the fix: the same shape, renumbered.
+  prs.update_slide_mut(
+    0,
+    base.with_shape(clash(2)).with_shape_auto_id(clash(2)),
+  )
+  assert_eq(format_issues(integrity_issues(@opc.Package::open(prs.save()))), "")
 }

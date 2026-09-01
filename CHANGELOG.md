@@ -7,8 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No API change. Two claims the documentation was making are now backed by
-something that runs.
+### Added
+
+- **Shape ids can be allocated instead of guessed.** `<p:cNvPr id>` has to
+  be unique within a slide, every shape builder takes one as a positional
+  `Int`, and until now nothing in the library helped:
+  - `Slide::with_shape_auto_id(shape)` appends with the id replaced by the
+    next free one, so the same builder output can be added twice without
+    colliding.
+  - `Slide::next_shape_id()` returns that number for callers who would
+    rather pass it to a builder themselves. It was already there as a
+    private helper for the header/footer builders; it now also descends
+    into groups, whose children share the slide's id space and could
+    previously hand back an id already in use.
+  - `Slide::duplicate_shape_ids()` reports the clashing ids on a slide,
+    ascending, each once.
+  - `Shape::with_id(id)` renumbers any typed shape variant; an `Unknown`
+    shape carries no typed id and is returned unchanged.
+
+  `duplicate_shape_ids` is a query rather than a `serialize` failure on
+  purpose: a deck parsed from a third-party file can arrive with duplicates
+  already in it, and refusing to write it back would cost the lossless
+  round-trip (ADR-004). The library's own output is held to the stricter
+  standard by a new Tier 1 integrity invariant (ADR-011) instead.
+
+  Additive — the generated `.mbti` differ by 4 added lines with no
+  removals. Closes `ROADMAP.md` §3.4 A3.
 
 ### Changed
 

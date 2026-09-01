@@ -159,3 +159,102 @@ test "an id-targeted rename round-trips through serialize" {
   let reparsed = @slide.Slide::parse(edited.serialize())
   assert_eq(reparsed.shapes[1].name().unwrap(), "Persisted")
 }
+
+// --- shape id allocation ---
+
+///|
+/// A group holding one rectangle, so the recursive id walk has something to
+/// descend into. Group children share the slide's `<p:spTree>` id space.
+fn group_with_child(group_id : Int, child_id : Int) -> @slide.Shape {
+  let child = @slide.AutoShape::rect(
+    child_id,
+    "Inner",
+    @units.Emu(0L),
+    @units.Emu(0L),
+    @units.Emu(914_400L),
+    @units.Emu(914_400L),
+  )
+  let g : @slide.GroupShape = {
+    id: group_id,
+    name: "Group",
+    transform: None,
+    child_offset: None,
+    child_extent: None,
+    children: [@slide.AutoShape(child)],
+    hyperlink: None,
+    extension: [],
+  }
+  @slide.Group(g)
+}
+
+///|
+test "Shape::with_id sets the id on every typed variant" {
+  let slide = @slide.Slide::parse(typical_title_slide())
+  assert_eq(slide.shapes[0].with_id(42).id().unwrap(), 42)
+  assert_eq(slide.shapes[2].with_id(43).id().unwrap(), 43)
+  assert_eq(group_with_child(10, 11).with_id(44).id().unwrap(), 44)
+  // Unknown carries no typed id, so it comes back untouched.
+  let unknown = @slide.Slide::parse(slide_with_unknown_shape()).shapes[0]
+  assert_eq(unknown.with_id(45), unknown)
+}
+
+///|
+test "Slide::next_shape_id clears the highest id in use" {
+  let slide = @slide.Slide::parse(typical_title_slide())
+  // ids 2, 3, 4 are taken.
+  assert_eq(slide.next_shape_id(), 5)
+  // A group's child competes for the same id space as its parent.
+  let with_group = slide.with_shape(group_with_child(10, 20))
+  assert_eq(with_group.next_shape_id(), 21)
+}
+
+///|
+test "Slide::next_shape_id floors at 2 on an empty slide" {
+  let empty = @slide.Slide::parse(typical_title_slide()).map_shapes(s => s)
+  let cleared = { ..empty, shapes: [], }
+  // id 1 belongs to the root spTree, so the first shape id is 2.
+  assert_eq(cleared.next_shape_id(), 2)
+}
+
+///|
+test "Slide::with_shape_auto_id renumbers a colliding shape" {
+  let slide = @slide.Slide::parse(typical_title_slide())
+  // Deliberately reuse id 2, which the title already holds.
+  let clashing = @slide.AutoShape(
+    @slide.AutoShape::rect(
+      2,
+      "Clash",
+      @units.Emu(0L),
+      @units.Emu(0L),
+      @units.Emu(914_400L),
+      @units.Emu(914_400L),
+    ),
+  )
+  assert_true(slide.with_shape(clashing).duplicate_shape_ids() == [2])
+  let fixed = slide.with_shape_auto_id(clashing)
+  assert_eq(fixed.shapes[3].id().unwrap(), 5)
+  assert_eq(fixed.shapes[3].name().unwrap(), "Clash")
+  assert_true(fixed.duplicate_shape_ids() == [])
+}
+
+///|
+test "Slide::duplicate_shape_ids reports each clashing id once, ascending" {
+  let slide = @slide.Slide::parse(typical_title_slide())
+  assert_true(slide.duplicate_shape_ids() == [])
+  // Two shapes on id 4 and three on id 3 — each id is reported once.
+  let clashing = slide
+    .with_shape(group_with_child(4, 3))
+    .with_shape(
+      @slide.AutoShape(
+        @slide.AutoShape::rect(
+          3,
+          "Third",
+          @units.Emu(0L),
+          @units.Emu(0L),
+          @units.Emu(914_400L),
+          @units.Emu(914_400L),
+        ),
+      ),
+    )
+  assert_true(clashing.duplicate_shape_ids() == [3, 4])
+}
