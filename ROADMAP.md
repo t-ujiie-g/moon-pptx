@@ -26,7 +26,7 @@ Two things deliberately live elsewhere:
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
 | Current version | `0.8.0` (2026-09-01 — RTL / bidi, `endParaRPr`, Asian-script fonts + theme font resolution; additive) |
-| Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012). Additive-only, with one scoped exception: the §3.4 API-shape pass in the 0.9.x line (ADR-015) |
+| Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012). Additive-only; the one sanctioned exception, the ADR-015 API-shape pass, has run and is closed (ADR-016). The next release is `0.9.0` — it carries those breaks |
 | Test suite | 1215 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
@@ -139,6 +139,7 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
 | G10 | **Resource limits on untrusted input** | ❌ | `Package::open` hands the whole archive to `@fzip.unzip_sync` (`src/opc/package.mbt:30`) with no cap on part count or total uncompressed size, so a zip bomb exhausts memory before any moon-pptx code runs. Nothing is written to disk, so zip-slip does not apply. Wants opt-in ceilings surfaced as `OpcError`, which matters the moment anyone parses user-uploaded decks server-side | S–M |
 | G11 | **Typed builder for the chartEx families** | △ | `@chart_ex` parses, round-trips and serialises the Microsoft 2016 set, and `Presentation::add_chart_ex_mut` does the OPC plumbing — but `ChartEx` exposes only `parse` / `serialize`, so *building* one means writing `<cx:chartSpace>` by hand. The project's own test does exactly that (`src/presentation/add_chart_test.mbt:135`). Until this closes, "creatable" is the wrong word for chartEx, and `README.md` says so. Wants `ChartExData` + `ChartEx::of_waterfall` / `of_treemap` / … mirroring `@chart`'s `ChartData` + `Chart::of_bar` | M–L |
+| G12 | **Builders for the model records that have none** | ❌ | Around 50 `pub(all) struct` expose no constructor, no `with_*`, in most cases no `pub fn` at all — a record literal is the only way to build one. The chart internals are the bulk (`Trendline`, `ManualLayout`, `Layout`, `DLbl` / `DLbls`, `NumFmt`, `Scaling`, `AxisCore`, `ChartTitle`, `ChartLegend`, `PlotArea`, the fifteen `*Body` / `*SeriesCore` records), with `Pattern`, `TileSpec`, `FillRect`, `SysColor`, `ArrowEnd` and the `CustomGeometry` family alongside. Each one a caller has a real reason to construct — a trendline on a series, a manual legend layout — and giving it a builder is a feature in its own right, not API tidying. Overlaps G11: a `ChartExData` builder and a chart-internals builder are the same work. See ADR-016 for why the visibility side of this stopped where it did | L |
 
 G1 (RTL / bidi text), G5 (`endParaRPr`) and G2 (Asian-script fonts) closed
 in 0.8.0; the IDs are retired rather than reused so older references still
@@ -167,122 +168,42 @@ in CI over generated decks plus the 7-file real-world corpus.
 | H5 | Repository discoverability | No GitHub description, no topics, no Releases. `v0.8.0` already has a CHANGELOG entry that can be pasted into a release verbatim. Costs minutes and is the only thing standing between the module and anyone finding it |
 | H6 | A rendered screenshot at the top of `README.md` | The comparison matrix runs ~40 rows without a single image of what the library actually emits. `tools/pptx-validate/gen-pptx.sh` already builds a showcase deck in CI — one rendered slide from it would do more work than the matrix |
 
-### 3.4 API finishing (breaking — must land before the 1.0 freeze)
-
-Unlike everything above, these are **not** additive. ADR-015 sanctions one
-scoped breaking pass in the `0.9.x` line to land them, because 1.0 would
-otherwise freeze the shape permanently and the 1.0 date is not ours to
-pick (ADR-012).
-
-A1 had a first pass. The 149 `pub(all) struct` declarations were sorted by
-the compiler rather than by opinion: flip every one to `pub`, run
-`moon check`, restore whatever the read-only errors name, repeat to a fixed
-point. What that reports is exactly the set nothing outside the defining
-package builds by record literal.
-
-| | Types | Disposition |
-|---|---|---|
-| Constructed externally by literal | 47 | Stay `pub(all)` — a downgrade needs a builder at each construction site first |
-| Have a constructor, nothing builds them by literal | 32 | **Downgraded this pass** — adding a field to these is now non-breaking, and every one keeps a full construction path |
-| Already `pub` | 5 | — |
-| No public construction path at all | 77 | Left alone — see A1 below |
-
-The 32 include the types most likely to gain a field: `Presentation`,
-`ChartData`, `Transform`, `Transition`, `Timeline`, `SmartArt`,
-`CoreProperties`, `TableCellProperties`, `RgbColor`.
-
-A second pass corrected the first and extended it. "Has a constructor"
-was too loose a test: `ChartEx`, `CommentList`, `CommentAuthorList`,
-`PresentationPart` and `Theme` expose only `parse`, and counting that as
-a construction path closed the only way to *author* one from scratch —
-they are round-trip artefacts with a `serialize`, so a caller has to be
-able to build one. They went back to `pub(all)`, and the criterion now
-reads: **a type with a public `serialize` is an authoring target and stays
-constructible**, whatever else it has.
-
-With that fixed, the "nothing needs to build it" test was closed over
-itself — demoting a type releases the records reachable only through it —
-which leaves 7 more: `ResolvedFonts`, `AnimStep`, `ChartSeries`,
-`BubbleSeries`, `ScatterSeries`, `PlaceholderDef`, `PlaceholderSpec`.
-
-One caveat on the method: `moon check` does not see
-`examples/sample-deck`, which is a separate module and therefore the only
-in-repo code that consumes the public API the way a downstream user does.
-The flip-and-check sweep is blind to it, and the effect pass below was
-caught by CI rather than locally for exactly that reason — see `CLAUDE.md`
-§3 for the extra command.
-
-A third pass took the eight `<a:effectLst>` records the other way round:
-give a type a builder and it stops needing to be `pub(all)`. `EffectList`,
-`Blur`, `Glow`, `InnerShadow`, `OuterShadow`, `PresetShadow`, `Reflection`
-and `SoftEdge` gained constructors and `with_*` builders and then dropped
-to `pub`. That was worth doing on its own: `PictureUncropped::with_effects`
-takes an `EffectList`, and nothing in the tree had ever passed that
-argument, because building one meant a record literal across eight fields.
-
-A2 (labelled geometry arguments) closed in that pass: `id`, `name`, `x`,
-`y`, `cx`, `cy` and every run of two or more same-typed parameters are now
-labelled across 24 public functions, so `x`↔`y` and `cx`↔`cy` swaps —
-and `video_bytes`↔`poster_bytes`, and the three rel-id strings of
-`Picture::of_media` — stop compiling. Behaviour is unchanged; only call
-sites move.
-
-A3 (shape-id allocation) closed without spending any of that budget —
-`Slide::next_shape_id`, `Slide::with_shape_auto_id`,
-`Slide::duplicate_shape_ids` and `Shape::with_id` are all additions, and
-the duplicate check became a Tier 1 invariant (ADR-011) rather than a
-`serialize` failure, so a third-party deck that already carries duplicates
-still round-trips.
-
-| # | Item | Why it is open | Size |
-|---|---|---|---|
-| A1 | **The chart-internal records with no construction path** | The first three passes took every type that was safe to take. What is left are the types where `pub` would *remove* a capability rather than tighten one: they expose no constructor, no `with_*`, and in most cases no `pub fn` at all, so a record literal is the only way to build one. They split in two, and the split has to be made per type. The effect records closed the same way (below): give them a builder, then downgrade. What is left is the chart internals — `Trendline`, `ManualLayout`, `Layout`, `DLbl` / `DLbls`, `NumFmt`, `Scaling`, `AxisCore`, `ChartTitle`, `ChartLegend`, `PlotArea` and the fifteen `*Body` / `*SeriesCore` records — plus a handful elsewhere (`Pattern`, `TileSpec`, `FillRect`, `SysColor`, `ArrowEnd`, `CustomGeometry` and its `Path` / `PathPoint` / `ConnectionSite` / `GeomRect` companions). Each needs a builder API before its visibility can change, and the chart set overlaps G11: a `ChartExData` builder and a chart-internals builder are the same kind of work | L |
-
-**Not actionable: the `pub(all) enum` half.** The 93 `pub(all) enum`
-declarations carry the same "adding a variant breaks exhaustive matches"
-hazard, and nothing in the language answers it. Visibility does not help —
-the breakage is on the *matching* side, which `pub` still allows — and
-`moon 0.1.20260827` has no `#non_exhaustive` equivalent (`#non_exhaustive`,
-`#open` and `#extensible` are all rejected as `unknown attribute`).
-Enums used as builder inputs (`Anchor`, `PresetShape`, …) must stay
-`pub(all)` regardless, since callers construct their variants. This is a
-consequence to document at 1.0, not a task.
-
 ---
 
 ## 4. Roadmap
 
 **v1.0.0 ships when the MoonBit toolchain itself reaches v1.0**
-(ADR-012). Releases are additive-only apart from the one scoped API-shape
-pass ADR-015 sanctions for `0.9.x`; after §3.4 closes, the version number
-is the only thing waiting on MoonBit.
+(ADR-012). The one sanctioned break, ADR-015's API-shape pass, has run and
+is closed (ADR-016); releases are additive-only again, so the version
+number is the only thing waiting on MoonBit.
 
 ### 4.1 Next (unversioned, additive)
 
 No dated cycle is committed. Work is pulled from §3 and §5 as demand
-appears; each item ships in whatever `0.7.x` / `0.8.0` release it lands
-in. Suggested order, highest value first:
+appears. The one item that had a deadline — ADR-015's API-shape pass — has
+run and is closed (ADR-016), so nothing below is racing the 1.0 tag.
+Suggested order, highest value first:
 
-1. **H5 / H6 reach** — description, topics, a `v0.8.0` Release, one
+1. **Cut `0.9.0`** — the breaking pass is done and sitting in
+   `[Unreleased]`. Releasing it is what lets consumers migrate once
+   instead of tracking `main`.
+2. **H5 / H6 reach** — description, topics, a GitHub Release, one
    screenshot. Minutes of work, and everything below is worth less while
    nobody can find the module.
-2. **V2 benchmarks** — they gate the streaming-write decision (G9)
+3. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-3. **§3.4 A1, what the first pass left** — the last item with a deadline:
-   1.0 freezes it permanently, and ADR-015's breaking pass is the window.
-   The cheap half is the parse-only records, which can be downgraded as
-   they stand. The expensive half is a builder API for the effect and
-   chart-internal records, and that is worth doing for its own sake — a
-   caller cannot construct an `OuterShadow` today without a record
-   literal.
 4. **G10 input limits** — small, and the difference between "a library
    that parses decks" and "a library you can point at uploads".
 5. **H1 sample-deck split** — forced eventually by the toolchain; cheap
    to do before it becomes an error.
-6. **G8 p14 extended transitions** — small, and the base transition model
+6. **G12 / G11 builders** — the largest remaining feature gap, and the
+   only way the ~50 records ADR-016 froze as `pub(all)` ever become
+   field-additive. Worth doing before 1.0 for that reason, but it is a
+   feature design, not a deadline.
+7. **G8 p14 extended transitions** — small, and the base transition model
    is already typed.
-7. **A theme builder** (§5) — font resolution now reads the theme, but
+8. **A theme builder** (§5) — font resolution now reads the theme, but
    nothing can *write* one, so "make this whole deck Japanese" still means
    setting fonts run by run.
 
@@ -292,13 +213,12 @@ DoD: MoonBit toolchain v1.0 is out; API surface frozen; verification
 matrix fully green (Tier 3 included); benchmarks published.
 
 🔴 **API stability review — final pass**
-  - `pkg.generated.mbti` diff vs the last 0.x must be additive only,
-    apart from the §3.4 breaks ADR-015 sanctions.
-  - **§3.4 A1 is settled**, because the `.mbti` diff above cannot settle
-    it: a field added to a `pub(all) struct` shows up as a
-    purely additive diff and still breaks exhaustive record literals
-    downstream. Visibility and argument shape have to be reviewed by
-    reading the types, not the diff.
+  - `pkg.generated.mbti` diff vs `0.9.0` must be additive only. The
+    ADR-015 breaks are spent; ADR-016 closed that window.
+  - The diff is not the whole test: a field added to a `pub(all) struct`
+    reads as purely additive and still breaks exhaustive record literals
+    downstream. The ~50 records G12 covers are the ones this applies to —
+    confirm the list has not grown by reading the types, not the diff.
   - Anything still marked experimental is stabilised or cut.
 
 🟡 **Verification matrix** (three-tier pyramid, ADR-011) — V1 / V3 in §3.2.
@@ -307,7 +227,10 @@ matrix fully green (Tier 3 included); benchmarks published.
 streaming write (G9) gets promoted onto the roadmap.
 
 🔴 **CHANGELOG cleanup + 1.0 announcement** — final release notes; blog
-post / mooncakes announcement.
+post / mooncakes announcement. State plainly what the tag does *not*
+promise: the `pub(all)` records G12 has not reached, and every
+`pub(all) enum`, gain fields and variants only as breaking changes from
+1.0 onward (ADR-016).
 
 ---
 ## 5. Open ideas (uncommitted)
@@ -443,6 +366,15 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Context**: ADR-012 declared the pre-1.0 breaking budget spent at v0.6.0 and every later release additive-only. §3.4 is the class of problem that promise cannot accommodate: argument shape and type visibility that 1.0 would freeze permanently. A2 — four consecutive `@units.Emu` where `x`↔`y` swaps compile silently — has no additive fix; a parallel labelled constructor beside every positional one would double the surface being frozen. ADR-012's own reasoning cuts this way: the 1.0 date is externally controlled, so an additive-only promise held until an unknown date is worth less than the API being right when the freeze lands.
 - **Decision**: One further breaking pass, scoped to §3.4 (argument labelling and `pub(all)` visibility) and nothing else, lands before 1.0 in the `0.9.x` line. Behaviour, semantics and emitted file bytes do not change — a caller who updates the call sites gets byte-identical output. Every breaking change ships with a CHANGELOG migration note precise enough to apply mechanically. Additive-only resumes once §3.4 closes, and if MoonBit reaches 1.0 while §3.4 is open, §3.4 finishes first.
 - **Consequences**: Consumers pinned to `0.8.x` face one mechanical migration instead of living with the shape permanently. The §4.2 stability gate now has something to check against — "additive since the last 0.x" is no longer the whole test, since ADR-015 sanctions a known set of breaks and nothing outside it.
+
+### ADR-016: The API-shape pass is closed; the remaining records stay `pub(all)`
+- **Date**: 2026-09-03
+- **Status**: Accepted (closes the pass ADR-015 opened)
+- **Context**: ADR-015 sanctioned one breaking pass for API shape and said additive-only resumes when it closes. It has run: arguments are labelled (A2), shape ids are allocated rather than guessed (A3), and 39 model records plus the eight `<a:effectLst>` records dropped to `pub`. What is left is around 50 records with no construction path at all — the chart internals and a handful elsewhere. Giving those a builder is designing a feature (an API for adding a trendline, for placing a legend by hand), not tidying an API, and it overlaps G11. Keeping a breaking budget open while that gets designed would leave the window open indefinitely, which is the opposite of what ADR-015 was for.
+- **Decision**: The pass is closed, and §3.4 — the section ADR-015 names — is retired with it, since ADR-013 keeps this file forward-looking and the passes themselves are in `CHANGELOG.md`. Every release from here is additive-only again, including 1.0. The remaining `pub(all)` records are tracked as **G12** — a builder gap, not a visibility gap. If a builder lands for one of them before 1.0, its visibility drops in the same change; after 1.0 it keeps the visibility it has.
+- **Consequences**: Those ~50 records are frozen as `pub(all)` at 1.0, so adding a field to any of them stays a breaking change forever — the cost of leaving them constructible, and the reason G12 is worth doing before the tag rather than after. Two rules the pass produced are worth keeping: a type with a public `serialize` is an **authoring target** and stays constructible whatever else it exposes; and a visibility sweep must be checked against `examples/sample-deck`, the only in-repo code that consumes the public API as a downstream module (`CLAUDE.md` §3).
+
+  The 93 `pub(all) enum` declarations were never in scope, because nothing can be done about them. Adding a variant breaks exhaustive matches downstream, and that breakage is on the *matching* side, which plain `pub` still allows — so visibility is not the lever. `moon 0.1.20260827` has no `#non_exhaustive` equivalent either (`#non_exhaustive`, `#open` and `#extensible` are all rejected as `unknown attribute`), and the enums used as builder inputs — `Anchor`, `PresetShape`, `ThemeColor` — must stay `pub(all)` regardless, since callers construct their variants. So 1.0 freezes the variant lists as they are: a new shape preset, fill kind or transition kind is a breaking change from the tag onward. Worth stating in the 1.0 announcement rather than discovering later.
 
 ---
 
