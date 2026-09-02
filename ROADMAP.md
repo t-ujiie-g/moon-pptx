@@ -165,7 +165,6 @@ in CI over generated decks plus the 7-file real-world corpus.
 | H2 | `XmlReader` over `StringView` instead of `Array[Char]` | `XmlReader::new` copies every part into `Array[Char]` (`src/xml/reader.mbt:83`), so peak memory, not just throughput, scales with part size — which makes this part of the same problem as G10, not only a V2 benchmark question. Blocked on wanting code-point (not UTF-16 code-unit) indexing |
 | H3 | Five XML helpers (`skip_subtree`, `next_event`, `collect_subtree_unknown`, `optional_attr`, `require_attr`) are duplicated across six packages | `@oxml` exports public equivalents; each package keeps a copy so the helper raises *its* suberror instead of `XmlReadError`. Deduplicating means either giving up per-subdomain error typing or finding a generic-over-error formulation. Accepted for now — logged so it is not mistaken for an oversight |
 | H4 | Fold `src/integration/readme_test.mbt` back into `README.mbt.md` | `moon 0.1.20260827` collects no tests from `.mbt.md` files or from `///` doc comments — verified with a deliberately failing probe in both a source package and the test-only package, and `--doc-index 0` reports `no test entry found`. So the `.mbt.md` extension currently buys nothing but the `readme` field in `moon.mod`, and the README's blocks stay `nocheck` with a mirrored test carrying the actual verification. Recheck when the toolchain (or the new TOML `moon.pkg` format) grows markdown/doc tests, then delete the mirror |
-| H5 | Repository discoverability | Description and topics are set; what is left is cutting a GitHub Release per tag. `v0.9.0`'s CHANGELOG section pastes in verbatim |
 | H6 | A rendered screenshot at the top of `README.md` | The comparison matrix runs ~40 rows without a single image of what the library actually emits. `tools/pptx-validate/gen-pptx.sh` already builds a showcase deck in CI — one rendered slide from it would do more work than the matrix |
 
 ---
@@ -187,9 +186,10 @@ Suggested order, highest value first:
 1. **Cut `0.9.0`** — the breaking pass is done and sitting in
    `[Unreleased]`. Releasing it is what lets consumers migrate once
    instead of tracking `main`.
-2. **H5 / H6 reach** — description, topics, a GitHub Release, one
-   screenshot. Minutes of work, and everything below is worth less while
-   nobody can find the module.
+2. **H6 reach** — one rendered screenshot at the top of the README. The
+   repository's description and topics are set; this is what is left of
+   making the module findable, and everything below is worth less while
+   nobody can see what it emits.
 3. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
@@ -471,6 +471,10 @@ a green `moon check --deny-warn` is not evidence the tree is warning-free.
    any user-visible feature (ADR-013 consequence — this is the table's
    only guard against drifting stale).
 6. Update §0 and §3 here if the release changed the gap list.
-7. Tag `v0.X.Y` on `main`.
+7. Tag `v0.X.Y` on `main`. **The tag is the whole release marker — we do
+   not cut GitHub Releases.** `CHANGELOG.md` already carries the notes a
+   release page would duplicate, and mooncakes.io is where the artefact
+   actually ships from, so a Release adds a second place to keep in sync
+   and nothing else.
 8. `moon publish` — confirms 202 Accepted (the trailing `Error: failed` line is benign for `--dry-run`).
 9. Verify the new docs render on mooncakes.io.
