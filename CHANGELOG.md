@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+The ADR-015 API-shape pass, in full. It is the only sanctioned break
+between v0.6.0 and 1.0, and ADR-016 closes it — every release after this
+one is additive-only again. Three things change shape: arguments get
+labels, model records that nothing needs to build become read-only, and
+the records that were only buildable by literal get builders first.
+
+Migration is mechanical throughout, and nothing about the emitted files
+changes: the same deck built the new way is byte-identical.
+
 ### Added
 
 - **The `<a:effectLst>` records have builders.** `PictureUncropped::with_effects`
