@@ -354,7 +354,7 @@ pub(all) enum AnimStart {
 /// the shape's `i`-th text paragraph (0-based) rather than the whole shape — the
 /// shape is then built by paragraph (`<p:bldP build="p">`), so a multi-bullet
 /// body can reveal one line per click.
-pub(all) struct AnimStep {
+pub struct AnimStep {
   effect : AnimEffect
   target_shape_id : Int
   start : AnimStart

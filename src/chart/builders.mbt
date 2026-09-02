@@ -55,7 +55,7 @@ pub impl Show for ChartData with fn output(self, logger) {
 /// - `label` — Display label — used as the series legend entry.
 /// - `values` — Numeric values in category order. Shorter arrays are padded
 ///   with zeros at emit time; longer arrays are truncated.
-pub(all) struct ChartSeries {
+pub struct ChartSeries {
   label : String
   values : Array[Double]
 } derive(Eq, Debug)
@@ -124,7 +124,7 @@ pub impl Show for ScatterData with fn output(self, logger) {
 ///|
 /// One XY series for a scatter chart. `x` and `y` must be
 /// the same length.
-pub(all) struct ScatterSeries {
+pub struct ScatterSeries {
   label : String
   x : Array[Double]
   y : Array[Double]
@@ -178,7 +178,7 @@ pub impl Show for BubbleData with fn output(self, logger) {
 ///|
 /// One XYS series for a bubble chart. `x`, `y`, and `size`
 /// must all be the same length.
-pub(all) struct BubbleSeries {
+pub struct BubbleSeries {
   label : String
   x : Array[Double]
   y : Array[Double]

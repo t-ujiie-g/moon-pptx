@@ -159,7 +159,7 @@ pub fn BubbleData::validate(Self) -> Self raise ChartError
 pub fn BubbleData::with_series(Self, String, Array[Double], Array[Double], Array[Double]) -> Self
 pub impl Show for BubbleData
 
-pub(all) struct BubbleSeries {
+pub struct BubbleSeries {
   label : String
   x : Array[Double]
   y : Array[Double]
@@ -271,7 +271,7 @@ pub(all) enum ChartPlot {
   Area(ChartData)
 } derive(Eq, @debug.Debug)
 
-pub(all) struct ChartSeries {
+pub struct ChartSeries {
   label : String
   values : Array[Double]
 } derive(Eq, @debug.Debug)
@@ -602,7 +602,7 @@ pub fn ScatterData::validate(Self) -> Self raise ChartError
 pub fn ScatterData::with_series(Self, String, Array[Double], Array[Double]) -> Self
 pub impl Show for ScatterData
 
-pub(all) struct ScatterSeries {
+pub struct ScatterSeries {
   label : String
   x : Array[Double]
   y : Array[Double]
