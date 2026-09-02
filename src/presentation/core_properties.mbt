@@ -33,7 +33,7 @@
 /// - `identifier` — `dc:identifier`.
 /// - `language` — `dc:language`.
 /// - `version` — `cp:version`.
-pub(all) struct CoreProperties {
+pub struct CoreProperties {
   title : String?
   creator : String?
   subject : String?

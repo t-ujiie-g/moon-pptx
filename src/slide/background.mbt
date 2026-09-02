@@ -31,7 +31,7 @@ pub(all) enum Background {
 ///   being dropped.
 /// - `shade_to_title` — The `shadeToTitle` attribute (default `false`).
 /// - `effects` — `<a:effectLst>` if present.
-pub(all) struct BackgroundProperties {
+pub struct BackgroundProperties {
   fill : @oxml.Fill?
   shade_to_title : Bool
   effects : @oxml.EffectList?

@@ -19,7 +19,7 @@
 ///   `<a:themeElements>` (`<a:fmtScheme>`, `<a:objectDefaults>`). The
 ///   original parent is recoverable from the element's `name.uri` /
 ///   `name.local_name` when writers re-emit.
-pub(all) struct Theme {
+pub struct Theme {
   name : String
   color_scheme : ColorScheme
   font_scheme : FontScheme

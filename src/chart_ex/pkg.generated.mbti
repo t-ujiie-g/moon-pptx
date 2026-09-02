@@ -16,7 +16,7 @@ pub(all) suberror ChartExError {
 pub impl Show for ChartExError
 
 // Types and methods
-pub(all) struct ChartEx {
+pub struct ChartEx {
   chart_data : @xml.XmlElement?
   chart : ChartExBody
   extension : Array[@xml.XmlElement]

@@ -118,7 +118,7 @@ pub impl Show for ColorBase with fn output(self, logger) {
 ///   `gray`, … — and any foreign-namespace children. Modeled modifiers
 ///   (`tint`, `shade`, `satMod`, `lumMod`, `alpha`) live in `transforms` and
 ///   do NOT duplicate here.
-pub(all) struct Color {
+pub struct Color {
   base : ColorBase
   transforms : Array[@units.ColorTransform]
   extension : Array[@xml.XmlElement]

@@ -36,6 +36,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING: 32 model records are now read-only from outside their
+  package** (`pub` rather than `pub(all)`). Their fields are still readable
+  and matchable; what goes away is building one with a record literal or a
+  `{ ..value, field: … }` spread. Every one of them keeps a full
+  construction path — that was the condition for downgrading it — so the
+  migration is to go through the constructor and `with_*` builders that
+  already exist:
+
+  ```moonbit
+  // before — and still fine, this was always the recommended form
+  let t = @slide.Transform::new(offset={ x, y }, extent={ cx, cy })
+
+  // before — no longer compiles
+  let t : @slide.Transform = { offset: …, extent: …, rotation: None, … }
+  ```
+
+  The point is what this buys: adding a field to a `pub(all) struct` breaks
+  any downstream exhaustive record literal, which is why 0.8.0's
+  `ParagraphProperties.rtl` was technically a breaking change. For these 32
+  — `Presentation`, `ChartData`, `Transform`, `Transition`, `Timeline`,
+  `SmartArt`, `Theme`, `CoreProperties`, `TableCellProperties`, `RgbColor`
+  and the rest — a new field is now genuinely additive, which is what the
+  1.0 freeze needs to be worth anything.
+
+  Sanctioned by ADR-015. `ROADMAP.md` §3.4 A1 records the full audit,
+  including the 47 types that stay `pub(all)` and the 77 that need a
+  builder API before they can move.
 - **BREAKING: identity, geometry and same-typed argument runs are now
   labelled**, across 24 public functions in `slide`, `presentation` and
   `smartart`. `id`, `name`, `x`, `y`, `cx`, `cy` take labels, as does every

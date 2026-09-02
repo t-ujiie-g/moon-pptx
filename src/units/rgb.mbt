@@ -7,7 +7,7 @@
 ///|
 /// 24-bit RGB color. Each channel is 0–255 (unchecked at construction;
 /// values outside that range round-trip but render undefined behaviour).
-pub(all) struct RgbColor {
+pub struct RgbColor {
   r : Int
   g : Int
   b : Int

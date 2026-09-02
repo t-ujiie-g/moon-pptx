@@ -13,7 +13,7 @@
 /// HSL color. `hue` is in degrees [0, 360); `saturation` and `lightness` in
 /// percent [0, 100]. Out-of-range values round-trip but conversion to RGB
 /// clamps `lightness`/`saturation` to [0, 100].
-pub(all) struct HslColor {
+pub struct HslColor {
   hue : Double
   saturation : Double
   lightness : Double

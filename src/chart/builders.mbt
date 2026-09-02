@@ -34,7 +34,7 @@
 /// - `categories` — Category labels, in display order.
 /// - `series` — Each series carries its own label and a parallel array of
 ///   numeric values (one entry per category).
-pub(all) struct ChartData {
+pub struct ChartData {
   categories : Array[String]
   series : Array[ChartSeries]
 } derive(Eq, Debug)
@@ -110,7 +110,7 @@ pub fn ChartData::with_series(
 /// Source-of-truth scatter-chart data. Each series carries parallel
 /// arrays of X and Y coordinates (instead of category labels +
 /// values — scatter has two value axes, not a category axis).
-pub(all) struct ScatterData {
+pub struct ScatterData {
   series : Array[ScatterSeries]
 } derive(Eq, Debug)
 
@@ -164,7 +164,7 @@ pub fn ScatterData::with_series(
 ///|
 /// Source-of-truth bubble-chart data. Each series carries parallel
 /// arrays of X coordinates, Y coordinates, and bubble sizes.
-pub(all) struct BubbleData {
+pub struct BubbleData {
   series : Array[BubbleSeries]
 } derive(Eq, Debug)
 

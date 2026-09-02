@@ -159,7 +159,7 @@ pub(all) enum Background {
   StyleReference(Int, @oxml.Color)
 } derive(Eq, @debug.Debug)
 
-pub(all) struct BackgroundProperties {
+pub struct BackgroundProperties {
   fill : @oxml.Fill?
   shade_to_title : Bool
   effects : @oxml.EffectList?
@@ -167,7 +167,7 @@ pub(all) struct BackgroundProperties {
 } derive(Eq, @debug.Debug)
 pub fn BackgroundProperties::of_fill(@oxml.Fill) -> Self
 
-pub(all) struct BodyProperties {
+pub struct BodyProperties {
   rotation : @units.Angle?
   vertical_text : VerticalText?
   wrap : WrapKind?
@@ -305,7 +305,7 @@ pub(all) enum HyperlinkTarget {
 } derive(Eq, @debug.Debug)
 pub impl Show for HyperlinkTarget
 
-pub(all) struct ListStyle {
+pub struct ListStyle {
   default_props : ParagraphProperties?
   level_props : Array[ParagraphProperties?]
   extension : Array[@xml.XmlElement]
@@ -330,7 +330,7 @@ pub(all) enum MotionCommand {
   Close
 } derive(Eq, @debug.Debug)
 
-pub(all) struct MotionPath {
+pub struct MotionPath {
   commands : Array[MotionCommand]
 } derive(Eq, @debug.Debug)
 pub fn MotionPath::close(Self) -> Self
@@ -838,7 +838,7 @@ pub fn TableCell::merged_origin(String, grid_span? : Int, row_span? : Int) -> Se
 pub fn TableCell::of_text(String) -> Self
 pub fn TableCell::v_merge_covered() -> Self
 
-pub(all) struct TableCellProperties {
+pub struct TableCellProperties {
   margin_l : @units.Emu?
   margin_r : @units.Emu?
   margin_t : @units.Emu?
@@ -881,7 +881,7 @@ pub(all) struct TableProperties {
 pub fn TableProperties::default() -> Self
 pub fn TableProperties::with_style(Self, TableStylePreset) -> Self
 
-pub(all) struct TableRow {
+pub struct TableRow {
   height : @units.Emu
   cells : Array[TableCell]
   extension : Array[@xml.XmlElement]
@@ -993,7 +993,7 @@ pub(all) enum TextSpacing {
   Points(@units.Pt)
 } derive(Eq, @debug.Debug)
 
-pub(all) struct Timeline {
+pub struct Timeline {
   steps : Array[AnimStep]
 } derive(Eq, @debug.Debug)
 pub fn Timeline::after_previous(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
@@ -1001,7 +1001,7 @@ pub fn Timeline::new() -> Self
 pub fn Timeline::on_click(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
 pub fn Timeline::with_previous(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
 
-pub(all) struct Transform {
+pub struct Transform {
   offset : Point
   extent : Size
   rotation : @units.Angle?
@@ -1012,7 +1012,7 @@ pub fn Transform::new(offset~ : Point, extent~ : Size, rotation? : @units.Angle?
 pub fn Transform::with_flip(Self, h? : Bool, v? : Bool) -> Self
 pub fn Transform::with_rotation(Self, @units.Angle) -> Self
 
-pub(all) struct Transition {
+pub struct Transition {
   kind : TransitionKind
   speed : TransitionSpeed
   advance_on_click : Bool

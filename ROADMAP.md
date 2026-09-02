@@ -173,6 +173,23 @@ scoped breaking pass in the `0.9.x` line to land them, because 1.0 would
 otherwise freeze the shape permanently and the 1.0 date is not ours to
 pick (ADR-012).
 
+A1 had a first pass. The 149 `pub(all) struct` declarations were sorted by
+the compiler rather than by opinion: flip every one to `pub`, run
+`moon check`, restore whatever the read-only errors name, repeat to a fixed
+point. What that reports is exactly the set nothing outside the defining
+package builds by record literal.
+
+| | Types | Disposition |
+|---|---|---|
+| Constructed externally by literal | 47 | Stay `pub(all)` — a downgrade needs a builder at each construction site first |
+| Have a constructor, nothing builds them by literal | 32 | **Downgraded this pass** — adding a field to these is now non-breaking, and every one keeps a full construction path |
+| Already `pub` | 5 | — |
+| No public construction path at all | 77 | Left alone — see A1 below |
+
+The 32 include the types most likely to gain a field: `Presentation`,
+`ChartData`, `Transform`, `Transition`, `Timeline`, `SmartArt`, `Theme`,
+`CoreProperties`, `TableCellProperties`, `RgbColor`.
+
 A2 (labelled geometry arguments) closed in that pass: `id`, `name`, `x`,
 `y`, `cx`, `cy` and every run of two or more same-typed parameters are now
 labelled across 24 public functions, so `x`↔`y` and `cx`↔`cy` swaps —
@@ -189,7 +206,7 @@ still round-trips.
 
 | # | Item | Why it is open | Size |
 |---|---|---|---|
-| A1 | **`pub(all) struct` audit** — 149 of them against 12 plain `pub struct` | `pub(all) struct` lets downstream code write record literals, so *adding a field is breaking* — 0.8.0's `ParagraphProperties.rtl` already was (see that release's **Compatibility** note). Dropping a type to `pub` makes field additions free, but `pub` is fully read-only from outside: it blocks `{ ..cell, properties: … }` spread construction too, so every downgrade needs `with_*` coverage for the fields callers legitimately set. The work is deciding, per type, whether anything outside the package has to *build* it. The §4.2 `.mbti` diff does not detect this class: a purely additive diff can still break consumers | L |
+| A1 | **The 77 model records with no construction path** | The first pass (above) took every type that was safe to take. What is left are the types where `pub` would *remove* a capability rather than tighten one: they expose no constructor, no `with_*`, and in most cases no `pub fn` at all, so a record literal is the only way to build one. They split in two, and the split has to be made per type. **Parse-only outputs** — `ResolvedFonts`, `MediaInfo`, `CommentPos`, `SlideIdRef` / `SlideMasterIdRef`, `NotesSize`, and the `presentation` placeholder-schema markers — are read in practice and never built, so `pub` costs nothing and can land as-is. **Build inputs** — `OuterShadow`, `InnerShadow`, `Reflection`, `SoftEdge`, `Blur`, `PresetShadow`, `Pattern`, `Trendline`, `ManualLayout`, `DLbls`, `NumFmt` and the chart `*Body` / `*Series` records — are things a caller has a real reason to construct, so each needs a builder API *before* it can be closed. That builder work, not the visibility change, is the remaining L | L |
 
 **Not actionable: the `pub(all) enum` half.** The 93 `pub(all) enum`
 declarations carry the same "adding a variant breaks exhaustive matches"
@@ -222,10 +239,13 @@ in. Suggested order, highest value first:
 2. **V2 benchmarks** — they gate the streaming-write decision (G9)
    and are required for the 1.0 gate anyway. Doing them early turns a
    guess into a number.
-3. **§3.4 A1, the `pub(all) struct` audit** — the last item with a
-   deadline: 1.0 freezes it permanently, and ADR-015's breaking pass is
-   the window. This is where the judgement is — 149 per-type decisions,
-   each needing `with_*` coverage for whatever construction it removes.
+3. **§3.4 A1, what the first pass left** — the last item with a deadline:
+   1.0 freezes it permanently, and ADR-015's breaking pass is the window.
+   The cheap half is the parse-only records, which can be downgraded as
+   they stand. The expensive half is a builder API for the effect and
+   chart-internal records, and that is worth doing for its own sake — a
+   caller cannot construct an `OuterShadow` today without a record
+   literal.
 4. **G10 input limits** — small, and the difference between "a library
    that parses decks" and "a library you can point at uploads".
 5. **H1 sample-deck split** — forced eventually by the toolchain; cheap

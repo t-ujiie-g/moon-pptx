@@ -613,7 +613,7 @@ pub(all) enum AutoFit {
 /// defaults". The 3d4 slice covers the practical surface; warp text,
 /// flatTx, and rich/RTL column attributes are deferred.
 ///
-pub(all) struct BodyProperties {
+pub struct BodyProperties {
   rotation : @units.Angle?
   vertical_text : VerticalText?
   wrap : WrapKind?
@@ -650,7 +650,7 @@ pub fn BodyProperties::default() -> BodyProperties {
 /// corresponds to `<a:lvl{i+1}pPr>` for `i ∈ 0..9` — the spec defines
 /// nine levels (`lvl1pPr` … `lvl9pPr`). Missing slots are `None`.
 ///
-pub(all) struct ListStyle {
+pub struct ListStyle {
   default_props : ParagraphProperties?
   level_props : Array[ParagraphProperties?]
   extension : Array[@xml.XmlElement]

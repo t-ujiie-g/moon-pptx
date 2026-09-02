@@ -124,7 +124,7 @@ pub impl Show for ColorTransform with fn output(self, logger) {
 
 ///|
 /// A reference to a theme color with an ordered list of transforms.
-pub(all) struct SchemeColor {
+pub struct SchemeColor {
   base : ThemeColor
   transforms : Array[ColorTransform]
 } derive(Debug)

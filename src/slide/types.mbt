@@ -36,7 +36,7 @@ pub(all) struct Size {
 ///   emits no `rot` attribute (PowerPoint treats that as `0`).
 /// - `flip_h` (`flipH`) — mirror horizontally.
 /// - `flip_v` (`flipV`) — mirror vertically.
-pub(all) struct Transform {
+pub struct Transform {
   offset : Point
   extent : Size
   rotation : @units.Angle?

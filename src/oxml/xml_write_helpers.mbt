@@ -31,7 +31,7 @@
 /// - `known_prefixes` — URI → prefix bindings the writer already knows.
 ///   Updated in place as `write_xml_element` discovers foreign URIs.
 /// Next free `extN` counter.
-pub(all) struct WriteCtx {
+pub struct WriteCtx {
   known_prefixes : Map[String, String]
   mut next_ext : Int
 }

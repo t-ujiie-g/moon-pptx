@@ -54,7 +54,7 @@ pub fn Emu::to_pt(Self) -> Pt
 pub fn Emu::value(Self) -> Int64
 pub impl Show for Emu
 
-pub(all) struct HslColor {
+pub struct HslColor {
   hue : Double
   saturation : Double
   lightness : Double
@@ -79,7 +79,7 @@ pub fn Pt::to_emu(Self) -> Emu
 pub fn Pt::value(Self) -> Double
 pub impl Show for Pt
 
-pub(all) struct RgbColor {
+pub struct RgbColor {
   r : Int
   g : Int
   b : Int
@@ -90,7 +90,7 @@ pub fn RgbColor::to_hex(Self) -> String
 pub fn RgbColor::to_hsl(Self) -> HslColor
 pub impl Show for RgbColor
 
-pub(all) struct SchemeColor {
+pub struct SchemeColor {
   base : ThemeColor
   transforms : Array[ColorTransform]
 } derive(@debug.Debug)
