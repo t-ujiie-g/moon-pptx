@@ -69,7 +69,7 @@ pub(all) enum AnimStart {
   AfterPrevious
 } derive(Eq, @debug.Debug)
 
-pub(all) struct AnimStep {
+pub struct AnimStep {
   effect : AnimEffect
   target_shape_id : Int
   start : AnimStart
@@ -682,7 +682,7 @@ pub(all) enum PresetShape {
 pub fn PresetShape::from_xml(String) -> Self raise SlideError
 pub fn PresetShape::to_xml(Self) -> String
 
-pub(all) struct ResolvedFonts {
+pub struct ResolvedFonts {
   latin : String
   east_asian : String
   complex_script : String

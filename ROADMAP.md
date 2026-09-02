@@ -33,7 +33,7 @@ Two things deliberately live elsewhere:
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
 | Buffer type | `FixedArray[Byte]` (matches `hustcer/fzip` + MoonBit core) |
 | Required deps | `hustcer/fzip` (DEFLATE + ZIP, pure MoonBit) |
-| Differentiator | All 16 standard chart families + 9 extended chartEx; SmartArt build; animation DSL; lossless preservation; type-safe units; multi-backend |
+| Differentiator | All 16 standard chart families built from typed data (9 extended chartEx read / written / attached, no typed builder yet — G11); SmartArt build; animation DSL; lossless preservation; type-safe units; multi-backend |
 
 **Feature-complete for the core mission.** The §1 vision goals are
 delivered and the v0.6.0 breaking pass has spent the pre-1.0 breaking
@@ -138,6 +138,7 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
 | G10 | **Resource limits on untrusted input** | ❌ | `Package::open` hands the whole archive to `@fzip.unzip_sync` (`src/opc/package.mbt:30`) with no cap on part count or total uncompressed size, so a zip bomb exhausts memory before any moon-pptx code runs. Nothing is written to disk, so zip-slip does not apply. Wants opt-in ceilings surfaced as `OpcError`, which matters the moment anyone parses user-uploaded decks server-side | S–M |
+| G11 | **Typed builder for the chartEx families** | △ | `@chart_ex` parses, round-trips and serialises the Microsoft 2016 set, and `Presentation::add_chart_ex_mut` does the OPC plumbing — but `ChartEx` exposes only `parse` / `serialize`, so *building* one means writing `<cx:chartSpace>` by hand. The project's own test does exactly that (`src/presentation/add_chart_test.mbt:135`). Until this closes, "creatable" is the wrong word for chartEx, and `README.md` says so. Wants `ChartExData` + `ChartEx::of_waterfall` / `of_treemap` / … mirroring `@chart`'s `ChartData` + `Chart::of_bar` | M–L |
 
 G1 (RTL / bidi text), G5 (`endParaRPr`) and G2 (Asian-script fonts) closed
 in 0.8.0; the IDs are retired rather than reused so older references still
@@ -187,8 +188,22 @@ package builds by record literal.
 | No public construction path at all | 77 | Left alone — see A1 below |
 
 The 32 include the types most likely to gain a field: `Presentation`,
-`ChartData`, `Transform`, `Transition`, `Timeline`, `SmartArt`, `Theme`,
+`ChartData`, `Transform`, `Transition`, `Timeline`, `SmartArt`,
 `CoreProperties`, `TableCellProperties`, `RgbColor`.
+
+A second pass corrected the first and extended it. "Has a constructor"
+was too loose a test: `ChartEx`, `CommentList`, `CommentAuthorList`,
+`PresentationPart` and `Theme` expose only `parse`, and counting that as
+a construction path closed the only way to *author* one from scratch —
+they are round-trip artefacts with a `serialize`, so a caller has to be
+able to build one. They went back to `pub(all)`, and the criterion now
+reads: **a type with a public `serialize` is an authoring target and stays
+constructible**, whatever else it has.
+
+With that fixed, the "nothing needs to build it" test was closed over
+itself — demoting a type releases the records reachable only through it —
+which leaves 7 more: `ResolvedFonts`, `AnimStep`, `ChartSeries`,
+`BubbleSeries`, `ScatterSeries`, `PlaceholderDef`, `PlaceholderSpec`.
 
 A2 (labelled geometry arguments) closed in that pass: `id`, `name`, `x`,
 `y`, `cx`, `cy` and every run of two or more same-typed parameters are now
@@ -206,7 +221,7 @@ still round-trips.
 
 | # | Item | Why it is open | Size |
 |---|---|---|---|
-| A1 | **The 77 model records with no construction path** | The first pass (above) took every type that was safe to take. What is left are the types where `pub` would *remove* a capability rather than tighten one: they expose no constructor, no `with_*`, and in most cases no `pub fn` at all, so a record literal is the only way to build one. They split in two, and the split has to be made per type. **Parse-only outputs** — `ResolvedFonts`, `MediaInfo`, `CommentPos`, `SlideIdRef` / `SlideMasterIdRef`, `NotesSize`, and the `presentation` placeholder-schema markers — are read in practice and never built, so `pub` costs nothing and can land as-is. **Build inputs** — `OuterShadow`, `InnerShadow`, `Reflection`, `SoftEdge`, `Blur`, `PresetShadow`, `Pattern`, `Trendline`, `ManualLayout`, `DLbls`, `NumFmt` and the chart `*Body` / `*Series` records — are things a caller has a real reason to construct, so each needs a builder API *before* it can be closed. That builder work, not the visibility change, is the remaining L | L |
+| A1 | **The model records with no construction path** | The first two passes took every type that was safe to take. What is left are the types where `pub` would *remove* a capability rather than tighten one: they expose no constructor, no `with_*`, and in most cases no `pub fn` at all, so a record literal is the only way to build one. They split in two, and the split has to be made per type. **Parse-only outputs** — `ResolvedFonts`, `MediaInfo`, `CommentPos`, `SlideIdRef` / `SlideMasterIdRef`, `NotesSize`, and the `presentation` placeholder-schema markers — are read in practice and never built, so `pub` costs nothing and can land as-is. **Build inputs** — `OuterShadow`, `InnerShadow`, `Reflection`, `SoftEdge`, `Blur`, `PresetShadow`, `Pattern`, `Trendline`, `ManualLayout`, `DLbls`, `NumFmt` and the chart `*Body` / `*Series` records — are things a caller has a real reason to construct, so each needs a builder API *before* it can be closed. That builder work, not the visibility change, is the remaining L | L |
 
 **Not actionable: the `pub(all) enum` half.** The 93 `pub(all) enum`
 declarations carry the same "adding a variant breaks exhaustive matches"

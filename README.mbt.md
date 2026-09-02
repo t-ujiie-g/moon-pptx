@@ -16,9 +16,12 @@ MoonBit backend.
 - **Builder API** for creating decks from scratch: text boxes, shapes,
   pictures, tables, and charts via `Presentation::new() →
   add_slide_mut → with_shape → save`.
-- **All 16 standard chart families** plus the Microsoft 2016 extended
-  chartEx families (waterfall, treemap, sunburst, histogram,
-  boxWhisker, funnel, paretoLine, regionMap, clusteredColumn).
+- **All 16 standard chart families** from a typed `ChartData`, plus
+  read/write support for the Microsoft 2016 extended chartEx families
+  (waterfall, treemap, sunburst, histogram, boxWhisker, funnel,
+  paretoLine, regionMap, clusteredColumn) — parsed losslessly and
+  attachable to a slide, though building one still means supplying the
+  `<cx:chartSpace>` XML yourself.
 - **Type-safe units** — `Emu`, `Pt`, `Inch`, `Cm`, `Angle`,
   `Percentage`, `RgbColor`, `ThemeColor` are distinct types; the
   compiler stops you from mixing them.
@@ -204,7 +207,8 @@ Legend: ✅ supported · △ partial, XML-level, or preserved-but-not-buildable 
 | Read existing `.pptx` | ✅ | ❌ generator only | ✅ lossless |
 | Write `.pptx` | ✅ | ✅ | ✅ |
 | Runs on | Python | JS (Node + browser) | Native · Wasm-GC · JS · Wasm |
-| Chart families creatable | 8 plot families | 10 | **16 standard + 9 chartEx = 25** |
+| Chart families creatable from typed data | 8 plot families | 10 | **16** |
+| Extended chartEx families | ❌ | ❌ | ✅ read / write / attach (no typed builder yet) |
 | SmartArt | △ identify only | ❌ | ✅ build, all 8 families |
 | Animations / transitions | △ raw XML | ❌ | ✅ typed DSL |
 | Unknown-XML preservation | △ partial | n/a | ✅ every node (ADR-004) |
@@ -212,11 +216,15 @@ Legend: ✅ supported · △ partial, XML-level, or preserved-but-not-buildable 
 
 ### Where moon-pptx goes further
 
-1. **Chart coverage** — 25 buildable families. waterfall, treemap,
-   sunburst, funnel, boxWhisker, paretoLine, regionMap, histogram and
-   clusteredColumn (the Microsoft 2016 `chartEx` set) are not creatable
-   in either competitor. python-pptx's `XL_CHART_TYPE` lists surface /
-   stock / of-pie, but they have no plot implementation behind them.
+1. **Chart coverage** — 16 families build from a typed `ChartData`, and
+   python-pptx's `XL_CHART_TYPE` lists surface / stock / of-pie with no
+   plot implementation behind them. On top of that, the Microsoft 2016
+   `chartEx` set (waterfall, treemap, sunburst, funnel, boxWhisker,
+   paretoLine, regionMap, histogram, clusteredColumn) parses losslessly
+   and can be written into a deck with the OPC plumbing handled — neither
+   competitor touches those at all. A typed builder for them is still
+   open (`ROADMAP.md` G11): today you hand `add_chart_ex_mut` a
+   `ChartEx` you parsed or assembled yourself.
 2. **Lossless preservation** — every model node carries
    `extension : Array[XmlElement]`, so third-party files round-trip with
    zero data loss even through features moon-pptx doesn't model.
@@ -291,7 +299,7 @@ omitted — assume parity unless listed.
 | Bar / line / pie / scatter / bubble / area / radar / doughnut | ✅ | ✅ | ✅ |
 | Stock / surface / of-pie | △ enum only | ❌ | ✅ |
 | 3-D bar / line / pie / area | ✅ | △ bar3d / bubble3d | ✅ |
-| Extended chartEx (waterfall, treemap, sunburst, funnel, boxWhisker, paretoLine, regionMap, histogram, clusteredColumn) | ❌ | ❌ | ✅ |
+| Extended chartEx (waterfall, treemap, sunburst, funnel, boxWhisker, paretoLine, regionMap, histogram, clusteredColumn) | ❌ | ❌ | ✅ read / write / attach; no typed builder |
 | Combo chart + secondary axis | △ | ✅ | ✅ |
 | Trendlines | ✅ | ❌ | ✅ |
 | Data labels with per-point overrides | ✅ | ✅ | ✅ |

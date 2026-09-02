@@ -14,7 +14,7 @@
 
 ///|
 /// The typefaces a run actually renders with, one per script slot.
-pub(all) struct ResolvedFonts {
+pub struct ResolvedFonts {
   latin : String
   east_asian : String
   complex_script : String

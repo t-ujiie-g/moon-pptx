@@ -12,7 +12,7 @@
 /// One placeholder declared on a master. `kind` is the
 /// `ST_PlaceholderType`; `position` is its rectangle on the master;
 /// `default_text` is prompt text shown until a slide overrides it.
-pub(all) struct PlaceholderDef {
+pub struct PlaceholderDef {
   kind : @slide.PlaceholderType
   position : @slide.Transform
   default_text : String?

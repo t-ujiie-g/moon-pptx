@@ -118,13 +118,13 @@ pub(all) struct NotesSize {
   cy : @units.Emu
 } derive(Eq, @debug.Debug)
 
-pub(all) struct PlaceholderDef {
+pub struct PlaceholderDef {
   kind : @slide.PlaceholderType
   position : @slide.Transform
   default_text : String?
 }
 
-pub(all) struct PlaceholderSpec {
+pub struct PlaceholderSpec {
   kind : @slide.PlaceholderType
   idx : Int
   position : @slide.Transform
@@ -192,7 +192,7 @@ pub fn Presentation::with_slide_moved(Self, Int, Int) -> Self raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError
 pub fn Presentation::without_slide(Self, Int) -> Self raise PptxError
 
-pub struct PresentationPart {
+pub(all) struct PresentationPart {
   sld_master_ids : Array[SlideMasterIdRef]
   sld_ids : Array[SlideIdRef]
   notes_master_id : SlideIdRef?

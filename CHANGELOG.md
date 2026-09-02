@@ -34,8 +34,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Additive — the generated `.mbti` differ by 4 added lines with no
   removals. Closes `ROADMAP.md` §3.4 A3.
 
+### Fixed
+
+- **`README.md` no longer calls the chartEx families "creatable".** The
+  comparison table claimed "16 standard + 9 chartEx = 25" buildable chart
+  families, but `@chart_ex` exposes only `ChartEx::parse` and
+  `serialize` — there is no typed builder, and the project's own test
+  constructs a waterfall chart by writing `<cx:chartSpace>` XML by hand.
+  What ships is real and still ahead of both competitors — lossless
+  chartEx parsing, serialisation, and `add_chart_ex_mut` doing the OPC
+  plumbing — so the table now says that instead. A typed builder is
+  tracked as `ROADMAP.md` G11.
+
 ### Changed
 
+- **`ChartEx`, `CommentList`, `CommentAuthorList`, `PresentationPart` and
+  `Theme` are constructible again.** The pass below made them `pub` on the
+  grounds that they had a constructor, but their only constructor is
+  `parse` — so what actually went away was the ability to author one from
+  scratch and `serialize` it, which is the whole point of a type that has
+  a `serialize`. They are `pub(all)` again, and the rule is now explicit:
+  a type with a public `serialize` is an authoring target and stays
+  constructible. Nothing shipped in a release with them closed.
+- **BREAKING: 7 more model records are read-only outside their package** —
+  `ResolvedFonts`, `AnimStep`, `ChartSeries`, `BubbleSeries`,
+  `ScatterSeries`, `PlaceholderDef`, `PlaceholderSpec`. Same reasoning as
+  the 32 below: nothing needs to construct them, so a new field on any of
+  them is now additive.
 - **BREAKING: 32 model records are now read-only from outside their
   package** (`pub` rather than `pub(all)`). Their fields are still readable
   and matchable; what goes away is building one with a record literal or a

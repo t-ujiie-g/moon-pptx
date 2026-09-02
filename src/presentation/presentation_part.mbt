@@ -75,7 +75,7 @@ pub(all) struct NotesSize {
 ///   emits this; `None` only happens on malformed input.
 /// - `notes_sz` (`<p:notesSz>`) — notes dimensions. Real PPTX always emits
 ///   this too.
-pub struct PresentationPart {
+pub(all) struct PresentationPart {
   sld_master_ids : Array[SlideMasterIdRef]
   sld_ids : Array[SlideIdRef]
   notes_master_id : SlideIdRef?

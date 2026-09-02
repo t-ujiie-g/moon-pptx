@@ -54,7 +54,7 @@ pub(all) struct CommentAuthor {
 /// - `authors` — Authors in source order. Order is not semantically
 ///   meaningful — `id` is the join key — but we preserve it for round-trip
 ///   stability.
-pub struct CommentAuthorList {
+pub(all) struct CommentAuthorList {
   authors : Array[CommentAuthor]
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)
@@ -104,7 +104,7 @@ pub(all) struct Comment {
 ///
 /// - `comments` — Comments in source order. Mid-thread reordering is rare but
 ///   we preserve whatever order the file shipped with for round-trip.
-pub struct CommentList {
+pub(all) struct CommentList {
   comments : Array[Comment]
   extension : Array[@xml.XmlElement]
 } derive(Eq, Debug)

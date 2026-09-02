@@ -31,7 +31,7 @@
 /// A placeholder's kind, layout index, and geometry. Drives both the
 /// synthesised layout placeholder (which carries the geometry) and the
 /// slide-side placeholder the accessor appends (which inherits it).
-pub(all) struct PlaceholderSpec {
+pub struct PlaceholderSpec {
   kind : @slide.PlaceholderType
   idx : Int
   position : @slide.Transform
