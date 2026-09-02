@@ -136,7 +136,8 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G6 | **Equation editor** (Office Math, `<m:oMathPara>`) | △ | A whole second markup vocabulary; only worth it with a concrete consumer | L |
 | G7 | **Form fields / ink** (`<p:contentPart>`) | △ | Same shape as G6 — niche, preserved losslessly today | M |
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
-| G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). Gated on the §4.2 benchmarks | L |
+| G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). **Was gated on the V2 benchmarks; they came back against it** — a thousand slides serialise in 46 ms, so the writer is not the cost. Parked unless a memory ceiling, not a time budget, forces it | L |
+| G13 | **Incremental build is super-linear** | ❌ | Building a deck a slide at a time costs 17.5 s at a thousand slides while saving the same deck costs 46 ms (§3.2 V2). Measured cause: *one* `update_slide_mut` gets more expensive as the deck grows — 339 µs on a 100-slide deck, 6.65 ms on a 1000-slide one. Both it and `slides()` go through `ordered_slide_parts()`, which re-parses `presentation.xml` (whose `<p:sldIdLst>` grows with N) on every call and resolves each entry through `Package::part_by_name` (`src/opc/package.mbt:132`), a linear scan over every part. Wants a name→part index on `Package` and a parsed-`presentation.xml` cache invalidated on mutation. There is no per-slide accessor either, so `prs.slides()[i]` in a loop re-parses every slide — the shape every example uses | M |
 | G10 | **Resource limits on untrusted input** | ❌ | `Package::open` hands the whole archive to `@fzip.unzip_sync` (`src/opc/package.mbt:30`) with no cap on part count or total uncompressed size, so a zip bomb exhausts memory before any moon-pptx code runs. Nothing is written to disk, so zip-slip does not apply. Wants opt-in ceilings surfaced as `OpcError`, which matters the moment anyone parses user-uploaded decks server-side | S–M |
 | G11 | **Typed builder for the chartEx families** | △ | `@chart_ex` parses, round-trips and serialises the Microsoft 2016 set, and `Presentation::add_chart_ex_mut` does the OPC plumbing — but `ChartEx` exposes only `parse` / `serialize`, so *building* one means writing `<cx:chartSpace>` by hand. The project's own test does exactly that (`src/presentation/add_chart_test.mbt:135`). Until this closes, "creatable" is the wrong word for chartEx, and `README.md` says so. Wants `ChartExData` + `ChartEx::of_waterfall` / `of_treemap` / … mirroring `@chart`'s `ChartData` + `Chart::of_bar` | M–L |
 | G12 | **Builders for the model records that have none** | ❌ | Around 50 `pub(all) struct` expose no constructor, no `with_*`, in most cases no `pub fn` at all — a record literal is the only way to build one. The chart internals are the bulk (`Trendline`, `ManualLayout`, `Layout`, `DLbl` / `DLbls`, `NumFmt`, `Scaling`, `AxisCore`, `ChartTitle`, `ChartLegend`, `PlotArea`, the fifteen `*Body` / `*SeriesCore` records), with `Pattern`, `TileSpec`, `FillRect`, `SysColor`, `ArrowEnd` and the `CustomGeometry` family alongside. Each one a caller has a real reason to construct — a trendline on a series, a manual legend layout — and giving it a builder is a feature in its own right, not API tidying. Overlaps G11: a `ChartExData` builder and a chart-internals builder are the same work. See ADR-016 for why the visibility side of this stopped where it did | L |
@@ -150,12 +151,47 @@ resolve. Of what is left, G8 is the smallest.
 | # | Gap | State |
 |---|---|---|
 | V1 | **Tier 3 (manual)** — PowerPoint 2019 / 2021 / 365 / Online open-without-warning pass; LibreOffice Impress + Keynote render parity | 🔴 not started for the 1.0 cycle (spot-checked in PowerPoint Web at v0.6.0) |
-| V2 | **Benchmarks** — build / save / parse throughput at 10 / 100 / 1000 slides; peak RSS; comparison vs python-pptx + PptxGenJS | 🔴 not started |
+| V2 | **Benchmarks** — build / save / parse throughput at 10 / 100 / 1000 slides; peak RSS; comparison vs python-pptx + PptxGenJS | ✅ done — harness in `tools/bench/` + `src/integration/bench_test.mbt`; results below |
 | V3 | **LibreOffice-headless convert-to-pdf** as an optional second opinion in Tier 2 CI | 🟡 optional, unstarted |
 
 Tiers 1 and 2 are automated and green (ADR-011): OPC structural
 invariants run on every `moon test`, and the Open XML SDK validator runs
 in CI over generated decks plus the 7-file real-world corpus.
+
+#### V2 results
+
+Apple M2, 8 GB, macOS 26.6.2 · moon 0.1.20260827 native release ·
+python-pptx 1.0.2 / CPython 3.13.3 · PptxGenJS 4.0.1 / Node 22.21.0.
+Workload: N slides, one text box each, serialised to bytes. Nothing
+touches disk — moon-pptx has no file I/O (ADR-002), so the other two
+serialise to an in-memory buffer. Whole-process wall clock, best of 3.
+Reproduce with `tools/bench/run.sh`.
+
+| Library | 10 slides | 100 slides | 1000 slides |
+|---|---|---|---|
+| moon-pptx | **101 ms · 3 MB** | **177 ms · 5 MB** | 9 523 ms · **12 MB** |
+| python-pptx | 290 ms · 40 MB | 327 ms · 41 MB | **1 207 ms** · 53 MB |
+| PptxGenJS | 152 ms · 57 MB | 179 ms · 67 MB | **395 ms** · 144 MB |
+
+Per phase, in-process (`moon bench -p t-ujiie-g/moon-pptx/integration
+--target native --release`):
+
+| Phase | 10 | 100 | 1000 | Scaling |
+|---|---|---|---|---|
+| build, as the docs write it | 3.06 ms | 171 ms | 17.47 s | super-linear |
+| build, `slides()` hoisted | 2.08 ms | 71.3 ms | 9.60 s | super-linear |
+| save | 733 µs | 4.92 ms | 45.8 ms | linear |
+| parse | 90.8 µs | 530 µs | 6.63 ms | linear |
+
+**What the numbers say.** Memory is a decisive win at every size — 12 MB
+against 53 and 144 at a thousand slides. So is speed up to ~100 slides.
+At a thousand, building is 8× slower than python-pptx and 24× slower than
+PptxGenJS, and that is *only* the incremental build path: the same deck
+saves in 46 ms and parses in 6.6 ms, both linear. Tracked as G13.
+
+**They also settle G9.** Streaming write was gated on these numbers, and
+they say no: serialising a thousand slides costs 46 ms, so the writer is
+not what makes a large deck slow.
 
 ### 3.3 Housekeeping
 
@@ -190,9 +226,11 @@ Suggested order, highest value first:
    repository's description and topics are set; this is what is left of
    making the module findable, and everything below is worth less while
    nobody can see what it emits.
-3. **V2 benchmarks** — they gate the streaming-write decision (G9)
-   and are required for the 1.0 gate anyway. Doing them early turns a
-   guess into a number.
+3. **G13, the super-linear build** — the benchmarks turned "is it fast?"
+   into a specific defect with a measured cause, and it is the one place
+   moon-pptx loses outright to both competitors. Fixing it is bounded:
+   an index on `Package`, a cache for the parsed `presentation.xml`, and
+   a per-slide accessor so the documented loop stops re-parsing.
 4. **G10 input limits** — small, and the difference between "a library
    that parses decks" and "a library you can point at uploads".
 5. **H1 sample-deck split** — forced eventually by the toolchain; cheap
@@ -223,8 +261,10 @@ matrix fully green (Tier 3 included); benchmarks published.
 
 🟡 **Verification matrix** (three-tier pyramid, ADR-011) — V1 / V3 in §3.2.
 
-🔴 **Benchmarks** — V2 in §3.2. If large-deck numbers disappoint,
-streaming write (G9) gets promoted onto the roadmap.
+✅ **Benchmarks** — V2 in §3.2, published there with the machine and
+method. They disappointed at a thousand slides, but not where the gate
+expected: the writer is fine and the incremental build is not, so G13
+took the promotion G9 was pencilled in for.
 
 🔴 **CHANGELOG cleanup + 1.0 announcement** — final release notes; blog
 post / mooncakes announcement. State plainly what the tag does *not*

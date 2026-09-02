@@ -14,3 +14,8 @@ out/
 # .NET build output for the pptx-validate tool (tools/pptx-validate/).
 tools/pptx-validate/bin/
 tools/pptx-validate/obj/
+
+# PptxGenJS is installed on demand by tools/bench/run.sh, not vendored.
+tools/bench/node_modules/
+tools/bench/package-lock.json
+tools/bench/package.json

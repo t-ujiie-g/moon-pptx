@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+  "t-ujiie-g/moon-pptx/presentation",
+  "t-ujiie-g/moon-pptx/slide",
+  "t-ujiie-g/moon-pptx/units",
+}
+
+pkgtype(kind: "executable")

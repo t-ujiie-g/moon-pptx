@@ -322,6 +322,27 @@ omitted — assume parity unless listed.
 | Lossless diff-write (untouched parts byte-identical) | ❌ | n/a | ✅ inherent in `save()` |
 | Streaming write for huge decks | ❌ | ❌ | ❌ |
 
+## Performance
+
+Apple M2, 8 GB, macOS 26.6.2 · moon 0.1.20260827 native release ·
+python-pptx 1.0.2 · PptxGenJS 4.0.1 / Node 22.21.0. N slides with one
+text box each, serialised to bytes in memory; whole-process wall clock
+and peak RSS, best of 3. Reproduce with `tools/bench/run.sh`.
+
+| Library | 10 slides | 100 slides | 1000 slides |
+|---|---|---|---|
+| moon-pptx | **101 ms · 3 MB** | **177 ms · 5 MB** | 9 523 ms · **12 MB** |
+| python-pptx | 290 ms · 40 MB | 327 ms · 41 MB | **1 207 ms** · 53 MB |
+| PptxGenJS | 152 ms · 57 MB | 179 ms · 67 MB | **395 ms** · 144 MB |
+
+Memory is a win at every size, and so is speed up to roughly a hundred
+slides. **At a thousand slides, building is 8× slower than python-pptx
+and 24× slower than PptxGenJS** — a defect in the incremental build path,
+not the writer: the same deck saves in 46 ms and parses in 6.6 ms, both
+linear in slide count. Filed with its measured cause as
+[ROADMAP.md](ROADMAP.md) G13 and not yet fixed; until it is, decks up to
+a few hundred slides are where moon-pptx is at its best.
+
 ## Compatibility
 
 | Backend | Status |
