@@ -175,7 +175,7 @@ suffice.
 | `@smartart` | SmartArt (DiagramML) builder — `SmartArt::list` / `process` / `cycle` / `pyramid` / `org_chart` / `hierarchy` / `matrix` / `relationship`; emits the five-part DiagramML graphic (data / layout / quickStyle / colors + cached `dsp:drawing` with connector lines); the tree families carry recursive hierRoot/hierChild (and radial) layout definitions so PowerPoint lays out the whole tree; per-node colour overrides (`Node::with_fill` / `with_line` / `with_text_color`) |
 | `@theme`, `@slide_master`, `@notes`, `@comments` | Theme / master / layout / speaker-notes / comments parsers and writers |
 | `@opc` | Open Packaging Convention layer (parts, content types, relationships) — usable for DOCX/XLSX too |
-| `@oxml` | Shared OOXML AST (`Color`, `Fill`, `Stroke`, `EffectList`, …) |
+| `@oxml` | Shared OOXML AST (`Color`, `Fill`, `Stroke`, `EffectList` + its builders, …) |
 | `@xml` | Streaming namespace-aware XML reader + writer |
 | `@units` | `Emu`, `Pt`, `Inch`, `Cm`, `Angle`, `Percentage`, `RgbColor`, `HslColor`, `ThemeColor` |
 
@@ -196,7 +196,7 @@ Two entry points live under [`examples/`](examples/):
 ## Comparison with python-pptx and PptxGenJS
 
 Compared against **python-pptx 1.0.2** and **PptxGenJS 4.0.1** (checked
-2026-09-01). moon-pptx column reflects **0.8.0**.
+2026-09-01). moon-pptx column reflects **0.9.0**.
 
 Legend: ✅ supported · △ partial, XML-level, or preserved-but-not-buildable · ❌ not supported
 
@@ -283,6 +283,7 @@ omitted — assume parity unless listed.
 | SVG pictures | ❌ | ✅ | ✅ |
 | Character spacing / kerning | ✅ / △ | ✅ / △ | ✅ / ✅ |
 | Text highlight / outline / glow / shadow | ❌ / △ / ❌ / ❌ | ✅ | ✅ |
+| Shape effects (`<a:effectLst>` — shadow / glow / reflection / soft edge) | △ shadow, inherit-only | △ shadow | ✅ typed, with builders |
 | Non-solid text fill (gradient / pattern) | △ | △ | ✅ full `Fill` ADT |
 | Paragraph-mark properties (`<a:endParaRPr>`) | △ | ❌ | ✅ typed `end_run_properties` |
 | Line spacing, absolute + percent | ✅ | ✅ | ✅ `TextSpacing` ADT |
