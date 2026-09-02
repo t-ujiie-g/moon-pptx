@@ -25,9 +25,9 @@ Two things deliberately live elsewhere:
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.8.0` (2026-09-01 — RTL / bidi, `endParaRPr`, Asian-script fonts + theme font resolution; additive) |
+| Current version | `0.9.0` (2026-09-03 — the ADR-015 API-shape pass: labelled arguments, shape-id allocation, 47 records closed, effect-list builders; **breaking**, and the last break before 1.0 per ADR-016) |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012). Additive-only; the one sanctioned exception, the ADR-015 API-shape pass, has run and is closed (ADR-016). The next release is `0.9.0` — it carries those breaks |
-| Test suite | 1215 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1221 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -165,7 +165,7 @@ in CI over generated decks plus the 7-file real-world corpus.
 | H2 | `XmlReader` over `StringView` instead of `Array[Char]` | `XmlReader::new` copies every part into `Array[Char]` (`src/xml/reader.mbt:83`), so peak memory, not just throughput, scales with part size — which makes this part of the same problem as G10, not only a V2 benchmark question. Blocked on wanting code-point (not UTF-16 code-unit) indexing |
 | H3 | Five XML helpers (`skip_subtree`, `next_event`, `collect_subtree_unknown`, `optional_attr`, `require_attr`) are duplicated across six packages | `@oxml` exports public equivalents; each package keeps a copy so the helper raises *its* suberror instead of `XmlReadError`. Deduplicating means either giving up per-subdomain error typing or finding a generic-over-error formulation. Accepted for now — logged so it is not mistaken for an oversight |
 | H4 | Fold `src/integration/readme_test.mbt` back into `README.mbt.md` | `moon 0.1.20260827` collects no tests from `.mbt.md` files or from `///` doc comments — verified with a deliberately failing probe in both a source package and the test-only package, and `--doc-index 0` reports `no test entry found`. So the `.mbt.md` extension currently buys nothing but the `readme` field in `moon.mod`, and the README's blocks stay `nocheck` with a mirrored test carrying the actual verification. Recheck when the toolchain (or the new TOML `moon.pkg` format) grows markdown/doc tests, then delete the mirror |
-| H5 | Repository discoverability | No GitHub description, no topics, no Releases. `v0.8.0` already has a CHANGELOG entry that can be pasted into a release verbatim. Costs minutes and is the only thing standing between the module and anyone finding it |
+| H5 | Repository discoverability | Description and topics are set; what is left is cutting a GitHub Release per tag. `v0.9.0`'s CHANGELOG section pastes in verbatim |
 | H6 | A rendered screenshot at the top of `README.md` | The comparison matrix runs ~40 rows without a single image of what the library actually emits. `tools/pptx-validate/gen-pptx.sh` already builds a showcase deck in CI — one rendered slide from it would do more work than the matrix |
 
 ---

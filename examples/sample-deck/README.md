@@ -34,7 +34,7 @@ exactly what a real consumer writes:
 
 ```toml
 import {
-  "t-ujiie-g/moon-pptx@0.8.0",
+  "t-ujiie-g/moon-pptx@0.9.0",
 }
 ```
 

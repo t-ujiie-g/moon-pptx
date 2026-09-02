@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] — 2026-09-03
 
 The ADR-015 API-shape pass, in full. It is the only sanctioned break
 between v0.6.0 and 1.0, and ADR-016 closes it — every release after this
@@ -981,8 +981,13 @@ decks containing styled text, shapes, pictures, tables, and charts.
 
 - Native, Wasm-GC, JS, and Wasm targets all tested in CI.
 
-[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.7.2...v0.8.0
+[0.7.2]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/t-ujiie-g/moon-pptx/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.5.0
 [0.1.0]: https://github.com/t-ujiie-g/moon-pptx/releases/tag/v0.1.0
