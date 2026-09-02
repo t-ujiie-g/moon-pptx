@@ -229,10 +229,11 @@ pub(all) enum BlipFillMode {
   Tile(TileSpec)
 } derive(Eq, @debug.Debug)
 
-pub(all) struct Blur {
+pub struct Blur {
   rad : @units.Emu
   grow : Bool?
 } derive(Eq, @debug.Debug)
+pub fn Blur::new(@units.Emu, grow? : Bool) -> Self
 
 pub struct Color {
   base : ColorBase
@@ -278,7 +279,7 @@ pub(all) enum DashStyle {
 } derive(Eq, @debug.Debug)
 pub fn DashStyle::from_xml(String) -> Self?
 
-pub(all) struct EffectList {
+pub struct EffectList {
   blur : Blur?
   glow : Glow?
   inner_shadow : InnerShadow?
@@ -288,6 +289,14 @@ pub(all) struct EffectList {
   soft_edge : SoftEdge?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn EffectList::empty() -> Self
+pub fn EffectList::with_blur(Self, Blur) -> Self
+pub fn EffectList::with_glow(Self, Glow) -> Self
+pub fn EffectList::with_inner_shadow(Self, InnerShadow) -> Self
+pub fn EffectList::with_outer_shadow(Self, OuterShadow) -> Self
+pub fn EffectList::with_preset_shadow(Self, PresetShadow) -> Self
+pub fn EffectList::with_reflection(Self, Reflection) -> Self
+pub fn EffectList::with_soft_edge(Self, SoftEdge) -> Self
 
 pub(all) enum Fill {
   NoFill
@@ -307,10 +316,11 @@ pub(all) struct FillRect {
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
 
-pub(all) struct Glow {
+pub struct Glow {
   rad : @units.Emu
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn Glow::new(@units.Emu, Color) -> Self
 
 pub(all) struct Gradient {
   stops : Array[GradientStop]
@@ -353,12 +363,13 @@ pub fn ImageFormat::content_type(Self) -> String
 pub fn ImageFormat::extension(Self) -> String
 pub impl Show for ImageFormat
 
-pub(all) struct InnerShadow {
+pub struct InnerShadow {
   blur_rad : @units.Emu
   dist : @units.Emu
   dir : @units.Angle
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn InnerShadow::new(blur_rad~ : @units.Emu, dist~ : @units.Emu, dir~ : @units.Angle, color~ : Color) -> Self
 
 pub(all) enum LineCap {
   CapFlat
@@ -388,7 +399,7 @@ pub fn MediaFormat::extension(Self) -> String
 pub fn MediaFormat::is_video(Self) -> Bool
 pub impl Show for MediaFormat
 
-pub(all) struct OuterShadow {
+pub struct OuterShadow {
   blur_rad : @units.Emu
   dist : @units.Emu
   dir : @units.Angle
@@ -400,6 +411,11 @@ pub(all) struct OuterShadow {
   rotate_with_shape : Bool?
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn OuterShadow::new(blur_rad~ : @units.Emu, dist~ : @units.Emu, dir~ : @units.Angle, color~ : Color) -> Self
+pub fn OuterShadow::with_alignment(Self, RectAlignment) -> Self
+pub fn OuterShadow::with_rotate_with_shape(Self, Bool) -> Self
+pub fn OuterShadow::with_scale(Self, sx~ : @units.Percentage, sy~ : @units.Percentage) -> Self
+pub fn OuterShadow::with_skew(Self, kx~ : @units.Angle, ky~ : @units.Angle) -> Self
 
 pub(all) struct Pattern {
   preset : String
@@ -414,12 +430,13 @@ pub(all) enum PenAlignment {
 } derive(Eq, @debug.Debug)
 pub fn PenAlignment::from_xml(String) -> Self?
 
-pub(all) struct PresetShadow {
+pub struct PresetShadow {
   preset : String
   dist : @units.Emu
   dir : @units.Angle
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn PresetShadow::new(String, dist~ : @units.Emu, dir~ : @units.Angle, color~ : Color) -> Self
 
 pub(all) enum RectAlignment {
   RectTopLeft
@@ -434,7 +451,7 @@ pub(all) enum RectAlignment {
 } derive(Eq, @debug.Debug)
 pub fn RectAlignment::from_xml(String) -> Self?
 
-pub(all) struct Reflection {
+pub struct Reflection {
   blur_rad : @units.Emu?
   st_a : @units.Percentage?
   st_pos : @units.Percentage?
@@ -450,10 +467,22 @@ pub(all) struct Reflection {
   alignment : RectAlignment?
   rotate_with_shape : Bool?
 } derive(Eq, @debug.Debug)
+pub fn Reflection::default() -> Self
+pub fn Reflection::with_alignment(Self, RectAlignment) -> Self
+pub fn Reflection::with_alpha(Self, start~ : @units.Percentage, end~ : @units.Percentage) -> Self
+pub fn Reflection::with_blur_rad(Self, @units.Emu) -> Self
+pub fn Reflection::with_direction(Self, @units.Angle) -> Self
+pub fn Reflection::with_distance(Self, @units.Emu) -> Self
+pub fn Reflection::with_fade_direction(Self, @units.Angle) -> Self
+pub fn Reflection::with_positions(Self, start~ : @units.Percentage, end~ : @units.Percentage) -> Self
+pub fn Reflection::with_rotate_with_shape(Self, Bool) -> Self
+pub fn Reflection::with_scale(Self, sx~ : @units.Percentage, sy~ : @units.Percentage) -> Self
+pub fn Reflection::with_skew(Self, kx~ : @units.Angle, ky~ : @units.Angle) -> Self
 
-pub(all) struct SoftEdge {
+pub struct SoftEdge {
   rad : @units.Emu
 } derive(Eq, @debug.Debug)
+pub fn SoftEdge::new(@units.Emu) -> Self
 
 pub(all) struct SrcRect {
   left : @units.Percentage

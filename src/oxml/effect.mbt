@@ -52,21 +52,21 @@ pub fn RectAlignment::from_xml(s : String) -> RectAlignment? {
 
 ///|
 /// `<a:blur rad="…" grow="0"/>` — Gaussian blur.
-pub(all) struct Blur {
+pub struct Blur {
   rad : @units.Emu
   grow : Bool?
 } derive(Eq, Debug)
 
 ///|
 /// `<a:glow rad="…">…color…</a:glow>` — outer glow.
-pub(all) struct Glow {
+pub struct Glow {
   rad : @units.Emu
   color : Color
 } derive(Eq, Debug)
 
 ///|
 /// `<a:innerShdw blurRad="…" dist="…" dir="…">…color…</a:innerShdw>`
-pub(all) struct InnerShadow {
+pub struct InnerShadow {
   blur_rad : @units.Emu
   dist : @units.Emu
   dir : @units.Angle
@@ -76,7 +76,7 @@ pub(all) struct InnerShadow {
 ///|
 /// `<a:outerShdw blurRad="…" dist="…" dir="…" sx="…" sy="…" kx="…"
 ///               ky="…" algn="…" rotWithShape="…">…color…</a:outerShdw>`
-pub(all) struct OuterShadow {
+pub struct OuterShadow {
   blur_rad : @units.Emu
   dist : @units.Emu
   dir : @units.Angle
@@ -94,7 +94,7 @@ pub(all) struct OuterShadow {
 /// preset-named shadow. PowerPoint exposes 20 named presets in
 /// `ST_PresetShadowVal`. Kept as a `String` so unknown presets
 /// round-trip.
-pub(all) struct PresetShadow {
+pub struct PresetShadow {
   preset : String
   dist : @units.Emu
   dir : @units.Angle
@@ -103,14 +103,14 @@ pub(all) struct PresetShadow {
 
 ///|
 /// `<a:softEdge rad="…"/>` — fades the shape edge inward.
-pub(all) struct SoftEdge {
+pub struct SoftEdge {
   rad : @units.Emu
 } derive(Eq, Debug)
 
 ///|
 /// `<a:reflection …/>` — mirrored reflection beneath the shape. Many
 /// optional attributes; most real PPTX uses just a few.
-pub(all) struct Reflection {
+pub struct Reflection {
   blur_rad : @units.Emu?
   st_a : @units.Percentage?
   st_pos : @units.Percentage?
@@ -133,7 +133,7 @@ pub(all) struct Reflection {
 /// modelled (it carries a nested `Fill` plus a blend mode); we drop it
 /// rather than block parsing for now.
 ///
-pub(all) struct EffectList {
+pub struct EffectList {
   blur : Blur?
   glow : Glow?
   inner_shadow : InnerShadow?

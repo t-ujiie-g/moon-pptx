@@ -647,3 +647,43 @@ test "example 22: shape ids without keeping a counter" {
   assert_eq(slide.shapes[1].id().unwrap(), 3)
   let _bytes = prs.save()
 }
+
+///|
+test "example 23: shape effects (shadow, glow, reflection)" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  let navy = @oxml.Color::srgb(@units.RgbColor::parse_hex("1F4E79"))
+  let effects = @oxml.EffectList::empty()
+    .with_outer_shadow(
+      @oxml.OuterShadow::new(
+        blur_rad=@units.Emu(76_200L),
+        dist=@units.Emu(38_100L),
+        dir=@units.Angle::from_ooxml(2_700_000),
+        color=navy,
+      ).with_alignment(RectTopLeft),
+    )
+    .with_glow(
+      @oxml.Glow::new(
+        @units.Emu(63_500L),
+        @oxml.Color::srgb(@units.RgbColor::parse_hex("FFC000")),
+      ),
+    )
+  let card = @slide.AutoShape::round_rect(
+    id=2,
+    name="Card",
+    x=prs.pct_w(20.0),
+    y=prs.pct_h(30.0),
+    cx=prs.pct_w(60.0),
+    cy=prs.pct_h(30.0),
+  ).with_effects(effects)
+  prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(card)))
+  // The effect list survives save -> open.
+  let reopened = @presentation.Presentation::open(prs.save())
+  let fx = match reopened.slides()[0].shapes[0] {
+    AutoShape(sp) => sp.effects.unwrap()
+    _ => abort("expected the AutoShape back")
+  }
+  assert_eq(fx.outer_shadow.unwrap().blur_rad, @units.Emu(76_200L))
+  assert_true(fx.outer_shadow.unwrap().alignment is Some(RectTopLeft))
+  assert_eq(fx.glow.unwrap().rad, @units.Emu(63_500L))
+}

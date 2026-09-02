@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The `<a:effectLst>` records have builders.** `PictureUncropped::with_effects`
+  has always taken an `@oxml.EffectList`, but there was no way to make one
+  short of a record literal across eight fields — which is why nothing in
+  the tree, examples included, ever passed that argument.
+  - `EffectList::empty()` plus `with_blur` / `with_glow` /
+    `with_inner_shadow` / `with_outer_shadow` / `with_preset_shadow` /
+    `with_reflection` / `with_soft_edge`.
+  - `Blur::new`, `Glow::new`, `SoftEdge::new`, `InnerShadow::new`,
+    `PresetShadow::new` and `OuterShadow::new` take the attributes the
+    schema requires. The optional tail — scale, skew, alignment,
+    `rotWithShape` — rides on `OuterShadow::with_scale` / `with_skew` /
+    `with_alignment` / `with_rotate_with_shape`.
+  - `Reflection::default()` plus eleven `with_*` builders, since every one
+    of its fourteen attributes is optional.
+  - `AutoShape::with_effects`, which was missing next to the `with_fill` /
+    `with_stroke` it belongs with.
+
+  `examples/README.md` gains recipe 23, and the sample deck's hand-written
+  effect literal now goes through them. Closes the effect half of
+  `ROADMAP.md` §3.4 A1.
 - **Shape ids can be allocated instead of guessed.** `<p:cNvPr id>` has to
   be unique within a slide, every shape builder takes one as a positional
   `Int`, and until now nothing in the library helped:
@@ -56,6 +76,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a `serialize`. They are `pub(all)` again, and the rule is now explicit:
   a type with a public `serialize` is an authoring target and stays
   constructible. Nothing shipped in a release with them closed.
+- **BREAKING: the eight effect records are read-only outside their
+  package** — `EffectList`, `Blur`, `Glow`, `InnerShadow`, `OuterShadow`,
+  `PresetShadow`, `Reflection`, `SoftEdge`. This is the flip side of the
+  builders above: once a type can be constructed properly it no longer
+  needs to be built by literal, so a new field on any of them is additive
+  from here. Migration is the builder call the entry above describes.
 - **BREAKING: 7 more model records are read-only outside their package** —
   `ResolvedFonts`, `AnimStep`, `ChartSeries`, `BubbleSeries`,
   `ScatterSeries`, `PlaceholderDef`, `PlaceholderSpec`. Same reasoning as

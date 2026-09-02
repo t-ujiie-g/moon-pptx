@@ -749,6 +749,49 @@ you did not build — it returns them instead of raising, because a deck
 parsed from a third-party file can arrive with duplicates and must still
 round-trip unchanged.
 
+## 23. Shape effects (shadow, glow, reflection)
+
+`<a:effectLst>` carries up to seven effects. Build one with
+`EffectList::empty()` and hang it on a shape, a picture, or a run:
+
+```moonbit
+let prs = @presentation.Presentation::new()
+let _ = prs.add_slide_mut(0)
+
+let navy = @oxml.Color::srgb(@units.RgbColor::parse_hex("1F4E79"))
+let effects = @oxml.EffectList::empty()
+  .with_outer_shadow(
+    @oxml.OuterShadow::new(
+      blur_rad=@units.Emu(76_200L),        // 6pt blur
+      dist=@units.Emu(38_100L),            // 3pt offset
+      dir=@units.Angle::from_ooxml(2_700_000),  // 45°, down-right
+      color=navy,
+    ).with_alignment(RectTopLeft),
+  )
+  .with_glow(
+    @oxml.Glow::new(
+      @units.Emu(63_500L),
+      @oxml.Color::srgb(@units.RgbColor::parse_hex("FFC000")),
+    ),
+  )
+
+let card = @slide.AutoShape::round_rect(
+  id=2, name="Card",
+  x=prs.pct_w(20.0), y=prs.pct_h(30.0),
+  cx=prs.pct_w(60.0), cy=prs.pct_h(30.0),
+).with_effects(effects)
+
+prs.update_slide_mut(0, prs.slides()[0].with_shape(@slide.AutoShape(card)))
+let _bytes = prs.save()
+```
+
+The same `EffectList` goes to `RunProperties::with_text_effects` for text
+effects, and to `Picture::builder(…).with_effects(effects=…)` for pictures.
+
+`OuterShadow` and `Reflection` carry the long tail of optional attributes
+— scale, skew, alignment, `rotWithShape` — as `with_*` builders on top of
+the required ones, so a plain drop shadow stays a one-liner.
+
 ---
 
 ## Where to next?

@@ -98,6 +98,22 @@ Note: **deprecation warnings appear under `moon test` / `moon build`, not
 `moon check`.** A green `moon check --deny-warn` does not prove the tree is
 warning-free — always run the tests too.
 
+**None of the four covers `examples/sample-deck`.** It is a separate
+module with its own `moon.mod`, so it compiles as a *consumer* of the
+public API rather than as part of the tree. Any change to a public
+signature or to a type's visibility has to be checked against it, or the
+first sign of breakage is the `validate` CI job failing to build:
+
+```bash
+bash tools/pptx-validate/gen-pptx.sh out                  # builds the deck
+dotnet run --project tools/pptx-validate -- \
+  out test_fixtures/corpus --baseline tools/pptx-validate/baseline.txt
+```
+
+The second command is Tier 2 of the verification pyramid (ADR-011) and
+needs the .NET SDK; the first is what catches the API break and needs
+nothing extra.
+
 If `moon info` produced a diff in any `pkg.generated.mbti`, the public API
 surface changed — review the diff and reflect it in `ROADMAP.md` if it affects
 roadmap items.
