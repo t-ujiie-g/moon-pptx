@@ -430,13 +430,12 @@ test "rPr: absent outline / effects are None" {
 
 ///|
 test "builder: with_text_outline + with_text_effects emit and round-trip" {
-  let glow_fx : @oxml.EffectList = {
-    ..empty_effects(),
-    glow: Some({
-      rad: @units.Emu(63500L),
-      color: @oxml.Color::srgb(@units.RgbColor::parse_hex("FFC000")),
-    }),
-  }
+  let glow_fx = @oxml.EffectList::empty().with_glow(
+    @oxml.Glow::new(
+      @units.Emu(63500L),
+      @oxml.Color::srgb(@units.RgbColor::parse_hex("FFC000")),
+    ),
+  )
   let rp = @slide.RunProperties::default()
     .with_text_outline(thin_stroke())
     .with_text_effects(glow_fx)

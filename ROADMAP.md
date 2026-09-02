@@ -205,6 +205,14 @@ itself — demoting a type releases the records reachable only through it —
 which leaves 7 more: `ResolvedFonts`, `AnimStep`, `ChartSeries`,
 `BubbleSeries`, `ScatterSeries`, `PlaceholderDef`, `PlaceholderSpec`.
 
+A third pass took the eight `<a:effectLst>` records the other way round:
+give a type a builder and it stops needing to be `pub(all)`. `EffectList`,
+`Blur`, `Glow`, `InnerShadow`, `OuterShadow`, `PresetShadow`, `Reflection`
+and `SoftEdge` gained constructors and `with_*` builders and then dropped
+to `pub`. That was worth doing on its own: `PictureUncropped::with_effects`
+takes an `EffectList`, and nothing in the tree had ever passed that
+argument, because building one meant a record literal across eight fields.
+
 A2 (labelled geometry arguments) closed in that pass: `id`, `name`, `x`,
 `y`, `cx`, `cy` and every run of two or more same-typed parameters are now
 labelled across 24 public functions, so `x`↔`y` and `cx`↔`cy` swaps —
@@ -221,7 +229,7 @@ still round-trips.
 
 | # | Item | Why it is open | Size |
 |---|---|---|---|
-| A1 | **The model records with no construction path** | The first two passes took every type that was safe to take. What is left are the types where `pub` would *remove* a capability rather than tighten one: they expose no constructor, no `with_*`, and in most cases no `pub fn` at all, so a record literal is the only way to build one. They split in two, and the split has to be made per type. **Parse-only outputs** — `ResolvedFonts`, `MediaInfo`, `CommentPos`, `SlideIdRef` / `SlideMasterIdRef`, `NotesSize`, and the `presentation` placeholder-schema markers — are read in practice and never built, so `pub` costs nothing and can land as-is. **Build inputs** — `OuterShadow`, `InnerShadow`, `Reflection`, `SoftEdge`, `Blur`, `PresetShadow`, `Pattern`, `Trendline`, `ManualLayout`, `DLbls`, `NumFmt` and the chart `*Body` / `*Series` records — are things a caller has a real reason to construct, so each needs a builder API *before* it can be closed. That builder work, not the visibility change, is the remaining L | L |
+| A1 | **The chart-internal records with no construction path** | The first three passes took every type that was safe to take. What is left are the types where `pub` would *remove* a capability rather than tighten one: they expose no constructor, no `with_*`, and in most cases no `pub fn` at all, so a record literal is the only way to build one. They split in two, and the split has to be made per type. The effect records closed the same way (below): give them a builder, then downgrade. What is left is the chart internals — `Trendline`, `ManualLayout`, `Layout`, `DLbl` / `DLbls`, `NumFmt`, `Scaling`, `AxisCore`, `ChartTitle`, `ChartLegend`, `PlotArea` and the fifteen `*Body` / `*SeriesCore` records — plus a handful elsewhere (`Pattern`, `TileSpec`, `FillRect`, `SysColor`, `ArrowEnd`, `CustomGeometry` and its `Path` / `PathPoint` / `ConnectionSite` / `GeomRect` companions). Each needs a builder API before its visibility can change, and the chart set overlaps G11: a `ChartExData` builder and a chart-internals builder are the same kind of work | L |
 
 **Not actionable: the `pub(all) enum` half.** The 93 `pub(all) enum`
 declarations carry the same "adding a variant breaks exhaustive matches"

@@ -22,20 +22,6 @@ fn thin_stroke() -> @oxml.Stroke {
 }
 
 ///|
-fn empty_effects() -> @oxml.EffectList {
-  {
-    blur: None,
-    glow: None,
-    inner_shadow: None,
-    outer_shadow: None,
-    preset_shadow: None,
-    reflection: None,
-    soft_edge: None,
-    extension: [],
-  }
-}
-
-///|
 fn pic_builder() -> @slide.PictureUncropped {
   @slide.Picture::builder(
     id=5,
@@ -82,7 +68,7 @@ test "Picture::builder: with_crop sets the source rectangle" {
 ///|
 test "Picture::builder: with_effects sets outline + effect list" {
   let stroke = thin_stroke()
-  let effects = empty_effects()
+  let effects = @oxml.EffectList::empty()
   let pic = pic_builder().with_effects(outline=stroke, effects~).build()
   assert_true(pic.stroke == Some(stroke))
   assert_true(pic.effects == Some(effects))

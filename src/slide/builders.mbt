@@ -514,6 +514,16 @@ pub fn AutoShape::with_stroke(
 }
 
 ///|
+/// Attach an `<a:effectLst>` — shadow, glow, reflection, soft edge. Build
+/// one with `@oxml.EffectList::empty()` and its `with_*` builders.
+pub fn AutoShape::with_effects(
+  self : AutoShape,
+  effects : @oxml.EffectList,
+) -> AutoShape {
+  { ..self, effects: Some(effects), }
+}
+
+///|
 /// Drop the outline — emits no `<a:ln>` so the shape inherits its
 /// border from the layout / theme (typically: none).
 pub fn AutoShape::with_no_stroke(self : AutoShape) -> AutoShape {

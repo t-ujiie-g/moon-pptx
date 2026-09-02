@@ -144,6 +144,7 @@ pub fn AutoShape::of_preset(id~ : Int, name~ : String, PresetShape, x~ : @units.
 pub fn AutoShape::rect(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
 pub fn AutoShape::round_rect(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
 pub fn AutoShape::textbox(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu, String) -> Self
+pub fn AutoShape::with_effects(Self, @oxml.EffectList) -> Self
 pub fn AutoShape::with_fill(Self, @oxml.Fill) -> Self
 pub fn AutoShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
 pub fn AutoShape::with_hyperlink(Self, url~ : String) -> Self
