@@ -205,6 +205,13 @@ itself — demoting a type releases the records reachable only through it —
 which leaves 7 more: `ResolvedFonts`, `AnimStep`, `ChartSeries`,
 `BubbleSeries`, `ScatterSeries`, `PlaceholderDef`, `PlaceholderSpec`.
 
+One caveat on the method: `moon check` does not see
+`examples/sample-deck`, which is a separate module and therefore the only
+in-repo code that consumes the public API the way a downstream user does.
+The flip-and-check sweep is blind to it, and the effect pass below was
+caught by CI rather than locally for exactly that reason — see `CLAUDE.md`
+§3 for the extra command.
+
 A third pass took the eight `<a:effectLst>` records the other way round:
 give a type a builder and it stops needing to be `pub(all)`. `EffectList`,
 `Blur`, `Glow`, `InnerShadow`, `OuterShadow`, `PresetShadow`, `Reflection`

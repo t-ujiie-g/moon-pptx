@@ -491,19 +491,12 @@ fn sample_v052_features_slide(
     ),
   )
   // Text effects (a soft glow).
-  let glow_fx : @oxml.EffectList = {
-    blur: None,
-    glow: Some({
-      rad: @units.Emu(63500L),
-      color: @oxml.Color::srgb(@units.RgbColor::new(0x4C, 0x8C, 0xE6)),
-    }),
-    inner_shadow: None,
-    outer_shadow: None,
-    preset_shadow: None,
-    reflection: None,
-    soft_edge: None,
-    extension: [],
-  }
+  let glow_fx = @oxml.EffectList::empty().with_glow(
+    @oxml.Glow::new(
+      @units.Emu(63500L),
+      @oxml.Color::srgb(@units.RgbColor::new(0x4C, 0x8C, 0xE6)),
+    ),
+  )
   let glow_box = @slide.AutoShape::textbox(
     id=14,
     name="Glow",

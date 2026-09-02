@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `AutoShape::with_effects`, which was missing next to the `with_fill` /
     `with_stroke` it belongs with.
 
-  `examples/README.md` gains recipe 23. Closes the effect half of
+  `examples/README.md` gains recipe 23, and the sample deck's hand-written
+  effect literal now goes through them. Closes the effect half of
   `ROADMAP.md` §3.4 A1.
 - **Shape ids can be allocated instead of guessed.** `<p:cNvPr id>` has to
   be unique within a slide, every shape builder takes one as a positional
