@@ -34,7 +34,7 @@ pub(all) suberror PptxError {
 pub impl Show for PptxError
 
 // Types and methods
-pub(all) struct AppProperties {
+pub struct AppProperties {
   company : String?
   manager : String?
   application : String?
@@ -51,7 +51,7 @@ pub struct BlankSlide {
 pub impl LayoutPlaceholders for BlankSlide
 pub impl LayoutType for BlankSlide
 
-pub(all) struct CoreProperties {
+pub struct CoreProperties {
   title : String?
   creator : String?
   subject : String?
@@ -98,7 +98,7 @@ pub fn[L] LayoutSlide::finish_mut(Self[L]) -> String raise PptxError
 pub fn[L : HasSubtitle] LayoutSlide::subtitle(Self[L], String) -> Self[L]
 pub fn[L : HasTitle] LayoutSlide::title(Self[L], String) -> Self[L]
 
-pub(all) struct MasterDefinition {
+pub struct MasterDefinition {
   name : String
   background : @slide.Background?
   placeholders : Array[PlaceholderDef]
@@ -130,7 +130,7 @@ pub(all) struct PlaceholderSpec {
   position : @slide.Transform
 }
 
-pub(all) struct Presentation {
+pub struct Presentation {
   pkg : @opc.Package
 }
 pub fn Presentation::add_audio_mut(Self, Int, audio_bytes~ : FixedArray[Byte], poster_bytes~ : FixedArray[Byte], x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Unit raise PptxError
@@ -192,7 +192,7 @@ pub fn Presentation::with_slide_moved(Self, Int, Int) -> Self raise PptxError
 pub fn Presentation::with_slide_updated(Self, Int, @slide.Slide) -> Self raise PptxError
 pub fn Presentation::without_slide(Self, Int) -> Self raise PptxError
 
-pub(all) struct PresentationPart {
+pub struct PresentationPart {
   sld_master_ids : Array[SlideMasterIdRef]
   sld_ids : Array[SlideIdRef]
   notes_master_id : SlideIdRef?

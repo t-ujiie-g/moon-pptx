@@ -223,7 +223,7 @@ pub(all) enum MotionCommand {
 /// space), whereas `<p:animMotion>` uses `0..1` slide fractions — a different
 /// coordinate space. A dedicated fractional `MotionPath` keeps each model in
 /// its own units rather than overloading one type across two meanings.
-pub(all) struct MotionPath {
+pub struct MotionPath {
   commands : Array[MotionCommand]
 } derive(Eq, Debug)
 
@@ -374,7 +374,7 @@ pub(all) struct AnimStep {
 ///   .with_previous(Entrance(Appear), logo_id)
 /// let slide = slide.with_animations(tl)
 /// ```
-pub(all) struct Timeline {
+pub struct Timeline {
   steps : Array[AnimStep]
 } derive(Eq, Debug)
 

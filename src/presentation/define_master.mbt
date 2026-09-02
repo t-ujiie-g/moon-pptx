@@ -28,7 +28,7 @@ pub(all) struct PlaceholderDef {
 ///   if `Some`.
 /// - `date` — Declare a date (`dt`) placeholder on the master (pairs with
 ///   `@slide.Slide::with_date`).
-pub(all) struct MasterDefinition {
+pub struct MasterDefinition {
   name : String
   background : @slide.Background?
   placeholders : Array[PlaceholderDef]

@@ -108,7 +108,7 @@ pub(all) struct Table {
 ///   required; we surface it directly rather than `Option` because any
 ///   well-formed table emits it.
 /// - `cells` — `<a:tc>` cells, left-to-right.
-pub(all) struct TableRow {
+pub struct TableRow {
   height : @units.Emu
   cells : Array[TableCell]
   extension : Array[@xml.XmlElement]

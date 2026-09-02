@@ -11,7 +11,7 @@
 ///
 /// Use the empty string for `uri` to represent an unqualified name (i.e.
 /// belonging to no namespace).
-pub(all) struct QName {
+pub struct QName {
   uri : String
   local_name : String
 } derive(Eq, Hash, Debug)

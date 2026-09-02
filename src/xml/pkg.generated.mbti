@@ -18,7 +18,7 @@ pub(all) suberror XmlError {
 pub impl Show for XmlError
 
 // Types and methods
-pub(all) struct QName {
+pub struct QName {
   uri : String
   local_name : String
 } derive(Eq, Hash, @debug.Debug)

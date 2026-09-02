@@ -91,7 +91,7 @@ pub(all) suberror OpcError {
 pub impl Show for OpcError
 
 // Types and methods
-pub(all) struct ContentTypes {
+pub struct ContentTypes {
   defaults : Array[(String, String)]
   overrides : Array[(String, String)]
 } derive(Eq, @debug.Debug)
@@ -122,7 +122,7 @@ pub fn Package::require_part(Self, String) -> Part raise OpcError
 pub fn Package::set_content_types(Self, ContentTypes) -> Unit
 pub fn Package::to_bytes(Self) -> FixedArray[Byte]
 
-pub(all) struct Part {
+pub struct Part {
   name : String
   mut content_type : String
   bytes : FixedArray[Byte]

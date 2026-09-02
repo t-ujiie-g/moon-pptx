@@ -234,7 +234,7 @@ pub(all) struct Blur {
   grow : Bool?
 } derive(Eq, @debug.Debug)
 
-pub(all) struct Color {
+pub struct Color {
   base : ColorBase
   transforms : Array[@units.ColorTransform]
   extension : Array[@xml.XmlElement]
@@ -511,7 +511,7 @@ pub(all) struct TileSpec {
   alignment : TileAlignment?
 } derive(Eq, @debug.Debug)
 
-pub(all) struct WriteCtx {
+pub struct WriteCtx {
   known_prefixes : Map[String, String]
   mut next_ext : Int
 }

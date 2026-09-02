@@ -89,7 +89,7 @@ pub fn TableProperties::default() -> TableProperties {
 /// Direct attribute mappings: `border_left`→`<a:lnL>`,
 /// `border_right`→`<a:lnR>`, `border_top`→`<a:lnT>`,
 /// `border_bottom`→`<a:lnB>`.
-pub(all) struct TableCellProperties {
+pub struct TableCellProperties {
   margin_l : @units.Emu?
   margin_r : @units.Emu?
   margin_t : @units.Emu?

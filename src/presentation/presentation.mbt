@@ -23,7 +23,7 @@
 /// - `pkg` — The OPC package backing this presentation. Public so consumers
 ///   who need raw part access can drop down without waiting for a typed
 ///   wrapper. Named `pkg` because `package` is a reserved keyword in MoonBit.
-pub(all) struct Presentation {
+pub struct Presentation {
   pkg : @opc.Package
 }
 

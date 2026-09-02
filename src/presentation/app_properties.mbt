@@ -22,7 +22,7 @@ let app_part_name : String = "/docProps/app.xml"
 /// - `app_version` (`<AppVersion>`) — Office expects the `XX.YYYY` shape
 ///   (e.g. `"16.0000"`).
 /// Direct attribute mappings: `company`, `manager`.
-pub(all) struct AppProperties {
+pub struct AppProperties {
   company : String?
   manager : String?
   application : String?

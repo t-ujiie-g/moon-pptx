@@ -35,14 +35,14 @@ pub(all) struct CommentAuthor {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 
-pub(all) struct CommentAuthorList {
+pub struct CommentAuthorList {
   authors : Array[CommentAuthor]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn CommentAuthorList::parse(FixedArray[Byte]) -> Self raise CommentsError
 pub fn CommentAuthorList::serialize(Self) -> FixedArray[Byte] raise CommentsError
 
-pub(all) struct CommentList {
+pub struct CommentList {
   comments : Array[Comment]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)

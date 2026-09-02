@@ -31,7 +31,7 @@
 /// - `chart_data` (`<cx:chartData>`) — the data dimensions block. Captured
 ///   XmlElement; typed dimensions can lift in a later slice.
 /// - `chart` (`<cx:chart>`) — REQUIRED chart definition body.
-pub(all) struct ChartEx {
+pub struct ChartEx {
   chart_data : @xml.XmlElement?
   chart : ChartExBody
   extension : Array[@xml.XmlElement]

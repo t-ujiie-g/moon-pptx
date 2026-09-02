@@ -50,7 +50,7 @@ pub(all) enum SmartArtKind {
 /// - `fill` — Box fill colour.
 /// - `line` — Box outline colour.
 /// - `text_color` — Text colour.
-pub(all) struct NodeStyle {
+pub struct NodeStyle {
   fill : @units.RgbColor?
   line : @units.RgbColor?
   text_color : @units.RgbColor?
@@ -74,7 +74,7 @@ pub fn NodeStyle::new(
 ///
 /// - `style` — Colour overrides for this node's box, or `None` for the
 ///   quick-style defaults.
-pub(all) struct Node {
+pub struct Node {
   text : String
   children : Array[Node]
   style : NodeStyle?
@@ -115,7 +115,7 @@ pub fn Node::with_text_color(self : Node, rgb : @units.RgbColor) -> Node {
 
 ///|
 /// A complete SmartArt diagram — a `kind` plus its top-level `nodes`.
-pub(all) struct SmartArt {
+pub struct SmartArt {
   kind : SmartArtKind
   nodes : Array[Node]
 } derive(Eq, Debug)

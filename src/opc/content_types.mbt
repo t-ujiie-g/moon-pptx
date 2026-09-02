@@ -31,7 +31,7 @@ pub let content_types_part_name : String = "/[Content_Types].xml"
 ///   spec.
 /// - `overrides` — `(part_name, content_type)` pairs. Part names are
 ///   case-sensitive.
-pub(all) struct ContentTypes {
+pub struct ContentTypes {
   defaults : Array[(String, String)]
   overrides : Array[(String, String)]
 } derive(Eq, Debug)

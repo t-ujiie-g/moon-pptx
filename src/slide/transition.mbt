@@ -245,7 +245,7 @@ pub(all) enum TransitionKind {
 ///   slide. Schema default `true`.
 /// - `advance_after` (`advTm`) — auto-advance after this many milliseconds.
 ///   `None` means the slide advances only on click (the attribute is absent).
-pub(all) struct Transition {
+pub struct Transition {
   kind : TransitionKind
   speed : TransitionSpeed
   advance_on_click : Bool

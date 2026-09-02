@@ -12,7 +12,7 @@
 /// `content_type` is the MIME-like content type from `[Content_Types].xml`;
 /// `Package::open` populates it via the ContentTypes resolver.
 /// `bytes` is the raw payload (XML or binary).
-pub(all) struct Part {
+pub struct Part {
   name : String
   mut content_type : String
   bytes : FixedArray[Byte]
