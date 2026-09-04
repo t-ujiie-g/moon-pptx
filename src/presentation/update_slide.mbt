@@ -26,19 +26,22 @@ pub fn Presentation::update_slide_mut(
   slide_index : Int,
   new_slide : @slide.Slide,
 ) -> Unit raise PptxError {
-  let parts = self.ordered_slide_parts()
-  if slide_index < 0 || slide_index >= parts.length() {
+  // Resolve only the slide being written: materialising every part on
+  // each call is what made building a deck one slide at a time scale
+  // badly (ROADMAP.md G13).
+  let names = self.ordered_slide_part_names()
+  if slide_index < 0 || slide_index >= names.length() {
     raise Malformed(
       "slide index " + slide_index.to_string() + " is out of range",
     )
   }
-  let part = parts[slide_index]
+  let part_name = names[slide_index]
   // Walk the slide and resolve any pending hyperlinks against the
   // part's `.rels` before serialisation. No-op for slides whose runs
   // carry no `hyperlink_target`.
-  let resolved = self.resolve_slide_hyperlinks(part.name, new_slide)
+  let resolved = self.resolve_slide_hyperlinks(part_name, new_slide)
   let bytes = resolved.serialize() catch {
     e => raise SlideFailure(e.to_string())
   }
-  self.replace_part_bytes(part.name, bytes, @oxml.ct_slide)
+  self.replace_part_bytes(part_name, bytes, @oxml.ct_slide)
 }

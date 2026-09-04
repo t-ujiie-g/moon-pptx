@@ -329,12 +329,17 @@ fn Presentation::replace_part_bytes(
   bytes : FixedArray[Byte],
   content_type : String,
 ) -> Unit raise PptxError {
-  let _ = self.pkg.remove_part(name)
   let part = @opc.Part::new(name, content_type, bytes) catch {
     e => raise OpcFailure(e.to_string())
   }
-  self.pkg.add_part(part) catch {
-    e => raise OpcFailure(e.to_string())
+  // In place when the part already exists: remove-then-add was two linear
+  // scans plus an array shift per call, which is most of why building a
+  // deck a slide at a time scaled badly (ROADMAP.md G13). It also keeps
+  // package order stable across a rewrite.
+  if !self.pkg.replace_part(part) {
+    self.pkg.add_part(part) catch {
+      e => raise OpcFailure(e.to_string())
+    }
   }
 }
 

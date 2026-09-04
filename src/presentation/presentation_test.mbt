@@ -486,3 +486,61 @@ fn minimal_pptx_without_pkg_rel() -> FixedArray[Byte] {
   ]
   @fzip.zip_sync(entries)
 }
+
+///|
+test "slide_at parses one slide and agrees with slides()" {
+  let prs = @presentation.Presentation::new()
+  for i in 0..<3 {
+    let _ = prs.add_slide_mut(0)
+    let tb = @slide.AutoShape::textbox(
+      id=2,
+      name="T",
+      x=@units.Emu(0L),
+      y=@units.Emu(0L),
+      cx=@units.Emu(914_400L),
+      cy=@units.Emu(914_400L),
+      "Slide \{i}",
+    )
+    prs.update_slide_mut(i, prs.slide_at(i).with_shape(@slide.AutoShape(tb)))
+  }
+  assert_eq(prs.slide_count(), 3)
+  let all = prs.slides()
+  for i in 0..<3 {
+    assert_true(prs.slide_at(i) == all[i])
+  }
+}
+
+///|
+test "slide_at raises outside the deck" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slide_mut(0)
+  assert_eq(prs.slide_count(), 1)
+  for bad in [-1, 1, 99] {
+    try prs.slide_at(bad) |> ignore catch {
+      _ => ()
+    } noraise {
+      _ => fail("expected slide_at(\{bad}) to raise")
+    }
+  }
+}
+
+///|
+test "the memoised slide order survives an update and follows an insert" {
+  let prs = @presentation.Presentation::new()
+  for _ in 0..<3 {
+    let _ = prs.add_slide_mut(0)
+  }
+  // Warm the memo, then rewrite a slide: the order is unchanged, and the
+  // memo must still be the right one.
+  assert_eq(prs.slide_count(), 3)
+  prs.update_slide_mut(1, prs.slide_at(1))
+  assert_eq(prs.slide_count(), 3)
+  // Adding rewrites presentation.xml, so the memo has to be dropped.
+  let _ = prs.add_slide_mut(0)
+  assert_eq(prs.slide_count(), 4)
+  assert_eq(prs.slides().length(), 4)
+  // And a removal the same way.
+  prs.remove_slide_mut(0)
+  assert_eq(prs.slide_count(), 3)
+  assert_eq(prs.slides().length(), 3)
+}

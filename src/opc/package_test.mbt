@@ -204,3 +204,53 @@ test "validate_part_name: accepts canonical names, rejects malformed" {
     }
   }
 }
+
+///|
+test "Package::replace_part swaps bytes in place and keeps the order" {
+  let pkg = @opc.Package::new()
+  for name in ["/a.xml", "/b.xml", "/c.xml"] {
+    pkg.add_part(
+      @opc.Part::new(name, "application/xml", FixedArray::make(4, b'x')),
+    )
+  }
+  let replaced = pkg.replace_part(
+    @opc.Part::new("/b.xml", "application/xml", FixedArray::make(9, b'y')),
+  )
+  assert_true(replaced)
+  // Position is preserved — remove-then-add used to move the part last.
+  let names = []
+  for p in pkg.parts() {
+    names.push(p.name)
+  }
+  assert_true(names == ["/a.xml", "/b.xml", "/c.xml"])
+  // The replacement's bytes, not the original's.
+  assert_eq(pkg.part_by_name("/b.xml").unwrap().bytes.length(), 9)
+}
+
+///|
+test "Package::replace_part reports a missing part and changes nothing" {
+  let pkg = @opc.Package::new()
+  pkg.add_part(
+    @opc.Part::new("/a.xml", "application/xml", FixedArray::make(4, b'x')),
+  )
+  let replaced = pkg.replace_part(
+    @opc.Part::new("/gone.xml", "application/xml", FixedArray::make(9, b'y')),
+  )
+  assert_false(replaced)
+  assert_eq(pkg.parts().length(), 1)
+}
+
+///|
+test "Package::part_by_name still resolves after a removal shifts positions" {
+  let pkg = @opc.Package::new()
+  for name in ["/a.xml", "/b.xml", "/c.xml"] {
+    pkg.add_part(
+      @opc.Part::new(name, "application/xml", FixedArray::make(4, b'x')),
+    )
+  }
+  assert_true(pkg.remove_part("/a.xml"))
+  // The name index is rebuilt on removal; a stale one would point at /c.
+  assert_eq(pkg.part_by_name("/b.xml").unwrap().name, "/b.xml")
+  assert_eq(pkg.part_by_name("/c.xml").unwrap().name, "/c.xml")
+  assert_true(pkg.part_by_name("/a.xml") is None)
+}

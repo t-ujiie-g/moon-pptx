@@ -331,17 +331,21 @@ and peak RSS, best of 3. Reproduce with `tools/bench/run.sh`.
 
 | Library | 10 slides | 100 slides | 1000 slides |
 |---|---|---|---|
-| moon-pptx | **101 ms · 3 MB** | **177 ms · 5 MB** | 9 523 ms · **12 MB** |
-| python-pptx | 290 ms · 40 MB | 327 ms · 41 MB | **1 207 ms** · 53 MB |
-| PptxGenJS | 152 ms · 57 MB | 179 ms · 67 MB | **395 ms** · 144 MB |
+| moon-pptx | **101 ms · 3 MB** | **142 ms · 5 MB** | 3 185 ms · **11 MB** |
+| python-pptx | 289 ms · 40 MB | 326 ms · 41 MB | **1 210 ms** · 54 MB |
+| PptxGenJS | 150 ms · 57 MB | 177 ms · 67 MB | **392 ms** · 144 MB |
 
-Memory is a win at every size, and so is speed up to roughly a hundred
-slides. **At a thousand slides, building is 8× slower than python-pptx
-and 24× slower than PptxGenJS** — a defect in the incremental build path,
-not the writer: the same deck saves in 46 ms and parses in 6.6 ms, both
-linear in slide count. Filed with its measured cause as
-[ROADMAP.md](ROADMAP.md) G13 and not yet fixed; until it is, decks up to
-a few hundred slides are where moon-pptx is at its best.
+Memory is a win at every size, and so is speed up to a few hundred
+slides. **At a thousand, building is 2.6× slower than python-pptx and 8×
+slower than PptxGenJS** — the incremental build path, not the writer: the
+same deck saves in 47 ms and parses in 7 ms, both linear. What is left of
+it is `add_slide_mut` re-serialising `presentation.xml` on every call,
+tracked as [ROADMAP.md](ROADMAP.md) G13.
+
+Two things help today. Reach for a slide with `prs.slide_at(i)` rather
+than `prs.slides()[i]`, which parses the whole deck each time — that alone
+is 3× on a thousand-slide build. And `update_slide_mut` is flat: 20 µs
+whether the deck holds a hundred slides or a thousand.
 
 ## Compatibility
 

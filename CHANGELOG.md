@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Presentation::slide_at(index)` and `slide_count()`.** `slides()`
+  parses every slide in the deck, so reaching for one by index inside a
+  loop re-parses the whole deck each time round — the shape the examples
+  used. `slide_at` parses only the slide asked for, and `slide_count`
+  answers without parsing any. On a thousand-slide build that is 14.3 s
+  down to 4.7 s.
+
 - **Benchmarks** (`ROADMAP.md` §3.2 V2). `src/integration/bench_test.mbt`
   times build / save / parse in-process under `moon bench` — `moon test`
   ignores it — and `tools/bench/` drives the same workload through
@@ -17,17 +24,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   summarised in `README.md` § Performance, including where moon-pptx
   loses.
 
-  The headline: memory is a decisive win at every size (12 MB against 53
-  and 144 at a thousand slides), and so is speed up to ~100 slides — but
-  building a thousand-slide deck takes 9.5 s against python-pptx's 1.2 s.
-  That is the incremental build path alone; the same deck saves in 46 ms
-  and parses in 6.6 ms, both linear. Tracked as the new gap G13, with the
-  cause measured rather than guessed: one `update_slide_mut` costs 339 µs
-  on a 100-slide deck and 6.65 ms on a 1000-slide one.
+  The headline as first measured: memory a decisive win at every size,
+  speed too up to ~100 slides, but a thousand-slide build taking 9.5 s
+  against python-pptx's 1.2 s — the incremental build path alone, since
+  the same deck saved in 46 ms and parsed in 6.6 ms. That became gap G13,
+  with the cause measured rather than guessed, and the entry under
+  **Fixed** below is what came of it. The tables in `ROADMAP.md` §3.2 and
+  `README.md` carry the numbers after that fix.
 
   The numbers also settle G9 (streaming write), which was explicitly
   gated on them: serialising a thousand slides costs 46 ms, so the writer
   is not what makes a large deck slow. G9 is parked.
+
+### Fixed
+
+- **Building a deck no longer slows down as the deck grows.** Or rather,
+  it does far less: `update_slide_mut` is now flat at ~20 µs whether the
+  deck holds a hundred slides or a thousand, against 339 µs and 6.65 ms
+  before, and a thousand-slide build went from 9.60 s to 3.03 s. Three
+  changes, each measured (`ROADMAP.md` §3.2, G13):
+  - `Package` keeps a name → position index, so `part_by_name` and
+    `add_part`'s duplicate check stop scanning every part.
+  - `Package::replace_part` rewrites a part in place. Replacing bytes was
+    remove-then-add — two linear scans and an array shift per call — and
+    it moved the part to the end, so package order churned on every
+    rewrite. Order is now preserved.
+  - The slide order is memoised. Resolving it means parsing
+    `presentation.xml` and its `.rels`, both of which grow with the deck,
+    and every mutation did it. The memo validates itself against the byte
+    arrays it was computed from, so the ~25 sites that mutate a package
+    need no invalidation logic and cannot forget it.
+
+  What remains is `add_slide_mut`, which re-serialises `presentation.xml`
+  on every call: adding a thousand slides is 3.03 s of that 3.03 s. G13
+  now tracks only that.
 
 ## [0.9.0] — 2026-09-03
 

@@ -70,5 +70,9 @@ pub fn Package::clone(self : Package) -> Package {
   for p in self.parts {
     new_parts.push(p.clone())
   }
-  { parts: new_parts, content_types: self.content_types.clone(), }
+  {
+    parts: new_parts,
+    content_types: self.content_types.clone(),
+    index: build_part_index(new_parts),
+  }
 }

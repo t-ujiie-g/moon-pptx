@@ -23,8 +23,14 @@
 /// - `pkg` — The OPC package backing this presentation. Public so consumers
 ///   who need raw part access can drop down without waiting for a typed
 ///   wrapper. Named `pkg` because `package` is a reserved keyword in MoonBit.
+/// - `slide_order` — internal memo, not part of the API: the slide part
+///   names in `<p:sldIdLst>` order, together with the `presentation.xml`
+///   and `.rels` byte arrays they were derived from. Reused only while
+///   both are still those same objects, so any rewrite drops it without
+///   anything having to say so. Visible only because the struct is `pub`.
 pub struct Presentation {
   pkg : @opc.Package
+  mut slide_order : (FixedArray[Byte], FixedArray[Byte], Array[String])?
 }
 
 ///|
@@ -38,7 +44,7 @@ pub fn Presentation::open(
   let pkg = @opc.Package::open(bytes) catch {
     e => raise OpcFailure(e.to_string())
   }
-  { pkg, }
+  { pkg, slide_order: None, }
 }
 
 ///|
@@ -119,6 +125,36 @@ pub fn Presentation::slides(
 }
 
 ///|
+/// The slide at `index` in `<p:sldIdLst>` order, parsed on its own.
+///
+/// `slides()` parses every slide in the deck, so reaching for one by
+/// index inside a loop re-parses the whole deck each time round. This
+/// parses exactly the one asked for. Raises `Malformed` if `index` is out
+/// of range.
+pub fn Presentation::slide_at(
+  self : Presentation,
+  index : Int,
+) -> @slide.Slide raise PptxError {
+  let names = self.ordered_slide_part_names()
+  if index < 0 || index >= names.length() {
+    raise Malformed("slide index " + index.to_string() + " is out of range")
+  }
+  let name = names[index]
+  let part = self.pkg.require_part(name) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  @slide.Slide::parse(part.bytes) catch {
+    e => raise SlideFailure(name + ": " + e.to_string())
+  }
+}
+
+///|
+/// How many slides the deck has, without parsing any of them.
+pub fn Presentation::slide_count(self : Presentation) -> Int raise PptxError {
+  self.ordered_slide_part_names().length()
+}
+
+///|
 /// Resolve the slide parts in `<p:sldIdLst>` order. Falls back to
 /// scanning by content-type *only* when the package doesn't expose a
 /// main-document relationship at all; once we find one, any further
@@ -128,18 +164,60 @@ pub fn Presentation::slides(
 fn Presentation::ordered_slide_parts(
   self : Presentation,
 ) -> Array[@opc.Part] raise PptxError {
+  let names = self.ordered_slide_part_names()
+  let out : Array[@opc.Part] = Array::new(capacity=names.length())
+  for n in names {
+    match self.pkg.part_by_name(n) {
+      Some(p) => out.push(p)
+      None => raise Malformed("presentation.xml references missing slide " + n)
+    }
+  }
+  out
+}
+
+///|
+/// The slide part *names* in `<p:sldIdLst>` order.
+///
+/// Memoised, because resolving the order means parsing `presentation.xml`
+/// and its `.rels` — both of which grow with the deck — and callers do it
+/// once per mutation. The memo validates itself: the order is a pure
+/// function of those two byte arrays, so the cache is reused only while
+/// both are the *same objects* it was computed from. Every write goes
+/// through a fresh `FixedArray[Byte]`, so adding, removing or reordering a
+/// slide invalidates it with no bookkeeping at the ~25 sites that mutate
+/// the package (ROADMAP.md G13).
+fn Presentation::ordered_slide_part_names(
+  self : Presentation,
+) -> Array[String] raise PptxError {
   let main_part_name = match self.main_document_part_name() {
     Some(n) => n
-    None => return self.fallback_slide_parts_in_package_order()
+    None => {
+      let out : Array[String] = []
+      for p in self.fallback_slide_parts_in_package_order() {
+        out.push(p.name)
+      }
+      return out
+    }
   }
   let part = self.pkg.require_part(main_part_name) catch {
     e => raise OpcFailure(e.to_string())
+  }
+  let rels_bytes = match
+    self.pkg.part_by_name(@opc.rels_path_for(main_part_name)) {
+    Some(p) => Some(p.bytes)
+    None => None
+  }
+  if self.slide_order is Some((pres_bytes, cached_rels, names)) &&
+    rels_bytes is Some(rb) &&
+    physical_equal(pres_bytes, part.bytes) &&
+    physical_equal(cached_rels, rb) {
+    return names
   }
   let pres = PresentationPart::parse(part.bytes)
   let rels = self.pkg.relationships_for(main_part_name) catch {
     e => raise OpcFailure(e.to_string())
   }
-  let out : Array[@opc.Part] = []
+  let names : Array[String] = Array::new(capacity=pres.sld_ids.length())
   for s in pres.sld_ids {
     let rel = match rels.by_id(s.r_id) {
       Some(r) => r
@@ -148,20 +226,12 @@ fn Presentation::ordered_slide_parts(
           "presentation.xml sldId " + s.r_id + " has no relationship",
         )
     }
-    let target_name = @opc.resolve_target(
-      main_part_name,
-      rel.target,
-      rel.target_mode,
-    )
-    match self.pkg.part_by_name(target_name) {
-      Some(p) => out.push(p)
-      None =>
-        raise Malformed(
-          "presentation.xml references missing slide " + target_name,
-        )
-    }
+    names.push(@opc.resolve_target(main_part_name, rel.target, rel.target_mode))
   }
-  out
+  if rels_bytes is Some(rb) {
+    self.slide_order = Some((part.bytes, rb, names))
+  }
+  names
 }
 
 ///|

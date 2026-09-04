@@ -137,7 +137,7 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G7 | **Form fields / ink** (`<p:contentPart>`) | △ | Same shape as G6 — niche, preserved losslessly today | M |
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). **Was gated on the V2 benchmarks; they came back against it** — a thousand slides serialise in 46 ms, so the writer is not the cost. Parked unless a memory ceiling, not a time budget, forces it | L |
-| G13 | **Incremental build is super-linear** | ❌ | Building a deck a slide at a time costs 17.5 s at a thousand slides while saving the same deck costs 46 ms (§3.2 V2). Measured cause: *one* `update_slide_mut` gets more expensive as the deck grows — 339 µs on a 100-slide deck, 6.65 ms on a 1000-slide one. Both it and `slides()` go through `ordered_slide_parts()`, which re-parses `presentation.xml` (whose `<p:sldIdLst>` grows with N) on every call and resolves each entry through `Package::part_by_name` (`src/opc/package.mbt:132`), a linear scan over every part. Wants a name→part index on `Package` and a parsed-`presentation.xml` cache invalidated on mutation. There is no per-slide accessor either, so `prs.slides()[i]` in a loop re-parses every slide — the shape every example uses | M |
+| G13 | **`add_slide_mut` rewrites `presentation.xml` on every call** | ❌ | What is left of the original G13 after the write and lookup paths were fixed. Adding a thousand slides and doing nothing else costs 3.03 s, against 3.07 s for the whole build — so this is now ~99 % of it, and it is quadratic: 35.7 ms at a hundred slides, 3.03 s at a thousand. Each call re-serialises `presentation.xml` and the main part's `.rels`, both of which grow an entry per slide. The fix is to stop writing them per call — either defer the rewrite to the next read or `save()` that needs it, or add a batch `add_slides_mut`. Deferring is the one that helps the loop people actually write | M |
 | G10 | **Resource limits on untrusted input** | ❌ | `Package::open` hands the whole archive to `@fzip.unzip_sync` (`src/opc/package.mbt:30`) with no cap on part count or total uncompressed size, so a zip bomb exhausts memory before any moon-pptx code runs. Nothing is written to disk, so zip-slip does not apply. Wants opt-in ceilings surfaced as `OpcError`, which matters the moment anyone parses user-uploaded decks server-side | S–M |
 | G11 | **Typed builder for the chartEx families** | △ | `@chart_ex` parses, round-trips and serialises the Microsoft 2016 set, and `Presentation::add_chart_ex_mut` does the OPC plumbing — but `ChartEx` exposes only `parse` / `serialize`, so *building* one means writing `<cx:chartSpace>` by hand. The project's own test does exactly that (`src/presentation/add_chart_test.mbt:135`). Until this closes, "creatable" is the wrong word for chartEx, and `README.md` says so. Wants `ChartExData` + `ChartEx::of_waterfall` / `of_treemap` / … mirroring `@chart`'s `ChartData` + `Chart::of_bar` | M–L |
 | G12 | **Builders for the model records that have none** | ❌ | Around 50 `pub(all) struct` expose no constructor, no `with_*`, in most cases no `pub fn` at all — a record literal is the only way to build one. The chart internals are the bulk (`Trendline`, `ManualLayout`, `Layout`, `DLbl` / `DLbls`, `NumFmt`, `Scaling`, `AxisCore`, `ChartTitle`, `ChartLegend`, `PlotArea`, the fifteen `*Body` / `*SeriesCore` records), with `Pattern`, `TileSpec`, `FillRect`, `SysColor`, `ArrowEnd` and the `CustomGeometry` family alongside. Each one a caller has a real reason to construct — a trendline on a series, a manual legend layout — and giving it a builder is a feature in its own right, not API tidying. Overlaps G11: a `ChartExData` builder and a chart-internals builder are the same work. See ADR-016 for why the visibility side of this stopped where it did | L |
@@ -169,28 +169,37 @@ Reproduce with `tools/bench/run.sh`.
 
 | Library | 10 slides | 100 slides | 1000 slides |
 |---|---|---|---|
-| moon-pptx | **101 ms · 3 MB** | **177 ms · 5 MB** | 9 523 ms · **12 MB** |
-| python-pptx | 290 ms · 40 MB | 327 ms · 41 MB | **1 207 ms** · 53 MB |
-| PptxGenJS | 152 ms · 57 MB | 179 ms · 67 MB | **395 ms** · 144 MB |
+| moon-pptx | **101 ms · 3 MB** | **142 ms · 5 MB** | 3 185 ms · **11 MB** |
+| python-pptx | 289 ms · 40 MB | 326 ms · 41 MB | **1 210 ms** · 54 MB |
+| PptxGenJS | 150 ms · 57 MB | 177 ms · 67 MB | **392 ms** · 144 MB |
 
 Per phase, in-process (`moon bench -p t-ujiie-g/moon-pptx/integration
 --target native --release`):
 
 | Phase | 10 | 100 | 1000 | Scaling |
 |---|---|---|---|---|
-| build, as the docs write it | 3.06 ms | 171 ms | 17.47 s | super-linear |
-| build, `slides()` hoisted | 2.08 ms | 71.3 ms | 9.60 s | super-linear |
-| save | 733 µs | 4.92 ms | 45.8 ms | linear |
-| parse | 90.8 µs | 530 µs | 6.63 ms | linear |
+| build, `prs.slides()[i]` per slide | 2.86 ms | 151 ms | 14.27 s | quadratic |
+| build, `prs.slide_at(i)` per slide | — | 55.6 ms | 4.71 s | quadratic |
+| build, `slides()` hoisted | 1.59 ms | 39.1 ms | 3.03 s | quadratic |
+| add N slides, nothing else | — | 35.7 ms | 3.03 s | quadratic |
+| one `update_slide_mut` | — | 20.1 µs | 20.0 µs | **constant** |
+| save | 709 µs | 4.76 ms | 46.6 ms | linear |
+| parse | 94.2 µs | 562 µs | 7.09 ms | linear |
 
-**What the numbers say.** Memory is a decisive win at every size — 12 MB
-against 53 and 144 at a thousand slides. So is speed up to ~100 slides.
-At a thousand, building is 8× slower than python-pptx and 24× slower than
-PptxGenJS, and that is *only* the incremental build path: the same deck
-saves in 46 ms and parses in 6.6 ms, both linear. Tracked as G13.
+**What the numbers say.** Memory is a decisive win at every size — 11 MB
+against 54 and 144 at a thousand slides — and so is speed up to a few
+hundred. At a thousand, building is 2.6× slower than python-pptx and 8×
+slower than PptxGenJS. That is the incremental build path alone: the same
+deck saves in 47 ms and parses in 7 ms, both linear.
+
+The first G13 pass took the thousand-slide build from 9.60 s to 3.03 s and
+made `update_slide_mut` flat — 20 µs whether the deck holds a hundred
+slides or a thousand. What is left is `add_slide_mut`, which re-serialises
+`presentation.xml` on every call: adding a thousand slides and doing
+nothing else is 3.03 s of the 3.03 s. G13 now tracks only that.
 
 **They also settle G9.** Streaming write was gated on these numbers, and
-they say no: serialising a thousand slides costs 46 ms, so the writer is
+they say no: serialising a thousand slides costs 47 ms, so the writer is
 not what makes a large deck slow.
 
 ### 3.3 Housekeeping

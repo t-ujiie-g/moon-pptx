@@ -29,7 +29,7 @@
 /// below; exposed publicly because users occasionally want a
 /// snapshot before a destructive edit.
 pub fn Presentation::clone(self : Presentation) -> Presentation {
-  { pkg: self.pkg.clone(), }
+  { pkg: self.pkg.clone(), slide_order: None, }
 }
 
 ///|

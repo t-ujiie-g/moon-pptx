@@ -132,6 +132,7 @@ pub struct PlaceholderSpec {
 
 pub struct Presentation {
   pkg : @opc.Package
+  mut slide_order : (FixedArray[Byte], FixedArray[Byte], Array[String])?
 }
 pub fn Presentation::add_audio_mut(Self, Int, audio_bytes~ : FixedArray[Byte], poster_bytes~ : FixedArray[Byte], x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_blank_typed_slide_mut(Self) -> LayoutSlide[BlankSlide] raise PptxError
@@ -175,6 +176,8 @@ pub fn Presentation::set_core_properties_mut(Self, CoreProperties) -> Unit raise
 pub fn Presentation::set_notes_mut(Self, Int, String) -> Unit raise PptxError
 pub fn Presentation::set_sections_mut(Self, Array[Section]) -> Unit raise PptxError
 pub fn Presentation::set_slide_size_mut(Self, SlideSizeKind) -> Unit raise PptxError
+pub fn Presentation::slide_at(Self, Int) -> @slide.Slide raise PptxError
+pub fn Presentation::slide_count(Self) -> Int raise PptxError
 pub fn Presentation::slide_h(Self) -> @units.Emu
 pub fn Presentation::slide_layouts(Self) -> Array[@slide_master.SlideLayout] raise PptxError
 pub fn Presentation::slide_masters(Self) -> Array[@slide_master.SlideMaster] raise PptxError
