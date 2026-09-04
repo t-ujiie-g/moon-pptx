@@ -19,7 +19,15 @@
 pub struct Package {
   parts : Array[Part]
   mut content_types : ContentTypes
+  index : Map[String, Int]
 }
+
+// `index` maps a part name to its position in `parts`, so `part_by_name`
+// and `add_part`'s duplicate check do not scan the array. It is
+// maintained by every mutator here and rebuilt by `remove_part`, whose
+// removal shifts later positions. `parts()` hands out the live array:
+// pushing or removing through it directly would desync the map, so
+// package mutation goes through this API.
 
 ///|
 /// Open a package from raw `.pptx` bytes.
@@ -33,6 +41,7 @@ pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
     let name = zip_name_to_opc(entry.0)
     parts.push({ name, content_type: "", bytes: entry.1, })
   }
+  let index = build_part_index(parts)
   // Locate [Content_Types].xml and parse it.
   let mut ct_bytes : FixedArray[Byte]? = None
   for p in parts {
@@ -60,14 +69,27 @@ pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
       None => () // unresolved — leave empty; callers can detect with `is_empty`
     }
   }
-  { parts, content_types, }
+  { parts, content_types, index, }
 }
 
 ///|
 /// Construct an empty package with no parts and an empty content-types
 /// catalog. Useful as a starting point for builder code or tests.
 pub fn Package::new() -> Package {
-  { parts: [], content_types: ContentTypes::new(), }
+  { parts: [], content_types: ContentTypes::new(), index: Map([]), }
+}
+
+///|
+/// Build the name → position map `Package.index` keeps. On a duplicate
+/// name the first position wins, matching the old linear scan.
+fn build_part_index(parts : Array[Part]) -> Map[String, Int] {
+  let index : Map[String, Int] = Map([])
+  for i, p in parts {
+    if index.get(p.name) is None {
+      index[p.name] = i
+    }
+  }
+  index
 }
 
 ///|
@@ -91,20 +113,10 @@ pub fn Package::regenerate_content_types_part(
   self : Package,
 ) -> Unit raise OpcError {
   let bytes = self.content_types.serialize()
-  let mut found = false
-  for i in 0..<self.parts.length() {
-    if self.parts[i].name == content_types_part_name {
-      self.parts[i] = {
-        name: content_types_part_name,
-        content_type: "",
-        bytes,
-      }
-      found = true
-      break
-    }
-  }
-  if !found {
-    self.parts.push({ name: content_types_part_name, content_type: "", bytes, })
+  let part : Part = { name: content_types_part_name, content_type: "", bytes, }
+  if !self.replace_part(part) {
+    self.index[content_types_part_name] = self.parts.length()
+    self.parts.push(part)
   }
 }
 
@@ -130,12 +142,10 @@ pub fn Package::parts(self : Package) -> Array[Part] {
 /// Look up a part by its OPC name (`/ppt/presentation.xml`). Returns `None`
 /// if no such part exists. Use `require_part` if absence should be an error.
 pub fn Package::part_by_name(self : Package, name : String) -> Part? {
-  for p in self.parts {
-    if p.name == name {
-      return Some(p)
-    }
+  match self.index.get(name) {
+    Some(i) => Some(self.parts[i])
+    None => None
   }
-  None
 }
 
 ///|
@@ -155,12 +165,29 @@ pub fn Package::require_part(
 ///|
 /// Append a part. Raises if a part with the same name already exists.
 pub fn Package::add_part(self : Package, part : Part) -> Unit raise OpcError {
-  for p in self.parts {
-    if p.name == part.name {
-      raise MalformedPackage("duplicate part name: " + part.name)
-    }
+  if self.index.get(part.name) is Some(_) {
+    raise MalformedPackage("duplicate part name: " + part.name)
   }
+  self.index[part.name] = self.parts.length()
   self.parts.push(part)
+}
+
+///|
+/// Replace the part named `part.name` in place, keeping its position.
+/// Returns false — and changes nothing — if no such part exists.
+///
+/// This is the cheap alternative to remove-then-add for a part whose bytes
+/// changed: it is O(1) instead of two linear scans plus an array shift, and
+/// it leaves package order alone, so re-emitted ZIP entries stay in the
+/// order they were read in.
+pub fn Package::replace_part(self : Package, part : Part) -> Bool {
+  match self.index.get(part.name) {
+    Some(i) => {
+      self.parts[i] = part
+      true
+    }
+    None => false
+  }
 }
 
 ///|
@@ -183,11 +210,19 @@ pub fn Package::relationships_for(
 ///|
 /// Remove a part by OPC name. Returns true if a part was removed.
 pub fn Package::remove_part(self : Package, name : String) -> Bool {
-  for i in 0..<self.parts.length() {
-    if self.parts[i].name == name {
+  match self.index.get(name) {
+    Some(i) => {
       let _ = self.parts.remove(i)
-      return true
+      // Every position after `i` shifted down, so the map is rebuilt
+      // rather than patched. Removal is rare; replacement is the hot path
+      // and goes through `replace_part`.
+      let rebuilt = build_part_index(self.parts)
+      self.index.clear()
+      for k, v in rebuilt {
+        self.index[k] = v
+      }
+      true
     }
+    None => false
   }
-  false
 }

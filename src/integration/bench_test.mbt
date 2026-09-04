@@ -28,6 +28,20 @@ fn build_idiomatic(n : Int) -> @presentation.Presentation raise {
 }
 
 ///|
+/// The same deck using `slide_at`, which parses one slide instead of all.
+fn build_slide_at(n : Int) -> @presentation.Presentation raise {
+  let prs = @presentation.Presentation::new()
+  for i in 0..<n {
+    let _ = prs.add_slide_mut(0)
+    prs.update_slide_mut(
+      i,
+      prs.slide_at(i).with_shape(@slide.AutoShape(slide_title(i))),
+    )
+  }
+  prs
+}
+
+///|
 /// The same deck, with the one `slides()` call lifted out of the loop.
 fn build_hoisted(n : Int) -> @presentation.Presentation raise {
   let prs = @presentation.Presentation::new()
@@ -198,4 +212,41 @@ test "bench one update_slide_mut on a 1000-slide deck" (it : @bench.T) {
     () => it.keep(prs.update_slide_mut(0, s) catch { _ => abort("update") }),
     count=10,
   )
+}
+
+///|
+test "bench build 100 (slide_at)" (it : @bench.T) {
+  it.bench(
+    () => it.keep(build_slide_at(100) catch { _ => abort("build") }),
+    count=10,
+  )
+}
+
+///|
+test "bench build 1000 (slide_at)" (it : @bench.T) {
+  it.bench(
+    () => it.keep(build_slide_at(1000) catch { _ => abort("build") }),
+    count=3,
+  )
+}
+
+///|
+/// How much of what is left is `add_slide_mut` rewriting `presentation.xml`
+/// on every call — an O(N) serialise per added slide.
+test "bench add 100 slides, nothing else" (it : @bench.T) {
+  it.bench(() => it.keep(add_only(100) catch { _ => abort("add") }), count=10)
+}
+
+///|
+test "bench add 1000 slides, nothing else" (it : @bench.T) {
+  it.bench(() => it.keep(add_only(1000) catch { _ => abort("add") }), count=3)
+}
+
+///|
+fn add_only(n : Int) -> @presentation.Presentation raise {
+  let prs = @presentation.Presentation::new()
+  for _ in 0..<n {
+    let _ = prs.add_slide_mut(0)
+  }
+  prs
 }

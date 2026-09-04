@@ -107,6 +107,7 @@ pub fn ContentTypes::without_override(Self, String) -> Self
 pub struct Package {
   parts : Array[Part]
   mut content_types : ContentTypes
+  index : Map[String, Int]
 }
 pub fn Package::add_part(Self, Part) -> Unit raise OpcError
 pub fn Package::clone(Self) -> Self
@@ -118,6 +119,7 @@ pub fn Package::parts(Self) -> Array[Part]
 pub fn Package::regenerate_content_types_part(Self) -> Unit raise OpcError
 pub fn Package::relationships_for(Self, String) -> Relationships raise OpcError
 pub fn Package::remove_part(Self, String) -> Bool
+pub fn Package::replace_part(Self, Part) -> Bool
 pub fn Package::require_part(Self, String) -> Part raise OpcError
 pub fn Package::set_content_types(Self, ContentTypes) -> Unit
 pub fn Package::to_bytes(Self) -> FixedArray[Byte]
