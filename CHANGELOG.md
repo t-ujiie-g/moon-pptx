@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Benchmarks** (`ROADMAP.md` §3.2 V2). `src/integration/bench_test.mbt`
+  times build / save / parse in-process under `moon bench` — `moon test`
+  ignores it — and `tools/bench/` drives the same workload through
+  moon-pptx, python-pptx and PptxGenJS end to end, recording peak RSS.
+  Results, machine and method are published in `ROADMAP.md` §3.2 and
+  summarised in `README.md` § Performance, including where moon-pptx
+  loses.
+
+  The headline: memory is a decisive win at every size (12 MB against 53
+  and 144 at a thousand slides), and so is speed up to ~100 slides — but
+  building a thousand-slide deck takes 9.5 s against python-pptx's 1.2 s.
+  That is the incremental build path alone; the same deck saves in 46 ms
+  and parses in 6.6 ms, both linear. Tracked as the new gap G13, with the
+  cause measured rather than guessed: one `update_slide_mut` costs 339 µs
+  on a 100-slide deck and 6.65 ms on a 1000-slide one.
+
+  The numbers also settle G9 (streaming write), which was explicitly
+  gated on them: serialising a thousand slides costs 46 ms, so the writer
+  is not what makes a large deck slow. G9 is parked.
+
 ## [0.9.0] — 2026-09-03
 
 The ADR-015 API-shape pass, in full. It is the only sanctioned break
