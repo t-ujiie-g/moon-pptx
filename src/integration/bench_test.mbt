@@ -250,3 +250,51 @@ fn add_only(n : Int) -> @presentation.Presentation raise {
   }
   prs
 }
+
+///|
+/// The batch path: one rewrite of `presentation.xml`, its rels and the
+/// content types for the whole run instead of one per slide.
+test "bench add 100 slides in one batch" (it : @bench.T) {
+  it.bench(() => it.keep(add_batch(100) catch { _ => abort("add") }), count=10)
+}
+
+///|
+test "bench add 1000 slides in one batch" (it : @bench.T) {
+  it.bench(() => it.keep(add_batch(1000) catch { _ => abort("add") }), count=5)
+}
+
+///|
+fn add_batch(n : Int) -> @presentation.Presentation raise {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slides_mut(0, n)
+  prs
+}
+
+///|
+/// The whole deck the recommended way: one batch add, then one
+/// `update_slide_mut` per slide.
+fn build_batch(n : Int) -> @presentation.Presentation raise {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slides_mut(0, n)
+  let all = prs.slides()
+  for i in 0..<n {
+    prs.update_slide_mut(i, all[i].with_shape(@slide.AutoShape(slide_title(i))))
+  }
+  prs
+}
+
+///|
+test "bench build 100 (batch)" (it : @bench.T) {
+  it.bench(
+    () => it.keep(build_batch(100) catch { _ => abort("build") }),
+    count=20,
+  )
+}
+
+///|
+test "bench build 1000 (batch)" (it : @bench.T) {
+  it.bench(
+    () => it.keep(build_batch(1000) catch { _ => abort("build") }),
+    count=5,
+  )
+}

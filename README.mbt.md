@@ -331,21 +331,26 @@ and peak RSS, best of 3. Reproduce with `tools/bench/run.sh`.
 
 | Library | 10 slides | 100 slides | 1000 slides |
 |---|---|---|---|
-| moon-pptx | **101 ms · 3 MB** | **142 ms · 5 MB** | 3 185 ms · **11 MB** |
-| python-pptx | 289 ms · 40 MB | 326 ms · 41 MB | **1 210 ms** · 54 MB |
-| PptxGenJS | 150 ms · 57 MB | 177 ms · 67 MB | **392 ms** · 144 MB |
+| moon-pptx | **102 ms · 3 MB** | **110 ms · 5 MB** | **192 ms · 10 MB** |
+| python-pptx | 294 ms · 40 MB | 332 ms · 41 MB | 1 215 ms · 54 MB |
+| PptxGenJS | 154 ms · 57 MB | 182 ms · 67 MB | 396 ms · 145 MB |
 
-Memory is a win at every size, and so is speed up to a few hundred
-slides. **At a thousand, building is 2.6× slower than python-pptx and 8×
-slower than PptxGenJS** — the incremental build path, not the writer: the
-same deck saves in 47 ms and parses in 7 ms, both linear. What is left of
-it is `add_slide_mut` re-serialising `presentation.xml` on every call,
-tracked as [ROADMAP.md](ROADMAP.md) G13.
+Ahead on both axes at every size measured. At a thousand slides that is
+6× faster than python-pptx and 2× faster than PptxGenJS, in a fifth to a
+fourteenth of the memory.
 
-Two things help today. Reach for a slide with `prs.slide_at(i)` rather
-than `prs.slides()[i]`, which parses the whole deck each time — that alone
-is 3× on a thousand-slide build. And `update_slide_mut` is flat: 20 µs
-whether the deck holds a hundred slides or a thousand.
+Two rules get you those numbers on a large deck, because the naive shape
+is quadratic and the fast one is linear:
+
+- **Add in a batch.** `prs.add_slides_mut(layout, n)` rewrites
+  `presentation.xml`, its `.rels` and `[Content_Types].xml` once for the
+  whole run; `add_slide_mut` in a loop rewrites all three per slide.
+- **Don't call `slides()` inside the loop** — it parses the whole deck
+  each time. Iterate the array you already have, or reach for one slide
+  with `prs.slide_at(i)`.
+
+Together those are 43 ms against 14 s for the same thousand-slide deck.
+`update_slide_mut` itself is flat at 20 µs regardless of deck size.
 
 ## Compatibility
 
