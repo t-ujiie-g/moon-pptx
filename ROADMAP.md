@@ -25,7 +25,7 @@ Two things deliberately live elsewhere:
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.9.0` (2026-09-03 — the ADR-015 API-shape pass; **breaking**, and the last break before 1.0 per ADR-016). Unreleased since: benchmarks (§3.2 V2) and the G13 build-scaling work, both additive |
+| Current version | `0.10.0` (2026-09-06 — benchmarks published (§3.2 V2) and the G13 build-scaling work: a thousand-slide deck builds in 43 ms rather than 9.6 s; additive). `0.9.0` before it was the ADR-015 API-shape pass, the last break before 1.0 per ADR-016 |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012). Additive-only; the one sanctioned exception, the ADR-015 API-shape pass, has run and is closed (ADR-016). The next release is `0.9.0` — it carries those breaks |
 | Test suite | 1231 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
