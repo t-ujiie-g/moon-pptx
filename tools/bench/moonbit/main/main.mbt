@@ -35,14 +35,13 @@ fn main {
 }
 
 ///|
-/// N slides, one text box each, serialised to bytes. `slides()` is lifted
-/// out of the loop: calling it per slide re-parses every slide already in
-/// the deck, which is quadratic (see ROADMAP.md §3.2).
+/// N slides, one text box each, serialised to bytes. This is the shape the
+/// library recommends for generating a deck: one batched `add_slides_mut`
+/// rather than an add per slide, and one `slides()` rather than one per
+/// slide (see ROADMAP.md §3.2).
 fn build_and_save(n : Int) -> FixedArray[Byte] raise {
   let prs = @presentation.Presentation::new()
-  for _ in 0..<n {
-    let _ = prs.add_slide_mut(0)
-  }
+  let _ = prs.add_slides_mut(0, n)
   let all = prs.slides()
   for i in 0..<n {
     let tb = @slide.AutoShape::textbox(

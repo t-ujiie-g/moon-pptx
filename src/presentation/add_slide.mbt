@@ -84,7 +84,12 @@ fn Presentation::add_slide_on_layout_mut(
   }
   // 6. Thread the new slide into presentation.xml (<p:sldId>), its rels,
   //    and [Content_Types].xml.
-  self.attach_slide_to_presentation(pres_name, new_slide_name, new_slide_rid)
+  self.attach_slide_to_presentation(
+    pres_name,
+    new_slide_name,
+    new_slide_rid,
+    pres_rels~,
+  )
   new_slide_name
 }
 
@@ -103,6 +108,7 @@ fn Presentation::attach_slide_to_presentation(
   pres_name : String,
   new_slide_name : String,
   new_slide_rid : String,
+  pres_rels? : @opc.Relationships,
 ) -> Unit raise PptxError {
   let pres = match self.presentation_part() {
     Some(p) => p
@@ -114,8 +120,14 @@ fn Presentation::attach_slide_to_presentation(
   let next_id = next_slide_id(pres.sld_ids)
   pres.sld_ids.push({ id: next_id, r_id: new_slide_rid, })
   self.replace_part_bytes(pres_name, pres.serialize(), @oxml.ct_presentation)
-  let pres_rels = self.pkg.relationships_for(pres_name) catch {
-    e => raise OpcFailure(e.to_string())
+  // Callers that already parsed the presentation rels hand them over:
+  // re-parsing costs one entry per slide in the deck, on every add.
+  let pres_rels = match pres_rels {
+    Some(r) => r
+    None =>
+      self.pkg.relationships_for(pres_name) catch {
+        e => raise OpcFailure(e.to_string())
+      }
   }
   let updated = pres_rels.with_relationship(@opc.Relationship::{
     id: new_slide_rid,
@@ -207,14 +219,7 @@ fn Presentation::next_slide_part_name(self : Presentation) -> String {
 /// approach as `next_slide_part_name` — append rather than reuse
 /// gaps.
 fn next_unused_rid(rels : @opc.Relationships) -> String {
-  let mut max_seen = 0
-  for r in rels.items {
-    let n = extract_rid_index(r.id)
-    if n > max_seen {
-      max_seen = n
-    }
-  }
-  "rId" + (max_seen + 1).to_string()
+  "rId" + (extract_max_rid_index(rels) + 1).to_string()
 }
 
 ///|
@@ -354,4 +359,113 @@ fn Presentation::write_rels_for_part(
   let bytes = rels.serialize() catch { e => raise OpcFailure(e.to_string()) }
   let rels_name = @opc.rels_path_for(source_part)
   self.replace_part_bytes(rels_name, bytes, @opc.rels_content_type)
+}
+
+///|
+/// Append `count` slides on the layout at `layout_index`, returning their
+/// part names in order. Equivalent to calling `add_slide_mut` that many
+/// times, and the shape to reach for when generating a deck.
+///
+/// `add_slide_mut` threads each slide into `presentation.xml`, its `.rels`
+/// and `[Content_Types].xml` as it goes, and all three grow an entry per
+/// slide — so adding a thousand slides one at a time re-parses and
+/// re-serialises three growing documents a thousand times. This does that
+/// work once for the whole batch (`ROADMAP.md` G13).
+///
+/// `count` of zero or less adds nothing and returns an empty array.
+pub fn Presentation::add_slides_mut(
+  self : Presentation,
+  layout_index : Int,
+  count : Int,
+) -> Array[String] raise PptxError {
+  let names : Array[String] = []
+  if count <= 0 {
+    return names
+  }
+  let layout_part_name = self.layout_part_name_at(layout_index)
+  let pres_name = match self.main_document_part_name() {
+    Some(n) => n
+    None =>
+      raise Malformed(
+        "package has no main-document relationship; cannot add slide",
+      )
+  }
+  let pres = match self.presentation_part() {
+    Some(p) => p
+    None =>
+      raise Malformed(
+        "presentation.xml could not be parsed while attaching a slide",
+      )
+  }
+  let mut rels = self.pkg.relationships_for(pres_name) catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  let mut ct = self.pkg.content_types()
+  // Seed the three counters once and step them locally; deriving each from
+  // the package per slide is what made the one-at-a-time path quadratic.
+  let mut next_index = self.max_part_index("/ppt/slides/slide") + 1
+  let mut next_rid = extract_max_rid_index(rels) + 1
+  let mut next_id = next_slide_id(pres.sld_ids)
+  for _ in 0..<count {
+    let slide_name = "/ppt/slides/slide" + next_index.to_string() + ".xml"
+    let rid = "rId" + next_rid.to_string()
+    let slide_part = @opc.Part::new(
+      slide_name,
+      @oxml.ct_slide,
+      @oxml.string_to_bytes(blank_slide_xml),
+    ) catch {
+      e => raise OpcFailure(e.to_string())
+    }
+    self.pkg.add_part(slide_part) catch {
+      e => raise OpcFailure(e.to_string())
+    }
+    let slide_rels_part = @opc.Part::new(
+      @opc.rels_path_for(slide_name),
+      @opc.rels_content_type,
+      @oxml.string_to_bytes(
+        build_slide_rels_xml(relative_target(slide_name, layout_part_name)),
+      ),
+    ) catch {
+      e => raise OpcFailure(e.to_string())
+    }
+    self.pkg.add_part(slide_rels_part) catch {
+      e => raise OpcFailure(e.to_string())
+    }
+    pres.sld_ids.push({ id: next_id, r_id: rid, })
+    rels = rels.with_relationship(@opc.Relationship::{
+      id: rid,
+      rel_type: @opc.rt_slide,
+      target: relative_target(pres_name, slide_name),
+      target_mode: Internal,
+    }) catch {
+      e => raise OpcFailure(e.to_string())
+    }
+    ct = ct.with_override(slide_name, @oxml.ct_slide)
+    names.push(slide_name)
+    next_index = next_index + 1
+    next_rid = next_rid + 1
+    next_id = next_id + 1L
+  }
+  // The three growing documents are written once, not once per slide.
+  self.replace_part_bytes(pres_name, pres.serialize(), @oxml.ct_presentation)
+  self.write_rels_for_part(pres_name, rels)
+  self.pkg.set_content_types(ct)
+  self.pkg.regenerate_content_types_part() catch {
+    e => raise OpcFailure(e.to_string())
+  }
+  names
+}
+
+///|
+/// Highest `rIdN` index in `rels`, or 0 when it holds none. `next_unused_rid`
+/// is this plus one, formatted; the batch path steps the number instead.
+fn extract_max_rid_index(rels : @opc.Relationships) -> Int {
+  let mut max_seen = 0
+  for r in rels.items {
+    let n = extract_rid_index(r.id)
+    if n > max_seen {
+      max_seen = n
+    }
+  }
+  max_seen
 }

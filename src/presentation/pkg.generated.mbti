@@ -144,6 +144,7 @@ pub fn Presentation::add_picture_mut(Self, Int, FixedArray[Byte], x~ : @units.Em
 pub fn Presentation::add_section_header_slide_mut(Self) -> LayoutSlide[SectionHeader] raise PptxError
 pub fn Presentation::add_section_mut(Self, title~ : String, start~ : Int) -> Unit raise PptxError
 pub fn Presentation::add_slide_mut(Self, Int) -> String raise PptxError
+pub fn Presentation::add_slides_mut(Self, Int, Int) -> Array[String] raise PptxError
 pub fn Presentation::add_smartart_mut(Self, Int, @smartart.SmartArt, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_svg_picture_mut(Self, Int, svg_bytes~ : FixedArray[Byte], fallback_bytes~ : FixedArray[Byte], x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Unit raise PptxError
 pub fn Presentation::add_title_content_slide_mut(Self) -> LayoutSlide[TitleAndContent] raise PptxError

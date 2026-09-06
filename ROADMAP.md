@@ -25,9 +25,9 @@ Two things deliberately live elsewhere:
 | Item | Value |
 |---|---|
 | Module ID | `t-ujiie-g/moon-pptx` |
-| Current version | `0.9.0` (2026-09-03 — the ADR-015 API-shape pass: labelled arguments, shape-id allocation, 47 records closed, effect-list builders; **breaking**, and the last break before 1.0 per ADR-016) |
+| Current version | `0.9.0` (2026-09-03 — the ADR-015 API-shape pass; **breaking**, and the last break before 1.0 per ADR-016). Unreleased since: benchmarks (§3.2 V2) and the G13 build-scaling work, both additive |
 | Release policy | **v1.0.0 ships when MoonBit itself reaches v1.0** (decided 2026-07-06 — see ADR-012). Additive-only; the one sanctioned exception, the ADR-015 API-shape pass, has run and is closed (ADR-016). The next release is `0.9.0` — it carries those breaks |
-| Test suite | 1221 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
+| Test suite | 1231 tests × 4 backends (Native / Wasm-GC / JS / Wasm), all green |
 | License | Apache-2.0 |
 | MoonBit toolchain | `moon 0.1.20260827` or newer (raised 2026-09-01 — the tree uses the `StringBuilder(size_hint=…)` constructor and `extend T with Show::{to_string}` declarations) |
 | Primary backend | Native; CI matrix also runs `wasm-gc` / `js` / `wasm` |
@@ -137,7 +137,6 @@ Legend: **❌** no support · **△** round-trips losslessly via `extension`
 | G7 | **Form fields / ink** (`<p:contentPart>`) | △ | Same shape as G6 — niche, preserved losslessly today | M |
 | G8 | **p14 extended slide transitions** | △ | Base `CT_SlideTransition` is typed; the Office 2010 extension set round-trips only | S–M |
 | G9 | **Streaming write for huge decks** | ❌ | `save()` materialises the whole package. Needs an incremental write API in `hustcer/fzip` (likely an upstream PR). **Was gated on the V2 benchmarks; they came back against it** — a thousand slides serialise in 46 ms, so the writer is not the cost. Parked unless a memory ceiling, not a time budget, forces it | L |
-| G13 | **`add_slide_mut` rewrites `presentation.xml` on every call** | ❌ | What is left of the original G13 after the write and lookup paths were fixed. Adding a thousand slides and doing nothing else costs 3.03 s, against 3.07 s for the whole build — so this is now ~99 % of it, and it is quadratic: 35.7 ms at a hundred slides, 3.03 s at a thousand. Each call re-serialises `presentation.xml` and the main part's `.rels`, both of which grow an entry per slide. The fix is to stop writing them per call — either defer the rewrite to the next read or `save()` that needs it, or add a batch `add_slides_mut`. Deferring is the one that helps the loop people actually write | M |
 | G10 | **Resource limits on untrusted input** | ❌ | `Package::open` hands the whole archive to `@fzip.unzip_sync` (`src/opc/package.mbt:30`) with no cap on part count or total uncompressed size, so a zip bomb exhausts memory before any moon-pptx code runs. Nothing is written to disk, so zip-slip does not apply. Wants opt-in ceilings surfaced as `OpcError`, which matters the moment anyone parses user-uploaded decks server-side | S–M |
 | G11 | **Typed builder for the chartEx families** | △ | `@chart_ex` parses, round-trips and serialises the Microsoft 2016 set, and `Presentation::add_chart_ex_mut` does the OPC plumbing — but `ChartEx` exposes only `parse` / `serialize`, so *building* one means writing `<cx:chartSpace>` by hand. The project's own test does exactly that (`src/presentation/add_chart_test.mbt:135`). Until this closes, "creatable" is the wrong word for chartEx, and `README.md` says so. Wants `ChartExData` + `ChartEx::of_waterfall` / `of_treemap` / … mirroring `@chart`'s `ChartData` + `Chart::of_bar` | M–L |
 | G12 | **Builders for the model records that have none** | ❌ | Around 50 `pub(all) struct` expose no constructor, no `with_*`, in most cases no `pub fn` at all — a record literal is the only way to build one. The chart internals are the bulk (`Trendline`, `ManualLayout`, `Layout`, `DLbl` / `DLbls`, `NumFmt`, `Scaling`, `AxisCore`, `ChartTitle`, `ChartLegend`, `PlotArea`, the fifteen `*Body` / `*SeriesCore` records), with `Pattern`, `TileSpec`, `FillRect`, `SysColor`, `ArrowEnd` and the `CustomGeometry` family alongside. Each one a caller has a real reason to construct — a trendline on a series, a manual legend layout — and giving it a builder is a feature in its own right, not API tidying. Overlaps G11: a `ChartExData` builder and a chart-internals builder are the same work. See ADR-016 for why the visibility side of this stopped where it did | L |
@@ -169,34 +168,37 @@ Reproduce with `tools/bench/run.sh`.
 
 | Library | 10 slides | 100 slides | 1000 slides |
 |---|---|---|---|
-| moon-pptx | **101 ms · 3 MB** | **142 ms · 5 MB** | 3 185 ms · **11 MB** |
-| python-pptx | 289 ms · 40 MB | 326 ms · 41 MB | **1 210 ms** · 54 MB |
-| PptxGenJS | 150 ms · 57 MB | 177 ms · 67 MB | **392 ms** · 144 MB |
+| moon-pptx | **102 ms · 3 MB** | **110 ms · 5 MB** | **192 ms · 10 MB** |
+| python-pptx | 294 ms · 40 MB | 332 ms · 41 MB | 1 215 ms · 54 MB |
+| PptxGenJS | 154 ms · 57 MB | 182 ms · 67 MB | 396 ms · 145 MB |
 
 Per phase, in-process (`moon bench -p t-ujiie-g/moon-pptx/integration
 --target native --release`):
 
 | Phase | 10 | 100 | 1000 | Scaling |
 |---|---|---|---|---|
-| build, `prs.slides()[i]` per slide | 2.86 ms | 151 ms | 14.27 s | quadratic |
-| build, `prs.slide_at(i)` per slide | — | 55.6 ms | 4.71 s | quadratic |
-| build, `slides()` hoisted | 1.59 ms | 39.1 ms | 3.03 s | quadratic |
-| add N slides, nothing else | — | 35.7 ms | 3.03 s | quadratic |
+| build, batched add + one `slides()` | — | 4.35 ms | 43.6 ms | **linear** |
+| `add_slides_mut(n)` alone | — | 1.01 ms | 9.00 ms | **linear** |
 | one `update_slide_mut` | — | 20.1 µs | 20.0 µs | **constant** |
 | save | 709 µs | 4.76 ms | 46.6 ms | linear |
 | parse | 94.2 µs | 562 µs | 7.09 ms | linear |
+| build, `add_slide_mut` + `slides()[i]` per slide | 2.86 ms | 151 ms | 14.27 s | quadratic |
+| `add_slide_mut` alone, one at a time | — | 26.6 ms | 2.15 s | quadratic |
 
-**What the numbers say.** Memory is a decisive win at every size — 11 MB
-against 54 and 144 at a thousand slides — and so is speed up to a few
-hundred. At a thousand, building is 2.6× slower than python-pptx and 8×
-slower than PptxGenJS. That is the incremental build path alone: the same
-deck saves in 47 ms and parses in 7 ms, both linear.
+**What the numbers say.** moon-pptx is now ahead on both axes at every
+size measured: 192 ms and 10 MB at a thousand slides, against
+python-pptx's 1 215 ms / 54 MB and PptxGenJS's 396 ms / 145 MB. The
+thousand-slide build went 9.60 s → 43.6 ms across the two G13 passes, and
+every phase on the recommended path is linear or flat.
 
-The first G13 pass took the thousand-slide build from 9.60 s to 3.03 s and
-made `update_slide_mut` flat — 20 µs whether the deck holds a hundred
-slides or a thousand. What is left is `add_slide_mut`, which re-serialises
-`presentation.xml` on every call: adding a thousand slides and doing
-nothing else is 3.03 s of the 3.03 s. G13 now tracks only that.
+**The one-at-a-time path is still quadratic**, and deliberately so. Each
+`add_slide_mut` threads its slide into `presentation.xml`, that part's
+`.rels` and `[Content_Types].xml`, all three of which grow an entry per
+slide. Making a single add cheap would mean holding those three parsed and
+flushing at `save()` — which would leave `prs.pkg`, a documented raw-access
+escape hatch, showing stale bytes between mutations. `add_slides_mut`
+buys the same win without that cost, so the batch API is the answer and
+the loop keeps its semantics.
 
 **They also settle G9.** Streaming write was gated on these numbers, and
 they say no: serialising a thousand slides costs 47 ms, so the writer is
@@ -228,29 +230,21 @@ appears. The one item that had a deadline — ADR-015's API-shape pass — has
 run and is closed (ADR-016), so nothing below is racing the 1.0 tag.
 Suggested order, highest value first:
 
-1. **Cut `0.9.0`** — the breaking pass is done and sitting in
-   `[Unreleased]`. Releasing it is what lets consumers migrate once
-   instead of tracking `main`.
-2. **H6 reach** — one rendered screenshot at the top of the README. The
+1. **H6 reach** — one rendered screenshot at the top of the README. The
    repository's description and topics are set; this is what is left of
    making the module findable, and everything below is worth less while
    nobody can see what it emits.
-3. **G13, the super-linear build** — the benchmarks turned "is it fast?"
-   into a specific defect with a measured cause, and it is the one place
-   moon-pptx loses outright to both competitors. Fixing it is bounded:
-   an index on `Package`, a cache for the parsed `presentation.xml`, and
-   a per-slide accessor so the documented loop stops re-parsing.
-4. **G10 input limits** — small, and the difference between "a library
+2. **G10 input limits** — small, and the difference between "a library
    that parses decks" and "a library you can point at uploads".
-5. **H1 sample-deck split** — forced eventually by the toolchain; cheap
+3. **H1 sample-deck split** — forced eventually by the toolchain; cheap
    to do before it becomes an error.
-6. **G12 / G11 builders** — the largest remaining feature gap, and the
+4. **G12 / G11 builders** — the largest remaining feature gap, and the
    only way the ~50 records ADR-016 froze as `pub(all)` ever become
    field-additive. Worth doing before 1.0 for that reason, but it is a
    feature design, not a deadline.
-7. **G8 p14 extended transitions** — small, and the base transition model
+5. **G8 p14 extended transitions** — small, and the base transition model
    is already typed.
-8. **A theme builder** (§5) — font resolution now reads the theme, but
+6. **A theme builder** (§5) — font resolution now reads the theme, but
    nothing can *write* one, so "make this whole deck Japanese" still means
    setting fonts run by run.
 

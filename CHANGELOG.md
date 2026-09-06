@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Presentation::add_slides_mut(layout_index, count)`.** Appends a batch
+  of slides and returns their part names. `add_slide_mut` threads each
+  slide into `presentation.xml`, that part's `.rels` and
+  `[Content_Types].xml` as it goes, and all three grow an entry per slide,
+  so a loop of them re-parses and re-serialises three growing documents
+  once per slide. This does that work once for the batch: adding a
+  thousand slides goes from 2.15 s to **9.0 ms**, and the whole
+  thousand-slide build from 14.3 s to **43.6 ms**. Linear where the loop
+  was quadratic. `examples/README.md` gains recipe 24.
 - **`Presentation::slide_at(index)` and `slide_count()`.** `slides()`
   parses every slide in the deck, so reaching for one by index inside a
   loop re-parses the whole deck each time round — the shape the examples
@@ -55,9 +64,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     arrays it was computed from, so the ~25 sites that mutate a package
     need no invalidation logic and cannot forget it.
 
-  What remains is `add_slide_mut`, which re-serialises `presentation.xml`
-  on every call: adding a thousand slides is 3.03 s of that 3.03 s. G13
-  now tracks only that.
+  Two more, in the same pass: `max_part_index` no longer allocates a
+  `String` per package part on every call, and a slide add no longer
+  parses the presentation `.rels` twice. Together −29 % on top.
+
+  `add_slide_mut` in a loop is still quadratic, and stays that way on
+  purpose. Making a single add cheap would mean holding
+  `presentation.xml`, its `.rels` and the content types parsed and
+  flushing at `save()` — which would leave `prs.pkg`, a documented
+  raw-access escape hatch, showing stale bytes between mutations.
+  `add_slides_mut` above buys the same win without that cost. G13 closes.
+
+  End to end against the other libraries, a thousand slides went from
+  9 523 ms to **192 ms** — ahead of both on time and memory at every size
+  measured. `README.md` § Performance and `ROADMAP.md` §3.2 carry the
+  tables.
 
 ## [0.9.0] — 2026-09-03
 

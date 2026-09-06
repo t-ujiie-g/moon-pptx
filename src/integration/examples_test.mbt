@@ -687,3 +687,27 @@ test "example 23: shape effects (shadow, glow, reflection)" {
   assert_true(fx.outer_shadow.unwrap().alignment is Some(RectTopLeft))
   assert_eq(fx.glow.unwrap().rad, @units.Emu(63_500L))
 }
+
+///|
+test "example 24: generating a large deck" {
+  let prs = @presentation.Presentation::new()
+  let _ = prs.add_slides_mut(0, 500)
+  let all = prs.slides()
+  for i, s in all {
+    let tb = @slide.AutoShape::textbox(
+      id=2,
+      name="Title",
+      x=prs.pct_w(10.0),
+      y=prs.pct_h(40.0),
+      cx=prs.pct_w(80.0),
+      cy=prs.pct_h(20.0),
+      "Slide \{i + 1}",
+    )
+    prs.update_slide_mut(i, s.with_shape(@slide.AutoShape(tb)))
+  }
+  assert_eq(prs.slide_count(), 500)
+  // Every slide survives the round-trip, so the batched sldIdLst, rels and
+  // content-type overrides all agree.
+  let reopened = @presentation.Presentation::open(prs.save())
+  assert_eq(reopened.slides().length(), 500)
+}

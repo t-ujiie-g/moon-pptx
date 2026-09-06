@@ -792,6 +792,38 @@ effects, and to `Picture::builder(…).with_effects(effects=…)` for pictures.
 — scale, skew, alignment, `rotWithShape` — as `with_*` builders on top of
 the required ones, so a plain drop shadow stays a one-liner.
 
+## 24. Generating a large deck
+
+`add_slide_mut` threads each slide into `presentation.xml`, its `.rels`
+and `[Content_Types].xml` as it goes — and all three grow an entry per
+slide, so a loop of them re-parses and re-serialises three growing
+documents once per slide. `add_slides_mut` does that work once for the
+whole batch:
+
+```moonbit
+let prs = @presentation.Presentation::new()
+
+// One rewrite for the batch, not one per slide.
+let _ = prs.add_slides_mut(0, 500)
+
+let all = prs.slides()          // one parse of the deck, not one per slide
+for i, s in all {
+  let tb = @slide.AutoShape::textbox(
+    id=2, name="Title",
+    x=prs.pct_w(10.0), y=prs.pct_h(40.0),
+    cx=prs.pct_w(80.0), cy=prs.pct_h(20.0),
+    "Slide \{i + 1}",
+  )
+  prs.update_slide_mut(i, s.with_shape(@slide.AutoShape(tb)))
+}
+let _bytes = prs.save()
+```
+
+On a thousand slides that is 44 ms against 14 s for the same deck built
+with `add_slide_mut` and `prs.slides()[i]` in a loop. The two rules: add
+in a batch, and don't call `slides()` inside the loop — use the array you
+already have, or `prs.slide_at(i)` for a single slide.
+
 ---
 
 ## Where to next?
