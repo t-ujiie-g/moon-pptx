@@ -17,3 +17,11 @@ test "Percentage scale and constants" {
 test "Percentage can be negative (e.g. tint -10%)" {
   assert_eq(@units.Percentage(-10.0).to_ooxml(), -10_000)
 }
+
+///|
+test "Percentage::from_ooxml round-trips every integer it is given" {
+  for n in 0..<100_000 {
+    assert_eq(@units.Percentage::from_ooxml(n).to_ooxml(), n)
+    assert_eq(@units.Percentage::from_ooxml(-n).to_ooxml(), -n)
+  }
+}

@@ -287,6 +287,17 @@ test "rPr: spc survives a parse -> serialize -> parse round-trip" {
 }
 
 ///|
+test "rPr: hundredth-of-a-point values survive a round-trip exactly" {
+  let slide = @slide.Slide::parse(
+    slide_with_rpr("<a:rPr sz=\"113\" spc=\"-29\" kern=\"201\"/>"),
+  )
+  let rp = rpr_of(@slide.Slide::parse(slide.serialize()))
+  assert_eq(rp.font_size.unwrap(), @units.Pt(1.13))
+  assert_eq(rp.character_spacing.unwrap(), @units.Pt(-0.29))
+  assert_eq(rp.kerning.unwrap(), @units.Pt(2.01))
+}
+
+///|
 test "builder: with_character_spacing emits spc and round-trips" {
   let rp = @slide.RunProperties::default().with_character_spacing(
     @units.Pt(2.0),

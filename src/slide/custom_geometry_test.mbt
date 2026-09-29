@@ -181,6 +181,25 @@ test "parse: arcTo carries wR/hR/stAng/swAng" {
 }
 
 ///|
+test "round-trip: arcTo angles that are not whole degrees survive" {
+  let body = "<a:custGeom><a:pathLst><a:path>" +
+    "<a:arcTo wR=\"500\" hR=\"600\" stAng=\"59\" swAng=\"-61\"/>" +
+    "</a:path></a:pathLst></a:custGeom>"
+  let slide = @slide.Slide::parse(slide_with_sp_pr(body))
+  let cg = match @slide.Slide::parse(slide.serialize()).shapes[0] {
+    AutoShape({ geometry: Some(Custom(cg)), .. }) => cg
+    _ => fail("expected a custom-geometry AutoShape")
+  }
+  match cg.paths[0].commands[0] {
+    ArcTo(_, _, Literal(st), Literal(sw)) => {
+      assert_eq(st.to_ooxml(), 59)
+      assert_eq(sw.to_ooxml(), -61)
+    }
+    _ => fail("expected ArcTo with literal angles")
+  }
+}
+
+///|
 test "parse: cubicBezTo with wrong point count raises Malformed" {
   let body = "<a:custGeom><a:pathLst><a:path>" +
     "<a:cubicBezTo><a:pt x=\"0\" y=\"0\"/></a:cubicBezTo>" +
