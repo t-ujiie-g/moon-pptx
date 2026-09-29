@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Angles, percentages and point sizes round-trip exactly** (#34).
+  `Angle::to_ooxml`, `Percentage::to_ooxml` and the hundredth-of-a-point
+  writers (`sz`, `spc`, `kern`, `spcPts`) truncated, and `n / k * k` is
+  not always exactly `n` in a `Double`, so a value read from a file could
+  be written back one unit short — `stAng="59"` came out as `58`, about
+  one angle in 26. They now round to the nearest unit.
+
 ### Changed
 
 - **Trait methods are promoted explicitly.** MoonBit is removing the

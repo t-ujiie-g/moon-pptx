@@ -26,9 +26,10 @@ pub fn Percentage::value(self : Percentage) -> Double {
 
 ///|
 /// Convert to the OOXML 1/1000-of-a-percent integer representation.
-/// Truncates toward zero.
+/// Rounds to the nearest unit, so `from_ooxml(n).to_ooxml() == n` for
+/// every `n` (truncating would turn e.g. 59 into 58).
 pub fn Percentage::to_ooxml(self : Percentage) -> Int {
-  (self.0 * ooxml_per_percent.to_double()).to_int()
+  (self.0 * ooxml_per_percent.to_double()).round().to_int()
 }
 
 ///|
