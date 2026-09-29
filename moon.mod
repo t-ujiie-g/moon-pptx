@@ -1,6 +1,6 @@
 name = "t-ujiie-g/moon-pptx"
 
-version = "0.10.0"
+version = "0.10.1"
 
 import {
   "hustcer/fzip@0.8.2",
