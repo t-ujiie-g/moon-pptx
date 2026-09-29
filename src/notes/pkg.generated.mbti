@@ -16,6 +16,8 @@ pub(all) suberror NotesError {
   Malformed(String)
   SlideFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn NotesError::equal(Self, Self) -> Bool
+pub fn NotesError::to_string(Self) -> String
 pub impl Show for NotesError
 
 // Types and methods
@@ -25,6 +27,7 @@ pub(all) struct NotesSlide {
   clr_map_override : @slide_master.ClrMapOverride
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn NotesSlide::equal(Self, Self) -> Bool
 pub fn NotesSlide::parse(FixedArray[Byte]) -> Self raise NotesError
 pub fn NotesSlide::serialize(Self) -> FixedArray[Byte] raise NotesError
 

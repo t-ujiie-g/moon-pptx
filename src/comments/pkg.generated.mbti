@@ -14,6 +14,8 @@ pub(all) suberror CommentsError {
   XmlFailure(String, String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+pub fn CommentsError::equal(Self, Self) -> Bool
+pub fn CommentsError::to_string(Self) -> String
 pub impl Show for CommentsError
 
 // Types and methods
@@ -25,6 +27,7 @@ pub(all) struct Comment {
   text : String
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Comment::equal(Self, Self) -> Bool
 
 pub(all) struct CommentAuthor {
   id : Int
@@ -34,11 +37,13 @@ pub(all) struct CommentAuthor {
   clr_idx : Int
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn CommentAuthor::equal(Self, Self) -> Bool
 
 pub(all) struct CommentAuthorList {
   authors : Array[CommentAuthor]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn CommentAuthorList::equal(Self, Self) -> Bool
 pub fn CommentAuthorList::parse(FixedArray[Byte]) -> Self raise CommentsError
 pub fn CommentAuthorList::serialize(Self) -> FixedArray[Byte] raise CommentsError
 
@@ -46,6 +51,7 @@ pub(all) struct CommentList {
   comments : Array[Comment]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn CommentList::equal(Self, Self) -> Bool
 pub fn CommentList::parse(FixedArray[Byte]) -> Self raise CommentsError
 pub fn CommentList::serialize(Self) -> FixedArray[Byte] raise CommentsError
 
@@ -53,6 +59,7 @@ pub(all) struct CommentPos {
   x : @units.Emu
   y : @units.Emu
 } derive(Eq, @debug.Debug)
+pub fn CommentPos::equal(Self, Self) -> Bool
 
 // Type aliases
 

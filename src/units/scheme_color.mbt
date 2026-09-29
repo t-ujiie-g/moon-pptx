@@ -142,7 +142,7 @@ pub fn SchemeColor::with_transform(
   self : SchemeColor,
   t : ColorTransform,
 ) -> SchemeColor {
-  let combined = Array::new(capacity=self.transforms.length() + 1)
+  let combined = Array(capacity=self.transforms.length() + 1)
   for x in self.transforms {
     combined.push(x)
   }

@@ -171,8 +171,10 @@ test "parse: arcTo carries wR/hR/stAng/swAng" {
     ArcTo(w_r, h_r, st, sw) => {
       assert_true(w_r == Literal(@units.Emu(500L)))
       assert_true(h_r == Literal(@units.Emu(600L)))
-      assert_true(st == AdjAngle::Literal(@units.Angle::from_ooxml(0)))
-      assert_true(sw == AdjAngle::Literal(@units.Angle::from_ooxml(5400000)))
+      assert_true(st == @slide.AdjAngle::Literal(@units.Angle::from_ooxml(0)))
+      assert_true(
+        sw == @slide.AdjAngle::Literal(@units.Angle::from_ooxml(5400000)),
+      )
     }
     _ => fail("expected ArcTo")
   }
@@ -216,8 +218,8 @@ test "parse: guide-name in arcTo angle becomes AdjAngle::GuideRef" {
   let cg = extract_custom_geometry(body)
   match cg.paths[0].commands[0] {
     ArcTo(_, _, st, sw) => {
-      assert_true(st == AdjAngle::GuideRef("startAng"))
-      assert_true(sw == AdjAngle::GuideRef("swA"))
+      assert_true(st == @slide.AdjAngle::GuideRef("startAng"))
+      assert_true(sw == @slide.AdjAngle::GuideRef("swA"))
     }
     _ => fail("expected ArcTo")
   }
@@ -278,7 +280,7 @@ test "parse: cxnLst with two connection sites" {
   let cg = extract_custom_geometry(body)
   assert_eq(cg.connection_sites.length(), 2)
   let s0 = cg.connection_sites[0]
-  assert_true(s0.ang == AdjAngle::Literal(@units.Angle::from_ooxml(0)))
+  assert_true(s0.ang == @slide.AdjAngle::Literal(@units.Angle::from_ooxml(0)))
   assert_true(s0.pos.x == Literal(@units.Emu(0L)))
   let s1 = cg.connection_sites[1]
   assert_true(s1.pos.y == Literal(@units.Emu(200L)))

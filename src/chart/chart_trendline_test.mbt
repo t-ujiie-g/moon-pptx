@@ -25,7 +25,7 @@ fn fixture_trendline_in_bar(trendline_body : String) -> FixedArray[Byte] {
 }
 
 ///|
-fn first_trendline(chart : @chart.Chart) -> Trendline {
+fn first_trendline(chart : @chart.Chart) -> @chart.Trendline {
   match chart.chart.plot_area.plots[0] {
     BarChart(b) => b.series[0].trendlines[0]
     _ => abort("expected BarChart")

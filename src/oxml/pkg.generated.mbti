@@ -159,12 +159,16 @@ pub(all) suberror ColorError {
   UnknownColorElement(String)
   MalformedColor(String)
 } derive(Eq, @debug.Debug)
+pub fn ColorError::equal(Self, Self) -> Bool
+pub fn ColorError::to_string(Self) -> String
 pub impl Show for ColorError
 
 pub(all) suberror EffectError {
   MalformedEffect(String)
   EffectColorFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn EffectError::equal(Self, Self) -> Bool
+pub fn EffectError::to_string(Self) -> String
 pub impl Show for EffectError
 
 pub(all) suberror FillError {
@@ -172,23 +176,31 @@ pub(all) suberror FillError {
   MalformedFill(String)
   ColorFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn FillError::equal(Self, Self) -> Bool
+pub fn FillError::to_string(Self) -> String
 pub impl Show for FillError
 
 pub(all) suberror StrokeError {
   MalformedStroke(String)
   FillFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn StrokeError::equal(Self, Self) -> Bool
+pub fn StrokeError::to_string(Self) -> String
 pub impl Show for StrokeError
 
 pub(all) suberror Utf8Error {
   StrayContinuation(Int)
   TruncatedSequence(Int)
 } derive(Eq, @debug.Debug)
+pub fn Utf8Error::equal(Self, Self) -> Bool
+pub fn Utf8Error::to_string(Self) -> String
 pub impl Show for Utf8Error
 
 pub(all) suberror XmlReadError {
   XmlReadError(String)
 } derive(Eq, @debug.Debug)
+pub fn XmlReadError::equal(Self, Self) -> Bool
+pub fn XmlReadError::to_string(Self) -> String
 pub impl Show for XmlReadError
 
 // Types and methods
@@ -197,12 +209,14 @@ pub(all) struct ArrowEnd {
   width : ArrowSize?
   length : ArrowSize?
 } derive(Eq, @debug.Debug)
+pub fn ArrowEnd::equal(Self, Self) -> Bool
 
 pub(all) enum ArrowSize {
   SizeSmall
   SizeMedium
   SizeLarge
 } derive(Eq, @debug.Debug)
+pub fn ArrowSize::equal(Self, Self) -> Bool
 pub fn ArrowSize::from_xml(String) -> Self?
 
 pub(all) enum ArrowType {
@@ -213,6 +227,7 @@ pub(all) enum ArrowType {
   ArrowOval
   ArrowArrow
 } derive(Eq, @debug.Debug)
+pub fn ArrowType::equal(Self, Self) -> Bool
 pub fn ArrowType::from_xml(String) -> Self?
 
 pub(all) struct BlipFill {
@@ -222,17 +237,20 @@ pub(all) struct BlipFill {
   fill_mode : BlipFillMode
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BlipFill::equal(Self, Self) -> Bool
 pub fn BlipFill::svg(String, String) -> Self
 
 pub(all) enum BlipFillMode {
   Stretch(FillRect?)
   Tile(TileSpec)
 } derive(Eq, @debug.Debug)
+pub fn BlipFillMode::equal(Self, Self) -> Bool
 
 pub struct Blur {
   rad : @units.Emu
   grow : Bool?
 } derive(Eq, @debug.Debug)
+pub fn Blur::equal(Self, Self) -> Bool
 pub fn Blur::new(@units.Emu, grow? : Bool) -> Self
 
 pub struct Color {
@@ -240,9 +258,11 @@ pub struct Color {
   transforms : Array[@units.ColorTransform]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Color::equal(Self, Self) -> Bool
 pub fn Color::of(ColorBase) -> Self
 pub fn Color::scheme(@units.ThemeColor) -> Self
 pub fn Color::srgb(@units.RgbColor) -> Self
+pub fn Color::to_string(Self) -> String
 pub impl Show for Color
 
 pub(all) enum ColorBase {
@@ -253,6 +273,8 @@ pub(all) enum ColorBase {
   Preset(String)
   Scrgb(@units.Percentage, @units.Percentage, @units.Percentage)
 } derive(Eq, @debug.Debug)
+pub fn ColorBase::equal(Self, Self) -> Bool
+pub fn ColorBase::to_string(Self) -> String
 pub impl Show for ColorBase
 
 pub(all) enum CompoundLine {
@@ -262,6 +284,7 @@ pub(all) enum CompoundLine {
   CmpdThinThick
   CmpdTriple
 } derive(Eq, @debug.Debug)
+pub fn CompoundLine::equal(Self, Self) -> Bool
 pub fn CompoundLine::from_xml(String) -> Self?
 
 pub(all) enum DashStyle {
@@ -277,6 +300,7 @@ pub(all) enum DashStyle {
   DashSysDashDot
   DashSysDashDotDot
 } derive(Eq, @debug.Debug)
+pub fn DashStyle::equal(Self, Self) -> Bool
 pub fn DashStyle::from_xml(String) -> Self?
 
 pub struct EffectList {
@@ -290,6 +314,7 @@ pub struct EffectList {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn EffectList::empty() -> Self
+pub fn EffectList::equal(Self, Self) -> Bool
 pub fn EffectList::with_blur(Self, Blur) -> Self
 pub fn EffectList::with_glow(Self, Glow) -> Self
 pub fn EffectList::with_inner_shadow(Self, InnerShadow) -> Self
@@ -305,6 +330,7 @@ pub(all) enum Fill {
   PatternFill(Pattern)
   BlipFillVariant(BlipFill)
 } derive(Eq, @debug.Debug)
+pub fn Fill::equal(Self, Self) -> Bool
 pub fn Fill::linear_gradient(@units.RgbColor, @units.RgbColor, via? : Array[@units.RgbColor], angle? : @units.Angle) -> Self
 pub fn Fill::pattern(String, fg~ : @units.RgbColor, bg~ : @units.RgbColor) -> Self
 pub fn Fill::solid(@units.RgbColor) -> Self
@@ -315,11 +341,13 @@ pub(all) struct FillRect {
   right : @units.Percentage
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
+pub fn FillRect::equal(Self, Self) -> Bool
 
 pub struct Glow {
   rad : @units.Emu
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn Glow::equal(Self, Self) -> Bool
 pub fn Glow::new(@units.Emu, Color) -> Self
 
 pub(all) struct Gradient {
@@ -329,6 +357,7 @@ pub(all) struct Gradient {
   flip : TileFlip?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Gradient::equal(Self, Self) -> Bool
 
 pub(all) enum GradientDirection {
   Linear(@units.Angle, Bool)
@@ -336,11 +365,13 @@ pub(all) enum GradientDirection {
   PathCircle
   PathShape
 } derive(Eq, @debug.Debug)
+pub fn GradientDirection::equal(Self, Self) -> Bool
 
 pub(all) struct GradientStop {
   position : @units.Percentage
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn GradientStop::equal(Self, Self) -> Bool
 
 pub(all) struct ImageDimensions {
   format : ImageFormat
@@ -349,7 +380,9 @@ pub(all) struct ImageDimensions {
   dpi_x : Double
   dpi_y : Double
 } derive(Eq, @debug.Debug)
+pub fn ImageDimensions::equal(Self, Self) -> Bool
 pub fn ImageDimensions::to_emu(Self) -> (Int64, Int64)
+pub fn ImageDimensions::to_string(Self) -> String
 pub impl Show for ImageDimensions
 
 pub(all) enum ImageFormat {
@@ -360,7 +393,9 @@ pub(all) enum ImageFormat {
   Tiff
 } derive(Eq, @debug.Debug)
 pub fn ImageFormat::content_type(Self) -> String
+pub fn ImageFormat::equal(Self, Self) -> Bool
 pub fn ImageFormat::extension(Self) -> String
+pub fn ImageFormat::to_string(Self) -> String
 pub impl Show for ImageFormat
 
 pub struct InnerShadow {
@@ -369,6 +404,7 @@ pub struct InnerShadow {
   dir : @units.Angle
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn InnerShadow::equal(Self, Self) -> Bool
 pub fn InnerShadow::new(blur_rad~ : @units.Emu, dist~ : @units.Emu, dir~ : @units.Angle, color~ : Color) -> Self
 
 pub(all) enum LineCap {
@@ -376,6 +412,7 @@ pub(all) enum LineCap {
   CapSquare
   CapRound
 } derive(Eq, @debug.Debug)
+pub fn LineCap::equal(Self, Self) -> Bool
 pub fn LineCap::from_xml(String) -> Self?
 
 pub(all) enum LineJoin {
@@ -383,6 +420,7 @@ pub(all) enum LineJoin {
   JoinBevel
   JoinMiter(@units.Percentage?)
 } derive(Eq, @debug.Debug)
+pub fn LineJoin::equal(Self, Self) -> Bool
 
 pub(all) enum MediaFormat {
   Mp4
@@ -395,8 +433,10 @@ pub(all) enum MediaFormat {
   M4a
 } derive(Eq, @debug.Debug)
 pub fn MediaFormat::content_type(Self) -> String
+pub fn MediaFormat::equal(Self, Self) -> Bool
 pub fn MediaFormat::extension(Self) -> String
 pub fn MediaFormat::is_video(Self) -> Bool
+pub fn MediaFormat::to_string(Self) -> String
 pub impl Show for MediaFormat
 
 pub struct OuterShadow {
@@ -411,6 +451,7 @@ pub struct OuterShadow {
   rotate_with_shape : Bool?
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn OuterShadow::equal(Self, Self) -> Bool
 pub fn OuterShadow::new(blur_rad~ : @units.Emu, dist~ : @units.Emu, dir~ : @units.Angle, color~ : Color) -> Self
 pub fn OuterShadow::with_alignment(Self, RectAlignment) -> Self
 pub fn OuterShadow::with_rotate_with_shape(Self, Bool) -> Self
@@ -423,11 +464,13 @@ pub(all) struct Pattern {
   bg : Color
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Pattern::equal(Self, Self) -> Bool
 
 pub(all) enum PenAlignment {
   AlignPenCenter
   AlignPenInset
 } derive(Eq, @debug.Debug)
+pub fn PenAlignment::equal(Self, Self) -> Bool
 pub fn PenAlignment::from_xml(String) -> Self?
 
 pub struct PresetShadow {
@@ -436,6 +479,7 @@ pub struct PresetShadow {
   dir : @units.Angle
   color : Color
 } derive(Eq, @debug.Debug)
+pub fn PresetShadow::equal(Self, Self) -> Bool
 pub fn PresetShadow::new(String, dist~ : @units.Emu, dir~ : @units.Angle, color~ : Color) -> Self
 
 pub(all) enum RectAlignment {
@@ -449,6 +493,7 @@ pub(all) enum RectAlignment {
   RectBottom
   RectBottomRight
 } derive(Eq, @debug.Debug)
+pub fn RectAlignment::equal(Self, Self) -> Bool
 pub fn RectAlignment::from_xml(String) -> Self?
 
 pub struct Reflection {
@@ -468,6 +513,7 @@ pub struct Reflection {
   rotate_with_shape : Bool?
 } derive(Eq, @debug.Debug)
 pub fn Reflection::default() -> Self
+pub fn Reflection::equal(Self, Self) -> Bool
 pub fn Reflection::with_alignment(Self, RectAlignment) -> Self
 pub fn Reflection::with_alpha(Self, start~ : @units.Percentage, end~ : @units.Percentage) -> Self
 pub fn Reflection::with_blur_rad(Self, @units.Emu) -> Self
@@ -482,6 +528,7 @@ pub fn Reflection::with_skew(Self, kx~ : @units.Angle, ky~ : @units.Angle) -> Se
 pub struct SoftEdge {
   rad : @units.Emu
 } derive(Eq, @debug.Debug)
+pub fn SoftEdge::equal(Self, Self) -> Bool
 pub fn SoftEdge::new(@units.Emu) -> Self
 
 pub(all) struct SrcRect {
@@ -490,6 +537,7 @@ pub(all) struct SrcRect {
   right : @units.Percentage
   bottom : @units.Percentage
 } derive(Eq, @debug.Debug)
+pub fn SrcRect::equal(Self, Self) -> Bool
 
 pub(all) struct Stroke {
   width : @units.Emu?
@@ -503,11 +551,14 @@ pub(all) struct Stroke {
   tail_end : ArrowEnd?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Stroke::equal(Self, Self) -> Bool
 
 pub(all) struct SysColor {
   val : String
   last_clr : @units.RgbColor?
 } derive(Eq, @debug.Debug)
+pub fn SysColor::equal(Self, Self) -> Bool
+pub fn SysColor::to_string(Self) -> String
 pub impl Show for SysColor
 
 pub(all) enum TileAlignment {
@@ -521,6 +572,7 @@ pub(all) enum TileAlignment {
   AlignBottom
   AlignBottomRight
 } derive(Eq, @debug.Debug)
+pub fn TileAlignment::equal(Self, Self) -> Bool
 pub fn TileAlignment::from_xml(String) -> Self?
 
 pub(all) enum TileFlip {
@@ -529,6 +581,7 @@ pub(all) enum TileFlip {
   FlipY
   FlipXy
 } derive(Eq, @debug.Debug)
+pub fn TileFlip::equal(Self, Self) -> Bool
 pub fn TileFlip::from_xml(String) -> Self?
 
 pub(all) struct TileSpec {
@@ -539,6 +592,7 @@ pub(all) struct TileSpec {
   flip : TileFlip?
   alignment : TileAlignment?
 } derive(Eq, @debug.Debug)
+pub fn TileSpec::equal(Self, Self) -> Bool
 
 pub struct WriteCtx {
   known_prefixes : Map[String, String]

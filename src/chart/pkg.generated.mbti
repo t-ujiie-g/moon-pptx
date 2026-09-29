@@ -13,6 +13,8 @@ pub(all) suberror ChartError {
   XmlFailure(String, String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+pub fn ChartError::equal(Self, Self) -> Bool
+pub fn ChartError::to_string(Self) -> String
 pub impl Show for ChartError
 
 // Types and methods
@@ -26,6 +28,8 @@ pub(all) struct Area3DChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Area3DChartBody::equal(Self, Self) -> Bool
+pub fn Area3DChartBody::to_string(Self) -> String
 pub impl Show for Area3DChartBody
 
 pub(all) struct AreaChartBody {
@@ -37,6 +41,8 @@ pub(all) struct AreaChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn AreaChartBody::equal(Self, Self) -> Bool
+pub fn AreaChartBody::to_string(Self) -> String
 pub impl Show for AreaChartBody
 
 pub(all) enum AxPos {
@@ -45,7 +51,9 @@ pub(all) enum AxPos {
   Right
   Top
 } derive(Eq, @debug.Debug)
+pub fn AxPos::equal(Self, Self) -> Bool
 pub fn AxPos::from_xml(String) -> Self?
+pub fn AxPos::to_string(Self) -> String
 pub fn AxPos::to_xml(Self) -> String
 pub impl Show for AxPos
 
@@ -56,7 +64,9 @@ pub(all) enum Axis {
   SerAx(AxisCore)
 } derive(Eq, @debug.Debug)
 pub fn Axis::core(Self) -> AxisCore
+pub fn Axis::equal(Self, Self) -> Bool
 pub fn Axis::local_name(Self) -> String
+pub fn Axis::to_string(Self) -> String
 pub impl Show for Axis
 
 pub(all) struct AxisCore {
@@ -78,6 +88,8 @@ pub(all) struct AxisCore {
   crosses_at : String?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn AxisCore::equal(Self, Self) -> Bool
+pub fn AxisCore::to_string(Self) -> String
 pub impl Show for AxisCore
 
 pub(all) struct Bar3DChartBody {
@@ -92,6 +104,8 @@ pub(all) struct Bar3DChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Bar3DChartBody::equal(Self, Self) -> Bool
+pub fn Bar3DChartBody::to_string(Self) -> String
 pub impl Show for Bar3DChartBody
 
 pub(all) struct BarChartBody {
@@ -105,13 +119,17 @@ pub(all) struct BarChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BarChartBody::equal(Self, Self) -> Bool
+pub fn BarChartBody::to_string(Self) -> String
 pub impl Show for BarChartBody
 
 pub(all) enum BarDir {
   Bar
   Col
 } derive(Eq, @debug.Debug)
+pub fn BarDir::equal(Self, Self) -> Bool
 pub fn BarDir::from_xml(String) -> Self?
+pub fn BarDir::to_string(Self) -> String
 pub fn BarDir::to_xml(Self) -> String
 pub impl Show for BarDir
 
@@ -121,7 +139,9 @@ pub(all) enum BarGrouping {
   Standard
   Stacked
 } derive(Eq, @debug.Debug)
+pub fn BarGrouping::equal(Self, Self) -> Bool
 pub fn BarGrouping::from_xml(String) -> Self?
+pub fn BarGrouping::to_string(Self) -> String
 pub fn BarGrouping::to_xml(Self) -> String
 pub impl Show for BarGrouping
 
@@ -133,7 +153,9 @@ pub(all) enum BarShape {
   Pyramid
   PyramidToMax
 } derive(Eq, @debug.Debug)
+pub fn BarShape::equal(Self, Self) -> Bool
 pub fn BarShape::from_xml(String) -> Self?
+pub fn BarShape::to_string(Self) -> String
 pub fn BarShape::to_xml(Self) -> String
 pub impl Show for BarShape
 
@@ -148,13 +170,17 @@ pub(all) struct BubbleChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BubbleChartBody::equal(Self, Self) -> Bool
+pub fn BubbleChartBody::to_string(Self) -> String
 pub impl Show for BubbleChartBody
 
 pub struct BubbleData {
   series : Array[BubbleSeries]
 } derive(Eq, @debug.Debug)
+pub fn BubbleData::equal(Self, Self) -> Bool
 pub fn BubbleData::is_consistent(Self) -> Bool
 pub fn BubbleData::new() -> Self
+pub fn BubbleData::to_string(Self) -> String
 pub fn BubbleData::validate(Self) -> Self raise ChartError
 pub fn BubbleData::with_series(Self, String, Array[Double], Array[Double], Array[Double]) -> Self
 pub impl Show for BubbleData
@@ -165,6 +191,8 @@ pub struct BubbleSeries {
   y : Array[Double]
   size : Array[Double]
 } derive(Eq, @debug.Debug)
+pub fn BubbleSeries::equal(Self, Self) -> Bool
+pub fn BubbleSeries::to_string(Self) -> String
 pub impl Show for BubbleSeries
 
 pub(all) struct BubbleSeriesCore {
@@ -178,6 +206,8 @@ pub(all) struct BubbleSeriesCore {
   bubble_size : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BubbleSeriesCore::equal(Self, Self) -> Bool
+pub fn BubbleSeriesCore::to_string(Self) -> String
 pub impl Show for BubbleSeriesCore
 
 pub(all) struct Chart {
@@ -188,6 +218,7 @@ pub(all) struct Chart {
   chart : ChartBody
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Chart::equal(Self, Self) -> Bool
 pub fn Chart::is_consistent(Self) -> Bool
 pub fn Chart::of_area(ChartData, grouping? : Grouping) -> Self
 pub fn Chart::of_bar(ChartData, bar_dir? : BarDir, grouping? : BarGrouping) -> Self
@@ -207,6 +238,7 @@ pub fn Chart::of_surface(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::of_surface_3d(ChartData, wireframe? : Bool) -> Self
 pub fn Chart::parse(FixedArray[Byte]) -> Self raise ChartError
 pub fn Chart::serialize(Self) -> FixedArray[Byte] raise ChartError
+pub fn Chart::to_string(Self) -> String
 pub fn Chart::validate(Self) -> Self raise ChartError
 pub fn Chart::with_options(Self, Array[ChartOption]) -> Self
 pub impl Show for Chart
@@ -226,14 +258,18 @@ pub(all) struct ChartBody {
   show_d_lbls_over_max : Bool?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartBody::equal(Self, Self) -> Bool
+pub fn ChartBody::to_string(Self) -> String
 pub impl Show for ChartBody
 
 pub struct ChartData {
   categories : Array[String]
   series : Array[ChartSeries]
 } derive(Eq, @debug.Debug)
+pub fn ChartData::equal(Self, Self) -> Bool
 pub fn ChartData::is_consistent(Self) -> Bool
 pub fn ChartData::new() -> Self
+pub fn ChartData::to_string(Self) -> String
 pub fn ChartData::validate(Self) -> Self raise ChartError
 pub fn ChartData::with_category(Self, String) -> Self
 pub fn ChartData::with_series(Self, String, Array[Double]) -> Self
@@ -248,6 +284,8 @@ pub(all) struct ChartLegend {
   tx_pr : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartLegend::equal(Self, Self) -> Bool
+pub fn ChartLegend::to_string(Self) -> String
 pub impl Show for ChartLegend
 
 pub(all) enum ChartOption {
@@ -263,6 +301,8 @@ pub(all) enum ChartOption {
   PlotVisibleOnly(Bool)
   DisplayBlanks(DisplayBlanksAs)
 } derive(Eq, @debug.Debug)
+pub fn ChartOption::equal(Self, Self) -> Bool
+pub fn ChartOption::to_string(Self) -> String
 pub impl Show for ChartOption
 
 pub(all) enum ChartPlot {
@@ -270,11 +310,14 @@ pub(all) enum ChartPlot {
   Line(ChartData)
   Area(ChartData)
 } derive(Eq, @debug.Debug)
+pub fn ChartPlot::equal(Self, Self) -> Bool
 
 pub struct ChartSeries {
   label : String
   values : Array[Double]
 } derive(Eq, @debug.Debug)
+pub fn ChartSeries::equal(Self, Self) -> Bool
+pub fn ChartSeries::to_string(Self) -> String
 pub impl Show for ChartSeries
 
 pub(all) struct ChartSeriesCore {
@@ -287,6 +330,8 @@ pub(all) struct ChartSeriesCore {
   val : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartSeriesCore::equal(Self, Self) -> Bool
+pub fn ChartSeriesCore::to_string(Self) -> String
 pub impl Show for ChartSeriesCore
 
 pub(all) struct ChartTitle {
@@ -297,6 +342,8 @@ pub(all) struct ChartTitle {
   tx_pr : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartTitle::equal(Self, Self) -> Bool
+pub fn ChartTitle::to_string(Self) -> String
 pub impl Show for ChartTitle
 
 pub(all) enum Crosses {
@@ -304,7 +351,9 @@ pub(all) enum Crosses {
   Min
   Max
 } derive(Eq, @debug.Debug)
+pub fn Crosses::equal(Self, Self) -> Bool
 pub fn Crosses::from_xml(String) -> Self?
+pub fn Crosses::to_string(Self) -> String
 pub fn Crosses::to_xml(Self) -> String
 pub impl Show for Crosses
 
@@ -326,6 +375,8 @@ pub(all) struct DLbl {
   separator : String?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn DLbl::equal(Self, Self) -> Bool
+pub fn DLbl::to_string(Self) -> String
 pub impl Show for DLbl
 
 pub(all) enum DLblPos {
@@ -339,7 +390,9 @@ pub(all) enum DLblPos {
   DLblRight
   DLblTop
 } derive(Eq, @debug.Debug)
+pub fn DLblPos::equal(Self, Self) -> Bool
 pub fn DLblPos::from_xml(String) -> Self?
+pub fn DLblPos::to_string(Self) -> String
 pub fn DLblPos::to_xml(Self) -> String
 pub impl Show for DLblPos
 
@@ -358,6 +411,8 @@ pub(all) struct DLbls {
   separator : String?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn DLbls::equal(Self, Self) -> Bool
+pub fn DLbls::to_string(Self) -> String
 pub impl Show for DLbls
 
 pub(all) enum DisplayBlanksAs {
@@ -365,7 +420,9 @@ pub(all) enum DisplayBlanksAs {
   Gap
   Zero
 } derive(Eq, @debug.Debug)
+pub fn DisplayBlanksAs::equal(Self, Self) -> Bool
 pub fn DisplayBlanksAs::from_xml(String) -> Self?
+pub fn DisplayBlanksAs::to_string(Self) -> String
 pub fn DisplayBlanksAs::to_xml(Self) -> String
 pub impl Show for DisplayBlanksAs
 
@@ -377,6 +434,8 @@ pub(all) struct DoughnutChartBody {
   hole_size : Int?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn DoughnutChartBody::equal(Self, Self) -> Bool
+pub fn DoughnutChartBody::to_string(Self) -> String
 pub impl Show for DoughnutChartBody
 
 pub(all) enum Grouping {
@@ -384,7 +443,9 @@ pub(all) enum Grouping {
   Stacked
   PercentStacked
 } derive(Eq, @debug.Debug)
+pub fn Grouping::equal(Self, Self) -> Bool
 pub fn Grouping::from_xml(String) -> Self?
+pub fn Grouping::to_string(Self) -> String
 pub fn Grouping::to_xml(Self) -> String
 pub impl Show for Grouping
 
@@ -392,13 +453,17 @@ pub(all) struct Layout {
   manual_layout : ManualLayout?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Layout::equal(Self, Self) -> Bool
+pub fn Layout::to_string(Self) -> String
 pub impl Show for Layout
 
 pub(all) enum LayoutMode {
   LayoutEdge
   LayoutFactor
 } derive(Eq, @debug.Debug)
+pub fn LayoutMode::equal(Self, Self) -> Bool
 pub fn LayoutMode::from_xml(String) -> Self?
+pub fn LayoutMode::to_string(Self) -> String
 pub fn LayoutMode::to_xml(Self) -> String
 pub impl Show for LayoutMode
 
@@ -406,7 +471,9 @@ pub(all) enum LayoutTarget {
   LayoutInner
   LayoutOuter
 } derive(Eq, @debug.Debug)
+pub fn LayoutTarget::equal(Self, Self) -> Bool
 pub fn LayoutTarget::from_xml(String) -> Self?
+pub fn LayoutTarget::to_string(Self) -> String
 pub fn LayoutTarget::to_xml(Self) -> String
 pub impl Show for LayoutTarget
 
@@ -416,6 +483,8 @@ pub(all) struct LegendEntry {
   tx_pr : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn LegendEntry::equal(Self, Self) -> Bool
+pub fn LegendEntry::to_string(Self) -> String
 pub impl Show for LegendEntry
 
 pub(all) enum LegendPos {
@@ -425,7 +494,9 @@ pub(all) enum LegendPos {
   LegendRight
   LegendTop
 } derive(Eq, @debug.Debug)
+pub fn LegendPos::equal(Self, Self) -> Bool
 pub fn LegendPos::from_xml(String) -> Self?
+pub fn LegendPos::to_string(Self) -> String
 pub fn LegendPos::to_xml(Self) -> String
 pub impl Show for LegendPos
 
@@ -439,6 +510,8 @@ pub(all) struct Line3DChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Line3DChartBody::equal(Self, Self) -> Bool
+pub fn Line3DChartBody::to_string(Self) -> String
 pub impl Show for Line3DChartBody
 
 pub(all) struct LineChartBody {
@@ -454,6 +527,8 @@ pub(all) struct LineChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn LineChartBody::equal(Self, Self) -> Bool
+pub fn LineChartBody::to_string(Self) -> String
 pub impl Show for LineChartBody
 
 pub(all) struct ManualLayout {
@@ -468,12 +543,16 @@ pub(all) struct ManualLayout {
   h : String?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ManualLayout::equal(Self, Self) -> Bool
+pub fn ManualLayout::to_string(Self) -> String
 pub impl Show for ManualLayout
 
 pub(all) struct NumFmt {
   format_code : String
   source_linked : Bool?
 } derive(Eq, @debug.Debug)
+pub fn NumFmt::equal(Self, Self) -> Bool
+pub fn NumFmt::to_string(Self) -> String
 pub impl Show for NumFmt
 
 pub(all) struct OfPieChartBody {
@@ -489,13 +568,17 @@ pub(all) struct OfPieChartBody {
   ser_lines : Array[@xml.XmlElement]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn OfPieChartBody::equal(Self, Self) -> Bool
+pub fn OfPieChartBody::to_string(Self) -> String
 pub impl Show for OfPieChartBody
 
 pub(all) enum OfPieType {
   Pie
   Bar
 } derive(Eq, @debug.Debug)
+pub fn OfPieType::equal(Self, Self) -> Bool
 pub fn OfPieType::from_xml(String) -> Self?
+pub fn OfPieType::to_string(Self) -> String
 pub fn OfPieType::to_xml(Self) -> String
 pub impl Show for OfPieType
 
@@ -503,7 +586,9 @@ pub(all) enum Orientation {
   MinMax
   MaxMin
 } derive(Eq, @debug.Debug)
+pub fn Orientation::equal(Self, Self) -> Bool
 pub fn Orientation::from_xml(String) -> Self?
+pub fn Orientation::to_string(Self) -> String
 pub fn Orientation::to_xml(Self) -> String
 pub impl Show for Orientation
 
@@ -513,6 +598,8 @@ pub(all) struct Pie3DChartBody {
   d_lbls : DLbls?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Pie3DChartBody::equal(Self, Self) -> Bool
+pub fn Pie3DChartBody::to_string(Self) -> String
 pub impl Show for Pie3DChartBody
 
 pub(all) struct PieChartBody {
@@ -522,6 +609,8 @@ pub(all) struct PieChartBody {
   first_slice_ang : Int?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn PieChartBody::equal(Self, Self) -> Bool
+pub fn PieChartBody::to_string(Self) -> String
 pub impl Show for PieChartBody
 
 pub(all) enum Plot {
@@ -542,7 +631,9 @@ pub(all) enum Plot {
   Surface3DChart(Surface3DChartBody)
   BubbleChart(BubbleChartBody)
 } derive(Eq, @debug.Debug)
+pub fn Plot::equal(Self, Self) -> Bool
 pub fn Plot::local_name(Self) -> String
+pub fn Plot::to_string(Self) -> String
 pub impl Show for Plot
 
 pub(all) struct PlotArea {
@@ -553,6 +644,8 @@ pub(all) struct PlotArea {
   sp_pr : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn PlotArea::equal(Self, Self) -> Bool
+pub fn PlotArea::to_string(Self) -> String
 pub impl Show for PlotArea
 
 pub(all) struct RadarChartBody {
@@ -563,6 +656,8 @@ pub(all) struct RadarChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn RadarChartBody::equal(Self, Self) -> Bool
+pub fn RadarChartBody::to_string(Self) -> String
 pub impl Show for RadarChartBody
 
 pub(all) enum RadarStyle {
@@ -570,7 +665,9 @@ pub(all) enum RadarStyle {
   Marker
   Filled
 } derive(Eq, @debug.Debug)
+pub fn RadarStyle::equal(Self, Self) -> Bool
 pub fn RadarStyle::from_xml(String) -> Self?
+pub fn RadarStyle::to_string(Self) -> String
 pub fn RadarStyle::to_xml(Self) -> String
 pub impl Show for RadarStyle
 
@@ -581,6 +678,8 @@ pub(all) struct Scaling {
   min : String?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Scaling::equal(Self, Self) -> Bool
+pub fn Scaling::to_string(Self) -> String
 pub impl Show for Scaling
 
 pub(all) struct ScatterChartBody {
@@ -591,13 +690,17 @@ pub(all) struct ScatterChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ScatterChartBody::equal(Self, Self) -> Bool
+pub fn ScatterChartBody::to_string(Self) -> String
 pub impl Show for ScatterChartBody
 
 pub struct ScatterData {
   series : Array[ScatterSeries]
 } derive(Eq, @debug.Debug)
+pub fn ScatterData::equal(Self, Self) -> Bool
 pub fn ScatterData::is_consistent(Self) -> Bool
 pub fn ScatterData::new() -> Self
+pub fn ScatterData::to_string(Self) -> String
 pub fn ScatterData::validate(Self) -> Self raise ChartError
 pub fn ScatterData::with_series(Self, String, Array[Double], Array[Double]) -> Self
 pub impl Show for ScatterData
@@ -607,6 +710,8 @@ pub struct ScatterSeries {
   x : Array[Double]
   y : Array[Double]
 } derive(Eq, @debug.Debug)
+pub fn ScatterSeries::equal(Self, Self) -> Bool
+pub fn ScatterSeries::to_string(Self) -> String
 pub impl Show for ScatterSeries
 
 pub(all) struct ScatterSeriesCore {
@@ -619,6 +724,8 @@ pub(all) struct ScatterSeriesCore {
   y_val : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ScatterSeriesCore::equal(Self, Self) -> Bool
+pub fn ScatterSeriesCore::to_string(Self) -> String
 pub impl Show for ScatterSeriesCore
 
 pub(all) enum ScatterStyle {
@@ -629,7 +736,9 @@ pub(all) enum ScatterStyle {
   Smooth
   SmoothMarker
 } derive(Eq, @debug.Debug)
+pub fn ScatterStyle::equal(Self, Self) -> Bool
 pub fn ScatterStyle::from_xml(String) -> Self?
+pub fn ScatterStyle::to_string(Self) -> String
 pub fn ScatterStyle::to_xml(Self) -> String
 pub impl Show for ScatterStyle
 
@@ -637,7 +746,9 @@ pub(all) enum SizeRepresents {
   Area
   Width
 } derive(Eq, @debug.Debug)
+pub fn SizeRepresents::equal(Self, Self) -> Bool
 pub fn SizeRepresents::from_xml(String) -> Self?
+pub fn SizeRepresents::to_string(Self) -> String
 pub fn SizeRepresents::to_xml(Self) -> String
 pub impl Show for SizeRepresents
 
@@ -648,7 +759,9 @@ pub(all) enum SplitType {
   Pos
   Val
 } derive(Eq, @debug.Debug)
+pub fn SplitType::equal(Self, Self) -> Bool
 pub fn SplitType::from_xml(String) -> Self?
+pub fn SplitType::to_string(Self) -> String
 pub fn SplitType::to_xml(Self) -> String
 pub impl Show for SplitType
 
@@ -661,12 +774,16 @@ pub(all) struct StockChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn StockChartBody::equal(Self, Self) -> Bool
+pub fn StockChartBody::to_string(Self) -> String
 pub impl Show for StockChartBody
 
 pub(all) enum StockKind {
   HLC
   OHLC
 } derive(Eq, @debug.Debug)
+pub fn StockKind::equal(Self, Self) -> Bool
+pub fn StockKind::to_string(Self) -> String
 pub impl Show for StockKind
 
 pub(all) struct Surface3DChartBody {
@@ -676,6 +793,8 @@ pub(all) struct Surface3DChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Surface3DChartBody::equal(Self, Self) -> Bool
+pub fn Surface3DChartBody::to_string(Self) -> String
 pub impl Show for Surface3DChartBody
 
 pub(all) struct SurfaceChartBody {
@@ -685,6 +804,8 @@ pub(all) struct SurfaceChartBody {
   ax_ids : Array[Int]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn SurfaceChartBody::equal(Self, Self) -> Bool
+pub fn SurfaceChartBody::to_string(Self) -> String
 pub impl Show for SurfaceChartBody
 
 pub(all) enum TickLblPos {
@@ -693,7 +814,9 @@ pub(all) enum TickLblPos {
   NextTo
   NoLbl
 } derive(Eq, @debug.Debug)
+pub fn TickLblPos::equal(Self, Self) -> Bool
 pub fn TickLblPos::from_xml(String) -> Self?
+pub fn TickLblPos::to_string(Self) -> String
 pub fn TickLblPos::to_xml(Self) -> String
 pub impl Show for TickLblPos
 
@@ -703,7 +826,9 @@ pub(all) enum TickMark {
   NoTick
   Out
 } derive(Eq, @debug.Debug)
+pub fn TickMark::equal(Self, Self) -> Bool
 pub fn TickMark::from_xml(String) -> Self?
+pub fn TickMark::to_string(Self) -> String
 pub fn TickMark::to_xml(Self) -> String
 pub impl Show for TickMark
 
@@ -721,6 +846,8 @@ pub(all) struct Trendline {
   trendline_lbl : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Trendline::equal(Self, Self) -> Bool
+pub fn Trendline::to_string(Self) -> String
 pub impl Show for Trendline
 
 pub(all) enum TrendlineType {
@@ -731,7 +858,9 @@ pub(all) enum TrendlineType {
   TrendlinePoly
   TrendlinePower
 } derive(Eq, @debug.Debug)
+pub fn TrendlineType::equal(Self, Self) -> Bool
 pub fn TrendlineType::from_xml(String) -> Self?
+pub fn TrendlineType::to_string(Self) -> String
 pub fn TrendlineType::to_xml(Self) -> String
 pub impl Show for TrendlineType
 

@@ -144,7 +144,7 @@ pub fn Relationships::with_relationship(
       )
     }
   }
-  let next : Array[Relationship] = Array::new(capacity=self.items.length() + 1)
+  let next : Array[Relationship] = Array(capacity=self.items.length() + 1)
   for r in self.items {
     next.push(r)
   }

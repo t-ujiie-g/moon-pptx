@@ -96,7 +96,7 @@ pub fn ContentTypes::with_default(
   extension : String,
   content_type : String,
 ) -> ContentTypes {
-  let next : Array[(String, String)] = Array::new(
+  let next : Array[(String, String)] = Array(
     capacity=self.defaults.length() + 1,
   )
   for kv in self.defaults {
@@ -114,7 +114,7 @@ pub fn ContentTypes::with_override(
   part_name : String,
   content_type : String,
 ) -> ContentTypes {
-  let next : Array[(String, String)] = Array::new(
+  let next : Array[(String, String)] = Array(
     capacity=self.overrides.length() + 1,
   )
   for kv in self.overrides {
@@ -134,9 +134,7 @@ pub fn ContentTypes::without_override(
   self : ContentTypes,
   part_name : String,
 ) -> ContentTypes {
-  let next : Array[(String, String)] = Array::new(
-    capacity=self.overrides.length(),
-  )
+  let next : Array[(String, String)] = Array(capacity=self.overrides.length())
   for kv in self.overrides {
     if kv.0 != part_name {
       next.push(kv)

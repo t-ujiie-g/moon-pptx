@@ -36,7 +36,7 @@ pub struct Package {
 /// have to mix two error types.
 pub fn Package::open(bytes : FixedArray[Byte]) -> Package raise OpcError {
   let entries = @fzip.unzip_sync(bytes) catch { e => raise wrap_fzip(e) }
-  let parts : Array[Part] = Array::new(capacity=entries.length())
+  let parts : Array[Part] = Array(capacity=entries.length())
   for entry in entries {
     let name = zip_name_to_opc(entry.0)
     parts.push({ name, content_type: "", bytes: entry.1, })
@@ -123,7 +123,7 @@ pub fn Package::regenerate_content_types_part(
 ///|
 /// Pack the package back to ZIP bytes.
 pub fn Package::to_bytes(self : Package) -> FixedArray[Byte] {
-  let entries : Array[(String, FixedArray[Byte])] = Array::new(
+  let entries : Array[(String, FixedArray[Byte])] = Array(
     capacity=self.parts.length(),
   )
   for p in self.parts {

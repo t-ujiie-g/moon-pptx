@@ -21,17 +21,23 @@ pub(all) suberror UnitsError {
   InvalidHexColor(String)
   UnknownSchemeColor(String)
 } derive(Eq, @debug.Debug)
+pub fn UnitsError::equal(Self, Self) -> Bool
+pub fn UnitsError::to_string(Self) -> String
 pub impl Show for UnitsError
 
 // Types and methods
 pub(all) struct Angle(Double) derive(Eq, @debug.Debug)
 pub fn Angle::degrees(Self) -> Double
+pub fn Angle::equal(Self, Self) -> Bool
 pub fn Angle::from_ooxml(Int) -> Self
 pub fn Angle::to_ooxml(Self) -> Int
+pub fn Angle::to_string(Self) -> String
 pub impl Show for Angle
 
 pub(all) struct Cm(Double) derive(Eq, @debug.Debug)
+pub fn Cm::equal(Self, Self) -> Bool
 pub fn Cm::to_emu(Self) -> Emu
+pub fn Cm::to_string(Self) -> String
 pub fn Cm::value(Self) -> Double
 pub impl Show for Cm
 
@@ -42,15 +48,20 @@ pub(all) enum ColorTransform {
   LumMod(Percentage)
   Alpha(Percentage)
 } derive(Eq, @debug.Debug)
+pub fn ColorTransform::equal(Self, Self) -> Bool
+pub fn ColorTransform::to_string(Self) -> String
 pub impl Show for ColorTransform
 
 pub(all) struct Emu(Int64) derive(Compare, Eq, @debug.Debug)
 pub fn Emu::add(Self, Self) -> Self
+pub fn Emu::compare(Self, Self) -> Int
+pub fn Emu::equal(Self, Self) -> Bool
 pub fn Emu::neg(Self) -> Self
 pub fn Emu::sub(Self, Self) -> Self
 pub fn Emu::to_cm(Self) -> Cm
 pub fn Emu::to_inch(Self) -> Inch
 pub fn Emu::to_pt(Self) -> Pt
+pub fn Emu::to_string(Self) -> String
 pub fn Emu::value(Self) -> Int64
 pub impl Show for Emu
 
@@ -59,23 +70,31 @@ pub struct HslColor {
   saturation : Double
   lightness : Double
 } derive(Eq, @debug.Debug)
+pub fn HslColor::equal(Self, Self) -> Bool
 pub fn HslColor::new(Double, Double, Double) -> Self
 pub fn HslColor::to_rgb(Self) -> RgbColor
+pub fn HslColor::to_string(Self) -> String
 pub impl Show for HslColor
 
 pub(all) struct Inch(Double) derive(Eq, @debug.Debug)
+pub fn Inch::equal(Self, Self) -> Bool
 pub fn Inch::to_emu(Self) -> Emu
+pub fn Inch::to_string(Self) -> String
 pub fn Inch::value(Self) -> Double
 pub impl Show for Inch
 
 pub(all) struct Percentage(Double) derive(Eq, @debug.Debug)
+pub fn Percentage::equal(Self, Self) -> Bool
 pub fn Percentage::from_ooxml(Int) -> Self
 pub fn Percentage::to_ooxml(Self) -> Int
+pub fn Percentage::to_string(Self) -> String
 pub fn Percentage::value(Self) -> Double
 pub impl Show for Percentage
 
 pub(all) struct Pt(Double) derive(Eq, @debug.Debug)
+pub fn Pt::equal(Self, Self) -> Bool
 pub fn Pt::to_emu(Self) -> Emu
+pub fn Pt::to_string(Self) -> String
 pub fn Pt::value(Self) -> Double
 pub impl Show for Pt
 
@@ -84,10 +103,12 @@ pub struct RgbColor {
   g : Int
   b : Int
 } derive(Eq, @debug.Debug)
+pub fn RgbColor::equal(Self, Self) -> Bool
 pub fn RgbColor::new(Int, Int, Int) -> Self
 pub fn RgbColor::parse_hex(String) -> Self raise UnitsError
 pub fn RgbColor::to_hex(Self) -> String
 pub fn RgbColor::to_hsl(Self) -> HslColor
+pub fn RgbColor::to_string(Self) -> String
 pub impl Show for RgbColor
 
 pub struct SchemeColor {
@@ -95,6 +116,7 @@ pub struct SchemeColor {
   transforms : Array[ColorTransform]
 } derive(@debug.Debug)
 pub fn SchemeColor::new(ThemeColor) -> Self
+pub fn SchemeColor::to_string(Self) -> String
 pub fn SchemeColor::with_transform(Self, ColorTransform) -> Self
 pub impl Show for SchemeColor
 
@@ -117,7 +139,9 @@ pub(all) enum ThemeColor {
   FolHlink
   PhClr
 } derive(Eq, @debug.Debug)
+pub fn ThemeColor::equal(Self, Self) -> Bool
 pub fn ThemeColor::from_xml(String) -> Self raise UnitsError
+pub fn ThemeColor::to_string(Self) -> String
 pub fn ThemeColor::to_xml(Self) -> String
 pub impl Show for ThemeColor
 

@@ -31,6 +31,8 @@ pub(all) suberror PptxError {
   SmartArtFailure(String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+pub fn PptxError::equal(Self, Self) -> Bool
+pub fn PptxError::to_string(Self) -> String
 pub impl Show for PptxError
 
 // Types and methods
@@ -40,6 +42,7 @@ pub struct AppProperties {
   application : String?
   app_version : String?
 } derive(Eq, @debug.Debug)
+pub fn AppProperties::equal(Self, Self) -> Bool
 pub fn AppProperties::new() -> Self
 pub fn AppProperties::with_app_version(Self, String) -> Self
 pub fn AppProperties::with_application(Self, String) -> Self
@@ -68,6 +71,7 @@ pub struct CoreProperties {
   language : String?
   version : String?
 } derive(Eq, @debug.Debug)
+pub fn CoreProperties::equal(Self, Self) -> Bool
 pub fn CoreProperties::new() -> Self
 pub fn CoreProperties::to_xml(Self) -> String raise @xml.XmlError
 pub fn CoreProperties::with_author(Self, String) -> Self
@@ -117,6 +121,7 @@ pub(all) struct NotesSize {
   cx : @units.Emu
   cy : @units.Emu
 } derive(Eq, @debug.Debug)
+pub fn NotesSize::equal(Self, Self) -> Bool
 
 pub struct PlaceholderDef {
   kind : @slide.PlaceholderType
@@ -205,6 +210,7 @@ pub(all) struct PresentationPart {
   notes_sz : NotesSize?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn PresentationPart::equal(Self, Self) -> Bool
 pub fn PresentationPart::parse(FixedArray[Byte]) -> Self raise PptxError
 pub fn PresentationPart::serialize(Self) -> FixedArray[Byte] raise PptxError
 
@@ -212,6 +218,7 @@ pub(all) struct Section {
   title : String
   start : Int
 } derive(Eq, @debug.Debug)
+pub fn Section::equal(Self, Self) -> Bool
 
 pub struct SectionHeader {
 }
@@ -224,17 +231,20 @@ pub(all) struct SlideIdRef {
   id : Int64
   r_id : String
 } derive(Eq, @debug.Debug)
+pub fn SlideIdRef::equal(Self, Self) -> Bool
 
 pub(all) struct SlideMasterIdRef {
   id : Int64
   r_id : String
 } derive(Eq, @debug.Debug)
+pub fn SlideMasterIdRef::equal(Self, Self) -> Bool
 
 pub(all) struct SlideSize {
   cx : @units.Emu
   cy : @units.Emu
   size_type : String
 } derive(Eq, @debug.Debug)
+pub fn SlideSize::equal(Self, Self) -> Bool
 
 pub(all) enum SlideSizeKind {
   ScreenFourByThree
@@ -248,8 +258,10 @@ pub(all) enum SlideSizeKind {
   Custom(@units.Emu, @units.Emu)
 } derive(Eq, @debug.Debug)
 pub fn SlideSizeKind::dimensions(Self) -> (@units.Emu, @units.Emu)
+pub fn SlideSizeKind::equal(Self, Self) -> Bool
 pub fn SlideSizeKind::size_type(Self) -> String
 pub fn SlideSizeKind::to_slide_size(Self) -> SlideSize
+pub fn SlideSizeKind::to_string(Self) -> String
 pub impl Show for SlideSizeKind
 
 pub struct TitleAndContent {

@@ -537,7 +537,7 @@ fn XmlReader::resolve_attrs(
   raw : Array[(String, String)],
   scope : Map[String, String],
 ) -> Array[(QName, String)] raise XmlError {
-  let out : Array[(QName, String)] = Array::new(capacity=raw.length())
+  let out : Array[(QName, String)] = Array(capacity=raw.length())
   for kv in raw {
     let q = self.resolve_qname(kv.0, scope, is_attribute=true)
     out.push((q, kv.1))

@@ -14,6 +14,8 @@ pub(all) suberror ThemeError {
   XmlFailure(String, String)
   MalformedTheme(String)
 } derive(Eq, @debug.Debug)
+pub fn ThemeError::equal(Self, Self) -> Bool
+pub fn ThemeError::to_string(Self) -> String
 pub impl Show for ThemeError
 
 // Types and methods
@@ -33,6 +35,7 @@ pub(all) struct ColorScheme {
   fol_hlink : @oxml.Color
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ColorScheme::equal(Self, Self) -> Bool
 
 pub(all) struct FontCollection {
   latin : String
@@ -41,6 +44,7 @@ pub(all) struct FontCollection {
   scripts : Array[ScriptFont]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn FontCollection::equal(Self, Self) -> Bool
 pub fn FontCollection::typeface_for_script(Self, String) -> String
 
 pub(all) struct FontScheme {
@@ -49,12 +53,15 @@ pub(all) struct FontScheme {
   minor_font : FontCollection
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn FontScheme::equal(Self, Self) -> Bool
 pub fn FontScheme::resolve_typeface(Self, String) -> String
 
 pub(all) struct ScriptFont {
   script : String
   typeface : String
 } derive(Eq, @debug.Debug)
+pub fn ScriptFont::equal(Self, Self) -> Bool
+pub fn ScriptFont::to_string(Self) -> String
 pub impl Show for ScriptFont
 
 pub(all) enum ScriptSlot {
@@ -62,6 +69,7 @@ pub(all) enum ScriptSlot {
   EastAsianSlot
   ComplexScriptSlot
 } derive(Eq, @debug.Debug)
+pub fn ScriptSlot::equal(Self, Self) -> Bool
 pub fn ScriptSlot::of_script(String) -> Self
 
 pub(all) struct Theme {
@@ -70,6 +78,7 @@ pub(all) struct Theme {
   font_scheme : FontScheme
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Theme::equal(Self, Self) -> Bool
 pub fn Theme::parse(FixedArray[Byte]) -> Self raise ThemeError
 pub fn Theme::serialize(Self) -> FixedArray[Byte] raise ThemeError
 
@@ -81,6 +90,7 @@ pub(all) enum ThemeFontRef {
   MinorEastAsian
   MinorComplexScript
 } derive(Eq, @debug.Debug)
+pub fn ThemeFontRef::equal(Self, Self) -> Bool
 pub fn ThemeFontRef::from_xml(String) -> Self?
 pub fn ThemeFontRef::to_xml(Self) -> String
 

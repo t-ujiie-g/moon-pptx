@@ -20,6 +20,8 @@ pub(all) suberror SlideError {
   XmlFailure(String, String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+pub fn SlideError::equal(Self, Self) -> Bool
+pub fn SlideError::to_string(Self) -> String
 pub impl Show for SlideError
 
 // Types and methods
@@ -27,11 +29,13 @@ pub(all) enum AdjAngle {
   Literal(@units.Angle)
   GuideRef(String)
 } derive(Eq, @debug.Debug)
+pub fn AdjAngle::equal(Self, Self) -> Bool
 
 pub(all) enum AdjCoordinate {
   Literal(@units.Emu)
   GuideRef(String)
 } derive(Eq, @debug.Debug)
+pub fn AdjCoordinate::equal(Self, Self) -> Bool
 
 pub(all) enum Anchor {
   AnchorTop
@@ -40,6 +44,7 @@ pub(all) enum Anchor {
   AnchorJustify
   AnchorDistributed
 } derive(Eq, @debug.Debug)
+pub fn Anchor::equal(Self, Self) -> Bool
 pub fn Anchor::from_xml(String) -> Self?
 
 pub(all) enum AnimDirection {
@@ -48,6 +53,7 @@ pub(all) enum AnimDirection {
   Left
   Right
 } derive(Eq, @debug.Debug)
+pub fn AnimDirection::equal(Self, Self) -> Bool
 pub fn AnimDirection::to_filter(Self) -> String
 
 pub(all) enum AnimEffect {
@@ -56,11 +62,13 @@ pub(all) enum AnimEffect {
   Emphasis(EmphasisEffect)
   Motion(MotionPath)
 } derive(Eq, @debug.Debug)
+pub fn AnimEffect::equal(Self, Self) -> Bool
 
 pub(all) enum AnimOrientation {
   Horizontal
   Vertical
 } derive(Eq, @debug.Debug)
+pub fn AnimOrientation::equal(Self, Self) -> Bool
 pub fn AnimOrientation::to_filter(Self) -> String
 
 pub(all) enum AnimStart {
@@ -68,6 +76,7 @@ pub(all) enum AnimStart {
   WithPrevious
   AfterPrevious
 } derive(Eq, @debug.Debug)
+pub fn AnimStart::equal(Self, Self) -> Bool
 
 pub struct AnimStep {
   effect : AnimEffect
@@ -76,12 +85,14 @@ pub struct AnimStep {
   duration_ms : Int
   paragraph : Int?
 } derive(Eq, @debug.Debug)
+pub fn AnimStep::equal(Self, Self) -> Bool
 
 pub(all) enum AutoFit {
   NoAutoFit
   NormAutoFit(@units.Percentage, @units.Percentage)
   SpAutoFit
 } derive(Eq, @debug.Debug)
+pub fn AutoFit::equal(Self, Self) -> Bool
 
 pub(all) enum AutoNumType {
   ArabicPeriod
@@ -124,6 +135,7 @@ pub(all) enum AutoNumType {
   HindiNumParenR
   HindiAlpha1Period
 } derive(Eq, @debug.Debug)
+pub fn AutoNumType::equal(Self, Self) -> Bool
 pub fn AutoNumType::from_xml(String) -> Self?
 
 pub(all) struct AutoShape {
@@ -140,6 +152,7 @@ pub(all) struct AutoShape {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn AutoShape::ellipse(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
+pub fn AutoShape::equal(Self, Self) -> Bool
 pub fn AutoShape::of_preset(id~ : Int, name~ : String, PresetShape, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
 pub fn AutoShape::rect(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
 pub fn AutoShape::round_rect(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
@@ -159,6 +172,7 @@ pub(all) enum Background {
   Properties(BackgroundProperties)
   StyleReference(Int, @oxml.Color)
 } derive(Eq, @debug.Debug)
+pub fn Background::equal(Self, Self) -> Bool
 
 pub struct BackgroundProperties {
   fill : @oxml.Fill?
@@ -166,6 +180,7 @@ pub struct BackgroundProperties {
   effects : @oxml.EffectList?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn BackgroundProperties::equal(Self, Self) -> Bool
 pub fn BackgroundProperties::of_fill(@oxml.Fill) -> Self
 
 pub struct BodyProperties {
@@ -181,6 +196,7 @@ pub struct BodyProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn BodyProperties::default() -> Self
+pub fn BodyProperties::equal(Self, Self) -> Bool
 
 pub(all) enum Bullet {
   BulNone
@@ -188,24 +204,28 @@ pub(all) enum Bullet {
   AutoNum(AutoNumType, Int)
   Picture(String)
 } derive(Eq, @debug.Debug)
+pub fn Bullet::equal(Self, Self) -> Bool
 
 pub(all) enum CapsKind {
   CapsNone
   CapsSmall
   CapsAll
 } derive(Eq, @debug.Debug)
+pub fn CapsKind::equal(Self, Self) -> Bool
 pub fn CapsKind::from_xml(String) -> Self?
 
 pub(all) struct ConnectionEnd {
   shape_id : Int
   idx : Int
 } derive(Eq, @debug.Debug)
+pub fn ConnectionEnd::equal(Self, Self) -> Bool
 
 pub(all) struct ConnectionSite {
   ang : AdjAngle
   pos : PathPoint
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ConnectionSite::equal(Self, Self) -> Bool
 
 pub(all) struct Connector {
   id : Int
@@ -219,6 +239,7 @@ pub(all) struct Connector {
   hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Connector::equal(Self, Self) -> Bool
 pub fn Connector::with_hyperlink(Self, url~ : String) -> Self
 pub fn Connector::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
 
@@ -230,17 +251,20 @@ pub(all) struct CustomGeometry {
   paths : Array[Path]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn CustomGeometry::equal(Self, Self) -> Bool
 
 pub(all) enum DateMode {
   Auto
   Fixed(String)
 } derive(Eq, @debug.Debug)
+pub fn DateMode::equal(Self, Self) -> Bool
 
 pub(all) enum EmphasisEffect {
   Spin(Int)
   GrowShrink(Int)
   ChangeFillColor(@units.RgbColor)
 } derive(Eq, @debug.Debug)
+pub fn EmphasisEffect::equal(Self, Self) -> Bool
 pub fn EmphasisEffect::preset_id(Self) -> Int
 
 pub(all) struct Field {
@@ -250,6 +274,7 @@ pub(all) struct Field {
   text : String
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Field::equal(Self, Self) -> Bool
 
 pub(all) struct GeomRect {
   l : AdjCoordinate
@@ -257,11 +282,13 @@ pub(all) struct GeomRect {
   r : AdjCoordinate
   b : AdjCoordinate
 } derive(Eq, @debug.Debug)
+pub fn GeomRect::equal(Self, Self) -> Bool
 
 pub(all) enum Geometry {
   Preset(PresetShape, Array[ShapeAdjustValue])
   Custom(CustomGeometry)
 } derive(Eq, @debug.Debug)
+pub fn Geometry::equal(Self, Self) -> Bool
 
 pub(all) struct GraphicFrame {
   id : Int
@@ -271,6 +298,7 @@ pub(all) struct GraphicFrame {
   hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn GraphicFrame::equal(Self, Self) -> Bool
 pub fn GraphicFrame::of_chart_ex_ref(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu, String) -> Self
 pub fn GraphicFrame::of_chart_ref(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu, String) -> Self
 pub fn GraphicFrame::of_diagram_ref(id~ : Int, name~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu, dm~ : String, lo~ : String, qs~ : String, cs~ : String) -> Self
@@ -284,6 +312,7 @@ pub(all) enum GraphicFrameContent {
   ChartExContent(String)
   OtherGraphic(String, @xml.XmlElement)
 } derive(Eq, @debug.Debug)
+pub fn GraphicFrameContent::equal(Self, Self) -> Bool
 
 pub(all) struct GroupShape {
   id : Int
@@ -295,6 +324,7 @@ pub(all) struct GroupShape {
   hyperlink : ShapeHyperlink?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn GroupShape::equal(Self, Self) -> Bool
 pub fn GroupShape::with_flip(Self, h? : Bool, v? : Bool) -> Self
 pub fn GroupShape::with_hyperlink(Self, url~ : String) -> Self
 pub fn GroupShape::with_hyperlink_to_slide(Self, slide_idx~ : Int) -> Self
@@ -304,6 +334,8 @@ pub(all) enum HyperlinkTarget {
   ExternalUrl(String)
   InternalSlide(Int)
 } derive(Eq, @debug.Debug)
+pub fn HyperlinkTarget::equal(Self, Self) -> Bool
+pub fn HyperlinkTarget::to_string(Self) -> String
 pub impl Show for HyperlinkTarget
 
 pub struct ListStyle {
@@ -312,17 +344,20 @@ pub struct ListStyle {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ListStyle::empty() -> Self
+pub fn ListStyle::equal(Self, Self) -> Bool
 
 pub(all) struct MediaInfo {
   kind : MediaKind
   link_id : String
   embed_id : String
 } derive(Eq, @debug.Debug)
+pub fn MediaInfo::equal(Self, Self) -> Bool
 
 pub(all) enum MediaKind {
   Video
   Audio
 } derive(Eq, @debug.Debug)
+pub fn MediaKind::equal(Self, Self) -> Bool
 
 pub(all) enum MotionCommand {
   MoveTo(MotionPoint)
@@ -330,12 +365,14 @@ pub(all) enum MotionCommand {
   CurveTo(MotionPoint, MotionPoint, MotionPoint)
   Close
 } derive(Eq, @debug.Debug)
+pub fn MotionCommand::equal(Self, Self) -> Bool
 
 pub struct MotionPath {
   commands : Array[MotionCommand]
 } derive(Eq, @debug.Debug)
 pub fn MotionPath::close(Self) -> Self
 pub fn MotionPath::curve_to(Self, Double, Double, Double, Double, Double, Double) -> Self
+pub fn MotionPath::equal(Self, Self) -> Bool
 pub fn MotionPath::line(Double, Double) -> Self
 pub fn MotionPath::line_to(Self, Double, Double) -> Self
 pub fn MotionPath::move_to(Self, Double, Double) -> Self
@@ -346,6 +383,7 @@ pub(all) struct MotionPoint {
   x : Double
   y : Double
 } derive(Eq, @debug.Debug)
+pub fn MotionPoint::equal(Self, Self) -> Bool
 
 pub(all) struct Paragraph {
   properties : ParagraphProperties
@@ -353,6 +391,7 @@ pub(all) struct Paragraph {
   end_run_properties : RunProperties?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Paragraph::equal(Self, Self) -> Bool
 pub fn Paragraph::of_styled_text(String, RunProperties) -> Self
 pub fn Paragraph::of_text(String) -> Self
 pub fn Paragraph::plain_text(Self) -> String
@@ -369,6 +408,7 @@ pub(all) enum ParagraphContent {
   Break(RunProperties)
   FieldContent(Field)
 } derive(Eq, @debug.Debug)
+pub fn ParagraphContent::equal(Self, Self) -> Bool
 
 pub(all) struct ParagraphProperties {
   level : Int
@@ -383,6 +423,7 @@ pub(all) struct ParagraphProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn ParagraphProperties::default() -> Self
+pub fn ParagraphProperties::equal(Self, Self) -> Bool
 
 pub(all) struct Path {
   w : @units.Emu
@@ -393,6 +434,7 @@ pub(all) struct Path {
   commands : Array[PathCommand]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Path::equal(Self, Self) -> Bool
 
 pub(all) enum PathCommand {
   MoveTo(PathPoint)
@@ -402,6 +444,7 @@ pub(all) enum PathCommand {
   ArcTo(AdjCoordinate, AdjCoordinate, AdjAngle, AdjAngle)
   Close
 } derive(Eq, @debug.Debug)
+pub fn PathCommand::equal(Self, Self) -> Bool
 
 pub(all) enum PathFillMode {
   PathFillNone
@@ -411,6 +454,7 @@ pub(all) enum PathFillMode {
   PathFillDarken
   PathFillDarkenLess
 } derive(Eq, @debug.Debug)
+pub fn PathFillMode::equal(Self, Self) -> Bool
 pub fn PathFillMode::from_xml(String) -> Self
 pub fn PathFillMode::to_xml(Self) -> String
 
@@ -418,6 +462,7 @@ pub(all) struct PathPoint {
   x : AdjCoordinate
   y : AdjCoordinate
 } derive(Eq, @debug.Debug)
+pub fn PathPoint::equal(Self, Self) -> Bool
 
 pub(all) struct Picture {
   id : Int
@@ -432,6 +477,7 @@ pub(all) struct Picture {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn Picture::builder(id~ : Int, name~ : String, String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> PictureUncropped
+pub fn Picture::equal(Self, Self) -> Bool
 pub fn Picture::of_image(id~ : Int, name~ : String, String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
 pub fn Picture::of_media(id~ : Int, name~ : String, MediaKind, link_id~ : String, media_embed_id~ : String, poster_embed_id~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
 pub fn Picture::of_svg_image(id~ : Int, name~ : String, png_embed_id~ : String, svg_embed_id~ : String, x~ : @units.Emu, y~ : @units.Emu, cx~ : @units.Emu, cy~ : @units.Emu) -> Self
@@ -463,6 +509,7 @@ pub(all) struct Placeholder {
   ph_type : String
   idx : Int
 } derive(Eq, @debug.Debug)
+pub fn Placeholder::equal(Self, Self) -> Bool
 pub fn Placeholder::kind(Self) -> PlaceholderType
 
 pub(all) enum PlaceholderType {
@@ -484,6 +531,7 @@ pub(all) enum PlaceholderType {
   Pic
   Other(String)
 } derive(Eq, @debug.Debug)
+pub fn PlaceholderType::equal(Self, Self) -> Bool
 pub fn PlaceholderType::from_xml(String) -> Self
 pub fn PlaceholderType::to_xml(Self) -> String
 
@@ -491,6 +539,7 @@ pub(all) struct Point {
   x : @units.Emu
   y : @units.Emu
 } derive(Eq, @debug.Debug)
+pub fn Point::equal(Self, Self) -> Bool
 
 pub(all) enum PresetShape {
   Line
@@ -680,6 +729,7 @@ pub(all) enum PresetShape {
   ChartStar
   ChartPlus
 } derive(Eq, @debug.Debug)
+pub fn PresetShape::equal(Self, Self) -> Bool
 pub fn PresetShape::from_xml(String) -> Self raise SlideError
 pub fn PresetShape::to_xml(Self) -> String
 
@@ -688,12 +738,14 @@ pub struct ResolvedFonts {
   east_asian : String
   complex_script : String
 } derive(Eq, @debug.Debug)
+pub fn ResolvedFonts::equal(Self, Self) -> Bool
 
 pub(all) struct Run {
   properties : RunProperties
   text : String
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Run::equal(Self, Self) -> Bool
 
 pub(all) struct RunProperties {
   lang : String
@@ -720,6 +772,7 @@ pub(all) struct RunProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn RunProperties::default() -> Self
+pub fn RunProperties::equal(Self, Self) -> Bool
 pub fn RunProperties::with_bold(Self) -> Self
 pub fn RunProperties::with_character_spacing(Self, @units.Pt) -> Self
 pub fn RunProperties::with_color(Self, @units.RgbColor) -> Self
@@ -745,6 +798,7 @@ pub(all) enum Shape {
   GraphicFrame(GraphicFrame)
   Unknown(@xml.XmlElement)
 } derive(Eq, @debug.Debug)
+pub fn Shape::equal(Self, Self) -> Bool
 pub fn Shape::id(Self) -> Int?
 pub fn Shape::name(Self) -> String?
 pub fn Shape::with_id(Self, Int) -> Self
@@ -753,12 +807,14 @@ pub(all) struct ShapeAdjustValue {
   name : String
   fmla : String
 } derive(Eq, @debug.Debug)
+pub fn ShapeAdjustValue::equal(Self, Self) -> Bool
 
 pub(all) struct ShapeHyperlink {
   target : HyperlinkTarget?
   click : String?
   action : String?
 } derive(Eq, @debug.Debug)
+pub fn ShapeHyperlink::equal(Self, Self) -> Bool
 pub fn ShapeHyperlink::external(String) -> Self
 pub fn ShapeHyperlink::to_slide(Int) -> Self
 
@@ -766,6 +822,7 @@ pub(all) struct Size {
   cx : @units.Emu
   cy : @units.Emu
 } derive(Eq, @debug.Debug)
+pub fn Size::equal(Self, Self) -> Bool
 
 pub(all) struct Slide {
   name : String
@@ -778,6 +835,7 @@ pub(all) struct Slide {
 } derive(Eq, @debug.Debug)
 pub fn Slide::body(Self) -> Shape?
 pub fn Slide::duplicate_shape_ids(Self) -> Array[Int]
+pub fn Slide::equal(Self, Self) -> Bool
 pub fn Slide::map_shapes(Self, (Shape) -> Shape) -> Self
 pub fn Slide::next_shape_id(Self) -> Int
 pub fn Slide::parse(FixedArray[Byte]) -> Self raise SlideError
@@ -811,6 +869,7 @@ pub(all) enum StrikeKind {
   StSingle
   StDouble
 } derive(Eq, @debug.Debug)
+pub fn StrikeKind::equal(Self, Self) -> Bool
 pub fn StrikeKind::from_xml(String) -> Self?
 
 pub(all) struct Table {
@@ -819,6 +878,7 @@ pub(all) struct Table {
   rows : Array[TableRow]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn Table::equal(Self, Self) -> Bool
 pub fn Table::of_grid(rows~ : Int, cols~ : Int, col_width~ : @units.Emu, row_height~ : @units.Emu) -> Self
 pub fn Table::of_rows(Array[TableRow], col_widths~ : Array[@units.Emu]) -> Self
 pub fn Table::with_style(Self, TableStylePreset, first_row? : Bool, band_row? : Bool) -> Self
@@ -833,6 +893,7 @@ pub(all) struct TableCell {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TableCell::empty() -> Self
+pub fn TableCell::equal(Self, Self) -> Bool
 pub fn TableCell::h_merge_covered() -> Self
 pub fn TableCell::hv_merge_covered() -> Self
 pub fn TableCell::merged_origin(String, grid_span? : Int, row_span? : Int) -> Self
@@ -857,6 +918,7 @@ pub struct TableCellProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TableCellProperties::default() -> Self
+pub fn TableCellProperties::equal(Self, Self) -> Bool
 pub fn TableCellProperties::with_anchor(Self, Anchor) -> Self
 pub fn TableCellProperties::with_border_all(Self, @oxml.Stroke) -> Self
 pub fn TableCellProperties::with_border_bottom(Self, @oxml.Stroke) -> Self
@@ -880,6 +942,7 @@ pub(all) struct TableProperties {
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
 pub fn TableProperties::default() -> Self
+pub fn TableProperties::equal(Self, Self) -> Bool
 pub fn TableProperties::with_style(Self, TableStylePreset) -> Self
 
 pub struct TableRow {
@@ -887,6 +950,7 @@ pub struct TableRow {
   cells : Array[TableCell]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn TableRow::equal(Self, Self) -> Bool
 pub fn TableRow::of_cells(Array[TableCell], height~ : @units.Emu) -> Self
 
 pub(all) enum TableStylePreset {
@@ -965,6 +1029,7 @@ pub(all) enum TableStylePreset {
   DarkStyle2Accent3And4
   DarkStyle2Accent5And6
 } derive(Eq, @debug.Debug)
+pub fn TableStylePreset::equal(Self, Self) -> Bool
 pub fn TableStylePreset::guid(Self) -> String
 
 pub(all) enum TextAlignment {
@@ -976,6 +1041,7 @@ pub(all) enum TextAlignment {
   AlignDistributed
   AlignThaiDistributed
 } derive(Eq, @debug.Debug)
+pub fn TextAlignment::equal(Self, Self) -> Bool
 pub fn TextAlignment::from_xml(String) -> Self?
 
 pub(all) struct TextBody {
@@ -984,6 +1050,7 @@ pub(all) struct TextBody {
   paragraphs : Array[Paragraph]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn TextBody::equal(Self, Self) -> Bool
 pub fn TextBody::of_paragraphs(Array[Paragraph]) -> Self
 pub fn TextBody::of_styled_text(String, RunProperties) -> Self
 pub fn TextBody::of_text(String) -> Self
@@ -993,11 +1060,13 @@ pub(all) enum TextSpacing {
   Percent(@units.Percentage)
   Points(@units.Pt)
 } derive(Eq, @debug.Debug)
+pub fn TextSpacing::equal(Self, Self) -> Bool
 
 pub struct Timeline {
   steps : Array[AnimStep]
 } derive(Eq, @debug.Debug)
 pub fn Timeline::after_previous(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
+pub fn Timeline::equal(Self, Self) -> Bool
 pub fn Timeline::new() -> Self
 pub fn Timeline::on_click(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
 pub fn Timeline::with_previous(Self, AnimEffect, Int, paragraph? : Int, duration_ms? : Int) -> Self
@@ -1009,6 +1078,7 @@ pub struct Transform {
   flip_h : Bool
   flip_v : Bool
 } derive(Eq, @debug.Debug)
+pub fn Transform::equal(Self, Self) -> Bool
 pub fn Transform::new(offset~ : Point, extent~ : Size, rotation? : @units.Angle?, flip_h? : Bool, flip_v? : Bool) -> Self
 pub fn Transform::with_flip(Self, h? : Bool, v? : Bool) -> Self
 pub fn Transform::with_rotation(Self, @units.Angle) -> Self
@@ -1023,6 +1093,7 @@ pub struct Transition {
 pub fn Transition::cover(TransitionDirection) -> Self
 pub fn Transition::cut(through_black? : Bool) -> Self
 pub fn Transition::dissolve() -> Self
+pub fn Transition::equal(Self, Self) -> Bool
 pub fn Transition::fade(through_black? : Bool) -> Self
 pub fn Transition::none() -> Self
 pub fn Transition::of_kind(TransitionKind) -> Self
@@ -1041,6 +1112,7 @@ pub(all) enum TransitionCorner {
   LeftDown
   RightDown
 } derive(Eq, @debug.Debug)
+pub fn TransitionCorner::equal(Self, Self) -> Bool
 pub fn TransitionCorner::from_xml(String) -> Self
 pub fn TransitionCorner::to_xml(Self) -> String
 
@@ -1054,6 +1126,7 @@ pub(all) enum TransitionDirection {
   LeftDown
   RightDown
 } derive(Eq, @debug.Debug)
+pub fn TransitionDirection::equal(Self, Self) -> Bool
 pub fn TransitionDirection::from_xml(String) -> Self
 pub fn TransitionDirection::to_xml(Self) -> String
 
@@ -1061,6 +1134,7 @@ pub(all) enum TransitionInOut {
   In
   Out
 } derive(Eq, @debug.Debug)
+pub fn TransitionInOut::equal(Self, Self) -> Bool
 pub fn TransitionInOut::from_xml(String) -> Self
 pub fn TransitionInOut::to_xml(Self) -> String
 
@@ -1088,11 +1162,13 @@ pub(all) enum TransitionKind {
   Wipe(TransitionSide)
   Zoom(TransitionInOut)
 } derive(Eq, @debug.Debug)
+pub fn TransitionKind::equal(Self, Self) -> Bool
 
 pub(all) enum TransitionOrientation {
   Horizontal
   Vertical
 } derive(Eq, @debug.Debug)
+pub fn TransitionOrientation::equal(Self, Self) -> Bool
 pub fn TransitionOrientation::from_xml(String) -> Self
 pub fn TransitionOrientation::to_xml(Self) -> String
 
@@ -1102,6 +1178,7 @@ pub(all) enum TransitionSide {
   Right
   Down
 } derive(Eq, @debug.Debug)
+pub fn TransitionSide::equal(Self, Self) -> Bool
 pub fn TransitionSide::from_xml(String) -> Self
 pub fn TransitionSide::to_xml(Self) -> String
 
@@ -1110,6 +1187,7 @@ pub(all) enum TransitionSpeed {
   Medium
   Fast
 } derive(Eq, @debug.Debug)
+pub fn TransitionSpeed::equal(Self, Self) -> Bool
 pub fn TransitionSpeed::from_xml(String) -> Self
 pub fn TransitionSpeed::to_xml(Self) -> String
 
@@ -1133,6 +1211,7 @@ pub(all) enum UnderlineKind {
   UlWavyHeavy
   UlWavyDouble
 } derive(Eq, @debug.Debug)
+pub fn UnderlineKind::equal(Self, Self) -> Bool
 pub fn UnderlineKind::from_xml(String) -> Self?
 
 pub(all) enum VerticalText {
@@ -1144,6 +1223,7 @@ pub(all) enum VerticalText {
   VertMongolianVert
   VertWordArtVertRtl
 } derive(Eq, @debug.Debug)
+pub fn VerticalText::equal(Self, Self) -> Bool
 pub fn VerticalText::from_xml(String) -> Self?
 
 pub(all) enum VisualEffect {
@@ -1157,6 +1237,7 @@ pub(all) enum VisualEffect {
   Wedge
   Wheel(Int)
 } derive(Eq, @debug.Debug)
+pub fn VisualEffect::equal(Self, Self) -> Bool
 pub fn VisualEffect::filter(Self) -> String?
 pub fn VisualEffect::fly_direction(Self) -> AnimDirection?
 pub fn VisualEffect::preset_id(Self) -> Int
@@ -1165,6 +1246,7 @@ pub(all) enum WrapKind {
   WrapNone
   WrapSquare
 } derive(Eq, @debug.Debug)
+pub fn WrapKind::equal(Self, Self) -> Bool
 pub fn WrapKind::from_xml(String) -> Self?
 
 // Type aliases
