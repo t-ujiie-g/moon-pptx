@@ -105,6 +105,7 @@ pub(all) enum PresetShape {
   QuadArrow
   LeftRightUpArrow
   LeftUpArrow
+  BentUpArrow
   BentArrow
   UturnArrow
   CircularArrow
@@ -299,6 +300,7 @@ pub fn PresetShape::from_xml(s : String) -> PresetShape raise SlideError {
     "quadArrow" => QuadArrow
     "leftRightUpArrow" => LeftRightUpArrow
     "leftUpArrow" => LeftUpArrow
+    "bentUpArrow" => BentUpArrow
     "bentArrow" => BentArrow
     "uturnArrow" => UturnArrow
     "circularArrow" => CircularArrow
@@ -493,6 +495,7 @@ pub fn PresetShape::to_xml(self : PresetShape) -> String {
     QuadArrow => "quadArrow"
     LeftRightUpArrow => "leftRightUpArrow"
     LeftUpArrow => "leftUpArrow"
+    BentUpArrow => "bentUpArrow"
     BentArrow => "bentArrow"
     UturnArrow => "uturnArrow"
     CircularArrow => "circularArrow"

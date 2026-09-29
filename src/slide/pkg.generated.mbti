@@ -600,6 +600,7 @@ pub(all) enum PresetShape {
   QuadArrow
   LeftRightUpArrow
   LeftUpArrow
+  BentUpArrow
   BentArrow
   UturnArrow
   CircularArrow

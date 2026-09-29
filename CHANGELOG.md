@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not always exactly `n` in a `Double`, so a value read from a file could
   be written back one unit short — `stAng="59"` came out as `58`, about
   one angle in 26. They now round to the nearest unit.
+- **`PresetShape::BentUpArrow`** (#35). `bentUpArrow` was the one
+  `ST_ShapeType` value missing, so it could be neither written nor read
+  back — `PresetShape::from_xml("bentUpArrow")` raised. All 187 values
+  are now present, and a test pins the full list. A downstream `match`
+  over `PresetShape` without a wildcard arm needs the new case.
 
 ### Changed
 
