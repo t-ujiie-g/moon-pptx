@@ -56,6 +56,71 @@ test "PresetShape: round-trip every variant via to_xml -> from_xml" {
 }
 
 ///|
+test "PresetShape covers every ST_ShapeType value" {
+  let names = [
+    "line", "lineInv", "rect", "roundRect", "round1Rect", "round2SameRect", "round2DiagRect",
+    "snipRoundRect", "snip1Rect", "snip2SameRect", "snip2DiagRect", "plaque", "frame",
+    "halfFrame", "corner", "diagStripe", "triangle", "rtTriangle", "parallelogram",
+    "trapezoid", "nonIsoscelesTrapezoid", "diamond", "pentagon", "hexagon", "heptagon",
+    "octagon", "decagon", "dodecagon", "star4", "star5", "star6", "star7", "star8",
+    "star10", "star12", "star16", "star24", "star32", "irregularSeal1", "irregularSeal2",
+    "ellipse", "teardrop", "pie", "pieWedge", "arc", "chord", "blockArc", "donut",
+    "noSmoking", "rightArrow", "leftArrow", "upArrow", "downArrow", "leftRightArrow",
+    "upDownArrow", "quadArrow", "leftRightUpArrow", "leftUpArrow", "bentUpArrow",
+    "bentArrow", "uturnArrow", "circularArrow", "leftCircularArrow", "leftRightCircularArrow",
+    "curvedRightArrow", "curvedLeftArrow", "curvedUpArrow", "curvedDownArrow", "stripedRightArrow",
+    "notchedRightArrow", "swooshArrow", "homePlate", "chevron", "leftArrowCallout",
+    "rightArrowCallout", "upArrowCallout", "downArrowCallout", "leftRightArrowCallout",
+    "upDownArrowCallout", "quadArrowCallout", "cube", "can", "bevel", "lightningBolt",
+    "heart", "sun", "moon", "smileyFace", "foldedCorner", "cloud", "leftBracket",
+    "rightBracket", "leftBrace", "rightBrace", "bracketPair", "bracePair", "straightConnector1",
+    "bentConnector2", "bentConnector3", "bentConnector4", "bentConnector5", "curvedConnector2",
+    "curvedConnector3", "curvedConnector4", "curvedConnector5", "callout1", "callout2",
+    "callout3", "accentCallout1", "accentCallout2", "accentCallout3", "borderCallout1",
+    "borderCallout2", "borderCallout3", "accentBorderCallout1", "accentBorderCallout2",
+    "accentBorderCallout3", "wedgeRectCallout", "wedgeRoundRectCallout", "wedgeEllipseCallout",
+    "cloudCallout", "ribbon", "ribbon2", "ellipseRibbon", "ellipseRibbon2", "leftRightRibbon",
+    "verticalScroll", "horizontalScroll", "wave", "doubleWave", "plus", "flowChartProcess",
+    "flowChartDecision", "flowChartInputOutput", "flowChartPredefinedProcess", "flowChartInternalStorage",
+    "flowChartDocument", "flowChartMultidocument", "flowChartTerminator", "flowChartPreparation",
+    "flowChartManualInput", "flowChartManualOperation", "flowChartConnector", "flowChartPunchedCard",
+    "flowChartPunchedTape", "flowChartSummingJunction", "flowChartOr", "flowChartCollate",
+    "flowChartSort", "flowChartExtract", "flowChartMerge", "flowChartOfflineStorage",
+    "flowChartOnlineStorage", "flowChartMagneticTape", "flowChartMagneticDisk", "flowChartMagneticDrum",
+    "flowChartDisplay", "flowChartDelay", "flowChartAlternateProcess", "flowChartOffpageConnector",
+    "actionButtonBlank", "actionButtonHome", "actionButtonHelp", "actionButtonInformation",
+    "actionButtonForwardNext", "actionButtonBackPrevious", "actionButtonEnd", "actionButtonBeginning",
+    "actionButtonReturn", "actionButtonDocument", "actionButtonSound", "actionButtonMovie",
+    "mathPlus", "mathMinus", "mathMultiply", "mathDivide", "mathEqual", "mathNotEqual",
+    "gear6", "gear9", "funnel", "cornerTabs", "squareTabs", "plaqueTabs", "chartX",
+    "chartStar", "chartPlus",
+  ]
+  assert_eq(names.length(), 187)
+  for name in names {
+    assert_eq(@slide.PresetShape::from_xml(name).to_xml(), name)
+  }
+}
+
+///|
+test "PresetShape: bentUpArrow parses and round-trips with its adjust values" {
+  let body = "<a:prstGeom prst=\"bentUpArrow\">" +
+    "<a:avLst>" +
+    "<a:gd name=\"adj1\" fmla=\"val 25000\"/>" +
+    "<a:gd name=\"adj2\" fmla=\"val 25000\"/>" +
+    "<a:gd name=\"adj3\" fmla=\"val 25000\"/>" +
+    "</a:avLst>" +
+    "</a:prstGeom>"
+  let slide = @slide.Slide::parse(slide_with_sp_pr(body))
+  match @slide.Slide::parse(slide.serialize()).shapes[0] {
+    AutoShape({ geometry: Some(Preset(kind, adj)), .. }) => {
+      assert_true(kind is @slide.PresetShape::BentUpArrow)
+      assert_eq(adj.map(a => a.name), ["adj1", "adj2", "adj3"])
+    }
+    _ => fail("expected a preset AutoShape")
+  }
+}
+
+///|
 test "PresetShape::from_xml: unknown value rejected" {
   try @slide.PresetShape::from_xml("notashape") catch {
     @slide.SlideError::Malformed(_) => ()
