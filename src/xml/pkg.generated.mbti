@@ -15,6 +15,8 @@ pub(all) suberror XmlError {
   UnboundPrefix(String)
   WriterMisuse(String)
 } derive(Eq, @debug.Debug)
+pub fn XmlError::equal(Self, Self) -> Bool
+pub fn XmlError::to_string(Self) -> String
 pub impl Show for XmlError
 
 // Types and methods
@@ -22,8 +24,11 @@ pub struct QName {
   uri : String
   local_name : String
 } derive(Eq, Hash, @debug.Debug)
+pub fn QName::equal(Self, Self) -> Bool
+pub fn QName::hash(Self) -> Int
 pub fn QName::is_qualified(Self) -> Bool
 pub fn QName::new(String, String) -> Self
+pub fn QName::to_string(Self) -> String
 pub fn QName::unqualified(String) -> Self
 pub impl Show for QName
 
@@ -32,7 +37,9 @@ pub(all) struct XmlElement {
   attributes : Array[(QName, String)]
   children : Array[XmlNode]
 } derive(Eq, @debug.Debug)
+pub fn XmlElement::equal(Self, Self) -> Bool
 pub fn XmlElement::new(QName, Array[(QName, String)], Array[XmlNode]) -> Self
+pub fn XmlElement::to_string(Self) -> String
 pub impl Show for XmlElement
 
 pub(all) enum XmlEvent {
@@ -41,6 +48,7 @@ pub(all) enum XmlEvent {
   Text(String)
   CData(String)
 } derive(@debug.Debug)
+pub fn XmlEvent::to_string(Self) -> String
 pub impl Show for XmlEvent
 
 pub(all) enum XmlNode {
@@ -48,6 +56,8 @@ pub(all) enum XmlNode {
   Text(String)
   CData(String)
 } derive(Eq, @debug.Debug)
+pub fn XmlNode::equal(Self, Self) -> Bool
+pub fn XmlNode::to_string(Self) -> String
 pub impl Show for XmlNode
 
 pub struct XmlReader {

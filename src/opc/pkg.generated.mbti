@@ -88,6 +88,8 @@ pub(all) suberror OpcError {
   MalformedPackage(String)
   PartNotFound(String)
 } derive(Eq, @debug.Debug)
+pub fn OpcError::equal(Self, Self) -> Bool
+pub fn OpcError::to_string(Self) -> String
 pub impl Show for OpcError
 
 // Types and methods
@@ -96,6 +98,7 @@ pub struct ContentTypes {
   overrides : Array[(String, String)]
 } derive(Eq, @debug.Debug)
 pub fn ContentTypes::clone(Self) -> Self
+pub fn ContentTypes::equal(Self, Self) -> Bool
 pub fn ContentTypes::new() -> Self
 pub fn ContentTypes::parse(FixedArray[Byte]) -> Self raise OpcError
 pub fn ContentTypes::resolve(Self, String) -> String?
@@ -132,6 +135,7 @@ pub struct Part {
 pub fn Part::clone(Self) -> Self
 pub fn Part::new(String, String, FixedArray[Byte]) -> Self raise OpcError
 pub fn Part::text(Self) -> String raise OpcError
+pub fn Part::to_string(Self) -> String
 pub impl Show for Part
 
 pub(all) struct Relationship {
@@ -140,6 +144,8 @@ pub(all) struct Relationship {
   target : String
   target_mode : TargetMode
 } derive(Eq, @debug.Debug)
+pub fn Relationship::equal(Self, Self) -> Bool
+pub fn Relationship::to_string(Self) -> String
 pub impl Show for Relationship
 
 pub(all) struct Relationships {
@@ -157,6 +163,7 @@ pub(all) enum TargetMode {
   Internal
   External
 } derive(Eq, @debug.Debug)
+pub fn TargetMode::equal(Self, Self) -> Bool
 
 // Type aliases
 

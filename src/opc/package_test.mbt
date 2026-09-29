@@ -21,7 +21,7 @@ fn minimal_content_types_xml() -> String {
 /// Pack a list of `(zip-name, text)` entries; always inserts a valid
 /// `[Content_Types].xml` first unless the caller already supplied one.
 fn make_pkg_bytes(entries : Array[(String, String)]) -> FixedArray[Byte] {
-  let raw : Array[(String, FixedArray[Byte])] = Array::new(
+  let raw : Array[(String, FixedArray[Byte])] = Array(
     capacity=entries.length() + 1,
   )
   let mut has_ct = false

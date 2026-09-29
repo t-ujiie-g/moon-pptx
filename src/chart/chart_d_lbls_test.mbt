@@ -21,7 +21,7 @@ fn fixture_d_lbls_bar_chart_xml(d_lbls_body : String) -> FixedArray[Byte] {
 }
 
 ///|
-fn unwrap_bar_d_lbls(chart : @chart.Chart) -> DLbls {
+fn unwrap_bar_d_lbls(chart : @chart.Chart) -> @chart.DLbls {
   match chart.chart.plot_area.plots[0] {
     BarChart(b) => b.d_lbls.unwrap()
     _ => abort("expected BarChart")

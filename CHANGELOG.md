@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Trait methods are promoted explicitly.** MoonBit is removing the
+  implicit promotion of trait-impl methods to regular methods, so each
+  package now declares them in an `extends.mbt`. `equal`, `compare`,
+  `hash` and `to_string` stay callable as methods (`x.to_string()`) and
+  now appear in the `.mbti`. The redundant ones — `not_equal`, `op_lt` /
+  `op_le` / `op_gt` / `op_ge`, `hash_combine`, `output`, `to_repr`, and
+  the typed-layout capability methods (`layout_type`, `placeholders`,
+  `title_spec`, `subtitle_spec`, `body_spec`) — are deprecated as method
+  calls; use the operators or the trait-qualified form (`Show::output(x,
+  logger)`) instead. The trait impls themselves are unchanged.
+
 ## [0.10.0] — 2026-09-06
 
 ### Added

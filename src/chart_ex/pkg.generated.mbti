@@ -13,6 +13,8 @@ pub(all) suberror ChartExError {
   XmlFailure(String, String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+pub fn ChartExError::equal(Self, Self) -> Bool
+pub fn ChartExError::to_string(Self) -> String
 pub impl Show for ChartExError
 
 // Types and methods
@@ -21,8 +23,10 @@ pub(all) struct ChartEx {
   chart : ChartExBody
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartEx::equal(Self, Self) -> Bool
 pub fn ChartEx::parse(FixedArray[Byte]) -> Self raise ChartExError
 pub fn ChartEx::serialize(Self) -> FixedArray[Byte] raise ChartExError
+pub fn ChartEx::to_string(Self) -> String
 pub impl Show for ChartEx
 
 pub(all) struct ChartExBody {
@@ -31,6 +35,8 @@ pub(all) struct ChartExBody {
   legend : @xml.XmlElement?
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartExBody::equal(Self, Self) -> Bool
+pub fn ChartExBody::to_string(Self) -> String
 pub impl Show for ChartExBody
 
 pub(all) enum ChartExKind {
@@ -45,7 +51,9 @@ pub(all) enum ChartExKind {
   Histogram
   Other(String)
 } derive(Eq, @debug.Debug)
+pub fn ChartExKind::equal(Self, Self) -> Bool
 pub fn ChartExKind::from_xml(String) -> Self
+pub fn ChartExKind::to_string(Self) -> String
 pub fn ChartExKind::to_xml(Self) -> String
 pub impl Show for ChartExKind
 
@@ -54,6 +62,8 @@ pub(all) struct ChartExPlotArea {
   axes : Array[@xml.XmlElement]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartExPlotArea::equal(Self, Self) -> Bool
+pub fn ChartExPlotArea::to_string(Self) -> String
 pub impl Show for ChartExPlotArea
 
 pub(all) struct ChartExPlotAreaRegion {
@@ -61,6 +71,8 @@ pub(all) struct ChartExPlotAreaRegion {
   series : Array[ChartExSeries]
   extension : Array[@xml.XmlElement]
 } derive(Eq, @debug.Debug)
+pub fn ChartExPlotAreaRegion::equal(Self, Self) -> Bool
+pub fn ChartExPlotAreaRegion::to_string(Self) -> String
 pub impl Show for ChartExPlotAreaRegion
 
 pub(all) struct ChartExSeries {
@@ -70,6 +82,8 @@ pub(all) struct ChartExSeries {
   owner_idx : Int?
   body : @xml.XmlElement
 } derive(Eq, @debug.Debug)
+pub fn ChartExSeries::equal(Self, Self) -> Bool
+pub fn ChartExSeries::to_string(Self) -> String
 pub impl Show for ChartExSeries
 
 // Type aliases
