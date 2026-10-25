@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Deprecated
+
+- **The project is archived in favour of
+  [`moonbitlang/pptx`](https://github.com/moonbitlang/office.mbt/tree/main/pptx).**
+  moon-pptx was imported into the official office.mbt tools; switch with
+  `moon add moonbitlang/pptx`. Every published `t-ujiie-g/moon-pptx`
+  version is marked deprecated on mooncakes.io (resolution still works,
+  with a warning), and the GitHub repository is read-only. No further
+  releases are planned.
+
 ## [0.10.1] — 2026-09-29
 
 ### Fixed

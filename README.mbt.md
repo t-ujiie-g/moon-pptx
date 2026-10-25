@@ -3,6 +3,20 @@
 [![CI](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml/badge.svg)](https://github.com/t-ujiie-g/moon-pptx/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
+> [!IMPORTANT]
+> **This project is archived.** moon-pptx now lives on as
+> [`moonbitlang/pptx`](https://mooncakes.io/docs/moonbitlang/pptx), part of
+> the official [office.mbt](https://github.com/moonbitlang/office.mbt/tree/main/pptx)
+> tools. Please use that module instead:
+>
+> ```bash
+> moon add moonbitlang/pptx
+> ```
+>
+> Every published `t-ujiie-g/moon-pptx` version is deprecated on
+> mooncakes.io. Existing builds keep resolving, but no further releases
+> or fixes will land here — report issues to office.mbt.
+
 A pure-MoonBit library for reading, building, and writing PowerPoint
 presentations (`.pptx` / OOXML). Type-safe units, immutable builders,
 lossless round-trip of unknown XML — and no FFI, so it runs on every
