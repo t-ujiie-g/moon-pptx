@@ -5,6 +5,11 @@
 > [mooncakes.io](https://mooncakes.io/docs/t-ujiie-g/moon-pptx) as
 > `t-ujiie-g/moon-pptx`.
 
+> **Archived (2026-10-25).** Development continues upstream as
+> [`moonbitlang/pptx`](https://github.com/moonbitlang/office.mbt/tree/main/pptx);
+> see ADR-017. The gaps and roadmap below are kept as a record of where
+> this project stood, not as open work.
+
 This document is the **single source of truth** for development
 direction, design decisions (ADRs), open questions, and risks. It is
 **forward-looking**: what is already shipped lives in `CHANGELOG.md`
@@ -418,6 +423,13 @@ Append-only. Each decision gets a heading, date, status, context, decision, cons
 - **Consequences**: Those ~50 records are frozen as `pub(all)` at 1.0, so adding a field to any of them stays a breaking change forever — the cost of leaving them constructible, and the reason G12 is worth doing before the tag rather than after. Two rules the pass produced are worth keeping: a type with a public `serialize` is an **authoring target** and stays constructible whatever else it exposes; and a visibility sweep must be checked against `examples/sample-deck`, the only in-repo code that consumes the public API as a downstream module (`CLAUDE.md` §3).
 
   The 93 `pub(all) enum` declarations were never in scope, because nothing can be done about them. Adding a variant breaks exhaustive matches downstream, and that breakage is on the *matching* side, which plain `pub` still allows — so visibility is not the lever. `moon 0.1.20260827` has no `#non_exhaustive` equivalent either (`#non_exhaustive`, `#open` and `#extensible` are all rejected as `unknown attribute`), and the enums used as builder inputs — `Anchor`, `PresetShape`, `ThemeColor` — must stay `pub(all)` regardless, since callers construct their variants. So 1.0 freezes the variant lists as they are: a new shape preset, fill kind or transition kind is a breaking change from the tag onward. Worth stating in the 1.0 announcement rather than discovering later.
+
+### ADR-017: Archive moon-pptx in favour of `moonbitlang/pptx`
+- **Date**: 2026-10-25
+- **Status**: Accepted (supersedes the release policy of ADR-012 and ADR-016 — there will be no 1.0 from this repository)
+- **Context**: moon-pptx 0.10.0 was imported into the official `moonbitlang/office.mbt` repository under `pptx/` and is published there as `moonbitlang/pptx`. Two independently maintained copies of the same library split users and bug fixes, and the official copy is the one integrated with the rest of the office tooling.
+- **Decision**: Stop development here. Every published version of `t-ujiie-g/moon-pptx` is deprecated on mooncakes.io (`moon deprecate`) with a reason pointing at `moonbitlang/pptx`, the README, ROADMAP and CHANGELOG carry the same pointer, and the GitHub repository is archived. No migration release is published; 0.10.1 is the last version.
+- **Consequences**: Existing consumers keep building — deprecation does not change version selection — but every dependency resolution warns and names the replacement. Open gaps in §3 / §4 are not carried forward from here; anything still relevant is for office.mbt to track.
 
 ---
 
